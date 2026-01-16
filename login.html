@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Hexomel</title>
+    <link rel="stylesheet" href="/src/styles/index.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body class="auth-page">
+    <div class="auth-card">
+      <h1 class="auth-title">Sign in</h1>
+      <p class="auth-subtitle">Welcome back to the golden touch of nature</p>
+
+      <!-- Redundant button removed to maintain Atlas style and official SDK logic -->
+
+      <form class="auth-form" id="loginForm">
+        <div class="floating-label-group">
+          <input
+            type="email"
+            id="email"
+            class="floating-input"
+            placeholder=" "
+            required
+          />
+          <label class="floating-label">Email*</label>
+        </div>
+
+        <div class="floating-label-group">
+          <input
+            type="password"
+            id="password"
+            class="floating-input"
+            placeholder=" "
+            required
+          />
+          <label class="floating-label">Password*</label>
+        </div>
+
+        <button type="submit" class="auth-submit">Sign in to Hexomel</button>
+      </form>
+
+      <div class="auth-divider" style="margin: 2rem 0">
+        <span>or sign in with Google</span>
+      </div>
+
+      <div
+        id="google-signin-button"
+        style="display: flex; justify-content: center; margin-top: 1.5rem"
+      ></div>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/register.html">Sign up</a>
+      </div>
+
+      <div style="margin-top: 2rem">
+        <a
+          href="/"
+          style="
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: var(--text-sm);
+          "
+          >← Back to home</a
+        >
+      </div>
+    </div>
+
+    <script type="module" src="/src/auth.js"></script>
+  </body>
+</html>

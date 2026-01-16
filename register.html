@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign up - Hexomel</title>
+    <link rel="stylesheet" href="/src/styles/index.css" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-card">
+      <h1 class="auth-title">Sign up</h1>
+      <p class="auth-subtitle">Join our community of honey lovers</p>
+
+      <!-- Redundant button removed for cleaner Atlas style -->
+
+      <form class="auth-form" id="registerForm">
+        <div class="input-row">
+          <div class="floating-label-group">
+            <input
+              type="text"
+              id="firstName"
+              class="floating-input"
+              placeholder=" "
+              required
+            />
+            <label class="floating-label">First Name*</label>
+          </div>
+          <div class="floating-label-group">
+            <input
+              type="text"
+              id="lastName"
+              class="floating-input"
+              placeholder=" "
+              required
+            />
+            <label class="floating-label">Last Name*</label>
+          </div>
+        </div>
+
+        <div class="floating-label-group">
+          <input
+            type="email"
+            id="email"
+            class="floating-input"
+            placeholder=" "
+            required
+          />
+          <label class="floating-label">Email*</label>
+        </div>
+
+        <div class="floating-label-group">
+          <input
+            type="password"
+            id="password"
+            class="floating-input"
+            placeholder=" "
+            required
+          />
+          <label class="floating-label">Password*</label>
+        </div>
+
+        <label
+          style="
+            display: flex;
+            gap: 0.5rem;
+            font-size: var(--text-sm);
+            color: var(--text-medium);
+            margin-bottom: 2rem;
+            cursor: pointer;
+          "
+        >
+          <input type="checkbox" required />
+          I agree to the Terms of Service and Privacy Policy.
+        </label>
+
+        <button type="submit" class="auth-submit">Create your account</button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="/login.html">Sign in</a>
+      </div>
+
+      <div style="margin-top: 2rem">
+        <a
+          href="/"
+          style="
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: var(--text-sm);
+          "
+          >← Back to home</a
+        >
+      </div>
+    </div>
+
+    <script type="module" src="/src/auth.js"></script>
+  </body>
+</html>

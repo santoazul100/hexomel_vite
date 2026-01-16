@@ -1,0 +1,84 @@
+REGRA: NÃO APAGAR, SÓ ADICIONAR E ATUALIZAR
+
+# Introdução e Propósito deste Ficheiro
+Este ficheiro, `projeto.txt`, serve como o **registo mestre e fonte de verdade** para todo o desenvolvimento do projeto Hexomel. O seu propósito é documentar de forma cumulativa todas as funcionalidades implementadas, decisões de design e a evolução tecnológica do site, garantindo que nada se perca durante o processo de aprendizagem e expansão.
+
+## A Escolha do Vanilla JavaScript
+Uma das decisões centrais deste projeto foi a utilização de **Vanilla JavaScript (JS Puro)**. Ao contrário de projetos que dependem de frameworks pesadas como React, Vue ou Angular, o Hexomel utiliza apenas as APIs nativas do navegador. Esta escolha serve para:
+- **Demonstrar Domínio Técnico**: Provar a capacidade de gerir o DOM, o estado da aplicação e as animações sem "muletas" tecnológicas.
+- **Máxima Performance**: O site é extremamente leve, pois carrega apenas o código estritamente necessário para funcionar.
+- **Aprendizagem Sólida**: Garante uma compreensão profunda de como a web funciona na sua base, o que é fundamental para qualquer desenvolvedor profissional.
+
+## O Papel do Vite no Projeto
+O projeto utiliza o **Vite** como o seu motor de desenvolvimento e build. O Vite foi escolhido por ser uma ferramenta de "next-generation" que oferece:
+- **Velocidade Extrema**: Graças ao ES Modules (ESM) nativo, o servidor de desenvolvimento inicia instantaneamente.
+- **Otimização de Assets**: Gestão inteligente de imagens (.webp), estilos (CSS) e scripts, garantindo que o site final seja o mais leve e rápido possível.
+- **Ambiente de Estudo Moderno**: Proporciona um workflow profissional, permitindo focar na escrita de código Vanilla JS limpo enquanto trata das tarefas complexas de bundling em background.
+
+---
+
+# Lista de Funcionalidades - Projeto Hexomel
+
+## 1. Identidade e Interface (UI/UX)
+- **Professional Design**: Refined palette based on honey tones (Gold, Cream, White) with modern typography.
+- **Emoji-Free Policy**: Strategic removal of excessive emojis to maintain a professional e-commerce aesthetic.
+- **Smart Navigation**: Sticky header with integrated 'Sign In' modal and dynamic cart state.
+- **Polished UI**: Usage of 'SweetAlert2' for elegant notifications instead of native browser alerts.
+- **Responsividade**: Layout totalmente adaptável para dispositivos móveis, tablets e desktops.
+
+## 2. Sistema de Animação (Bee System)
+- **Minimalist Generation**: Dynamic generation of a subtle number of bees (3 units) to avoid visual clutter.
+- **Orientation Rule**:
+  - Left Side (< 50%): Bees face center (Normal).
+  - Right Side (>= 50%): Bees face center (Inverted).
+- **Smooth Interaction**: Delicate mouse-follow parallax and idle floating animation.
+
+## 3. Comércio Eletrónico (E-commerce)
+- **Catálogo de Produtos**: Exibição dinâmica de variedades de mel (Wildflower, Acacia, Lavender) com preços e descrições.
+- **Sistema de Carrinho**:
+  - Adição e remoção de produtos em tempo real.
+  - Persistência de dados via `localStorage` (o carrinho mantém-se após fechar o navegador).
+  - Cálculo automático de totais.
+
+## 4. Área de Administração e Autenticação
+- **Login Unificado**: Sistema de autenticação que distingue Clientes e Administradores numa única página.
+- **Painel de Controlo**: Tabela de gestão de produtos para administradores (Adicionar, Editar, Eliminar).
+- **Segurança**: Proteção de rotas e gestão de sessões PHP.
+
+## 5. Documentação e Estudo
+- **PROJETO.md**: Documentação técnica detalhada sobre arquitetura e objetivos académicos.
+- **Pasta de Estudo (`estudo/`)**: Todos os ficheiros core exportados em formato `.txt` para fácil consulta e backup.
+
+## 6. Planeamento de Futuro (Próximos Passos)
+- [x] Registo de Interações: Implementação de logging para monitorizar cliques e movimentos (Required Note).
+- [x] Otimização de Backend: Transição completa de PHP para Node.js para maior escalabilidade e modernização.
+- [x] Checkout Funcional: Integração de sistema de encomendas com persistência em base de dados.
+- [x] Autenticação Social: Integração com Google Login para facilitação do acesso.
+
+## 7. Escolha de SGBD (Sistema de Gestão de Base de Dados)
+Para este projeto, optámos pelo **SQLite**.
+- **Porquê?**: Ao contrário do MySQL (WAMP/XAMPP), o SQLite não precisa de um servidor à parte. A base de dados é apenas um ficheiro `.db` dentro do projeto.
+- **Vantagem**: Só precisas de correr o Node.js (`npm run dev`) e tudo funciona. É a solução mais leve e moderna para o desenvolvimento atual do Hexomel.
+
+## 8. Arquitetura do Backend (Node.js + SQLite)
+- **Engine**: Node.js com Express.
+- **Base de Dados**: SQLite via `sqlite3` e `sqlite` (Wrapper de Promises).
+- **Segurança**: Utilização de variáveis de ambiente (`.env`) e hashing `bcryptjs`.
+- **Autenticação**: JWT (JSON Web Tokens) e Google OAuth 2.0.
+- **Segurança**: Utilização de variáveis de ambiente (`.env`) para proteger credenciais de acesso.
+- **Autenticação Google**: ID do Google configurado: `566495487980-k2ten8upqs965tsjdvja8jvehv006tj7.apps.googleusercontent.com`.
+
+## 9. Como Correr o Projeto (Guia Rápido)
+1. **Frontend**: No terminal da pasta raiz, corre `npm install` e depois `npm run dev`.
+2. **Backend**: Na pasta `backend/`, corre `npm install` e depois `npm run dev`.
+3. **Base de Dados**: Não é necessária configuração externa. O ficheiro `database.db` é criado e gerido automaticamente.
+
+## 10. Gestão Visual da Base de Dados (SQLite Viewer)
+Para veres os dados (utilizadores, produtos, carrinho) sem usar comandos:
+1. Instala a extensão **"SQLite Viewer"** (de Florian Klampfer) no VS Code.
+2. Abre a pasta `backend/` no explorador de ficheiros do VS Code.
+3. Clica com o botão direito no ficheiro `database.db`.
+4. Seleciona "Open with..." -> **"SQLite Viewer"**.
+   > [!WARNING]
+   > Nunca abras ficheiros `.js` (como o `db.js`) no SQLite Viewer. Isso causará o erro "Not a Database". Abre apenas o ficheiro **`database.db`**.
+5. Agora podes navegar pelas tabelas e ver os registos em tempo real como se fosse o phpMyAdmin, mas dentro do VS Code.
