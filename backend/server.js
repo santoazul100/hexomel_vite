@@ -17,7 +17,7 @@ let db;
 // Initialize Database
 initDB().then((database) => {
   db = database;
-  console.log("SQLite Database connected and initialized.");
+  console.log("MySQL Database connected and initialized.");
 });
 
 app.use(cors());
@@ -35,10 +35,10 @@ app.post("/api/auth/register", async (req, res) => {
 
   try {
     // Check if user exists
-    const existing = await db.get("SELECT * FROM cliente WHERE Email = ?", [
+    const [rows] = await db.execute("SELECT * FROM cliente WHERE Email = ?", [
       email,
     ]);
-    if (existing) {
+    if (rows.length > 0) {
       return res.status(400).json({ error: "User already exists" });
     }
 
@@ -48,7 +48,7 @@ app.post("/api/auth/register", async (req, res) => {
     const fullName = `${firstName} ${lastName}`;
 
     // Insert user
-    await db.run(
+    await db.execute(
       "INSERT INTO cliente (Nome, Email, Senha, Telefone) VALUES (?, ?, ?, ?)",
       [fullName, email, hashedPassword, phone || 0],
     );
@@ -65,7 +65,10 @@ app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
+    const [rows] = await db.execute("SELECT * FROM cliente WHERE Email = ?", [
+      email,
+    ]);
+    const user = rows[0];
     if (!user) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
@@ -109,14 +112,20 @@ app.post("/api/auth/google", async (req, res) => {
     const { email, name, picture } = payload;
     console.log("Google Login Payload:", { email, name, picture });
 
-    let user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
+    let [rows] = await db.execute("SELECT * FROM cliente WHERE Email = ?", [
+      email,
+    ]);
+    let user = rows[0];
     if (!user) {
       const randomPass = await bcrypt.hash(Math.random().toString(36), 10);
-      await db.run(
+      await db.execute(
         "INSERT INTO cliente (Nome, Email, Senha, Picture) VALUES (?, ?, ?, ?)",
         [name, email, randomPass, picture],
       );
-      user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
+      [rows] = await db.execute("SELECT * FROM cliente WHERE Email = ?", [
+        email,
+      ]);
+      user = rows[0];
     } else if (!user.Picture && picture) {
       // Sync picture if it was missing
       await db.run("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
@@ -151,7 +160,7 @@ app.post("/api/auth/google", async (req, res) => {
 // Example route: Get all products
 app.get("/api/products", async (req, res) => {
   try {
-    const rows = await db.all("SELECT * FROM produto");
+    const [rows] = await db.execute("SELECT * FROM produto");
     res.json(rows);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -163,12 +172,14 @@ app.get("/api/products", async (req, res) => {
 // Get user cart
 app.get("/api/cart", authenticateToken, async (req, res) => {
   try {
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
+    const [cartRows] = await db.execute(
+      "SELECT * FROM carrinho WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    const cart = cartRows[0];
     if (!cart) return res.json([]);
 
-    const items = await db.all(
+    const [items] = await db.execute(
       `SELECT ic.*, p.Nome, p.Preco, p.Stock 
        FROM item_carrinho ic 
        JOIN produto p ON ic.ID_Produto = p.ID_Produto 
@@ -188,34 +199,37 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
 
   try {
     // 1. Ensure cart exists
-    let cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
+    const [cartRows] = await db.execute(
+      "SELECT * FROM carrinho WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    let cart = cartRows[0];
     let cartId;
 
     if (!cart) {
-      const result = await db.run(
+      const [result] = await db.execute(
         "INSERT INTO carrinho (ID_Cliente) VALUES (?)",
         [req.user.id],
       );
-      cartId = result.lastID;
+      cartId = result.insertId;
     } else {
       cartId = cart.ID_Carrinho;
     }
 
     // 2. Add or update item
-    const existing = await db.get(
+    const [existingRows] = await db.execute(
       "SELECT * FROM item_carrinho WHERE ID_Carrinho = ? AND ID_Produto = ?",
       [cartId, productId],
     );
+    const existing = existingRows[0];
 
     if (existing) {
-      await db.run(
+      await db.execute(
         "UPDATE item_carrinho SET Quantidade = Quantidade + ? WHERE ID_itemCarrinho = ?",
         [quantity || 1, existing.ID_itemCarrinho],
       );
     } else {
-      await db.run(
+      await db.execute(
         "INSERT INTO item_carrinho (ID_Carrinho, ID_Produto, Quantidade) VALUES (?, ?, ?)",
         [cartId, productId, quantity || 1],
       );
@@ -235,7 +249,7 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
     if (quantity < 1) {
       return res.status(400).json({ error: "Quantity must be at least 1" });
     }
-    await db.run(
+    await db.execute(
       "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
       [quantity, itemId],
     );
@@ -250,7 +264,7 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
 app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
   const { itemId } = req.params;
   try {
-    await db.run("DELETE FROM item_carrinho WHERE ID_itemCarrinho = ?", [
+    await db.execute("DELETE FROM item_carrinho WHERE ID_itemCarrinho = ?", [
       itemId,
     ]);
     res.json({ message: "Item removed" });
@@ -263,7 +277,7 @@ app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
 // Example route: Get all clients
 app.get("/api/clients", async (req, res) => {
   try {
-    const rows = await db.all("SELECT * FROM cliente");
+    const [rows] = await db.execute("SELECT * FROM cliente");
     res.json(rows);
   } catch (error) {
     console.error("Error fetching clients:", error);
@@ -274,12 +288,14 @@ app.get("/api/clients", async (req, res) => {
 // Checkout
 app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
   try {
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
+    const [cartRows] = await db.execute(
+      "SELECT * FROM carrinho WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    const cart = cartRows[0];
     if (!cart) return res.status(400).json({ error: "Cart is empty" });
 
-    const items = await db.all(
+    const [items] = await db.execute(
       `SELECT ic.*, p.Preco FROM item_carrinho ic 
        JOIN produto p ON ic.ID_Produto = p.ID_Produto 
        WHERE ic.ID_Carrinho = ?`,
@@ -294,24 +310,24 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       0,
     );
 
-    const orderResult = await db.run(
+    const [orderResult] = await db.execute(
       "INSERT INTO encomenda (ID_Cliente, Total) VALUES (?, ?)",
       [req.user.id, total],
     );
-    const orderId = orderResult.lastID;
+    const orderId = orderResult.insertId;
 
     for (const item of items) {
-      await db.run(
+      await db.execute(
         "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
         [orderId, item.ID_Produto, item.Quantidade, item.Preco],
       );
-      await db.run(
+      await db.execute(
         "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
         [item.Quantidade, item.ID_Produto],
       );
     }
 
-    await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [
+    await db.execute("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [
       cart.ID_Carrinho,
     ]);
     res.json({ message: "Order placed successfully!", orderId });
@@ -324,7 +340,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
 // FAVORITES ROUTES
 app.get("/api/favorites", authenticateToken, async (req, res) => {
   try {
-    const favorites = await db.all(
+    const [favorites] = await db.execute(
       `SELECT p.* FROM favoritos f
        JOIN produto p ON f.ID_Produto = p.ID_Produto
        WHERE f.ID_Cliente = ?`,
@@ -340,15 +356,15 @@ app.get("/api/favorites", authenticateToken, async (req, res) => {
 app.post("/api/favorites/add", authenticateToken, async (req, res) => {
   const { productId } = req.body;
   try {
-    const existing = await db.get(
+    const [existingRows] = await db.execute(
       "SELECT * FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
       [req.user.id, productId],
     );
-    if (existing) {
+    if (existingRows.length > 0) {
       return res.status(400).json({ error: "Product already in favorites" });
     }
 
-    await db.run(
+    await db.execute(
       "INSERT INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
       [req.user.id, productId],
     );
@@ -365,7 +381,7 @@ app.delete(
   async (req, res) => {
     const { productId } = req.params;
     try {
-      await db.run(
+      await db.execute(
         "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
         [req.user.id, productId],
       );
@@ -380,13 +396,14 @@ app.delete(
 // USER PROFILE ROUTE
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
-    const user = await db.get(
+    const [userRows] = await db.execute(
       "SELECT Nome, Email, Picture, Level, Pontos, XP, Badges, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
+    const user = userRows[0];
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const orders = await db.all(
+    const [orders] = await db.execute(
       "SELECT * FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
       [req.user.id],
     );

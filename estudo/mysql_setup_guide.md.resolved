@@ -1,0 +1,49 @@
+# MySQL Installation & Setup Guide (For PAP)
+
+Since this is for your **PAP (Prova de Aptidão Profissional)**, using a dedicated MySQL server is a great choice. It demonstrates that you can manage a real database environment, separate from the application logic.
+
+## 1. Install MySQL Community Server
+We will install the official Oracle MySQL version, not XAMPP on this occasion.
+
+1.  **Download**: Go to [dev.mysql.com/downloads/installer/](https://dev.mysql.com/downloads/installer/).
+2.  Choose **Windows (x86, 32-bit), MSI Installer** (it installs the 64-bit server too). Pick the larger file (~400MB) if you have slow internet, or the smaller one if you have fast internet.
+3.  **Run the Installer**:
+    -   **Setup Type**: Choose **"Developer Default"** (installs Server + MySQL Workbench + Connectors) OR **"Server only"** if you want to keep it minimal (but "Developer Default" is better for PAP as you get the GUI tools).
+    -   **Type and Networking**: Default is fine (Port 3306).
+    -   **Authentication Method**: Use "Use Strong Password Encryption".
+    -   **Accounts and Roles**:
+        -   **Root Password**: Set a password you will remember (e.g., `root` or `admin123`). **WRITE THIS DOWN**.
+        -   You can add a user, but for now `root` is fine for development.
+    -   **Windows Service**: Keep defaults (Start MySQL System Service).
+    -   **Apply Configuration**: Click Execute.
+
+## 2. Set Up Your Database
+Now that the server is running, we need to create the empty database and import your table structure.
+
+1.  Open **MySQL Workbench** (it was installed in step 1).
+2.  Click the **Local instance MySQL80** box.
+3.  Enter your root password.
+4.  In the query window (middle), type:
+    ```sql
+    CREATE DATABASE hexomel;
+    ```
+    And click the Lightning Bolt icon (Execute).
+
+## 3. Import Your Schema ([hexomel.sql](file:///c:/escola/PAP/codigo/hexomel/estudo/hexomel.sql))
+1.  In Workbench, go to **Server** -> **Data Import**.
+2.  Select **Import from Self-Contained File**.
+3.  Browse to your project file: [c:\escola\PAP\codigo\hexomel\estudo\hexomel.sql](file:///c:/escola/PAP/codigo/hexomel/estudo/hexomel.sql).
+4.  **Default Target Schema**: Select `hexomel`.
+5.  Click **Start Import**.
+
+> [!NOTE]
+> If you get errors because your SQL file uses `MyISAM` engine (older format), don't worry. We can fix the SQL file to use `InnoDB` (modern standard) easily.
+
+## 4. Install Database Management Tool (Optional)
+If you find Workbench too heavy, for your PAP presentation you might want something lighter like **HeidiSQL** or **DBeaver**. But Workbench is the "official" tool and looks good in reports.
+
+## Next Steps
+Once you have done this, tell me, and I will strictly rewrite your:
+1.  [package.json](file:///c:/escola/PAP/codigo/hexomel/backend/package.json) (to include MySQL drivers)
+2.  [server.js](file:///c:/escola/PAP/codigo/hexomel/backend/server.js) (to talk to MySQL instead of SQLite)
+3.  [config/db.js](file:///c:/escola/PAP/codigo/hexomel/backend/config/db.js) (to connect to your new Local MySQL)
