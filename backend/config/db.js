@@ -20,6 +20,11 @@ export const initDB = async () => {
       Email TEXT UNIQUE NOT NULL,
       Senha TEXT NOT NULL,
       Telefone INTEGER,
+      Picture TEXT,
+      Level INTEGER DEFAULT 1,
+      Pontos INTEGER DEFAULT 0,
+      XP INTEGER DEFAULT 0,
+      Badges TEXT DEFAULT '[]',
       Data_Resgistro DATE DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -66,6 +71,21 @@ export const initDB = async () => {
       FOREIGN KEY (ID_Produto) REFERENCES produto(ID_Produto)
     );
   `);
+
+  // Migration: Add new columns if they don't exist
+  const tableInfo = await db.all("PRAGMA table_info(cliente)");
+  const columns = tableInfo.map((c) => c.name);
+
+  if (!columns.includes("Picture"))
+    await db.exec("ALTER TABLE cliente ADD COLUMN Picture TEXT");
+  if (!columns.includes("Level"))
+    await db.exec("ALTER TABLE cliente ADD COLUMN Level INTEGER DEFAULT 1");
+  if (!columns.includes("Pontos"))
+    await db.exec("ALTER TABLE cliente ADD COLUMN Pontos INTEGER DEFAULT 0");
+  if (!columns.includes("XP"))
+    await db.exec("ALTER TABLE cliente ADD COLUMN XP INTEGER DEFAULT 0");
+  if (!columns.includes("Badges"))
+    await db.exec("ALTER TABLE cliente ADD COLUMN Badges TEXT DEFAULT '[]'");
 
   // Insert initial products if empty
   const products = await db.all("SELECT * FROM produto");

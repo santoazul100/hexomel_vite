@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hexomel - Mel 100% Natural</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+    <!-- Google Auth -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <!-- Navbar (Premium Overhaul) -->
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a
+          class="navbar-brand d-flex align-items-center gap-2"
+          href="index.html"
+        >
+          Hexomel
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto gap-4">
+            <li class="nav-item">
+              <a class="nav-link active" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="shop.html">Produtos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contactos</a>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center gap-3 ms-lg-4">
+            <button
+              id="cart-btn"
+              class="btn btn-link text-decoration-none text-dark position-relative p-0"
+            >
+              <i class="fas fa-shopping-bag fs-5"></i>
+              <span
+                id="cart-badge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                >0</span
+              >
+            </button>
+            <div class="d-flex align-items-center gap-2" id="authSection">
+              <!-- Injected by main.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- Hero Section (Premium Overhaul) -->
+      <section class="hero-premium">
+        <!-- Scattered Bees Layer -->
+        <div class="bee-container">
+          <img src="abelha/abelha.webp" class="bee-decoration" alt="Bees" />
+          <img
+            src="abelha/abelha_inverso.webp"
+            class="bee-decoration"
+            alt="Bees"
+          />
+          <img src="abelha/abelha.webp" class="bee-decoration" alt="Bees" />
+          <img
+            src="abelha/abelha_inverso.webp"
+            class="bee-decoration"
+            alt="Bees"
+          />
+        </div>
+
+        <div class="container text-center animate-fade-up">
+          <h1 class="hero-title">Mel 100% Natural</h1>
+          <p class="hero-subtitle">
+            Doçura autêntica, direta da colmeia para a sua mesa, preservando a
+            essência pura da natureza em cada gota.
+          </p>
+          <div class="d-flex justify-content-center gap-3">
+            <a
+              href="shop.html"
+              class="btn btn-auth-enhanced register px-5 py-3 fs-5"
+              >Explorar Loja</a
+            >
+            <a
+              href="about.html"
+              class="btn btn-auth-enhanced login px-5 py-3 fs-5"
+              >Nossa História</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- Why Hexomel Section -->
+      <section class="py-5 position-relative">
+        <img
+          src="abelha/abelha.webp"
+          class="bee-decoration"
+          alt="Bees"
+          style="top: -40px; right: 15%; width: 70px"
+        />
+        <div class="container my-5">
+          <div class="text-center mb-5 animate-fade-up">
+            <h2 class="display-5 fw-bold" style="color: var(--primary-green)">
+              Porquê a Hexomel?
+            </h2>
+            <p class="text-muted">
+              A pureza que você pode sentir em cada gota.
+            </p>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-4">
+              <div class="premium-card text-center">
+                <span class="feature-icon">🌿</span>
+                <h4 class="fw-bold mb-3">100% Orgânico</h4>
+                <p class="text-muted mb-0">
+                  Produção totalmente livre de químicos, respeitando
+                  integralmente o ciclo natural das nossas abelhas.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="premium-card text-center">
+                <span class="feature-icon">🍯</span>
+                <h4 class="fw-bold mb-3">Recolha Artesanal</h4>
+                <p class="text-muted mb-0">
+                  Técnicas tradicionais passadas por gerações que preservam
+                  todas as propriedades medicinais do mel.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="premium-card text-center">
+                <span class="feature-icon">✨</span>
+                <h4 class="fw-bold mb-3">Pureza Garantida</h4>
+                <p class="text-muted mb-0">
+                  Sem qualquer adição de açúcares, corantes ou conservantes.
+                  Apenas o mel no seu estado mais puro.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    <!-- Footer Premium -->
+    <footer class="footer-premium">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <h3 class="footer-brand mb-3">Hexomel</h3>
+            <p class="mb-4" style="max-width: 300px">
+              Dedicados à produção de mel 100% natural, preservando a pureza e a
+              tradição apícola em cada gota.
+            </p>
+            <div class="social-links">
+              <a href="#" class="social-icon"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-whatsapp"></i
+              ></a>
+            </div>
+          </div>
+          <div class="col-lg-2 ms-lg-auto">
+            <h5 class="footer-heading">Navegação</h5>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="footer-link">Início</a></li>
+              <li><a href="shop.html" class="footer-link">Produtos</a></li>
+              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2">
+            <h5 class="footer-heading">Pedido</h5>
+            <ul class="list-unstyled">
+              <li><a href="#" class="footer-link">Carrinho</a></li>
+              <li><a href="#" class="footer-link">A minha conta</a></li>
+              <li><a href="#" class="footer-link">FAQ</a></li>
+              <li><a href="#" class="footer-link">Termos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3">
+            <h5 class="footer-heading">Contactos</h5>
+            <p class="small mb-2">
+              <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+              Estrela, Portugal
+            </p>
+            <p class="small mb-2">
+              <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+            </p>
+            <p class="small mb-4">
+              <i class="fas fa-envelope me-2 text-warning"></i> info@hexomel.pt
+            </p>
+          </div>
+        </div>
+        <hr class="my-5 opacity-10" />
+        <div class="text-center small opacity-50">
+          <p class="mb-0">
+            &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+            reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

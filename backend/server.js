@@ -50,7 +50,7 @@ app.post("/api/auth/register", async (req, res) => {
     // Insert user
     await db.run(
       "INSERT INTO cliente (Nome, Email, Senha, Telefone) VALUES (?, ?, ?, ?)",
-      [fullName, email, hashedPassword, phone || 0]
+      [fullName, email, hashedPassword, phone || 0],
     );
 
     res.status(201).json({ message: "User registered successfully" });
@@ -80,7 +80,16 @@ app.post("/api/auth/login", async (req, res) => {
     });
     res.json({
       token,
-      user: { id: user.ID_Cliente, name: user.Nome, email: user.Email },
+      user: {
+        id: user.ID_Cliente,
+        name: user.Nome,
+        email: user.Email,
+        picture: user.Picture,
+        level: user.Level || 1,
+        pontos: user.Pontos || 0,
+        xp: user.XP || 0,
+        badges: JSON.parse(user.Badges || "[]"),
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -104,7 +113,7 @@ app.post("/api/auth/google", async (req, res) => {
       const randomPass = await bcrypt.hash(Math.random().toString(36), 10);
       await db.run(
         "INSERT INTO cliente (Nome, Email, Senha) VALUES (?, ?, ?)",
-        [name, email, randomPass]
+        [name, email, randomPass],
       );
       user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
     }
@@ -114,7 +123,16 @@ app.post("/api/auth/google", async (req, res) => {
     });
     res.json({
       token,
-      user: { id: user.ID_Cliente, name: user.Nome, email: user.Email },
+      user: {
+        id: user.ID_Cliente,
+        name: user.Nome,
+        email: user.Email,
+        picture: user.Picture,
+        level: user.Level || 1,
+        pontos: user.Pontos || 0,
+        xp: user.XP || 0,
+        badges: JSON.parse(user.Badges || "[]"),
+      },
     });
   } catch (error) {
     console.error("Google login error:", error);
@@ -147,7 +165,7 @@ app.get("/api/cart", authenticateToken, async (req, res) => {
        FROM item_carrinho ic 
        JOIN produto p ON ic.ID_Produto = p.ID_Produto 
        WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho]
+      [cart.ID_Carrinho],
     );
     res.json(items);
   } catch (error) {
@@ -170,7 +188,7 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
     if (!cart) {
       const result = await db.run(
         "INSERT INTO carrinho (ID_Cliente) VALUES (?)",
-        [req.user.id]
+        [req.user.id],
       );
       cartId = result.lastID;
     } else {
@@ -180,18 +198,18 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
     // 2. Add or update item
     const existing = await db.get(
       "SELECT * FROM item_carrinho WHERE ID_Carrinho = ? AND ID_Produto = ?",
-      [cartId, productId]
+      [cartId, productId],
     );
 
     if (existing) {
       await db.run(
         "UPDATE item_carrinho SET Quantidade = Quantidade + ? WHERE ID_itemCarrinho = ?",
-        [quantity || 1, existing.ID_itemCarrinho]
+        [quantity || 1, existing.ID_itemCarrinho],
       );
     } else {
       await db.run(
         "INSERT INTO item_carrinho (ID_Carrinho, ID_Produto, Quantidade) VALUES (?, ?, ?)",
-        [cartId, productId, quantity || 1]
+        [cartId, productId, quantity || 1],
       );
     }
 
@@ -225,7 +243,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       `SELECT ic.*, p.Preco FROM item_carrinho ic 
        JOIN produto p ON ic.ID_Produto = p.ID_Produto 
        WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho]
+      [cart.ID_Carrinho],
     );
 
     if (items.length === 0)
@@ -233,23 +251,23 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
 
     const total = items.reduce(
       (sum, item) => sum + item.Preco * item.Quantidade,
-      0
+      0,
     );
 
     const orderResult = await db.run(
       "INSERT INTO encomenda (ID_Cliente, Total) VALUES (?, ?)",
-      [req.user.id, total]
+      [req.user.id, total],
     );
     const orderId = orderResult.lastID;
 
     for (const item of items) {
       await db.run(
         "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-        [orderId, item.ID_Produto, item.Quantidade, item.Preco]
+        [orderId, item.ID_Produto, item.Quantidade, item.Preco],
       );
       await db.run(
         "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
-        [item.Quantidade, item.ID_Produto]
+        [item.Quantidade, item.ID_Produto],
       );
     }
 

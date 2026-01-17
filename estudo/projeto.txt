@@ -31,7 +31,7 @@ O projeto utiliza o **Vite** como o seu motor de desenvolvimento e build. O Vite
 - **Orientation Rule**:
   - Left Side (< 50%): Bees face center (Normal).
   - Right Side (>= 50%): Bees face center (Inverted).
-- **Smooth Interaction**: Delicate mouse-follow parallax and idle floating animation.
+- **Smooth Interaction**: Delicate mouse-follow parallax and idle floating animation (V2 Physics).
 
 ## 3. Comércio Eletrónico (E-commerce)
 - **Catálogo de Produtos**: Exibição dinâmica de variedades de mel (Wildflower, Acacia, Lavender) com preços e descrições.
@@ -82,3 +82,16 @@ Para veres os dados (utilizadores, produtos, carrinho) sem usar comandos:
    > [!WARNING]
    > Nunca abras ficheiros `.js` (como o `db.js`) no SQLite Viewer. Isso causará o erro "Not a Database". Abre apenas o ficheiro **`database.db`**.
 5. Agora podes navegar pelas tabelas e ver os registos em tempo real como se fosse o phpMyAdmin, mas dentro do VS Code.
+
+## 11. Reorganização do Projeto e Interface (Recente)
+- **Estrutura Frontend/Backend**: Migração de todos os ficheiros de interface para uma pasta `frontend` dedicada, mantendo o `backend` separado.
+- **Restauro da Página Inicial**: Reversão do design da Home Page para o estilo original (WAMP), mantendo a modernização do código subjacente.
+- **Unificação das Abelhas**: Sincronização do sistema de animação de abelhas com o projeto de referência, garantindo consistência visual e comportamental (Parallax, posicionamento).
+
+## 12. Melhorias de UX e Core Web Vitals (Hoje)
+- **Animação de Abelhas V2**: Reescrita completa do script `beeAnimation.js` para usar `requestAnimationFrame`, garantindo movimento suave (floating) e resposta ao rato (parallax), sem afetar a performance.
+- **Correção da Navbar**: Ajuste do efeito de hover para ser mais subtil (sublinhado elegante) e reposicionamento do badge do carrinho para melhor leitura.
+- **Integração Google Auth**: Configuração correta dos scopes e URIs de redirecionamento para o Google Console, permitindo login via pop-up sem erros de origem.
+- **Links Google Console**:
+  - **Authorized Javascript Origins**: `http://localhost:5173`, `http://localhost:3000`
+  - **Authorized Redirect URIs**: (Deixar vazio se usar Pop-up Flow) ou `http://localhost:5173`
