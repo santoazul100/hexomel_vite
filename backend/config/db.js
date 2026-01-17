@@ -33,7 +33,16 @@ export const initDB = async () => {
       Nome TEXT NOT NULL,
       Preco DECIMAL(10,2) NOT NULL,
       Stock INTEGER NOT NULL,
-      ID_Categoria INTEGER
+      ID_Categoria INTEGER,
+      Descricao TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS favoritos (
+      ID_Favorito INTEGER PRIMARY KEY AUTOINCREMENT,
+      ID_Cliente INTEGER NOT NULL,
+      ID_Produto INTEGER NOT NULL,
+      FOREIGN KEY (ID_Cliente) REFERENCES cliente(ID_Cliente),
+      FOREIGN KEY (ID_Produto) REFERENCES produto(ID_Produto)
     );
 
     CREATE TABLE IF NOT EXISTS carrinho (
@@ -87,21 +96,39 @@ export const initDB = async () => {
   if (!columns.includes("Badges"))
     await db.exec("ALTER TABLE cliente ADD COLUMN Badges TEXT DEFAULT '[]'");
 
+  // Migration for produto table
+  const produtoInfo = await db.all("PRAGMA table_info(produto)");
+  const produtoColumns = produtoInfo.map((c) => c.name);
+  if (!produtoColumns.includes("Descricao")) {
+    await db.exec("ALTER TABLE produto ADD COLUMN Descricao TEXT");
+  }
+
+  // Create favoritos table if it doesn't exist (in case migration didn't run)
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS favoritos (
+      ID_Favorito INTEGER PRIMARY KEY AUTOINCREMENT,
+      ID_Cliente INTEGER NOT NULL,
+      ID_Produto INTEGER NOT NULL,
+      FOREIGN KEY (ID_Cliente) REFERENCES cliente(ID_Cliente),
+      FOREIGN KEY (ID_Produto) REFERENCES produto(ID_Produto)
+    );
+  `);
+
   // Insert initial products if empty or less than expected
   const productsCount = await db.get("SELECT COUNT(*) as count FROM produto");
   if (productsCount.count < 8) {
     // Clear and re-seed for consistency in this dev stage
     await db.exec("DELETE FROM produto");
     await db.exec(`
-      INSERT INTO produto (Nome, Preco, Stock, ID_Categoria) VALUES 
-      ('Mel de Rosmaninho Premium', 13.50, 50, 1),
-      ('Mel de Eucalipto Puro', 12.00, 30, 1),
-      ('Mel de Urze da Serra', 15.50, 40, 1),
-      ('Pólen de Abelha Natural', 8.50, 25, 2),
-      ('Própolis Gotas Reais', 10.00, 20, 2),
-      ('Mel com Favo de Ouro', 18.00, 15, 1),
-      ('Mel de Castanheiro Intenso', 14.50, 35, 1),
-      ('Wildflower Blossom', 11.00, 60, 1);
+      INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, Descricao) VALUES 
+      ('Mel de Rosmaninho Premium', 13.50, 50, 1, 'Mel suave e aromático colhido nas encostas da Serra da Estrela. Ideal para o pequeno-almoço.'),
+      ('Mel de Eucalipto Puro', 12.00, 30, 1, 'Mel com traços balsâmicos e sabor intenso. Excelente para as vias respiratórias.'),
+      ('Mel de Urze da Serra', 15.50, 40, 1, 'Sabor forte e persistente com notas florais profundas. Um clássico da apicultura portuguesa.'),
+      ('Pólen de Abelha Natural', 8.50, 25, 2, 'Superalimento rico em proteínas e vitaminas. Reforce o seu sistema imunitário.'),
+      ('Própolis Gotas Reais', 10.00, 20, 2, 'Antibiótico natural produzido pelas abelhas. Proteção pura para o seu dia-a-dia.'),
+      ('Mel com Favo de Ouro', 18.00, 15, 1, 'A experiência mais pura: mel virgem diretamente dentro do favo de cera natural.'),
+      ('Mel de Castanheiro Intenso', 14.50, 35, 1, 'Mel escuro e pouco doce, com um toque amadeirado. Perfeito para acompanhar queijos.'),
+      ('Wildflower Blossom', 11.00, 60, 1, 'Uma mistura vibrante de pólens e néctares de flores silvestres. Doçura equilibrada.');
     `);
   }
 

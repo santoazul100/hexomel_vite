@@ -135,6 +135,39 @@ class CartManager {
     }
   }
 
+  async updateQuantity(itemId, newQuantity) {
+    if (newQuantity < 1) return;
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${API_URL}/cart/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ itemId, quantity: newQuantity }),
+      });
+      await this.syncWithBackend();
+      this.render();
+    } catch (error) {
+      console.error("Update cart error:", error);
+    }
+  }
+
+  async removeItem(itemId) {
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${API_URL}/cart/remove/${itemId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await this.syncWithBackend();
+      this.render();
+    } catch (error) {
+      console.error("Remove item error:", error);
+    }
+  }
+
   toggle(show) {
     document.getElementById("cart-sidebar").classList.toggle("open", show);
     document.getElementById("cart-overlay").classList.toggle("show", show);
@@ -150,24 +183,31 @@ class CartManager {
       .map((item) => {
         total += item.Preco * item.Quantidade;
         return `
-                <div class="cart-item">
-                    <div class="cart-item-info">
-                        <div class="cart-item-title">${item.Nome}</div>
-                        <div style="color: var(--text-light); font-size: 0.875rem;">Qty: ${
-                          item.Quantidade
-                        }</div>
-                    </div>
+            <div class="cart-item">
+                <div class="d-flex justify-content-between">
+                    <div class="cart-item-title">${item.Nome}</div>
                     <div style="font-weight: 600;">€${(
                       item.Preco * item.Quantidade
                     ).toFixed(2)}</div>
                 </div>
-            `;
+                
+                <div class="cart-item-controls">
+                    <button class="cart-qty-btn" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
+                    <span class="cart-qty-val">${item.Quantidade}</span>
+                    <button class="cart-qty-btn" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                    
+                    <button class="cart-remove-btn" onclick="cart.removeItem(${item.ID_itemCarrinho})">
+                        <i class="fas fa-trash"></i> Remover
+                    </button>
+                </div>
+            </div>
+        `;
       })
       .join("");
 
     if (this.items.length === 0) {
       container.innerHTML =
-        '<p style="text-align: center; color: var(--text-light); margin-top: 2rem;">Your cart is empty.</p>';
+        '<p style="text-align: center; color: var(--text-light); margin-top: 2rem;">O seu carrinho está vazio.</p>';
     }
 
     totalEl.textContent = `€${total.toFixed(2)}`;
@@ -177,3 +217,4 @@ class CartManager {
 
 export const cart = new CartManager();
 window.addToCart = (id) => cart.addItem(id);
+window.cart = cart; // Expose to window for inline onclicks

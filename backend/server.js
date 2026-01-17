@@ -228,6 +228,38 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
   }
 });
 
+// Update cart item quantity
+app.post("/api/cart/update", authenticateToken, async (req, res) => {
+  const { itemId, quantity } = req.body;
+  try {
+    if (quantity < 1) {
+      return res.status(400).json({ error: "Quantity must be at least 1" });
+    }
+    await db.run(
+      "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
+      [quantity, itemId],
+    );
+    res.json({ message: "Cart updated" });
+  } catch (error) {
+    console.error("Cart update error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Remove item from cart
+app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
+  const { itemId } = req.params;
+  try {
+    await db.run("DELETE FROM item_carrinho WHERE ID_itemCarrinho = ?", [
+      itemId,
+    ]);
+    res.json({ message: "Item removed" });
+  } catch (error) {
+    console.error("Cart remove error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Example route: Get all clients
 app.get("/api/clients", async (req, res) => {
   try {
@@ -286,6 +318,87 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Checkout error:", error);
     res.status(500).json({ error: "Checkout failed" });
+  }
+});
+
+// FAVORITES ROUTES
+app.get("/api/favorites", authenticateToken, async (req, res) => {
+  try {
+    const favorites = await db.all(
+      `SELECT p.* FROM favoritos f
+       JOIN produto p ON f.ID_Produto = p.ID_Produto
+       WHERE f.ID_Cliente = ?`,
+      [req.user.id],
+    );
+    res.json(favorites);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  try {
+    const existing = await db.get(
+      "SELECT * FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+      [req.user.id, productId],
+    );
+    if (existing) {
+      return res.status(400).json({ error: "Product already in favorites" });
+    }
+
+    await db.run(
+      "INSERT INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ message: "Added to favorites" });
+  } catch (error) {
+    console.error("Add favorite error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.delete(
+  "/api/favorites/remove/:productId",
+  authenticateToken,
+  async (req, res) => {
+    const { productId } = req.params;
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, productId],
+      );
+      res.json({ message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Remove favorite error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTE
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT Nome, Email, Picture, Level, Pontos, XP, Badges, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const orders = await db.all(
+      "SELECT * FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({
+      ...user,
+      badges: JSON.parse(user.Badges || "[]"),
+      orders,
+    });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

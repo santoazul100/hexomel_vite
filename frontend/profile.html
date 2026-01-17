@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>O Meu Perfil - Hexomel</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+  </head>
+  <body>
+    <!-- Navbar (Premium Overhaul) -->
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a
+          class="navbar-brand d-flex align-items-center gap-2"
+          href="index.html"
+        >
+          Hexomel
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto gap-4">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="shop.html">Produtos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contactos</a>
+            </li>
+          </ul>
+
+          <div class="cart-navbar-separate ms-lg-4">
+            <button
+              id="cart-btn"
+              class="btn btn-link text-decoration-none text-dark position-relative p-0"
+            >
+              <i class="fas fa-shopping-bag fs-5"></i>
+              <span
+                id="cart-badge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                >0</span
+              >
+            </button>
+          </div>
+
+          <div class="d-flex align-items-center gap-3" id="authSection">
+            <!-- Injected by main.js -->
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-5 mt-5">
+      <div class="container mt-4">
+        <!-- Profile Header Card -->
+        <div
+          class="premium-card p-0 overflow-hidden border-0 mb-5 animate-fade-up"
+        >
+          <div
+            class="profile-banner bg-warning opacity-25"
+            style="height: 120px"
+          ></div>
+          <div
+            class="p-4 pt-0 d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4"
+            style="margin-top: -60px"
+          >
+            <div class="position-relative">
+              <img
+                id="profile-avatar-large"
+                src="https://via.placeholder.com/150"
+                alt="Avatar"
+                class="rounded-circle border border-4 border-white shadow-lg"
+                style="width: 150px; height: 150px; object-fit: cover"
+              />
+            </div>
+            <div class="flex-grow-1 text-center text-md-start mb-3">
+              <h1 class="display-6 fw-bold mb-1" id="profile-name">
+                Carregando...
+              </h1>
+              <p class="text-muted mb-0" id="profile-email">
+                email@exemplo.com
+              </p>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+              <button class="btn btn-auth-enhanced register px-4">
+                Editar Perfil
+              </button>
+            </div>
+          </div>
+
+
+        <div class="row g-5">
+          <!-- Orders Selection -->
+          <div class="col-lg-8 animate-fade-up" style="animation-delay: 0.1s">
+            <h3 class="fw-bold mb-4">As Minhas Encomendas</h3>
+            <div id="orders-list" class="d-flex flex-column gap-3">
+              <div class="text-center py-5 opacity-50">
+                Carregando encomendas...
+              </div>
+            </div>
+          </div>
+
+          <!-- Favorites Section (Sidebar style or small grid) -->
+          <div class="col-lg-4 animate-fade-up" style="animation-delay: 0.2s">
+            <h3 class="fw-bold mb-4">Favoritos</h3>
+            <div id="favorites-grid" class="d-flex flex-column gap-3">
+              <div class="text-center py-5 opacity-50">
+                Ainda não tens favoritos...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer Premium (Same as others) -->
+    <footer class="footer-premium mt-5">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <h3 class="footer-brand mb-3">Hexomel</h3>
+            <p class="mb-4" style="max-width: 300px">
+              Dedicados à produção de mel 100% natural, preservando a pureza e a
+              tradição apícola em cada gota.
+            </p>
+            <div class="social-links">
+              <a href="#" class="social-icon"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-whatsapp"></i
+              ></a>
+            </div>
+          </div>
+          <div class="col-lg-2 ms-lg-auto">
+            <h5 class="footer-heading">Navegação</h5>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="footer-link">Início</a></li>
+              <li><a href="shop.html" class="footer-link">Produtos</a></li>
+              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2">
+            <h5 class="footer-heading">Pedido</h5>
+            <ul class="list-unstyled">
+              <li><a href="#" class="footer-link">Carrinho</a></li>
+              <li><a href="#" class="footer-link">A minha conta</a></li>
+              <li><a href="#" class="footer-link">FAQ</a></li>
+              <li><a href="#" class="footer-link">Termos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3">
+            <h5 class="footer-heading">Contactos</h5>
+            <p class="small mb-2">
+              <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+              Estrela, Portugal
+            </p>
+            <p class="small mb-2">
+              <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+            </p>
+            <p class="small mb-4">
+              <i class="fas fa-envelope me-2 text-warning"></i> info@hexomel.pt
+            </p>
+          </div>
+        </div>
+        <hr class="my-5 opacity-10" />
+        <div class="text-center small opacity-50">
+          <p class="mb-0">
+            &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+            reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/profile.js"></script>
+  </body>
+</html>

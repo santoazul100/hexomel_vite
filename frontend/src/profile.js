@@ -1,106 +1,142 @@
+// Profile page logic
 import { getLoggedUser } from "./auth.js";
-import Swal from "sweetalert2";
 
-const BADGE_DEFINITIONS = [
-  {
-    id: "first_login",
-    name: "Iniciante",
-    icon: "🐣",
-    description: "Criou uma conta no Hexomel",
-  },
-  {
-    id: "loyal_customer",
-    name: "Cliente Fiel",
-    icon: "🏆",
-    description: "Fez mais de 5 encomendas",
-  },
-  {
-    id: "gold_member",
-    name: "Membro Gold",
-    icon: "🍯",
-    description: "Atingiu o nível 10",
-  },
-  {
-    id: "bee_keeper",
-    name: "Apicultor Jr",
-    icon: "🐝",
-    description: "Acumulou 1000 pontos",
-  },
-];
+// ... existing code ...
 
 document.addEventListener("DOMContentLoaded", () => {
-  const user = getLoggedUser();
+  fetchProfileData();
+  updateNav(getLoggedUser());
+});
 
-  if (!user) {
+async function fetchProfileData() {
+  const token = localStorage.getItem("token");
+  if (!token) {
     window.location.href = "index.html";
     return;
   }
 
-  renderProfileData(user);
-});
+  try {
+    const res = await fetch("http://localhost:3000/api/user/profile", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-function renderProfileData(user) {
+    if (!res.ok) throw new Error("Failed to fetch profile");
+
+    const data = await res.json();
+    renderProfile(data);
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    // If unauthorized, redirect might be needed, but for now just log
+  }
+}
+
+function renderProfile(data) {
   // Basic Info
-  document.getElementById("profile-name").textContent = user.name;
-  document.getElementById("profile-email").textContent = user.email;
-  document.getElementById("user-name-input").value = user.name;
+  document.getElementById("profile-name").innerText = data.Nome;
+  document.getElementById("profile-email").innerText = data.Email;
+  // document.getElementById("profile-level").innerText = data.Level || 1;
 
-  const profilePic = document.getElementById("profile-pic-large");
-  if (user.picture) {
-    profilePic.src = user.picture;
+  if (data.Picture) {
+    document.getElementById("profile-avatar-large").src = data.Picture;
   } else {
-    profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=f4b400&color=fff&size=128`;
+    document.getElementById("profile-avatar-large").src =
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(data.Nome)}&background=f4b400&color=fff&size=150`;
   }
 
-  // Stats
-  document.getElementById("stat-lvl").textContent = user.level || 1;
-  document.getElementById("stat-pts").textContent = user.pontos || 0;
-
-  const unlockedBadges = user.badges || [];
-  document.getElementById("stat-badges").textContent = unlockedBadges.length;
-
-  // XP Progress
-  const currentXP = user.xp || 0;
-  const level = user.level || 1;
-  const xpNeeded = level * 100;
-  const progress = (currentXP / xpNeeded) * 100;
-
-  const xpBar = document.getElementById("xp-bar");
-  const xpText = document.getElementById("xp-text");
-
-  xpText.textContent = `${currentXP} / ${xpNeeded} XP`;
-  // Animate bar after a short delay
-  setTimeout(() => {
-    xpBar.style.width = `${progress}%`;
-  }, 300);
-
-  // Badges Grid
-  const badgesGrid = document.getElementById("badges-grid");
-  badgesGrid.innerHTML = "";
-
-  BADGE_DEFINITIONS.forEach((badge) => {
-    const isLocked = !unlockedBadges.includes(badge.id);
-    const card = document.createElement("div");
-    card.className = `badge-card ${isLocked ? "locked" : ""}`;
-
-    card.innerHTML = `
-            <span class="badge-icon">${badge.icon}</span>
-            <div class="badge-name-premium fs-6 fw-bold">${badge.name}</div>
-            <div class="badge-description text-muted small">${badge.description}</div>
-            ${isLocked ? '<i class="fas fa-lock mt-2 text-muted"></i>' : ""}
+  // Orders
+  const ordersList = document.getElementById("orders-list");
+  if (data.orders && data.orders.length > 0) {
+    ordersList.innerHTML = data.orders
+      .map(
+        (order) => `
+            <div class="premium-card p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">Encomenda #${order.ID_Encomenda}</div>
+                    <div class="small text-muted">${new Date(order.Data_Encomenda).toLocaleDateString("pt-PT")}</div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold" style="color: var(--primary-green)">€${order.Total.toFixed(2)}</div>
+                    <span class="badge rounded-pill ${order.Status === "Pendente" ? "bg-warning text-dark" : "bg-success"}">${order.Status}</span>
+                </div>
+            </div>
+        `,
+      )
+      .join("");
+  } else {
+    ordersList.innerHTML = `
+            <div class="text-center py-5 opacity-50 bg-light rounded-4 border">
+                <i class="fas fa-shopping-basket fs-1 mb-3"></i>
+                <p>Ainda não fizeste nenhuma encomenda.</p>
+                <a href="shop.html" class="btn btn-sm btn-auth-enhanced register">Ir para a Loja</a>
+            </div>
         `;
+  }
 
-    if (!isLocked) {
-      card.addEventListener("click", () => {
-        Swal.fire({
-          title: badge.name,
-          text: badge.description,
-          iconHtml: badge.icon,
-          confirmButtonColor: "#f4b400",
-        });
-      });
-    }
-
-    badgesGrid.appendChild(card);
-  });
+  fetchFavorites();
 }
+
+async function fetchFavorites() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("http://localhost:3000/api/favorites", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const favorites = await res.json();
+    renderFavorites(favorites);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+  }
+}
+
+function renderFavorites(favorites) {
+  const favGrid = document.getElementById("favorites-grid");
+  if (favorites && favorites.length > 0) {
+    favGrid.innerHTML = favorites
+      .map(
+        (fav) => `
+            <div class="premium-card p-3 d-flex align-items-center gap-3">
+                <img src="/img/produtos/${fav.ID_Produto}.webp" alt="${fav.Nome}" style="width: 50px; height: 50px; object-fit: contain;" onerror="this.src='https://placehold.co/50x50/f6f6f6/e0e0e0?text=H'">
+                <div class="flex-grow-1">
+                    <div class="fw-bold small">${fav.Nome}</div>
+                    <div class="text-muted" style="font-size: 0.8rem;">€${fav.Preco.toFixed(2)}</div>
+                </div>
+                <button onclick="removeFromFavorites(${fav.ID_Produto})" class="btn btn-sm text-danger"><i class="fas fa-times"></i></button>
+            </div>
+        `,
+      )
+      .join("");
+  } else {
+    favGrid.innerHTML = `
+            <div class="text-center py-4 opacity-50 bg-light rounded-4 border">
+                <p class="small mb-0">Sem favoritos.</p>
+            </div>
+        `;
+  }
+}
+
+window.removeFromFavorites = async function (productId) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(
+      `http://localhost:3000/api/favorites/remove/${productId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (res.ok) fetchFavorites();
+  } catch (error) {
+    console.error("Remove favorite error:", error);
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchProfileData();
+  updateNav(getLoggedUser());
+});
