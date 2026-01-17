@@ -73,15 +73,15 @@ class BeeSystem {
     this.bees.forEach((bee, index) => {
       const offset = index * 1.5;
 
-      // 1. Idle Floating (Multi-layered Sine Waves for natural feel)
+      // 1. Expansive Floating (Doubled amplitudes for "broad" movement)
       const floatX =
-        Math.sin(time + offset) * 12 + Math.cos(time * 0.5 + offset) * 5;
+        Math.sin(time + offset) * 35 + Math.cos(time * 0.5 + offset) * 15;
       const floatY =
-        Math.cos(time * 0.7 + offset) * 15 + Math.sin(time * 0.3 + offset) * 8;
-      const rotate = Math.sin(time * 0.4 + offset) * 8;
+        Math.cos(time * 0.7 + offset) * 40 + Math.sin(time * 0.3 + offset) * 20;
+      const rotate = Math.sin(time * 0.4 + offset) * 25;
 
-      // 2. Subtle Parallax
-      const depth = 20 + (index % 3) * 10; // Pixels of movement
+      // 2. Pronounced Parallax
+      const depth = 50 + (index % 3) * 25; // Broadened range: 50, 75, or 100px
       const parallaxX = this.targetX * depth;
       const parallaxY = this.targetY * depth;
 

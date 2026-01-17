@@ -56,18 +56,20 @@ export function updateNav(user) {
   if (!authSection) return;
 
   if (user) {
-    const avatar = user.avatar || "/public/default-avatar.png";
+    const avatar = user.picture || user.avatar || "/public/default-avatar.png";
+    const firstName = user.firstName || user.name?.split(" ")[0] || "User";
 
     authSection.innerHTML = `
       <div class="d-flex align-items-center gap-3">
           <!-- Profile Dropdown -->
           <div class="dropdown">
               <div class="profile-avatar-container" data-bs-toggle="dropdown" aria-expanded="false">
-                  <img src="${avatar}" alt="User" class="user-avatar-navbar">
+                  <img src="${avatar}" alt="User" class="user-avatar-navbar" onerror="this.src='/public/default-avatar.png'">
+                  <span class="user-name-navbar d-none d-md-block">${firstName}</span>
               </div>
               <ul class="dropdown-menu dropdown-menu-end dropdown-menu-premium animate-fade-in">
                   <li class="px-3 py-2 border-bottom">
-                      <p class="mb-0 fw-bold small text-truncate" style="max-width: 150px">${user.firstName} ${user.lastName}</p>
+                      <p class="mb-0 fw-bold small text-truncate" style="max-width: 150px">${user.firstName ?? user.name} ${user.lastName ?? ""}</p>
                       <p class="mb-0 text-muted smaller">${user.userType === "admin" ? "Administrador" : "Membro Premium"}</p>
                   </li>
                   <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
@@ -127,39 +129,6 @@ window.toggleAuthMode = function (mode) {
   }
 };
 
-// Initialize Google Sign-In
-function initGoogleAuth() {
-  if (typeof google === "undefined") return;
-
-  const handleCredentialResponse = async (response) => {
-    // Handle auth...
-  };
-
-  const initOptions = {
-    client_id:
-      "725619379632-15fbe8v4ivueo5p8rkgisvvev6lquf5m.apps.googleusercontent.com",
-    callback: handleCredentialResponse,
-  };
-
-  google.accounts.id.initialize(initOptions);
-
-  const loginBtn = document.getElementById("google-signin-button");
-  if (loginBtn)
-    google.accounts.id.renderButton(loginBtn, {
-      theme: "outline",
-      size: "large",
-      width: "100%",
-    });
-
-  const shopBtn = document.getElementById("google-signin-button-shop");
-  if (shopBtn)
-    google.accounts.id.renderButton(shopBtn, {
-      theme: "outline",
-      size: "large",
-      width: "100%",
-    });
-}
-
 // Smooth scrolling and scroll effects
 window.addEventListener("scroll", () => {
   const nav = document.querySelector(".navbar-enhanced");
@@ -175,7 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
   injectAuthModal();
   initializeAuthForms();
   updateNav(getLoggedUser());
-  initGoogleAuth();
 
   // Cart logic
   const cartBtn = document.getElementById("cart-btn");

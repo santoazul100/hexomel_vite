@@ -87,14 +87,21 @@ export const initDB = async () => {
   if (!columns.includes("Badges"))
     await db.exec("ALTER TABLE cliente ADD COLUMN Badges TEXT DEFAULT '[]'");
 
-  // Insert initial products if empty
-  const products = await db.all("SELECT * FROM produto");
-  if (products.length === 0) {
+  // Insert initial products if empty or less than expected
+  const productsCount = await db.get("SELECT COUNT(*) as count FROM produto");
+  if (productsCount.count < 8) {
+    // Clear and re-seed for consistency in this dev stage
+    await db.exec("DELETE FROM produto");
     await db.exec(`
       INSERT INTO produto (Nome, Preco, Stock, ID_Categoria) VALUES 
-      ('Wildflower Honey', 12.50, 50, 1),
-      ('Acacia Honey', 14.00, 30, 2),
-      ('Lavender Honey', 15.50, 40, 3);
+      ('Mel de Rosmaninho Premium', 13.50, 50, 1),
+      ('Mel de Eucalipto Puro', 12.00, 30, 1),
+      ('Mel de Urze da Serra', 15.50, 40, 1),
+      ('Pólen de Abelha Natural', 8.50, 25, 2),
+      ('Própolis Gotas Reais', 10.00, 20, 2),
+      ('Mel com Favo de Ouro', 18.00, 15, 1),
+      ('Mel de Castanheiro Intenso', 14.50, 35, 1),
+      ('Wildflower Blossom', 11.00, 60, 1);
     `);
   }
 

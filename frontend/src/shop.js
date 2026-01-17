@@ -3,63 +3,35 @@ import "./styles/index.css";
 // import "./styles/modern.css"; // Already in HTML
 import { cart } from "./cart.js";
 
-// Product data
-const products = [
-  {
-    id: 1,
-    name: "Wildflower Honey",
-    category: "Silvestre",
-    price: 12.5,
-    image: "/img/produtos/mel_silvestre.webp", // Updated path assumption, or use placeholder
-    weight: "500g",
-  },
-  {
-    id: 2,
-    name: "Acacia Honey",
-    category: "Acácia",
-    price: 14.0,
-    image: "/img/produtos/mel_rosmaninho.webp",
-    weight: "500g",
-  },
-  {
-    id: 3,
-    name: "Lavender Honey",
-    category: "Lavanda",
-    price: 15.5,
-    image: "/img/produtos/mel_eucalipto.webp",
-    weight: "500g",
-  },
-  {
-    id: 4,
-    name: "Wildflower Honey - Large",
-    category: "Silvestre",
-    price: 22.0,
-    image: "/img/produtos/mel_silvestre.webp",
-    weight: "1kg",
-  },
-  {
-    id: 5,
-    name: "Acacia Honey - Large",
-    category: "Acácia",
-    price: 25.0,
-    image: "/img/produtos/mel_rosmaninho.webp",
-    weight: "1kg",
-  },
-  {
-    id: 6,
-    name: "Lavender Honey - Large",
-    category: "Lavanda",
-    price: 28.0,
-    image: "/img/produtos/mel_eucalipto.webp",
-    weight: "1kg",
-  },
-];
-
 // Fallback images if files don't exist
 const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
 
 // State
-let filteredProducts = [...products];
+let products = [];
+let filteredProducts = [];
+
+// Fetch products from API
+async function fetchProducts() {
+  try {
+    const res = await fetch("/api/products");
+    const data = await res.json();
+
+    // Map backend data to frontend format
+    products = data.map((p) => ({
+      id: p.ID_Produto,
+      name: p.Nome,
+      price: p.Preco,
+      category: p.ID_Categoria === 2 ? "Pólen & Própolis" : "Mel Puro",
+      image: `/img/produtos/${p.ID_Produto}.webp`,
+      weight: "500g",
+    }));
+
+    filteredProducts = [...products];
+    renderProducts();
+  } catch (error) {
+    console.error("Error fetching products:", error);
+  }
+}
 
 // Render products (Nike Style)
 function renderProducts() {
@@ -99,9 +71,9 @@ function renderProducts() {
 // Filtering Logic
 function applyFilters() {
   // 1. Get checked categories
-  const silvestre = document.getElementById("f-wildflower")?.checked;
-  const acacia = document.getElementById("f-acacia")?.checked;
-  const lavender = document.getElementById("f-lavender")?.checked;
+  const melPuro = document.getElementById("cat-mel")?.checked;
+  const polen = document.getElementById("cat-polen")?.checked;
+  const acessorios = document.getElementById("cat-acessorios")?.checked;
 
   // 2. Get price range
   const maxPrice = document.getElementById("priceRange")?.value || 100;
@@ -110,11 +82,11 @@ function applyFilters() {
   filteredProducts = products.filter((p) => {
     let catMatch = true;
     // If any category filter is checked, product must match one of them
-    if (silvestre || acacia || lavender) {
+    if (melPuro || polen || acessorios) {
       catMatch = false;
-      if (silvestre && p.category === "Silvestre") catMatch = true;
-      if (acacia && p.category === "Acácia") catMatch = true;
-      if (lavender && p.category === "Lavanda") catMatch = true;
+      if (melPuro && p.category === "Mel Puro") catMatch = true;
+      if (polen && p.category === "Pólen & Própolis") catMatch = true;
+      if (acessorios && p.category === "Acessórios") catMatch = true;
     }
 
     let priceMatch = p.price <= maxPrice;
@@ -133,7 +105,7 @@ window.addToCart = function (productId) {
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", () => {
-  renderProducts();
+  fetchProducts();
 
   // Bind Filter Events
   const filters = document.querySelectorAll(".form-check-input, #priceRange");

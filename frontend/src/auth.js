@@ -72,7 +72,7 @@ export const initializeAuthForms = () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
 
-          // Close custom modal
+          // Close custom modal immediately
           if (typeof window.closeAuthModal === "function") {
             window.closeAuthModal();
           }
@@ -145,6 +145,11 @@ const handleGoogleCallback = async (response) => {
     if (res.ok) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Close custom modal
+      if (typeof window.closeAuthModal === "function") {
+        window.closeAuthModal();
+      }
 
       Swal.fire({
         icon: "success",

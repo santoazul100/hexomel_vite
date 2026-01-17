@@ -106,16 +106,24 @@ app.post("/api/auth/google", async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const { email, name } = payload;
+    const { email, name, picture } = payload;
+    console.log("Google Login Payload:", { email, name, picture });
 
     let user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
     if (!user) {
       const randomPass = await bcrypt.hash(Math.random().toString(36), 10);
       await db.run(
-        "INSERT INTO cliente (Nome, Email, Senha) VALUES (?, ?, ?)",
-        [name, email, randomPass],
+        "INSERT INTO cliente (Nome, Email, Senha, Picture) VALUES (?, ?, ?, ?)",
+        [name, email, randomPass, picture],
       );
       user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
+    } else if (!user.Picture && picture) {
+      // Sync picture if it was missing
+      await db.run("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
+        picture,
+        user.ID_Cliente,
+      ]);
+      user.Picture = picture;
     }
 
     const token = jwt.sign({ id: user.ID_Cliente }, process.env.JWT_SECRET, {
