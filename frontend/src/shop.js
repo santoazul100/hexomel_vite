@@ -2,6 +2,7 @@
 import "./styles/index.css";
 // import "./styles/modern.css"; // Already in HTML
 import { cart } from "./cart.js";
+import Swal from "sweetalert2";
 
 // Fallback images if files don't exist
 const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
@@ -9,6 +10,7 @@ const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
 // State
 let products = [];
 let filteredProducts = [];
+let userFavorites = [];
 
 // Fetch products from API
 async function fetchProducts() {
@@ -16,11 +18,10 @@ async function fetchProducts() {
     const res = await fetch("/api/products");
     const data = await res.json();
 
-    // Map backend data to frontend format
     products = data.map((p) => ({
       id: p.ID_Produto,
       name: p.Nome,
-      price: p.Preco,
+      price: Number(p.Preco), // Fix: Ensure price is a number
       description: p.Descricao,
       category: p.ID_Categoria === 2 ? "Pólen & Própolis" : "Mel Puro",
       image: `/img/produtos/${p.ID_Produto}.webp`,
@@ -49,7 +50,6 @@ function renderProducts() {
     .map(
       (product) => `
     <div class="col-md-6 col-lg-4 mb-4">
-    <div class="col-md-6 col-lg-4 mb-4">
       <div class="product-card-premium h-100 position-relative">
         <div class="product-img-container" style="cursor: pointer" onclick="window.openProductDetails(${product.id})">
           ${product.id === 1 ? '<div class="product-badge">Destaque</div>' : ""}
@@ -61,16 +61,13 @@ function renderProducts() {
               <p class="text-muted small mb-3">${product.category} • ${product.weight}</p>
           </div>
           <div class="d-flex justify-content-between align-items-center mt-3 gap-2">
-            <span class="h5 fw-bold mb-0 me-auto" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
+            <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
             
-            <button class="btn btn-light rounded-circle border d-flex align-items-center justify-content-center" 
-                    style="width: 40px; height: 40px; color: #ccc;" 
-                    onclick="window.toggleFavorite(${product.id}); this.classList.toggle('text-danger');">
+            <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
+                    style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                    id="btn-fav-${product.id}"
+                    onclick="window.toggleFavorite(${product.id})">
                 <i class="fas fa-heart"></i>
-            </button>
-            
-            <button class="btn btn-auth-enhanced register btn-sm px-3" onclick="window.addToCart(${product.id})">
-                Adicionar
             </button>
           </div>
         </div>
@@ -143,11 +140,11 @@ window.openProductDetails = async function (productId) {
             <button class="btn-minimal-add" onclick="window.addToCartFromDetails(${product.id})">
               ADICIONAR
             </button>
-            <button class="btn btn-light rounded-circle border d-flex align-items-center justify-content-center" 
-                  style="width: 50px; height: 50px; color: #ccc;" 
+            <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
+                  style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
                   id="modal-fav-btn"
-                  onclick="window.toggleFavorite(${product.id}); this.classList.toggle('text-danger');">
-              <i class="fas fa-heart"></i>
+                  onclick="window.toggleFavorite(${product.id})">
+              <i class="fas fa-heart" ></i>
           </button>
           </div>
         </div>
@@ -158,19 +155,8 @@ window.openProductDetails = async function (productId) {
   document.getElementById("detailsOverlay")?.remove();
   document.body.insertAdjacentHTML("beforeend", modalHtml);
 
-  // Check favorite state
-  const token = localStorage.getItem("token");
-  if (token) {
-    try {
-      const res = await fetch("http://localhost:3000/api/favorites", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const favorites = await res.json();
-      if (favorites.some((f) => f.ID_Produto === productId)) {
-        document.getElementById("modal-fav-btn")?.classList.add("text-danger");
-      }
-    } catch (e) {}
-  }
+  // Check favorite state handled by isFavorited in template, but modal btn needs specific ID check if opened later
+  updateModalFavBtn(productId);
 
   setTimeout(() => {
     document.getElementById("detailsOverlay").classList.add("active");
@@ -202,36 +188,92 @@ window.addToCartFromDetails = function (id) {
   // cart.toggle(true); // Optional: open cart after add
 };
 
+function isFavorited(productId) {
+  const token = localStorage.getItem("token");
+  if (token) {
+    return userFavorites.some((f) => f.ID_Produto === productId);
+  }
+  return false;
+}
+
+function updateModalFavBtn(productId) {
+  const btn = document.getElementById("modal-fav-btn");
+  if (!btn) return;
+  if (isFavorited(productId)) {
+    btn.classList.add("active");
+  } else {
+    btn.classList.remove("active");
+  }
+}
+
+async function fetchFavorites() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    userFavorites = [];
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/favorites", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      userFavorites = await res.json();
+      renderProducts(); // Re-render to show favorite states
+    }
+  } catch (error) {
+    console.error("Error fetching favorites:", error);
+  }
+}
+
 window.toggleFavorite = async function (productId) {
   const token = localStorage.getItem("token");
+
   if (!token) {
     Swal.fire({
       title: "Iniciar Sessão",
       text: "Precisas de estar logado para guardar favoritos.",
       icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "Entrar",
+      cancelButtonText: "Depois",
       confirmButtonColor: "#f4b400",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.openAuthModal("login");
+      }
     });
     return;
   }
 
-  const btn = document.getElementById(`btn-fav-${productId}`);
-  const isAdding = !btn.classList.contains("active");
+  // User Mode
+  const isCurrentlyFav = userFavorites.some((f) => f.ID_Produto === productId);
 
   try {
     const res = await fetch(
-      `http://localhost:3000/api/favorites/${isAdding ? "add" : "remove/" + productId}`,
+      `/api/favorites/${isCurrentlyFav ? "remove/" + productId : "add"}`,
       {
-        method: isAdding ? "POST" : "DELETE",
+        method: isCurrentlyFav ? "DELETE" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: isAdding ? JSON.stringify({ productId }) : null,
+        body: isCurrentlyFav ? null : JSON.stringify({ productId }),
       },
     );
 
     if (res.ok) {
-      btn.classList.toggle("active");
+      // Update local state and UI
+      if (isCurrentlyFav) {
+        userFavorites = userFavorites.filter((f) => f.ID_Produto !== productId);
+      } else {
+        // We don't have the full product object easily here, but we can just refetch or push a dummy
+        userFavorites.push({ ID_Produto: productId });
+      }
+
+      const gridBtn = document.getElementById(`btn-fav-${productId}`);
+      if (gridBtn) gridBtn.classList.toggle("active");
+      updateModalFavBtn(productId);
     }
   } catch (error) {
     console.error("Fav toggle error", error);
@@ -244,8 +286,9 @@ window.addToCart = function (productId) {
 };
 
 // Initialize on page load
-document.addEventListener("DOMContentLoaded", () => {
-  fetchProducts();
+document.addEventListener("DOMContentLoaded", async () => {
+  await fetchProducts();
+  await fetchFavorites(); // Get latest from DB
 
   // Bind Filter Events
   const filters = document.querySelectorAll(".form-check-input, #priceRange");

@@ -32,17 +32,27 @@ export const initializeAuthForms = () => {
 
         const data = await res.json();
         if (res.ok) {
+          // Auto-login on register
+          if (data.token && data.user) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+            updateNav(data.user);
+          }
+
+          // Close modal immediately
+          if (typeof window.closeAuthModal === "function") {
+            window.closeAuthModal();
+          }
+
           Swal.fire({
             icon: "success",
-            title: "Conta Criada!",
-            text: "Agora podes entrar na tua conta.",
-            confirmButtonColor: "#f4b400",
+            title: "Bem-vindo!",
+            text: "Conta criada com sucesso. A iniciar sessão...",
+            timer: 1500,
+            showConfirmButton: false,
+          }).then(() => {
+            window.location.reload();
           });
-
-          // Switch to login view
-          if (typeof window.toggleAuthMode === "function") {
-            window.toggleAuthMode("login");
-          }
         } else {
           Swal.fire("Erro", data.error, "error");
         }
@@ -71,6 +81,7 @@ export const initializeAuthForms = () => {
         if (res.ok) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
+          updateNav(data.user);
 
           // Close custom modal immediately
           if (typeof window.closeAuthModal === "function") {
@@ -145,18 +156,18 @@ const handleGoogleCallback = async (response) => {
     if (res.ok) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      updateNav(data.user);
 
-      // Close custom modal
       if (typeof window.closeAuthModal === "function") {
         window.closeAuthModal();
       }
 
       Swal.fire({
         icon: "success",
-        title: `Bem-vindo!`,
-        text: "Login com Google efetuado com sucesso.",
-        showConfirmButton: false,
+        title: "Login Efetuado",
+        text: `Bem-vindo, ${data.user.name}!`,
         timer: 1500,
+        showConfirmButton: false,
       }).then(() => {
         window.location.reload();
       });
@@ -175,3 +186,48 @@ const handleGoogleCallback = async (response) => {
 
 // Auto-init for Google Auth on window load
 window.addEventListener("load", initializeGoogleAuth);
+
+// Navbar Logic
+// Update Navigation based on login status
+export function updateNav(user) {
+  const authSection = document.getElementById("authSection");
+  if (!authSection) return;
+
+  if (user) {
+    const avatar = user.picture || user.avatar || "/default-avatar.png";
+    const firstName = user.name?.split(" ")[0] || user.firstName || "User";
+
+    authSection.innerHTML = `
+      <div class="d-flex align-items-center gap-3">
+          <!-- Profile Dropdown -->
+          <div class="dropdown">
+              <div class="profile-avatar-container" data-bs-toggle="dropdown" aria-expanded="false">
+                  <img src="${avatar}" alt="User" class="user-avatar-navbar" onerror="this.src='/default-avatar.png'">
+                  <span class="user-name-navbar d-none d-md-block">${firstName}</span>
+              </div>
+              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-premium animate-fade-in">
+                  <li class="px-3 py-2 border-bottom">
+                      <p class="mb-0 fw-bold small text-truncate" style="max-width: 150px">${user.name || user.firstName} ${user.lastName ?? ""}</p>
+                      <p class="mb-0 text-muted smaller">${user.userType === "admin" ? "Administrador" : "Membro Premium"}</p>
+                  </li>
+                  <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
+                  <li><a class="dropdown-item dropdown-item-premium" href="orders.html"><i class="fas fa-history me-2"></i> Encomendas</a></li>
+                  ${user.userType === "admin" ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>' : ""}
+                  <li><hr class="dropdown-divider opacity-50"></li>
+                  <li><a class="dropdown-item dropdown-item-premium text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
+              </ul>
+          </div>
+      </div>
+    `;
+
+    document.getElementById("logout-btn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      logout();
+    });
+  } else {
+    authSection.innerHTML = `
+      <button class="btn btn-nav-auth-filled" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
+      <button class="btn btn-nav-auth-outline" onclick="window.openAuthModal('register')">Criar Conta</button>
+    `;
+  }
+}

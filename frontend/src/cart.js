@@ -70,10 +70,19 @@ class CartManager {
     const token = localStorage.getItem("token");
     if (!token) {
       Swal.fire({
-        icon: "warning",
-        title: "Login Required",
-        text: "Please login to add items to your cart!",
-        confirmButtonColor: "var(--primary-gold)",
+        title: "Iniciar Sessão",
+        text: "Precisas de estar logado para adicionar produtos ao carrinho.",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Entrar",
+        cancelButtonText: "Depois",
+        confirmButtonColor: "#f4b400",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          if (typeof window.openAuthModal === "function") {
+            window.openAuthModal("login");
+          }
+        }
       });
       return;
     }

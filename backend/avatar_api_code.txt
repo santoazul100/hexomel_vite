@@ -1,0 +1,27 @@
+// Backend API Endpoint - Add to server.js after the profile update route
+
+// Update Profile Picture
+app.put("/api/user/profile/picture", authenticateToken, async (req, res) => {
+  try {
+    const { picture } = req.body;
+
+    if (!picture) {
+      return res.status(400).json({ error: "Picture data is required" });
+    }
+
+    // Validate base64 image format
+    if (!picture.startsWith("data:image/")) {
+      return res.status(400).json({ error: "Invalid image format" });
+    }
+
+    await db.execute("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
+      picture,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Profile picture updated successfully", picture });
+  } catch (error) {
+    console.error("Picture update error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});

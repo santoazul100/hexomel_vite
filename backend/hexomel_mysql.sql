@@ -22,10 +22,6 @@ CREATE TABLE `cliente` (
   `Senha` varchar(255) NOT NULL,
   `Telefone` int(9) DEFAULT NULL,
   `Picture` TEXT,
-  `Level` INT DEFAULT 1,
-  `Pontos` INT DEFAULT 0,
-  `XP` INT DEFAULT 0,
-  `Badges` TEXT,
   `Data_Resgistro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ID_Cliente`),
   UNIQUE KEY `Email` (`Email`)

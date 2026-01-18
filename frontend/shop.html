@@ -66,7 +66,7 @@
               id="cart-btn"
               class="btn btn-link text-decoration-none text-dark position-relative p-0"
             >
-              <i class="fas fa-shopping-bag fs-5"></i>
+              <i class="fas fa-shopping-cart fs-5"></i>
               <span
                 id="cart-badge"
                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
@@ -87,57 +87,90 @@
         <div class="row g-5">
           <!-- Filter Sidebar (Premium) -->
           <aside class="col-lg-3">
-            <div class="premium-card p-4 border-0">
-              <h3 class="filter-title border-bottom pb-3 mb-4">Filtros</h3>
+            <div class="premium-filter-container">
+              <h3 class="filter-title-premium">Filtros</h3>
 
-              <div class="filter-section mb-4">
-                <h5 class="fw-bold mb-3 small text-uppercase opacity-75">
-                  Categorias
-                </h5>
-                <div class="filter-option">
-                  <input type="checkbox" id="cat-mel" />
-                  <label for="cat-mel">Mel Puro</label>
-                </div>
-                <div class="filter-option">
-                  <input type="checkbox" id="cat-polen" />
-                  <label for="cat-polen">Pólen & Própolis</label>
-                </div>
-                <div class="filter-option">
-                  <input type="checkbox" id="cat-acessorios" />
-                  <label for="cat-acessorios">Acessórios</label>
-                </div>
+              <!-- Categories -->
+              <div class="filter-group-premium">
+                <h5 class="filter-subheading">Categorias</h5>
+
+                <label class="custom-checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="cat-mel"
+                    class="custom-checkbox-input"
+                  />
+                  <span class="custom-checkbox-visual"></span>
+                  <span class="checkbox-label-text">Mel Puro</span>
+                </label>
+
+                <label class="custom-checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="cat-polen"
+                    class="custom-checkbox-input"
+                  />
+                  <span class="custom-checkbox-visual"></span>
+                  <span class="checkbox-label-text">Pólen & Própolis</span>
+                </label>
+
+                <label class="custom-checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="cat-acessorios"
+                    class="custom-checkbox-input"
+                  />
+                  <span class="custom-checkbox-visual"></span>
+                  <span class="checkbox-label-text">Acessórios</span>
+                </label>
               </div>
 
-              <div class="filter-section mb-4">
-                <h5 class="fw-bold mb-3 small text-uppercase opacity-75">
-                  Origem
-                </h5>
-                <div class="filter-option">
-                  <input type="checkbox" id="ori-serra" />
-                  <label for="ori-serra">Serra da Estrela</label>
-                </div>
-                <div class="filter-option">
-                  <input type="checkbox" id="ori-alentejo" />
-                  <label for="ori-alentejo">Alentejo</label>
-                </div>
+              <!-- Origin -->
+              <div class="filter-group-premium">
+                <h5 class="filter-subheading">Origem</h5>
+
+                <label class="custom-checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="ori-serra"
+                    class="custom-checkbox-input"
+                  />
+                  <span class="custom-checkbox-visual"></span>
+                  <span class="checkbox-label-text">Serra da Estrela</span>
+                </label>
+
+                <label class="custom-checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="ori-alentejo"
+                    class="custom-checkbox-input"
+                  />
+                  <span class="custom-checkbox-visual"></span>
+                  <span class="checkbox-label-text">Alentejo</span>
+                </label>
               </div>
 
-              <div class="filter-section">
-                <h5 class="fw-bold mb-3 small text-uppercase opacity-75">
-                  Preço
-                </h5>
+              <!-- Price -->
+              <div class="filter-group-premium">
+                <h5 class="filter-subheading">Preço Máximo</h5>
                 <input
                   type="range"
-                  class="form-range"
+                  class="range-slider-premium"
+                  id="priceRange"
                   min="0"
                   max="50"
                   step="1"
+                  value="50"
+                  oninput="
+                    document.getElementById('priceVal').textContent =
+                      this.value + '€'
+                  "
                 />
                 <div
-                  class="d-flex justify-content-between small opacity-75 mt-2"
+                  class="d-flex justify-content-between mt-2 font-monospace smaller text-muted"
                 >
                   <span>0€</span>
-                  <span>50€</span>
+                  <span id="priceVal" class="fw-bold text-dark">50€</span>
                 </div>
               </div>
             </div>

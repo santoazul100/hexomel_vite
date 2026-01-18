@@ -60,7 +60,7 @@
               id="cart-btn"
               class="btn btn-link text-decoration-none text-dark position-relative p-0"
             >
-              <i class="fas fa-shopping-bag fs-5"></i>
+              <i class="fas fa-shopping-cart fs-5"></i>
               <span
                 id="cart-badge"
                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
@@ -77,61 +77,154 @@
     </nav>
 
     <main class="py-5 mt-5">
-      <div class="container mt-4">
+      <div class="container mt-3">
         <!-- Profile Header Card -->
         <div
-          class="premium-card p-0 overflow-hidden border-0 mb-5 animate-fade-up"
+          class="premium-card profile-header p-0 overflow-hidden border-0 mb-4 animate-fade-up"
         >
           <div
             class="profile-banner bg-warning opacity-25"
-            style="height: 120px"
+            style="height: 140px"
           ></div>
           <div
             class="p-4 pt-0 d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4"
-            style="margin-top: -60px"
+            style="margin-top: -80px"
           >
-            <div class="position-relative">
+            <div class="position-relative profile-avatar-wrapper">
               <img
                 id="profile-avatar-large"
-                src="https://via.placeholder.com/150"
+                src="https://ui-avatars.com/api/?name=User&background=f4b400&color=fff&size=160"
                 alt="Avatar"
                 class="rounded-circle border border-4 border-white shadow-lg"
-                style="width: 150px; height: 150px; object-fit: cover"
+                style="width: 160px; height: 160px; object-fit: cover"
+              />
+              <button
+                class="profile-camera-btn"
+                id="upload-avatar-btn"
+                title="Alterar foto de perfil"
+              >
+                <i class="fas fa-camera"></i>
+              </button>
+              <input
+                type="file"
+                id="avatar-file-input"
+                accept="image/*"
+                style="display: none"
               />
             </div>
             <div class="flex-grow-1 text-center text-md-start mb-3">
-              <h1 class="display-6 fw-bold mb-1" id="profile-name">
-                Carregando...
-              </h1>
-              <p class="text-muted mb-0" id="profile-email">
+              <h1 class="profile-name mb-2" id="profile-name">Carregando...</h1>
+              <p class="profile-email mb-3" id="profile-email">
                 email@exemplo.com
               </p>
             </div>
-            <div class="d-flex gap-2 mb-3">
-              <button class="btn btn-auth-enhanced register px-4">
-                Editar Perfil
+            <button
+              class="btn btn-auth-enhanced register px-4 mb-3"
+              onclick="window.openEditModal()"
+            >
+              <i class="fas fa-edit me-2"></i>Editar Perfil
+            </button>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Left Sidebar: Tabs -->
+          <div class="col-lg-3">
+            <div class="premium-card p-3 d-flex flex-column gap-2">
+              <button class="btn btn-profile-tab active" data-tab="orders">
+                <i class="fas fa-shopping-basket me-2"></i>Encomendas
+              </button>
+              <button class="btn btn-profile-tab" data-tab="favorites">
+                <i class="fas fa-heart me-2"></i>Favoritos
+              </button>
+              <button class="btn btn-profile-tab" data-tab="security">
+                <i class="fas fa-shield-alt me-2"></i>Segurança
+              </button>
+              <button
+                class="btn btn-profile-tab text-danger"
+                id="delete-account-btn"
+              >
+                <i class="fas fa-user-slash me-2"></i>Eliminar Conta
               </button>
             </div>
           </div>
 
-
-        <div class="row g-5">
-          <!-- Orders Selection -->
-          <div class="col-lg-8 animate-fade-up" style="animation-delay: 0.1s">
-            <h3 class="fw-bold mb-4">As Minhas Encomendas</h3>
-            <div id="orders-list" class="d-flex flex-column gap-3">
-              <div class="text-center py-5 opacity-50">
-                Carregando encomendas...
+          <!-- Main Content: Tab Panes -->
+          <div class="col-lg-9">
+            <!-- Orders Tab -->
+            <div class="profile-tab-content active" id="tab-orders">
+              <h3 class="fw-bold mb-4">As Minhas Encomendas</h3>
+              <div id="orders-list" class="d-flex flex-column gap-3">
+                <div class="text-center py-5 opacity-50">
+                  Carregando encomendas...
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Favorites Section (Sidebar style or small grid) -->
-          <div class="col-lg-4 animate-fade-up" style="animation-delay: 0.2s">
-            <h3 class="fw-bold mb-4">Favoritos</h3>
-            <div id="favorites-grid" class="d-flex flex-column gap-3">
-              <div class="text-center py-5 opacity-50">
-                Ainda não tens favoritos...
+            <!-- Favorites Tab -->
+            <div
+              class="profile-tab-content"
+              id="tab-favorites"
+              style="display: none"
+            >
+              <h3 class="fw-bold mb-4">Os Meus Favoritos</h3>
+              <div id="favorites-grid" class="row g-4">
+                <div class="text-center py-5 opacity-50">
+                  Ainda não tens favoritos...
+                </div>
+              </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div
+              class="profile-tab-content"
+              id="tab-security"
+              style="display: none"
+            >
+              <h3 class="fw-bold mb-4">Configurações de Segurança</h3>
+              <div class="premium-card p-4" style="max-width: 600px">
+                <form id="changePasswordForm">
+                  <h5 class="fw-bold mb-3">Alterar Palavra-passe</h5>
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >Palavra-passe Atual</label
+                    >
+                    <input
+                      type="password"
+                      id="current-password"
+                      class="auth-input mb-0"
+                      required
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >Nova Palavra-passe</label
+                    >
+                    <input
+                      type="password"
+                      id="new-password"
+                      class="auth-input mb-0"
+                      required
+                      placeholder="Pelo menos 6 caracteres"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >Confirmar Nova Palavra-passe</label
+                    >
+                    <input
+                      type="password"
+                      id="confirm-new-password"
+                      class="auth-input mb-0"
+                      required
+                      placeholder="Repete a nova password"
+                    />
+                  </div>
+                  <button type="submit" class="btn btn-auth-enhanced register">
+                    Guardar Nova Password
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -202,6 +295,64 @@
         </div>
       </div>
     </footer>
+
+    <!-- Edit Profile Modal -->
+    <div
+      class="modal fade"
+      id="editProfileModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content auth-modal-content">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Editar Perfil</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="editProfileForm">
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Nome Completo</label>
+                <input
+                  type="text"
+                  id="edit-name"
+                  class="auth-input mb-0"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Email</label>
+                <input
+                  type="email"
+                  id="edit-email"
+                  class="auth-input mb-0"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Telefone</label>
+                <input
+                  type="tel"
+                  id="edit-phone"
+                  class="auth-input mb-0"
+                  placeholder="912345678"
+                />
+              </div>
+              <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-auth-enhanced register">
+                  Guardar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

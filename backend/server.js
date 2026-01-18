@@ -21,7 +21,8 @@ initDB().then((database) => {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // Basic health check route
 app.get("/health", (req, res) => {
@@ -49,14 +50,34 @@ app.post("/api/auth/register", async (req, res) => {
 
     // Insert user
     await db.execute(
-      "INSERT INTO cliente (Nome, Email, Senha, Telefone) VALUES (?, ?, ?, ?)",
-      [fullName, email, hashedPassword, phone || 0],
+      "INSERT INTO cliente (Nome, Email, Senha) VALUES (?, ?, ?)",
+      [`${firstName} ${lastName}`.trim(), email, hashedPassword],
     );
 
-    res.status(201).json({ message: "User registered successfully" });
+    // Auto-login: Get the new user
+    const [userRows] = await db.execute(
+      "SELECT * FROM cliente WHERE Email = ?",
+      [email],
+    );
+    const user = userRows[0];
+
+    const token = jwt.sign({ id: user.ID_Cliente }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.status(201).json({
+      message: "User created successfully",
+      token,
+      user: {
+        id: user.ID_Cliente,
+        name: user.Nome,
+        email: user.Email,
+        picture: user.Picture,
+      },
+    });
   } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error(error);
+    res.status(500).json({ error: "Error creating user" });
   }
 });
 
@@ -88,10 +109,6 @@ app.post("/api/auth/login", async (req, res) => {
         name: user.Nome,
         email: user.Email,
         picture: user.Picture,
-        level: user.Level || 1,
-        pontos: user.Pontos || 0,
-        xp: user.XP || 0,
-        badges: JSON.parse(user.Badges || "[]"),
       },
     });
   } catch (error) {
@@ -128,7 +145,7 @@ app.post("/api/auth/google", async (req, res) => {
       user = rows[0];
     } else if (!user.Picture && picture) {
       // Sync picture if it was missing
-      await db.run("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
+      await db.execute("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
         picture,
         user.ID_Cliente,
       ]);
@@ -145,10 +162,6 @@ app.post("/api/auth/google", async (req, res) => {
         name: user.Nome,
         email: user.Email,
         picture: user.Picture,
-        level: user.Level || 1,
-        pontos: user.Pontos || 0,
-        xp: user.XP || 0,
-        badges: JSON.parse(user.Badges || "[]"),
       },
     });
   } catch (error) {
@@ -393,28 +406,128 @@ app.delete(
   },
 );
 
-// USER PROFILE ROUTE
+// USER PROFILE ROUTES
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const [userRows] = await db.execute(
-      "SELECT Nome, Email, Picture, Level, Pontos, XP, Badges, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
+      "SELECT Nome, Email, Telefone, Picture, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
     const user = userRows[0];
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const [orders] = await db.execute(
-      "SELECT * FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
       [req.user.id],
     );
 
     res.json({
-      ...user,
-      badges: JSON.parse(user.Badges || "[]"),
+      id: user.ID_Cliente,
+      name: user.Nome,
+      email: user.Email,
+      phone: user.Telefone,
+      picture: user.Picture,
+      dateRegistered: user.Data_Resgistro,
       orders,
     });
   } catch (error) {
     console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  const { name, email, phone } = req.body;
+  try {
+    // Basic validation
+    if (!name || !email) {
+      return res.status(400).json({ error: "Name and Email are required" });
+    }
+
+    // Check if email is already taken by another user
+    const [existing] = await db.execute(
+      "SELECT ID_Cliente FROM cliente WHERE Email = ? AND ID_Cliente != ?",
+      [email, req.user.id],
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Email is already in use" });
+    }
+
+    await db.execute(
+      "UPDATE cliente SET Nome = ?, Email = ?, Telefone = ? WHERE ID_Cliente = ?",
+      [name, email, phone || null, req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Update Profile Picture
+app.put("/api/user/profile/picture", authenticateToken, async (req, res) => {
+  try {
+    const { picture } = req.body;
+
+    if (!picture) {
+      return res.status(400).json({ error: "Picture data is required" });
+    }
+
+    // Validate base64 image format
+    if (!picture.startsWith("data:image/")) {
+      return res.status(400).json({ error: "Invalid image format" });
+    }
+
+    await db.execute("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
+      picture,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Profile picture updated successfully", picture });
+  } catch (error) {
+    console.error("Picture update error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Update password
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  try {
+    const [rows] = await db.execute(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    const user = rows[0];
+
+    const isMatch = await bcrypt.compare(currentPassword, user.Senha);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Incorrect current password" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await db.execute("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashedPassword,
+      req.user.id,
+    ]);
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Delete account
+app.delete("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    // Note: ON DELETE CASCADE in schema handles related tables (cart, favorites, etc.)
+    await db.execute("DELETE FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Account deletion error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });

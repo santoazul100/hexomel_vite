@@ -6,6 +6,7 @@ import {
   logout,
   initializeGoogleAuth,
   initializeAuthForms,
+  updateNav,
 } from "./auth.js";
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
@@ -49,50 +50,7 @@ document
     observer.observe(el);
   });
 
-// Navbar Logic
-// Update Navigation based on login status
-export function updateNav(user) {
-  const authSection = document.getElementById("authSection");
-  if (!authSection) return;
-
-  if (user) {
-    const avatar = user.picture || user.avatar || "/public/default-avatar.png";
-    const firstName = user.firstName || user.name?.split(" ")[0] || "User";
-
-    authSection.innerHTML = `
-      <div class="d-flex align-items-center gap-3">
-          <!-- Profile Dropdown -->
-          <div class="dropdown">
-              <div class="profile-avatar-container" data-bs-toggle="dropdown" aria-expanded="false">
-                  <img src="${avatar}" alt="User" class="user-avatar-navbar" onerror="this.src='/public/default-avatar.png'">
-                  <span class="user-name-navbar d-none d-md-block">${firstName}</span>
-              </div>
-              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-premium animate-fade-in">
-                  <li class="px-3 py-2 border-bottom">
-                      <p class="mb-0 fw-bold small text-truncate" style="max-width: 150px">${user.firstName ?? user.name} ${user.lastName ?? ""}</p>
-                      <p class="mb-0 text-muted smaller">${user.userType === "admin" ? "Administrador" : "Membro Premium"}</p>
-                  </li>
-                  <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
-                  <li><a class="dropdown-item dropdown-item-premium" href="orders.html"><i class="fas fa-history me-2"></i> Encomendas</a></li>
-                  ${user.userType === "admin" ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>' : ""}
-                  <li><hr class="dropdown-divider opacity-50"></li>
-                  <li><a class="dropdown-item dropdown-item-premium text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
-              </ul>
-          </div>
-      </div>
-    `;
-
-    document.getElementById("logout-btn")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      logout();
-    });
-  } else {
-    authSection.innerHTML = `
-      <button class="btn btn-nav-auth-filled" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
-      <button class="btn btn-nav-auth-outline" onclick="window.openAuthModal('register')">Criar Conta</button>
-    `;
-  }
-}
+// Navbar and Auth initialization handled in DOMContentLoaded below
 
 // Custom Auth Modal Logic (Vercel Style)
 window.openAuthModal = function (mode = "login") {
@@ -153,14 +111,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function injectAuthModal() {
-  if (document.getElementById("authOverlay")) return;
+  // Force remove existing modal to ensure updates (dev fix)
+  const existing = document.getElementById("authOverlay");
+  if (existing) existing.remove();
 
   const modalHtml = `
     <div class="auth-overlay" id="authOverlay">
       <div class="auth-card-v2">
         <div class="auth-header-row">
-          <div class="auth-logo-v2">Hexomel</div>
-          <div class="auth-switcher-v2">
+          <div class="auth-logo-v2" style="flex: 1;">Hexomel</div>
+          <div class="auth-switcher-v2 me-3">
             <button class="auth-pill active" id="pill-login" onclick="window.toggleAuthMode('login')">Entrar</button>
             <button class="auth-pill" id="pill-register" onclick="window.toggleAuthMode('register')">Criar conta</button>
           </div>
@@ -217,4 +177,12 @@ function injectAuthModal() {
     </div>
   `;
   document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+  // Close when clicking outside the card
+  // Close when clicking outside the card (DISABLED as per user request)
+  // document.getElementById("authOverlay").addEventListener("click", (e) => {
+  //   if (e.target.id === "authOverlay") {
+  //     window.closeAuthModal();
+  //   }
+  // });
 }

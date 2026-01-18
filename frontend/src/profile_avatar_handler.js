@@ -1,0 +1,93 @@
+// Handle Avatar Upload
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith("image/")) {
+    Swal.fire({
+      icon: "error",
+      title: "Ficheiro Inválido",
+      text: "Por favor, seleciona uma imagem válida.",
+      confirmButtonColor: "#f4b400",
+    });
+    return;
+  }
+
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    Swal.fire({
+      icon: "error",
+      title: "Ficheiro Muito Grande",
+      text: "A imagem deve ter no máximo 5MB.",
+      confirmButtonColor: "#f4b400",
+    });
+    return;
+  }
+
+  try {
+    // Show loading
+    Swal.fire({
+      title: "A carregar...",
+      text: "A atualizar a tua foto de perfil",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    // Convert image to base64
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Image = event.target.result;
+
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/user/profile/picture", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ picture: base64Image }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao atualizar foto");
+      }
+
+      // Update UI
+      document.getElementById("profile-avatar-large").src = base64Image;
+
+      // Update localStorage and nav
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      user.picture = base64Image;
+      localStorage.setItem("user", JSON.stringify(user));
+      updateNav(user);
+
+      Swal.fire({
+        icon: "success",
+        title: "Foto Atualizada!",
+        text: "A tua foto de perfil foi atualizada com sucesso.",
+        confirmButtonColor: "#f4b400",
+      });
+    };
+
+    reader.onerror = () => {
+      throw new Error("Erro ao ler o ficheiro");
+    };
+
+    reader.readAsDataURL(file);
+  } catch (error) {
+    console.error("Avatar upload error:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Erro",
+      text: error.message || "Não foi possível atualizar a foto.",
+      confirmButtonColor: "#f4b400",
+    });
+  } finally {
+    // Reset file input
+    e.target.value = "";
+  }
+}
