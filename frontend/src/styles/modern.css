@@ -816,7 +816,7 @@ body {
 .auth-card-v2 {
   background: white;
   width: 100%;
-  max-width: 440px;
+  max-width: 500px; /* Increased from 440px for better breathing room */
   border-radius: 28px;
   padding: 32px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -840,7 +840,7 @@ body {
   font-weight: 800;
   font-size: 1.2rem;
   color: var(--primary-gold);
-  /* flex: 1; Removed to allow switcher to control spacing */
+  white-space: nowrap; /* Prevent logo wrapping */
 }
 
 .auth-switcher-v2 {
@@ -849,7 +849,7 @@ body {
   border-radius: 50px;
   display: flex;
   margin-left: auto; /* Push to the right */
-  margin-right: 1rem; /* Spacing from close button */
+  margin-right: 0.25rem; /* Reduced from 1rem to move closer to edge */
   gap: 2px;
   flex: 0 0 auto;
 }

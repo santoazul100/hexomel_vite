@@ -87,6 +87,7 @@ async function fetchProfileData() {
 
     const data = await res.json();
     console.log("Profile Data Loaded:", data);
+    console.log("Orders found:", data.orders?.length || 0);
     currentUserData = data;
     renderProfile(data);
   } catch (error) {
@@ -114,18 +115,28 @@ function renderProfile(data) {
   document.getElementById("profile-email").innerText = email;
 
   const avatarEl = document.getElementById("profile-avatar-large");
-  if (pictureUrl) {
+  console.log("Avatar Debug:", { pictureUrl, name });
+
+  // Explicit check for non-empty string
+  if (pictureUrl && pictureUrl.trim() !== "") {
     avatarEl.src = pictureUrl;
   } else {
-    // Default avatar as requested
-    avatarEl.src = "/default-avatar.png";
-
-    // Add error handler to fallback to UI Avatars if local default is missing
-    avatarEl.onerror = function () {
-      this.onerror = null;
-      this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f4b400&color=fff&size=160`;
-    };
+    // Default avatar local asset
+    avatarEl.src = "/images/default-user.png";
   }
+
+  // Generic fallback
+  avatarEl.onerror = function () {
+      console.warn("Avatar failed to load:", this.src);
+      this.onerror = null;
+      // Fallback to local default if the remote (Google) one fails
+      if (this.src.includes("default-user.png")) {
+          // If even local fails (super unlikely), use placeholder
+           this.src = "https://placehold.co/160x160/f4b400/fff?text=Hexomel";
+      } else {
+          this.src = "/images/default-user.png";
+      }
+  };
 
   // Update nav and localStorage to match fresh data
   const updatedUser = { ...data, orders: undefined };
@@ -135,6 +146,7 @@ function renderProfile(data) {
   // Orders
   const ordersList = document.getElementById("orders-list");
   const orders = data.orders || [];
+  console.log("Rendering orders:", orders);
 
   if (orders.length > 0) {
     ordersList.innerHTML = orders
@@ -146,7 +158,7 @@ function renderProfile(data) {
                     <div class="small text-muted">${new Date(order.date).toLocaleDateString("pt-PT")}</div>
                 </div>
                 <div class="text-end">
-                    <div class="fw-bold" style="color: var(--primary-green)">€${(order.total || 0).toFixed(2)}</div>
+                    <div class="fw-bold" style="color: var(--primary-green)">€${(parseFloat(order.total) || 0).toFixed(2)}</div>
                     <span class="badge rounded-pill ${order.status === "Pendente" ? "bg-warning text-dark" : "bg-success"}">${order.status}</span>
                 </div>
             </div>
@@ -154,6 +166,7 @@ function renderProfile(data) {
       )
       .join("");
   } else {
+    console.log("No orders found, showing empty state");
     ordersList.innerHTML = `
             <div class="text-center py-5 opacity-50 bg-light rounded-4 border">
                 <i class="fas fa-shopping-basket fs-1 mb-3"></i>
@@ -168,16 +181,56 @@ function renderProfile(data) {
 
 async function fetchFavorites() {
   const token = localStorage.getItem("token");
+  const favGrid = document.getElementById("favorites-grid");
+
+  if (!token) {
+    console.warn("No token found, skipping favorites fetch");
+    renderFavorites([]);
+    return;
+  }
+
   try {
+    // Show loading state
+    favGrid.innerHTML = `
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-warning" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-3 text-muted">A carregar favoritos...</p>
+      </div>
+    `;
+
+    console.log("Fetching favorites from /api/favorites...");
     const res = await fetch("/api/favorites", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    console.log("Favorites response status:", res.status);
+
+    if (!res.ok) {
+      const errorData = await res
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(errorData.error || `HTTP ${res.status}`);
+    }
+
     const favorites = await res.json();
+    console.log("Favorites loaded:", favorites);
     renderFavorites(favorites);
   } catch (error) {
     console.error("Favorites fetch error:", error);
+    favGrid.innerHTML = `
+      <div class="col-12 text-center py-5 text-danger">
+        <i class="fas fa-exclamation-triangle fs-1 mb-3"></i>
+        <p>Erro ao carregar favoritos</p>
+        <p class="small text-muted">${error.message}</p>
+        <button onclick="window.location.reload()" class="btn btn-sm btn-auth-enhanced register mt-3">
+          Tentar Novamente
+        </button>
+      </div>
+    `;
   }
 }
 
@@ -194,7 +247,7 @@ function renderFavorites(favorites) {
                   </div>
                   <div class="flex-grow-1">
                       <div class="fw-bold small text-truncate">${fav.Nome}</div>
-                      <div class="text-muted" style="font-size: 0.85rem;">€${fav.Preco.toFixed(2)}</div>
+                      <div class="text-muted" style="font-size: 0.85rem;">€${(parseFloat(fav.Preco) || 0).toFixed(2)}</div>
                   </div>
                   <div class="d-flex gap-2">
                     <button onclick="window.location.href='product.html?id=${fav.ID_Produto}'" class="btn btn-sm btn-auth-enhanced login flex-grow-1 py-1">Ver</button>

@@ -194,7 +194,8 @@ export function updateNav(user) {
   if (!authSection) return;
 
   if (user) {
-    const avatar = user.picture || user.avatar || "/default-avatar.png";
+    // Prioritize picture, then avatar, then default
+    const avatar = (user.picture && user.picture.trim() !== "") ? user.picture : (user.avatar || "/images/default-user.png");
     const firstName = user.name?.split(" ")[0] || user.firstName || "User";
 
     authSection.innerHTML = `
@@ -202,7 +203,7 @@ export function updateNav(user) {
           <!-- Profile Dropdown -->
           <div class="dropdown">
               <div class="profile-avatar-container" data-bs-toggle="dropdown" aria-expanded="false">
-                  <img src="${avatar}" alt="User" class="user-avatar-navbar" onerror="this.src='/default-avatar.png'">
+                  <img src="${avatar}" alt="User" class="user-avatar-navbar" onerror="this.onerror=null;this.src='/images/default-user.png'">
                   <span class="user-name-navbar d-none d-md-block">${firstName}</span>
               </div>
               <ul class="dropdown-menu dropdown-menu-end dropdown-menu-premium animate-fade-in">
