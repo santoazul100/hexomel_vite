@@ -195,7 +195,10 @@ export function updateNav(user) {
 
   if (user) {
     // Prioritize picture, then avatar, then default
-    const avatar = (user.picture && user.picture.trim() !== "") ? user.picture : (user.avatar || "/images/default-user.png");
+    const avatar =
+      user.picture && user.picture.trim() !== ""
+        ? user.picture
+        : user.avatar || "/images/default-user.png";
     const firstName = user.name?.split(" ")[0] || user.firstName || "User";
 
     authSection.innerHTML = `
@@ -209,11 +212,24 @@ export function updateNav(user) {
               <ul class="dropdown-menu dropdown-menu-end dropdown-menu-premium animate-fade-in">
                   <li class="px-3 py-2 border-bottom">
                       <p class="mb-0 fw-bold small text-truncate" style="max-width: 150px">${user.name || user.firstName} ${user.lastName ?? ""}</p>
-                      <p class="mb-0 text-muted smaller">${user.userType === "admin" ? "Administrador" : "Membro Premium"}</p>
+                      <p class="mb-0 text-muted smaller">${
+                        user.role?.toLowerCase() === "admin" ||
+                        user.userType?.toLowerCase() === "admin" ||
+                        user.UserType?.toLowerCase() === "admin"
+                          ? "Administrador"
+                          : "Membro Premium"
+                      }</p>
                   </li>
                   <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
                   <li><a class="dropdown-item dropdown-item-premium" href="orders.html"><i class="fas fa-history me-2"></i> Encomendas</a></li>
-                  ${user.userType === "admin" ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>' : ""}
+                  ${
+                    user.role?.toLowerCase() === "admin" ||
+                    user.userType?.toLowerCase() === "admin" ||
+                    user.UserType?.toLowerCase() === "admin"
+                      ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>'
+                      : ""
+                  }
+                  <li><hr class="dropdown-divider opacity-50"></li>
                   <li><hr class="dropdown-divider opacity-50"></li>
                   <li><a class="dropdown-item dropdown-item-premium text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
               </ul>

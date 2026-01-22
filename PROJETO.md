@@ -29,6 +29,9 @@ O projeto **Hexomel** é um website premium de comércio eletrónico de mel port
 
 - **Loja Interativa**: Catálogo dinâmico com gestão de carrinho via `localStorage`.
 - **Navegação Consistente**: Cabeçalho e rodapé unificados em todas as páginas (Home, Shop, About, Contact).
+- **Modal de Autenticação Avançado**:
+  - Layout otimizado com switcher de conta e botão de fechar alinhados no topo.
+  - Campos de password com controlo de visibilidade (visto/oculto) e link de recuperação.
 
 ---
 

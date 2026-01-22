@@ -68,6 +68,20 @@ window.closeAuthModal = function () {
   document.body.style.overflow = "";
 };
 
+window.togglePasswordVisibility = function (id) {
+  const input = document.getElementById(id);
+  const icon = input.nextElementSibling.querySelector("i");
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
+  } else {
+    input.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  }
+};
+
 window.toggleAuthMode = function (mode) {
   const loginView = document.getElementById("login-view-v2");
   const registerView = document.getElementById("register-view-v2");
@@ -119,12 +133,14 @@ function injectAuthModal() {
     <div class="auth-overlay" id="authOverlay">
       <div class="auth-card-v2">
         <div class="auth-header-row">
-          <div class="auth-logo-v2" style="flex: 1;">Hexomel</div>
-          <div class="auth-switcher-v2 me-3">
-            <button class="auth-pill active" id="pill-login" onclick="window.toggleAuthMode('login')">Entrar</button>
-            <button class="auth-pill" id="pill-register" onclick="window.toggleAuthMode('register')">Criar conta</button>
+          <div class="auth-logo-v2">Hexomel</div>
+          <div class="auth-header-right-v2">
+            <div class="auth-switcher-v2">
+              <button class="auth-pill active" id="pill-login" onclick="window.toggleAuthMode('login')">Entrar</button>
+              <button class="auth-pill" id="pill-register" onclick="window.toggleAuthMode('register')">Criar conta</button>
+            </div>
+            <button class="auth-close-v2" onclick="window.closeAuthModal()">&times;</button>
           </div>
-          <button class="auth-close-v2" onclick="window.closeAuthModal()">&times;</button>
         </div>
 
         <!-- Login View -->
@@ -136,8 +152,14 @@ function injectAuthModal() {
             </div>
             <div class="auth-field-v2">
               <label class="auth-label-v2">Password</label>
-              <input type="password" id="login-password-v2" class="auth-input-v2" placeholder="Sua password" required>
+              <div class="password-wrapper-v2">
+                <input type="password" id="login-password-v2" class="auth-input-v2" placeholder="Sua password" required>
+                <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('login-password-v2')">
+                  <i class="far fa-eye"></i>
+                </button>
+              </div>
             </div>
+            <a href="#" class="forgot-password-link-v2">Esqueceu-se da palavra-passe?</a>
             <button type="submit" class="auth-btn-primary" id="login-submit-v2">Entrar</button>
           </form>
 
@@ -160,11 +182,21 @@ function injectAuthModal() {
             </div>
             <div class="auth-field-v2">
               <label class="auth-label-v2">Password</label>
-              <input type="password" id="register-password-v2" class="auth-input-v2" placeholder="Mínimo 6 caracteres" required>
+              <div class="password-wrapper-v2">
+                <input type="password" id="register-password-v2" class="auth-input-v2" placeholder="Mínimo 6 caracteres" required>
+                <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('register-password-v2')">
+                  <i class="far fa-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="auth-field-v2">
               <label class="auth-label-v2">Confirmar password</label>
-              <input type="password" id="register-confirm-v2" class="auth-input-v2" placeholder="Repete a password" required>
+              <div class="password-wrapper-v2">
+                <input type="password" id="register-confirm-v2" class="auth-input-v2" placeholder="Repete a password" required>
+                <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('register-confirm-v2')">
+                  <i class="far fa-eye"></i>
+                </button>
+              </div>
             </div>
             <label class="terms-label-v2">
               <input type="checkbox" id="terms-checkbox-v2" required>

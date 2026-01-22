@@ -95,3 +95,10 @@ Para veres os dados (utilizadores, produtos, carrinho) sem usar comandos:
 - **Links Google Console**:
   - **Authorized Javascript Origins**: `http://localhost:5173`, `http://localhost:3000`
   - **Authorized Redirect URIs**: (Deixar vazio se usar Pop-up Flow) ou `http://localhost:5173`
+
+## 13. Refinamento do Modal de Autenticação (Agora)
+- **Novo Layout de Cabeçalho**: Reposicionamento das opções "Entrar" e "Criar conta" para o canto superior direito, alinhadas horizontalmente com o botão de fechar ("X"), otimizando o fluxo visual.
+- **Segurança e UX no Login**:
+  - Implementação de **Toggle de Visibilidade** (ícone de olho) em todos os campos de palavra-passe, permitindo ao utilizador validar o que escreveu.
+  - Adição do link **"Esqueceu-se da palavra-passe?"** para futura integração com recuperação de conta.
+- **Preservação de Design**: Ajustes estruturais realizados sem comprometer a identidade visual original (pill switcher, tipografia e paleta de cores premium).

@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   server: {
     port: 5173,
+    strictPort: true, // Forces it to only use this port
     open: true,
     proxy: {
       "/api": {

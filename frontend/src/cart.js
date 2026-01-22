@@ -9,6 +9,7 @@ class CartManager {
 
   async init() {
     this.createCartUI();
+    this.createCheckoutModal(); // Init modal
     await this.syncWithBackend();
     this.render();
   }
@@ -34,11 +35,50 @@ class CartManager {
         `;
     document.body.appendChild(sidebar);
 
-    // Create Overlay
     const overlay = document.createElement("div");
     overlay.className = "cart-overlay";
     overlay.id = "cart-overlay";
     document.body.appendChild(overlay);
+
+    // Styles for Checkout Modal
+    const style = document.createElement("style");
+    style.textContent = `
+      .checkout-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 10001;
+        width: 90%;
+        max-width: 500px;
+        animation: fadeIn 0.3s ease;
+      }
+      .checkout-modal.active { display: block; }
+      .checkout-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+      }
+      .checkout-overlay.active { display: block; }
+      .spinner-border {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+      }
+      @keyframes spinner-border { to { transform: rotate(360deg); } }
+    `;
+    document.head.appendChild(style);
 
     // Events
     document
@@ -109,39 +149,22 @@ class CartManager {
 
   async checkout() {
     if (this.items.length === 0) {
-      Swal.fire("Your cart is empty!", "", "info");
+      Swal.fire("O carrinho está vazio!", "", "info");
       return;
     }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      Swal.fire("Please login to checkout!", "", "warning");
+      Swal.fire({
+        title: "Login Necessário",
+        text: "Por favor, inicie sessão para finalizar a compra.",
+        icon: "warning",
+        confirmButtonColor: "#f4b400",
+      });
       return;
     }
 
-    try {
-      const res = await fetch(`${API_URL}/cart/checkout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Order Placed!",
-          text: "Thank you for your purchase 🍯",
-          confirmButtonColor: "var(--primary-gold)",
-        });
-        this.items = [];
-        this.render();
-        this.toggle(false);
-      } else {
-        Swal.fire("Checkout failed", data.error, "error");
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-    }
+    this.openCheckoutModal();
   }
 
   async updateQuantity(itemId, newQuantity) {
@@ -221,6 +244,116 @@ class CartManager {
 
     totalEl.textContent = `€${total.toFixed(2)}`;
     if (badge) badge.textContent = this.items.length;
+  }
+
+  createCheckoutModal() {
+    const overlay = document.createElement("div");
+    overlay.className = "checkout-overlay";
+    overlay.id = "checkout-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "checkout-modal";
+    modal.id = "checkout-modal";
+    modal.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 fw-bold">Finalizar Compra</h4>
+        <button type="button" class="btn-close" onclick="cart.closeCheckoutModal()"></button>
+      </div>
+      <form id="checkout-form">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Morada de Entrega</label>
+          <input type="text" class="form-control form-control-v2" required placeholder="Rua, Cidade, Código Postal">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Pagamento (Simulação)</label>
+          <div class="d-flex gap-2">
+            <div class="border rounded p-2 flex-grow-1 text-center" style="cursor:pointer; border-color: var(--primary-color)!important">
+              <i class="fas fa-credit-card me-2"></i> Cartão
+            </div>
+            <div class="border rounded p-2 flex-grow-1 text-center text-muted">
+              <i class="fas fa-university me-2"></i> MB Way
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+           <label class="form-label small fw-bold">Dados do Cartão (Mock)</label>
+           <input type="text" class="form-control form-control-v2 mb-2" value="4242 4242 4242 4242" disabled>
+           <div class="row g-2">
+             <div class="col-6"><input type="text" class="form-control form-control-v2" value="12/28" disabled></div>
+             <div class="col-6"><input type="text" class="form-control form-control-v2" value="123" disabled></div>
+           </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100" id="confirm-checkout-btn">
+          Pagar e Encomendar
+        </button>
+      </form>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+
+    document
+      .getElementById("checkout-overlay")
+      .addEventListener("click", () => this.closeCheckoutModal());
+    document.getElementById("checkout-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handlePaymentSimulation();
+    });
+  }
+
+  openCheckoutModal() {
+    document.getElementById("checkout-modal").classList.add("active");
+    document.getElementById("checkout-overlay").classList.add("active");
+    this.toggle(false); // Close cart sidebar
+  }
+
+  closeCheckoutModal() {
+    document.getElementById("checkout-modal").classList.remove("active");
+    document.getElementById("checkout-overlay").classList.remove("active");
+  }
+
+  async handlePaymentSimulation() {
+    const btn = document.getElementById("confirm-checkout-btn");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border"></span> Processando...';
+    btn.disabled = true;
+
+    // Simulate network delay for payment
+    await new Promise((r) => setTimeout(r, 1500));
+
+    // Proceed to backend checkout
+    await this.processBackendCheckout();
+
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+
+  async processBackendCheckout() {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/cart/checkout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        this.closeCheckoutModal();
+        Swal.fire({
+          icon: "success",
+          title: "Encomenda Confirmada!",
+          html: `<p>Obrigado pela sua compra.</p><p class="small text-muted">Um email de confirmação foi enviado.</p>`,
+          confirmButtonColor: "var(--primary-gold)",
+        });
+        this.items = [];
+        this.render();
+      } else {
+        Swal.fire("Erro", data.error || "Falha na encomenda", "error");
+      }
+    } catch (error) {
+      console.error("Checkout Request Failed", error);
+      Swal.fire("Erro", "Falha de comunicação com o servidor", "error");
+    }
   }
 }
 

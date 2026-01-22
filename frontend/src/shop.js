@@ -1,5 +1,6 @@
 // Shop page JavaScript - handles product display
 import "./styles/index.css";
+const API_URL = "/api";
 // import "./styles/modern.css"; // Already in HTML
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
@@ -15,7 +16,7 @@ let userFavorites = [];
 // Fetch products from API
 async function fetchProducts() {
   try {
-    const res = await fetch("/api/products");
+    const res = await fetch(`${API_URL}/products`);
     const data = await res.json();
 
     products = data.map((p) => ({
@@ -23,9 +24,10 @@ async function fetchProducts() {
       name: p.Nome,
       price: Number(p.Preco), // Fix: Ensure price is a number
       description: p.Descricao,
-      category: p.ID_Categoria === 2 ? "Pólen & Própolis" : "Mel Puro",
-      image: `/img/produtos/${p.ID_Produto}.webp`,
+      category: p.ID_Categoria === 2 ? "Derivados" : "Méls",
+      image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
       weight: "500g",
+      tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
     }));
 
     filteredProducts = [...products];
@@ -52,7 +54,15 @@ function renderProducts() {
     <div class="col-md-6 col-lg-4 mb-4">
       <div class="product-card-premium h-100 position-relative">
         <div class="product-img-container" style="cursor: pointer" onclick="window.openProductDetails(${product.id})">
-          ${product.id === 1 ? '<div class="product-badge">Destaque</div>' : ""}
+          <div class="product-tags-container">
+            ${product.tags
+              .map(
+                (tag) => `
+              <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+            `,
+              )
+              .join("")}
+          </div>
           <img src="${product.image}" alt="${product.name}" onerror="this.src='${fallbackImage}'">
         </div>
         <div class="p-4">
@@ -81,9 +91,11 @@ function renderProducts() {
 // Filtering Logic
 function applyFilters() {
   // 1. Get checked categories
-  const melPuro = document.getElementById("cat-mel")?.checked;
-  const polen = document.getElementById("cat-polen")?.checked;
-  const acessorios = document.getElementById("cat-acessorios")?.checked;
+  const selectedCategories = [
+    document.getElementById("cat-mel")?.checked ? "Méls" : null,
+    document.getElementById("cat-polen")?.checked ? "Derivados" : null,
+    document.getElementById("cat-acessorios")?.checked ? "Acessórios" : null,
+  ].filter((c) => c !== null);
 
   // 2. Get price range
   const maxPrice = document.getElementById("priceRange")?.value || 100;
@@ -94,8 +106,8 @@ function applyFilters() {
     // If any category filter is checked, product must match one of them
     if (melPuro || polen || acessorios) {
       catMatch = false;
-      if (melPuro && p.category === "Mel Puro") catMatch = true;
-      if (polen && p.category === "Pólen & Própolis") catMatch = true;
+      if (melPuro && p.category === "Méls") catMatch = true;
+      if (polen && p.category === "Derivados") catMatch = true;
       if (acessorios && p.category === "Acessórios") catMatch = true;
     }
 
