@@ -69,6 +69,38 @@ class AdminUI {
         this.handleSaveProduct();
       });
     }
+
+    this.setupImagePreview();
+  }
+
+  setupImagePreview() {
+    const fileInput = document.getElementById("prod-image-file");
+    const trigger = document.getElementById("upload-trigger");
+    const preview = document.getElementById("prod-image-preview");
+    const placeholder = document.getElementById("prod-image-placeholder");
+
+    // Trigger file input when clicking the box
+    if (trigger && fileInput) {
+        trigger.addEventListener("click", () => fileInput.click());
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.style.display = "block";
+            // Check if placeholder exists (it might be hidden)
+            if(placeholder) placeholder.style.display = "none";
+          };
+          reader.readAsDataURL(file);
+        } else {
+            // Keep existing logic for clearing
+        }
+      });
+    }
   }
 
   switchSection(sectionId) {
@@ -114,41 +146,28 @@ class AdminUI {
             <tr>
                 <td>
                     <div class="d-flex align-items-center gap-3">
-                        <img src="${p.Imagem || "public/images/wildflower.png"}" class="product-img-small" alt="${p.Nome}">
+                        <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}">
                         <div>
-                            <div class="fw-bold">${p.Nome}</div>
-                            <div class="text-muted small">#${p.ID_Produto}</div>
+                            <div class="fw-bold text-dark">${p.Nome}</div>
+                            <div class="text-muted smaller">ID: #${p.ID_Produto}</div>
                         </div>
                     </div>
                 </td>
-                <td class="fw-bold">${parseFloat(p.Preco).toFixed(2)}€</td>
+                <td class="fw-bold text-dark">${parseFloat(p.Preco).toFixed(2)}€</td>
                 <td>
-                    <span class="badge-status ${p.Stock < 10 ? "badge-low" : "badge-ok"}">
-                        ${p.Stock} em stock
+                    <span class="badge-premium ${p.Stock < 10 ? "badge-stock-low" : "badge-stock-ok"}">
+                        ${p.Stock} UN
                     </span>
                 </td>
-                <td>${p.ID_Categoria === 1 ? "Méls" : "Derivados"}</td>
                 <td>
-                    <div class="d-flex flex-wrap gap-1">
-                        ${
-                          p.Tags
-                            ? p.Tags.split(",")
-                                .map(
-                                  (tag) => `
-                            <span class="badge bg-secondary smaller text-uppercase" style="font-size: 0.65rem;">${tag.trim()}</span>
-                        `,
-                                )
-                                .join("")
-                            : ""
-                        }
-                    </div>
+                    <span class="badge bg-light text-dark border">${p.ID_Categoria === 1 ? "Méls" : "Derivados"}</span>
                 </td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-light me-1" onclick="adminUI.editProduct('${p.ID_Produto}')">
-                        <i class="fas fa-edit"></i>
+                    <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
+                        <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
                     </button>
-                    <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteProduct('${p.ID_Produto}')">
-                        <i class="fas fa-trash"></i>
+                    <button class="btn-action-premium delete" onclick="adminUI.deleteProduct('${p.ID_Produto}')" title="Eliminar">
+                        <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
                     </button>
                 </td>
             </tr>
@@ -285,6 +304,10 @@ class AdminUI {
   resetForm() {
     document.getElementById("productForm").reset();
     document.getElementById("product-id").value = "";
+    document.getElementById("prod-imagem").value = ""; // Clear hidden path
+    document.getElementById("prod-image-preview").style.display = "none";
+    document.getElementById("prod-image-placeholder").style.display = "block";
+    
     document.getElementById("modalTitle").innerText = "Novo Produto";
     this.currentTags.clear(); // Clear tags on form reset
     this.renderTagPills();
@@ -298,11 +321,24 @@ class AdminUI {
     if (!p) return;
     document.getElementById("product-id").value = p.ID_Produto;
     document.getElementById("prod-nome").value = p.Nome;
-    document.getElementById("prod-preco").value = p.Preco; // Corrected from prod-price to prod-preco
+    document.getElementById("prod-preco").value = p.Preco;
     document.getElementById("prod-stock").value = p.Stock;
     document.getElementById("prod-categoria").value = p.ID_Categoria;
     document.getElementById("prod-descricao").value = p.Descricao || "";
+    
+    // Handle Image
     document.getElementById("prod-imagem").value = p.Imagem || "";
+    const preview = document.getElementById("prod-image-preview");
+    const placeholder = document.getElementById("prod-image-placeholder");
+    
+    if (p.Imagem) {
+        preview.src = p.Imagem;
+        preview.style.display = "block";
+        if(placeholder) placeholder.style.display = "none";
+    } else {
+        preview.style.display = "none";
+        if(placeholder) placeholder.style.display = "block";
+    }
 
     // Initialize Tags
     this.currentTags = new Set(
@@ -324,9 +360,31 @@ class AdminUI {
       document.getElementById("prod-categoria").value,
     );
     const descricao = document.getElementById("prod-descricao").value;
-    const imagem =
-      document.getElementById("prod-imagem").value || "/images/wildflower.png";
-    const tags = Array.from(this.currentTags).join(", "); // Join Set to String
+    let imagem = document.getElementById("prod-imagem").value; // Default to existing
+    const tags = Array.from(this.currentTags).join(", ");
+
+    // Handle File Upload
+    const fileInput = document.getElementById("prod-image-file");
+    if (fileInput && fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+        
+        try {
+            const uploadRes = await fetch(`${API_URL}/upload`, {
+                method: "POST",
+                body: formData // No headers, browser sets multipart/form-data
+            });
+            if (uploadRes.ok) {
+                const data = await uploadRes.json();
+                imagem = data.path; // Update image path
+            } else {
+                console.error("Upload failed");
+                Swal.fire("Aviso", "Falha no upload da imagem, a guardar sem imagem nova.", "warning");
+            }
+        } catch (err) {
+            console.error("Upload error", err);
+        }
+    }
 
     const method = id ? "PUT" : "POST";
     const url = id
@@ -388,10 +446,16 @@ class AdminUI {
     }
   }
   // --- TAG MANAGEMENT ---
+  // --- TAG MANAGEMENT ---
   initTagInput() {
     const input = document.getElementById("tag-input-field");
     const container = document.getElementById("tag-input-container");
+    const suggestionsContainer = document.getElementById("available-tags-suggestions");
+    
     if (!input || !container) return;
+
+    // Focus input when clicking container
+    container.addEventListener("click", () => input.focus());
 
     // Handle Enter key
     input.addEventListener("keydown", (e) => {
@@ -400,15 +464,21 @@ class AdminUI {
         this.addTag(input.value);
         input.value = "";
       }
-      if (
-        e.key === "Backspace" &&
-        input.value === "" &&
-        this.currentTags.size > 0
-      ) {
+      if (e.key === "Backspace" && input.value === "" && this.currentTags.size > 0) {
         const lastTag = Array.from(this.currentTags).pop();
         this.removeTag(lastTag);
       }
     });
+
+    // Event Delegation for Suggestions
+    if (suggestionsContainer) {
+        suggestionsContainer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("tag-suggestion")) {
+                const tag = e.target.dataset.tag;
+                if (tag) this.addTag(tag);
+            }
+        });
+    }
 
     this.renderSuggestions();
   }
@@ -418,7 +488,7 @@ class AdminUI {
     if (cleanTag && !this.currentTags.has(cleanTag)) {
       this.currentTags.add(cleanTag);
       this.renderTagPills();
-      this.renderSuggestions(); // Refresh suggestions
+      this.renderSuggestions();
     }
   }
 
@@ -431,16 +501,18 @@ class AdminUI {
   renderTagPills() {
     const container = document.getElementById("selected-tags-container");
     if (!container) return;
-    container.innerHTML = Array.from(this.currentTags)
-      .map(
-        (tag) => `
-        <span class="tag-pill">
-            ${tag}
-            <span class="remove-tag" onclick="adminUI.removeTag('${tag}')">×</span>
-        </span>
-    `,
-      )
-      .join("");
+    
+    container.innerHTML = "";
+    Array.from(this.currentTags).forEach(tag => {
+        const span = document.createElement("span");
+        span.className = "tag-pill";
+        span.innerHTML = `${tag} <span class="remove-tag">×</span>`;
+        span.querySelector(".remove-tag").onclick = (e) => {
+            e.stopPropagation(); // Prevent container focus
+            this.removeTag(tag);
+        };
+        container.appendChild(span);
+    });
   }
 
   renderSuggestions() {
@@ -449,12 +521,9 @@ class AdminUI {
 
     // Collect all unique tags from existing products
     const allTags = new Set([
-      "Novo",
-      "Destaque",
-      "Desconto",
-      "Esgotado",
-      "Premium",
-    ]); // Defaults
+      "Novo", "Destaque", "Desconto", "Esgotado", "Premium", "Mel", "Pólen", "Própolis"
+    ]); 
+    
     this.products.forEach((p) => {
       if (p.Tags) {
         p.Tags.split(",").forEach((t) => allTags.add(t.trim()));
@@ -462,20 +531,13 @@ class AdminUI {
     });
 
     // Filter out already selected tags
-    const suggestions = Array.from(allTags).filter(
-      (t) => !this.currentTags.has(t),
-    );
+    const suggestions = Array.from(allTags).filter((t) => !this.currentTags.has(t));
 
     container.innerHTML = suggestions
-      .map(
-        (tag) => `
-        <span class="tag-suggestion" onclick="adminUI.addTag('${tag}')">
-            + ${tag}
-        </span>
-    `,
-      )
+      .map(tag => `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`)
       .join("");
   }
 }
 
 const adminUI = new AdminUI();
+window.adminUI = adminUI;

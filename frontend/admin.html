@@ -273,10 +273,10 @@
 
           <div class="admin-card">
             <div class="table-responsive">
-              <table class="table align-middle product-table">
+              <table class="table-premium">
                 <thead>
                   <tr>
-                    <th>Produto</th>
+                    <th style="width: 40%">Produto</th>
                     <th>Preço</th>
                     <th>Stock</th>
                     <th>Categoria</th>
@@ -367,106 +367,178 @@
           <div class="modal-body p-4">
             <form id="productForm">
               <input type="hidden" id="product-id" />
-              <div class="row g-3">
-                <div class="col-md-8">
-                  <label class="form-label small fw-bold"
-                    >Nome do Produto</label
-                  >
-                  <input
-                    type="text"
-                    id="prod-nome"
-                    class="form-control form-control-v2"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small fw-bold">Preço (€)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    id="prod-preco"
-                    class="form-control form-control-v2"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small fw-bold">Stock</label>
-                  <input
-                    type="number"
-                    id="prod-stock"
-                    class="form-control form-control-v2"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small fw-bold">Categoria</label>
-                  <select
-                    id="prod-categoria"
-                    class="form-select form-control-v2"
-                  >
-                    <option value="1">Méls</option>
-                    <option value="2">Derivados</option>
-                    <option value="3">Acessórios</option>
-                  </select>
-                </div>
-                <!-- Image Field Moved Up for compactness -->
-                <div class="col-md-4">
-                  <label class="form-label small fw-bold">Imagem (URL)</label>
-                  <input
-                    type="text"
-                    id="prod-imagem"
-                    class="form-control form-control-v2"
-                    placeholder="/images/wildflower.png"
-                  />
-                </div>
-
-                <div class="col-12">
-                  <label class="form-label small fw-bold">Descrição</label>
-                  <textarea
-                    id="prod-descricao"
-                    class="form-control form-control-v2"
-                    rows="2"
-                  ></textarea>
-                </div>
-                <div class="col-12 mt-3">
-                  <label class="form-label small fw-bold">Tags</label>
-                  <div class="tag-input-wrapper">
-                    <div
-                      class="form-control form-control-v2 d-flex align-items-center flex-wrap gap-2"
-                      id="tag-input-container"
-                      onclick="
-                        document.getElementById('tag-input-field').focus()
-                      "
-                    >
-                      <div
-                        id="selected-tags-container"
-                        class="d-flex flex-wrap gap-1"
-                      ></div>
+              <div class="row g-4">
+                <!-- LEft Column: Inputs -->
+                <div class="col-lg-8">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Nome do Produto</label
+                      >
                       <input
                         type="text"
-                        id="tag-input-field"
-                        class="border-0 bg-transparent flex-grow-1"
-                        placeholder="Escreva e pressione Enter..."
-                        style="outline: none; min-width: 120px"
+                        id="prod-nome"
+                        class="form-control form-control-v2"
+                        placeholder="Ex: Mel de Rosmaninho"
+                        required
                       />
                     </div>
-                    <small class="text-muted d-block mt-1">Sugestões:</small>
+
+                    <div class="col-md-4">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Preço (€)</label
+                      >
+                      <input
+                        type="number"
+                        step="0.01"
+                        id="prod-preco"
+                        class="form-control form-control-v2"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-4">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Stock</label
+                      >
+                      <input
+                        type="number"
+                        id="prod-stock"
+                        class="form-control form-control-v2"
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-4">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Categoria</label
+                      >
+                      <select
+                        id="prod-categoria"
+                        class="form-select form-control-v2"
+                      >
+                        <option value="1">Méls</option>
+                        <option value="2">Derivados</option>
+                        <option value="3">Acessórios</option>
+                      </select>
+                    </div>
+
+                    <div class="col-12">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Descrição</label
+                      >
+                      <textarea
+                        id="prod-descricao"
+                        class="form-control form-control-v2"
+                        rows="3"
+                        placeholder="Detalhes sobre o produto..."
+                      ></textarea>
+                    </div>
+
+                    <div class="col-12">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Tags</label
+                      >
+                      <div class="tag-input-wrapper">
+                        <div
+                          class="form-control form-control-v2 d-flex align-items-center flex-wrap gap-2"
+                          id="tag-input-container"
+                        >
+                          <div
+                            id="selected-tags-container"
+                            class="d-flex flex-wrap gap-1"
+                          ></div>
+                          <input
+                            type="text"
+                            id="tag-input-field"
+                            class="border-0 bg-transparent flex-grow-1"
+                            placeholder="Adicionar tag..."
+                            style="outline: none; min-width: 100px"
+                          />
+                        </div>
+                        <div
+                          id="available-tags-suggestions"
+                          class="d-flex flex-wrap gap-2 mt-2"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Column: Image Upload -->
+                <div class="col-lg-4">
+                  <label
+                    class="form-label small fw-bold text-uppercase text-muted mb-2"
+                    >Imagem do Produto</label
+                  >
+                  <div class="image-upload-container h-100">
+                    <input
+                      type="file"
+                      id="prod-image-file"
+                      class="d-none"
+                      accept="image/*"
+                    />
+                    <input type="hidden" id="prod-imagem" />
+
                     <div
-                      id="available-tags-suggestions"
-                      class="d-flex flex-wrap gap-2 mt-2"
-                    ></div>
+                      id="upload-trigger"
+                      class="upload-area d-flex flex-column align-items-center justify-content-center text-center p-3 border rounded-4 bg-light position-relative"
+                      style="
+                        height: 320px;
+                        cursor: pointer;
+                        border: 2px dashed #cbd5e1 !important;
+                        transition: all 0.2s;
+                      "
+                    >
+                      <div id="prod-image-placeholder" class="py-4">
+                        <div class="mb-3 text-muted opacity-50">
+                          <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                        </div>
+                        <span class="d-block fw-bold text-muted"
+                          >Clique para carregar</span
+                        >
+                        <span class="small text-muted opacity-75"
+                          >PNG, JPG ou WEBP</span
+                        >
+                      </div>
+                      <img
+                        id="prod-image-preview"
+                        src=""
+                        class="img-fluid rounded-3 w-100 h-100 object-fit-cover position-absolute top-0 start-0"
+                        style="display: none"
+                      />
+
+                      <!-- Overlay on hover if image exists -->
+                      <div
+                        class="upload-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 text-white rounded-3 opacity-0 hover-visible"
+                        style="transition: opacity 0.2s"
+                      >
+                        <i class="fas fa-pen me-2"></i> Alterar Imagem
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="mt-4 d-flex gap-2 justify-content-end">
+
+              <div
+                class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end"
+              >
                 <button
                   type="button"
-                  class="btn btn-light px-4"
+                  class="btn btn-light px-4 fw-bold text-muted"
                   data-bs-dismiss="modal"
                 >
                   Cancelar
                 </button>
-                <button type="submit" class="btn btn-add-product px-4">
+                <button type="submit" class="btn btn-add-product px-5 py-2">
                   Guardar Produto
                 </button>
               </div>
