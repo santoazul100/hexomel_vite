@@ -7,6 +7,13 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { authenticateToken, isAdmin } from "./middleware/auth.js";
 import nodemailer from "nodemailer";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -24,6 +31,36 @@ initDB().then((database) => {
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// Configure Multer for local storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Save to frontend public folder so Vite serves it
+    const uploadPath = path.join(__dirname, "../frontend/public/uploads");
+    // Ensure directory exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    // Unique filename: timestamp + original extension
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Upload Endpoint
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+  // Return path relative to public folder (accessible via web)
+  const relativePath = `/uploads/${req.file.filename}`;
+  res.json({ path: relativePath });
+});
 
 // Basic health check route
 app.get("/health", (req, res) => {

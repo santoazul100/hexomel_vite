@@ -255,7 +255,6 @@ export function updateNav(user) {
                       : ""
                   }
                   <li><hr class="dropdown-divider opacity-50"></li>
-                  <li><hr class="dropdown-divider opacity-50"></li>
                   <li><a class="dropdown-item dropdown-item-premium text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
               </ul>
           </div>

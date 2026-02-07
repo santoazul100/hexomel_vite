@@ -1161,3 +1161,111 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.05);
   margin-bottom: 15px;
 }
+
+/* --- Premium Table Styles (Admin) --- */
+.table-premium {
+  border-collapse: separate;
+  border-spacing: 0 12px; /* Space between rows */
+  width: 100%;
+}
+
+.table-premium thead th {
+  border: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  padding: 0 1.5rem 1rem;
+}
+
+.table-premium tbody tr {
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.2s;
+  border-radius: 12px;
+}
+
+.table-premium tbody tr:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+  z-index: 10;
+  position: relative;
+}
+
+.table-premium td {
+  border: none;
+  padding: 1.25rem 1.5rem;
+  vertical-align: middle;
+}
+
+.table-premium td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.table-premium td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Premium Badges */
+.badge-premium {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-stock-ok {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+}
+
+.badge-stock-low {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.product-img-rounded {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.btn-action-premium {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-action-premium:hover {
+  background: var(--primary-gold);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-action-premium.delete:hover {
+  background: #ef4444;
+}
+
+/* Image Upload Area Hover Effect */
+.upload-area:hover {
+  border-color: var(--primary-gold) !important;
+  background-color: #fff8e6 !important;
+}
+
+.upload-area:hover .hover-visible {
+  opacity: 1 !important;
+}

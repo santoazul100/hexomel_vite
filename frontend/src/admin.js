@@ -120,6 +120,38 @@ class AdminUI {
         window.location.href = "index.html";
       });
     }
+
+    this.setupImagePreview();
+  }
+
+  setupImagePreview() {
+    const fileInput = document.getElementById("prod-image-file");
+    const trigger = document.getElementById("upload-trigger");
+    const preview = document.getElementById("prod-image-preview");
+    const placeholder = document.getElementById("prod-image-placeholder");
+
+    // Trigger file input when clicking the box
+    if (trigger && fileInput) {
+      trigger.addEventListener("click", () => fileInput.click());
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.style.display = "block";
+            // Check if placeholder exists (it might be hidden)
+            if (placeholder) placeholder.style.display = "none";
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Keep existing logic for clearing
+        }
+      });
+    }
   }
 
   switchSection(sectionId) {
@@ -205,30 +237,35 @@ class AdminUI {
     container.innerHTML = this.products
       .map(
         (p) => `
-        <tr>
-          <td>
-            <div style="display:flex; align-items:center; gap:12px;">
-              <img src="${p.Imagem || "public/images/wildflower.png"}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;" onerror="this.src='public/images/wildflower.png'">
-              <div>
-                <div style="font-weight:600;">${p.Nome}</div>
-                <div style="font-size:0.8rem; color:#6b7280;">#${p.ID_Produto}</div>
-              </div>
-            </div>
-          </td>
-          <td style="font-weight:600;">${parseFloat(p.Preco).toFixed(2)}€</td>
-          <td>
-            <span class="badge-status ${p.Stock < 10 ? "badge-low" : "badge-ok"}">
-              ${p.Stock} UN
-            </span>
-          </td>
-          <td class="text-end">
-            <div class="d-flex justify-content-end gap-2">
-              <button class="admin-btn-outline" onclick="adminUI.editProduct('${p.ID_Produto}')"><i class="fas fa-edit"></i></button>
-              <button class="admin-btn-outline danger" onclick="adminUI.deleteProduct('${p.ID_Produto}')"><i class="fas fa-trash"></i></button>
-            </div>
-          </td>
-        </tr>
-      `,
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}">
+                        <div>
+                            <div class="fw-bold text-dark">${p.Nome}</div>
+                            <div class="text-muted smaller">ID: #${p.ID_Produto}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="fw-bold text-dark">${parseFloat(p.Preco).toFixed(2)}€</td>
+                <td>
+                    <span class="badge-premium ${p.Stock < 10 ? "badge-stock-low" : "badge-stock-ok"}">
+                        ${p.Stock} UN
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark border">${p.ID_Categoria === 1 ? "Méls" : "Derivados"}</span>
+                </td>
+                <td class="text-end">
+                    <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
+                        <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                    </button>
+                    <button class="btn-action-premium delete" onclick="adminUI.deleteProduct('${p.ID_Produto}')" title="Eliminar">
+                        <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                    </button>
+                </td>
+            </tr>
+        `,
       )
       .join("");
   }
@@ -341,6 +378,10 @@ class AdminUI {
     const form = document.getElementById("productForm");
     if (form) form.reset();
     document.getElementById("product-id").value = "";
+    document.getElementById("prod-imagem").value = ""; // Clear hidden path
+    document.getElementById("prod-image-preview").style.display = "none";
+    document.getElementById("prod-image-placeholder").style.display = "block";
+
     document.getElementById("modalTitle").innerText = "Novo Produto";
   }
 
@@ -355,8 +396,26 @@ class AdminUI {
     document.getElementById("prod-stock").value = p.Stock;
     document.getElementById("prod-categoria").value = p.ID_Categoria;
     document.getElementById("prod-descricao").value = p.Descricao || "";
+
+    // Handle Image
     document.getElementById("prod-imagem").value = p.Imagem || "";
-    document.getElementById("tag-input-field-legacy").value = p.Tags || "";
+    const preview = document.getElementById("prod-image-preview");
+    const placeholder = document.getElementById("prod-image-placeholder");
+
+    if (p.Imagem) {
+      preview.src = p.Imagem;
+      preview.style.display = "block";
+      if (placeholder) placeholder.style.display = "none";
+    } else {
+      preview.style.display = "none";
+      if (placeholder) placeholder.style.display = "block";
+    }
+
+    // Initialize Tags
+    this.currentTags = new Set(
+      p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
+    );
+    this.renderTagPills();
 
     document.getElementById("modalTitle").innerText = "Editar Produto";
     new bootstrap.Modal(document.getElementById("productModal")).show();
@@ -364,16 +423,51 @@ class AdminUI {
 
   async handleSaveProduct() {
     const id = document.getElementById("product-id").value;
+    const nome = document.getElementById("prod-nome").value;
+    const preco = parseFloat(document.getElementById("prod-preco").value);
+    const stock = parseInt(document.getElementById("prod-stock").value);
+    const idCategoria = parseInt(
+      document.getElementById("prod-categoria").value,
+    );
+    const descricao = document.getElementById("prod-descricao").value;
+    let imagem = document.getElementById("prod-imagem").value; // Default to existing
+    const tags = Array.from(this.currentTags).join(", ");
+
+    // Handle File Upload
+    const fileInput = document.getElementById("prod-image-file");
+    if (fileInput && fileInput.files.length > 0) {
+      const formData = new FormData();
+      formData.append("image", fileInput.files[0]);
+
+      try {
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData, // No headers, browser sets multipart/form-data
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          imagem = data.path; // Update image path
+        } else {
+          console.error("Upload failed");
+          Swal.fire(
+            "Aviso",
+            "Falha no upload da imagem, a guardar sem imagem nova.",
+            "warning",
+          );
+        }
+      } catch (err) {
+        console.error("Upload error", err);
+      }
+    }
+
     const data = {
-      nome: document.getElementById("prod-nome").value,
-      preco: parseFloat(document.getElementById("prod-preco").value),
-      stock: parseInt(document.getElementById("prod-stock").value),
-      idCategoria: parseInt(document.getElementById("prod-categoria").value),
-      descricao: document.getElementById("prod-descricao").value,
-      imagem:
-        document.getElementById("prod-imagem").value ||
-        "/images/wildflower.png",
-      tags: document.getElementById("tag-input-field-legacy").value,
+      nome,
+      preco,
+      stock,
+      idCategoria,
+      descricao,
+      imagem: imagem || "/images/wildflower.png",
+      tags,
     };
 
     const method = id ? "PUT" : "POST";
@@ -431,7 +525,116 @@ class AdminUI {
       }
     }
   }
+  // --- TAG MANAGEMENT ---
+  initTagInput() {
+    const input = document.getElementById("tag-input-field");
+    const container = document.getElementById("tag-input-container");
+    const suggestionsContainer = document.getElementById(
+      "available-tags-suggestions",
+    );
+
+    if (!input || !container) return;
+
+    // Focus input when clicking container
+    container.addEventListener("click", () => input.focus());
+
+    // Handle Enter key
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.addTag(input.value);
+        input.value = "";
+      }
+      if (
+        e.key === "Backspace" &&
+        input.value === "" &&
+        this.currentTags.size > 0
+      ) {
+        const lastTag = Array.from(this.currentTags).pop();
+        this.removeTag(lastTag);
+      }
+    });
+
+    // Event Delegation for Suggestions
+    if (suggestionsContainer) {
+      suggestionsContainer.addEventListener("click", (e) => {
+        if (e.target.classList.contains("tag-suggestion")) {
+          const tag = e.target.dataset.tag;
+          if (tag) this.addTag(tag);
+        }
+      });
+    }
+
+    this.renderSuggestions();
+  }
+
+  addTag(tagName) {
+    const cleanTag = tagName.trim();
+    if (cleanTag && !this.currentTags.has(cleanTag)) {
+      this.currentTags.add(cleanTag);
+      this.renderTagPills();
+      this.renderSuggestions();
+    }
+  }
+
+  removeTag(tagName) {
+    this.currentTags.delete(tagName);
+    this.renderTagPills();
+    this.renderSuggestions();
+  }
+
+  renderTagPills() {
+    const container = document.getElementById("selected-tags-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+    Array.from(this.currentTags).forEach((tag) => {
+      const span = document.createElement("span");
+      span.className = "tag-pill";
+      span.innerHTML = `${tag} <span class="remove-tag">×</span>`;
+      span.querySelector(".remove-tag").onclick = (e) => {
+        e.stopPropagation(); // Prevent container focus
+        this.removeTag(tag);
+      };
+      container.appendChild(span);
+    });
+  }
+
+  renderSuggestions() {
+    const container = document.getElementById("available-tags-suggestions");
+    if (!container) return;
+
+    // Collect all unique tags from existing products
+    const allTags = new Set([
+      "Novo",
+      "Destaque",
+      "Desconto",
+      "Esgotado",
+      "Premium",
+      "Mel",
+      "Pólen",
+      "Própolis",
+    ]);
+
+    this.products.forEach((p) => {
+      if (p.Tags) {
+        p.Tags.split(",").forEach((t) => allTags.add(t.trim()));
+      }
+    });
+
+    // Filter out already selected tags
+    const suggestions = Array.from(allTags).filter(
+      (t) => !this.currentTags.has(t),
+    );
+
+    container.innerHTML = suggestions
+      .map(
+        (tag) =>
+          `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`,
+      )
+      .join("");
+  }
 }
 
-// Expose globally
-window.adminUI = new AdminUI();
+const adminUI = new AdminUI();
+window.adminUI = adminUI;
