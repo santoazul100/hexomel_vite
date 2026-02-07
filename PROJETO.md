@@ -32,6 +32,11 @@ O projeto **Hexomel** é um website premium de comércio eletrónico de mel port
 - **Modal de Autenticação Avançado**:
   - Layout otimizado com switcher de conta e botão de fechar alinhados no topo.
   - Campos de password com controlo de visibilidade (visto/oculto) e link de recuperação.
+- **Dashboard Administrativo (Colgaia Style)**:
+  - **Redirecionamento Automático**: Admins são levados diretamente para o painel `admin.html` após o login.
+  - **Interface de Grelha Moderna**: Sidebar fixa de 260px com sistema de navegação por secções.
+  - **Métricas de Faturação**: Cálculo automático de receita total com base no estado das encomendas.
+  - **Modo Mobile**: Transformação automática das tabelas e menu inferior sticky para telemóveis.
 
 ---
 

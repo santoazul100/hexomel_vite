@@ -104,3 +104,14 @@ Para veres os dados (utilizadores, produtos, carrinho) sem usar comandos:
   - Implementação de **Toggle de Visibilidade** (ícone de olho) em todos os campos de palavra-passe, permitindo ao utilizador validar o que escreveu.
   - Adição do link **"Esqueceu-se da palavra-passe?"** para futura integração com recuperação de conta.
 - **Preservação de Design**: Ajustes estruturais realizados sem comprometer a identidade visual original (pill switcher, tipografia e paleta de cores premium).
+
+## 14. Redesign do Painel Administrativo e Dashboard (Novo)
+- **Interface Estilo Vercel**: Redesign completo do Admin Panel para uma estética moderna, limpa e profissional com barra lateral fixa e navegação por secções (Dashboard, Produtos, Utilizadores, Encomendas).
+- **Dashboard Estatístico Inteligente**: Implementação de uma vista de "Overview" com 4 indicadores principais calculados em tempo real:
+  - **Total de Utilizadores**: Contagem de contas registadas.
+  - **Produtos Ativos**: Estado atual do inventário.
+  - **Volume de Encomendas**: Registo histórico de vendas.
+  - **Faturação Total**: Soma automática dos valores das encomendas com estado "Pago" ou "Enviado".
+- **Correção de Persistência Admin**: Resolução do bug de perda de estado de administrador ao atualizar a página (Refresh persistence), garantindo que a sessão se mantém segura e estável.
+- **Tabelas de Gestão Modernas**: Implementação de sistema de tabelas com espaçamento otimizado, badges de estado coloridos e botões de ação (editar/eliminar) intuitivos.
+- **Gestão de Inventário Avançada**: Refinamento do modal de gestão de produtos, incluindo suporte para tags e URLs de imagem, com validação de stock e categorias.

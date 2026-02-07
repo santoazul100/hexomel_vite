@@ -149,7 +149,7 @@ app.post("/api/auth/login", async (req, res) => {
         name: user.Nome,
         email: user.Email,
         picture: user.Picture,
-        role: user.UserType,
+        role: user.UserType || user.usertype || "client",
       },
     });
   } catch (error) {
@@ -203,7 +203,7 @@ app.post("/api/auth/google", async (req, res) => {
         name: user.Nome,
         email: user.Email,
         picture: user.Picture,
-        role: user.UserType,
+        role: user.UserType || user.usertype || "client",
       },
     });
   } catch (error) {

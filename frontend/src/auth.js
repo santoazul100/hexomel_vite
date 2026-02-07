@@ -54,10 +54,16 @@ export const initializeAuthForms = () => {
             window.location.reload();
           });
         } else {
+          if (typeof window.closeAuthModal === "function") {
+            window.closeAuthModal();
+          }
           Swal.fire("Erro", data.error, "error");
         }
       } catch (error) {
         console.error("Registration failed:", error);
+        if (typeof window.closeAuthModal === "function") {
+          window.closeAuthModal();
+        }
         Swal.fire("Erro", "Não foi possível conectar ao servidor.", "error");
       }
     });
@@ -88,19 +94,32 @@ export const initializeAuthForms = () => {
             window.closeAuthModal();
           }
 
+          const role =
+            data.user.role || data.user.userType || data.user.UserType;
+
           Swal.fire({
             icon: "success",
             title: `Bem-vindo de volta!`,
             showConfirmButton: false,
             timer: 1500,
           }).then(() => {
-            window.location.reload();
+            if (role?.toLowerCase() === "admin") {
+              window.location.href = "admin.html";
+            } else {
+              window.location.reload();
+            }
           });
         } else {
+          if (typeof window.closeAuthModal === "function") {
+            window.closeAuthModal();
+          }
           Swal.fire("Login Falhou", data.error, "error");
         }
       } catch (error) {
         console.error("Login failed:", error);
+        if (typeof window.closeAuthModal === "function") {
+          window.closeAuthModal();
+        }
         Swal.fire("Erro", "Não foi possível conectar ao servidor.", "error");
       }
     });
@@ -172,6 +191,9 @@ const handleGoogleCallback = async (response) => {
         window.location.reload();
       });
     } else {
+      if (typeof window.closeAuthModal === "function") {
+        window.closeAuthModal();
+      }
       Swal.fire(
         "Login Falhou",
         data.error || "Autenticação Google falhou",
@@ -180,6 +202,9 @@ const handleGoogleCallback = async (response) => {
     }
   } catch (error) {
     console.error("Google Auth Error:", error);
+    if (typeof window.closeAuthModal === "function") {
+      window.closeAuthModal();
+    }
     Swal.fire("Erro", "Erro na autenticação externa", "error");
   }
 };
