@@ -8,55 +8,96 @@ class AdminUI {
     this.orders = [];
     this.token = localStorage.getItem("token");
     this.userData = JSON.parse(localStorage.getItem("user"));
-    this.currentTags = new Set(); // Stores active tags for the modal
     this.init();
   }
 
   async init() {
     // Security Check
+    if (!this.token || !this.userData) {
+      window.location.href = "index.html";
+      return;
+    }
+
     const role =
       this.userData.role || this.userData.userType || this.userData.UserType;
 
-    if (!this.token || !this.userData || role?.toLowerCase() !== "admin") {
+    if (role?.toLowerCase() !== "admin") {
       window.location.href = "index.html";
       return;
     }
 
     this.setupEventListeners();
-    this.injectNavbar();
-    this.initTagInput(); // Initialize tags once globally
-    await this.loadProducts(); // Default view
+    this.renderUserInfo();
+    await this.loadAllData(); // Load all data initially to compute dashboard stats
+    this.switchSection("dashboard");
   }
 
-  async injectNavbar() {
-    try {
-      const response = await fetch("index.html");
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const navbar = doc.querySelector(".navbar-enhanced");
-      if (navbar) {
-        // Remove cart button from admin navbar to avoid confusion or fix its logic
-        const cartBtn = navbar.querySelector(".cart-navbar-separate");
-        if (cartBtn) cartBtn.remove();
+  renderUserInfo() {
+    const nameEl = document.getElementById("admin-user-name");
+    const initialEl = document.getElementById("admin-user-initial");
+    const navInitialEl = document.getElementById("navbar-user-initial");
 
-        document.getElementById("navbar-placeholder").appendChild(navbar);
-
-        // Re-initialize auth section in navbar
-        const { updateNav, getLoggedUser } = await import("./auth.js");
-        updateNav(getLoggedUser());
-      }
-    } catch (error) {
-      console.error("Erro ao injetar navbar:", error);
+    if (this.userData) {
+      const name = this.userData.name || this.userData.firstName || "Admin";
+      if (nameEl) nameEl.innerText = name;
+      const initial = name.charAt(0).toUpperCase();
+      if (initialEl) initialEl.innerText = initial;
+      if (navInitialEl) navInitialEl.innerText = initial;
     }
+  }
+
+  async loadAllData() {
+    try {
+      // Parallel loading for initial stats
+      const [prodRes, userRes, orderRes] = await Promise.all([
+        fetch(`${API_URL}/admin/products`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        }),
+        fetch(`${API_URL}/admin/users`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        }),
+        fetch(`${API_URL}/admin/orders`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        }),
+      ]);
+
+      if (prodRes.ok) this.products = await prodRes.json();
+      if (userRes.ok) this.users = await userRes.json();
+      if (orderRes.ok) this.orders = await orderRes.json();
+
+      this.updateDashboardStats();
+    } catch (error) {
+      console.error("Erro ao carregar dados iniciais:", error);
+    }
+  }
+
+  updateDashboardStats() {
+    const setStat = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.innerText = val;
+    };
+
+    setStat("stat-total-users", this.users.length);
+    setStat("stat-total-products", this.products.length);
+    setStat("stat-total-orders", this.orders.length);
+
+    const totalRevenue = this.orders
+      .filter((o) => o.Status === "Pago" || o.Status === "Enviado")
+      .reduce((sum, o) => sum + parseFloat(o.Total || 0), 0);
+
+    setStat("stat-total-revenue", `${totalRevenue.toFixed(2)}€`);
   }
 
   setupEventListeners() {
     // Nav switching
-    const navLinks = document.querySelectorAll(".admin-nav-link[data-section]");
-    navLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        const section = e.currentTarget.dataset.section;
+    const navItems = document.querySelectorAll(
+      ".nav-item[data-section], .bottom-nav-item[data-section]",
+    );
+    navItems.forEach((item) => {
+      item.addEventListener("click", (e) => {
+        // Handle click on icon or text span inside button
+        const target = e.currentTarget;
+        const section = target.dataset.section;
         this.switchSection(section);
       });
     });
@@ -69,165 +110,172 @@ class AdminUI {
         this.handleSaveProduct();
       });
     }
+
+    // Logout
+    const logoutBtn = document.getElementById("admin-logout-btn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "index.html";
+      });
+    }
   }
 
   switchSection(sectionId) {
-    // Update Nav UI
+    // Update Nav UI (Both sidebar and bottom nav)
     document
-      .querySelectorAll(".admin-nav-link")
+      .querySelectorAll(".nav-item, .bottom-nav-item")
       .forEach((l) => l.classList.remove("active"));
-    document
-      .querySelector(`.admin-nav-link[data-section="${sectionId}"]`)
-      .classList.add("active");
+    const activeLinks = document.querySelectorAll(
+      `[data-section="${sectionId}"]`,
+    );
+    activeLinks.forEach((l) => l.classList.add("active"));
 
     // Update Visibility
     document
       .querySelectorAll(".admin-section")
       .forEach((s) => s.classList.remove("active"));
-    document.getElementById(`${sectionId}-section`).classList.add("active");
+    const activeSection = document.getElementById(`${sectionId}-section`);
+    if (activeSection) activeSection.classList.add("active");
 
-    // Load Data
-    if (sectionId === "products") this.loadProducts();
-    if (sectionId === "customers") this.loadUsers();
-    if (sectionId === "orders") this.loadOrders();
-  }
+    // Update Header Text
+    const title = document.getElementById("page-title");
+    const subtitle = document.getElementById("page-subtitle");
+    const kicker = document.getElementById("section-kicker");
+    const mainActionBtn = document.getElementById("main-action-btn");
 
-  // --- PRODUCTS ---
-  async loadProducts() {
-    try {
-      const response = await fetch(`${API_URL}/admin/products`, {
-        headers: { Authorization: `Bearer ${this.token}` },
-      });
-      if (!response.ok) throw new Error("Falha ao carregar produtos");
-      this.products = await response.json();
-      this.renderProducts();
-    } catch (error) {
-      Swal.fire("Erro", "Não foi possível carregar os produtos.", "error");
+    const sectionConfigs = {
+      dashboard: {
+        kicker: "Bem-vindo",
+        title: "Administrador do Sistema",
+        sub: "Visão geral e gestão dos dados principais.",
+        action: null,
+      },
+      products: {
+        kicker: "Logística",
+        title: "Produtos (Stock)",
+        sub: "Gerir stock e catálogo de produtos.",
+        action: {
+          text: "Novo Produto",
+          handler: () => this.openProductModal(),
+        },
+      },
+      users: {
+        kicker: "Comunidade",
+        title: "Utilizadores",
+        sub: "Controlo de contas registadas.",
+        action: null,
+      },
+      orders: {
+        kicker: "Vendas",
+        title: "Encomendas Recentess",
+        sub: "Estado das vendas e envios.",
+        action: null,
+      },
+    };
+
+    if (sectionConfigs[sectionId]) {
+      const config = sectionConfigs[sectionId];
+      if (kicker) kicker.innerText = config.kicker;
+      if (title) title.innerText = config.title;
+      if (subtitle) subtitle.innerText = config.sub;
+
+      if (mainActionBtn) {
+        if (config.action) {
+          mainActionBtn.style.display = "block";
+          mainActionBtn.innerText = config.action.text;
+          mainActionBtn.onclick = config.action.handler;
+        } else {
+          mainActionBtn.style.display = "none";
+        }
+      }
     }
+
+    // Load Data if needed
+    if (sectionId === "products") this.renderProducts();
+    if (sectionId === "users") this.renderUsers();
+    if (sectionId === "orders") this.renderOrders();
   }
 
+  // --- RENDER METHODS ---
   renderProducts() {
     const container = document.getElementById("product-list-body");
+    if (!container) return;
     container.innerHTML = this.products
       .map(
         (p) => `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${p.Imagem || "public/images/wildflower.png"}" class="product-img-small" alt="${p.Nome}">
-                        <div>
-                            <div class="fw-bold">${p.Nome}</div>
-                            <div class="text-muted small">#${p.ID_Produto}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="fw-bold">${parseFloat(p.Preco).toFixed(2)}€</td>
-                <td>
-                    <span class="badge-status ${p.Stock < 10 ? "badge-low" : "badge-ok"}">
-                        ${p.Stock} em stock
-                    </span>
-                </td>
-                <td>${p.ID_Categoria === 1 ? "Méls" : "Derivados"}</td>
-                <td>
-                    <div class="d-flex flex-wrap gap-1">
-                        ${
-                          p.Tags
-                            ? p.Tags.split(",")
-                                .map(
-                                  (tag) => `
-                            <span class="badge bg-secondary smaller text-uppercase" style="font-size: 0.65rem;">${tag.trim()}</span>
-                        `,
-                                )
-                                .join("")
-                            : ""
-                        }
-                    </div>
-                </td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-light me-1" onclick="adminUI.editProduct('${p.ID_Produto}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteProduct('${p.ID_Produto}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `,
+        <tr>
+          <td>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="${p.Imagem || "public/images/wildflower.png"}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;" onerror="this.src='public/images/wildflower.png'">
+              <div>
+                <div style="font-weight:600;">${p.Nome}</div>
+                <div style="font-size:0.8rem; color:#6b7280;">#${p.ID_Produto}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-weight:600;">${parseFloat(p.Preco).toFixed(2)}€</td>
+          <td>
+            <span class="badge-status ${p.Stock < 10 ? "badge-low" : "badge-ok"}">
+              ${p.Stock} UN
+            </span>
+          </td>
+          <td class="text-end">
+            <div class="d-flex justify-content-end gap-2">
+              <button class="admin-btn-outline" onclick="adminUI.editProduct('${p.ID_Produto}')"><i class="fas fa-edit"></i></button>
+              <button class="admin-btn-outline danger" onclick="adminUI.deleteProduct('${p.ID_Produto}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `,
       )
       .join("");
-  }
-
-  // --- CUSTOMERS ---
-  async loadUsers() {
-    try {
-      const response = await fetch(`${API_URL}/admin/users`, {
-        headers: { Authorization: `Bearer ${this.token}` },
-      });
-      if (!response.ok) throw new Error("Falha ao carregar clientes");
-      this.users = await response.json();
-      this.renderUsers();
-    } catch (error) {
-      Swal.fire("Erro", "Não foi possível carregar os clientes.", "error");
-    }
   }
 
   renderUsers() {
     const container = document.getElementById("customer-list-body");
+    if (!container) return;
     container.innerHTML = this.users
       .map(
         (u) => `
-            <tr>
-                <td><div class="fw-bold">${u.Nome}</div></td>
-                <td>${u.Email}</td>
-                <td><span class="badge bg-light text-dark">${u.UserType}</span></td>
-                <td>${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id ? "disabled" : ""}>
-                        <i class="fas fa-user-minus"></i>
-                    </button>
-                </td>
-            </tr>
-        `,
+        <tr>
+          <td><div style="font-weight:600;">${u.Nome}</div></td>
+          <td style="color:#6b7280; font-size:0.9rem;">${u.Email}</td>
+          <td><span class="badge-status bg-light text-dark">${u.UserType}</span></td>
+          <td class="text-end">
+            <button class="admin-btn-outline danger" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id ? "disabled" : ""}>
+                <i class="fas fa-user-minus"></i>
+            </button>
+          </td>
+        </tr>
+      `,
       )
       .join("");
   }
 
-  // --- ORDERS ---
-  async loadOrders() {
-    try {
-      const response = await fetch(`${API_URL}/admin/orders`, {
-        headers: { Authorization: `Bearer ${this.token}` },
-      });
-      if (!response.ok) throw new Error("Falha ao carregar encomendas");
-      this.orders = await response.json();
-      this.renderOrders();
-    } catch (error) {
-      Swal.fire("Erro", "Não foi possível carregar as encomendas.", "error");
-    }
-  }
-
   renderOrders() {
     const container = document.getElementById("order-list-body");
+    if (!container) return;
     container.innerHTML = this.orders
       .map(
         (o) => `
-            <tr>
-                <td class="fw-bold">#${o.ID_Encomenda}</td>
-                <td>${o.ClienteNome}</td>
-                <td>${new Date(o.Data_Encomenda).toLocaleDateString()}</td>
-                <td class="fw-bold">${parseFloat(o.Total).toFixed(2)}€</td>
-                <td>
-                    <span class="badge-status badge-${o.Status.toLowerCase()}">${o.Status}</span>
-                </td>
-                <td class="text-end">
-                    <select class="form-select form-select-sm d-inline-block w-auto" onchange="adminUI.updateOrderStatus('${o.ID_Encomenda}', this.value)">
-                        <option value="Pendente" ${o.Status === "Pendente" ? "selected" : ""}>Pendente</option>
-                        <option value="Pago" ${o.Status === "Pago" ? "selected" : ""}>Pago</option>
-                        <option value="Enviado" ${o.Status === "Enviado" ? "selected" : ""}>Enviado</option>
-                    </select>
-                </td>
-            </tr>
-        `,
+        <tr>
+          <td style="font-weight:600;">#${o.ID_Encomenda}</td>
+          <td><div style="font-size:0.9rem; font-weight:500;">${o.ClienteNome}</div></td>
+          <td style="font-weight:700;">${parseFloat(o.Total).toFixed(2)}€</td>
+          <td>
+            <span class="badge-status badge-${o.Status.toLowerCase().replace(/á/g, "a")}">${o.Status}</span>
+          </td>
+          <td class="text-end">
+            <select class="form-select form-select-sm d-inline-block w-auto border-0 bg-light fw-bold" onchange="adminUI.updateOrderStatus('${o.ID_Encomenda}', this.value)">
+              <option value="Pendente" ${o.Status === "Pendente" ? "selected" : ""}>Pendente</option>
+              <option value="Pago" ${o.Status === "Pago" ? "selected" : ""}>Pago</option>
+              <option value="Enviado" ${o.Status === "Enviado" ? "selected" : ""}>Enviado</option>
+            </select>
+          </td>
+        </tr>
+      `,
       )
       .join("");
   }
@@ -243,14 +291,15 @@ class AdminUI {
         },
         body: JSON.stringify({ status }),
       });
-      if (!response.ok) throw new Error("Falha ao atualizar estado");
+      if (!response.ok) throw new Error("Erro ao atualizar status");
       Swal.fire({
         icon: "success",
-        title: "Estado Atualizado",
+        title: "Atualizado",
         timer: 1000,
         showConfirmButton: false,
       });
-      await this.loadOrders();
+      await this.loadAllData();
+      this.renderOrders();
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
     }
@@ -258,12 +307,12 @@ class AdminUI {
 
   async deleteUser(id) {
     const result = await Swal.fire({
-      title: "Remover Cliente?",
-      text: "Esta ação apagará a conta e todo o histórico!",
+      title: "Eliminar Utilizador?",
+      text: "Esta ação é irreversível.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Confirmar Remoção",
+      confirmButtonColor: "#1e293b",
+      confirmButtonText: "Sim, eliminar",
     });
 
     if (result.isConfirmed) {
@@ -272,23 +321,27 @@ class AdminUI {
           method: "DELETE",
           headers: { Authorization: `Bearer ${this.token}` },
         });
-        if (!response.ok) throw new Error("Erro ao remover utilizador");
-        Swal.fire("Removido", "O cliente foi removido do sistema.", "success");
-        await this.loadUsers();
+        if (!response.ok) throw new Error("Erro ao eliminar");
+        await this.loadAllData();
+        this.renderUsers();
+        Swal.fire("Eliminado", "Utilizador removido.", "success");
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }
     }
   }
 
-  // --- PRODUCT CRUD HELPERS (existing logic) ---
+  // --- PRODUCT HELPERS ---
+  openProductModal() {
+    this.resetForm();
+    new bootstrap.Modal(document.getElementById("productModal")).show();
+  }
+
   resetForm() {
-    document.getElementById("productForm").reset();
+    const form = document.getElementById("productForm");
+    if (form) form.reset();
     document.getElementById("product-id").value = "";
     document.getElementById("modalTitle").innerText = "Novo Produto";
-    this.currentTags.clear(); // Clear tags on form reset
-    this.renderTagPills();
-    this.renderSuggestions();
   }
 
   editProduct(id) {
@@ -298,18 +351,12 @@ class AdminUI {
     if (!p) return;
     document.getElementById("product-id").value = p.ID_Produto;
     document.getElementById("prod-nome").value = p.Nome;
-    document.getElementById("prod-preco").value = p.Preco; // Corrected from prod-price to prod-preco
+    document.getElementById("prod-preco").value = p.Preco;
     document.getElementById("prod-stock").value = p.Stock;
     document.getElementById("prod-categoria").value = p.ID_Categoria;
     document.getElementById("prod-descricao").value = p.Descricao || "";
     document.getElementById("prod-imagem").value = p.Imagem || "";
-
-    // Initialize Tags
-    this.currentTags = new Set(
-      p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
-    );
-    this.renderTagPills();
-    // this.initTagInput(); // Removed to avoid duplicate listeners
+    document.getElementById("tag-input-field-legacy").value = p.Tags || "";
 
     document.getElementById("modalTitle").innerText = "Editar Produto";
     new bootstrap.Modal(document.getElementById("productModal")).show();
@@ -317,21 +364,23 @@ class AdminUI {
 
   async handleSaveProduct() {
     const id = document.getElementById("product-id").value;
-    const nome = document.getElementById("prod-nome").value;
-    const preco = parseFloat(document.getElementById("prod-preco").value);
-    const stock = parseInt(document.getElementById("prod-stock").value);
-    const idCategoria = parseInt(
-      document.getElementById("prod-categoria").value,
-    );
-    const descricao = document.getElementById("prod-descricao").value;
-    const imagem =
-      document.getElementById("prod-imagem").value || "/images/wildflower.png";
-    const tags = Array.from(this.currentTags).join(", "); // Join Set to String
+    const data = {
+      nome: document.getElementById("prod-nome").value,
+      preco: parseFloat(document.getElementById("prod-preco").value),
+      stock: parseInt(document.getElementById("prod-stock").value),
+      idCategoria: parseInt(document.getElementById("prod-categoria").value),
+      descricao: document.getElementById("prod-descricao").value,
+      imagem:
+        document.getElementById("prod-imagem").value ||
+        "/images/wildflower.png",
+      tags: document.getElementById("tag-input-field-legacy").value,
+    };
 
     const method = id ? "PUT" : "POST";
     const url = id
       ? `${API_URL}/admin/products/${id}`
       : `${API_URL}/admin/products`;
+
     try {
       const response = await fetch(url, {
         method,
@@ -339,27 +388,20 @@ class AdminUI {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify({
-          nome,
-          preco,
-          stock,
-          idCategoria,
-          descricao,
-          imagem,
-          tags,
-        }),
+        body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Erro ao guardar produto");
-      Swal.fire({
-        icon: "success",
-        title: id ? "Atualizado" : "Criado",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      if (!response.ok) throw new Error("Erro ao guardar");
       bootstrap.Modal.getInstance(
         document.getElementById("productModal"),
       ).hide();
-      await this.loadProducts();
+      await this.loadAllData();
+      this.renderProducts();
+      Swal.fire({
+        icon: "success",
+        title: "Sucesso",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
     }
@@ -367,12 +409,13 @@ class AdminUI {
 
   async deleteProduct(id) {
     const result = await Swal.fire({
-      title: "Tem a certeza?",
+      title: "Eliminar Produto?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Sim, eliminar!",
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Sim, eliminar",
     });
+
     if (result.isConfirmed) {
       try {
         const response = await fetch(`${API_URL}/admin/products/${id}`, {
@@ -380,102 +423,15 @@ class AdminUI {
           headers: { Authorization: `Bearer ${this.token}` },
         });
         if (!response.ok) throw new Error("Erro ao eliminar");
+        await this.loadAllData();
+        this.renderProducts();
         Swal.fire("Eliminado", "", "success");
-        await this.loadProducts();
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }
     }
   }
-  // --- TAG MANAGEMENT ---
-  initTagInput() {
-    const input = document.getElementById("tag-input-field");
-    const container = document.getElementById("tag-input-container");
-    if (!input || !container) return;
-
-    // Handle Enter key
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        this.addTag(input.value);
-        input.value = "";
-      }
-      if (
-        e.key === "Backspace" &&
-        input.value === "" &&
-        this.currentTags.size > 0
-      ) {
-        const lastTag = Array.from(this.currentTags).pop();
-        this.removeTag(lastTag);
-      }
-    });
-
-    this.renderSuggestions();
-  }
-
-  addTag(tagName) {
-    const cleanTag = tagName.trim();
-    if (cleanTag && !this.currentTags.has(cleanTag)) {
-      this.currentTags.add(cleanTag);
-      this.renderTagPills();
-      this.renderSuggestions(); // Refresh suggestions
-    }
-  }
-
-  removeTag(tagName) {
-    this.currentTags.delete(tagName);
-    this.renderTagPills();
-    this.renderSuggestions();
-  }
-
-  renderTagPills() {
-    const container = document.getElementById("selected-tags-container");
-    if (!container) return;
-    container.innerHTML = Array.from(this.currentTags)
-      .map(
-        (tag) => `
-        <span class="tag-pill">
-            ${tag}
-            <span class="remove-tag" onclick="adminUI.removeTag('${tag}')">×</span>
-        </span>
-    `,
-      )
-      .join("");
-  }
-
-  renderSuggestions() {
-    const container = document.getElementById("available-tags-suggestions");
-    if (!container) return;
-
-    // Collect all unique tags from existing products
-    const allTags = new Set([
-      "Novo",
-      "Destaque",
-      "Desconto",
-      "Esgotado",
-      "Premium",
-    ]); // Defaults
-    this.products.forEach((p) => {
-      if (p.Tags) {
-        p.Tags.split(",").forEach((t) => allTags.add(t.trim()));
-      }
-    });
-
-    // Filter out already selected tags
-    const suggestions = Array.from(allTags).filter(
-      (t) => !this.currentTags.has(t),
-    );
-
-    container.innerHTML = suggestions
-      .map(
-        (tag) => `
-        <span class="tag-suggestion" onclick="adminUI.addTag('${tag}')">
-            + ${tag}
-        </span>
-    `,
-      )
-      .join("");
-  }
 }
 
-const adminUI = new AdminUI();
+// Expose globally
+window.adminUI = new AdminUI();

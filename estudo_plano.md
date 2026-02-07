@@ -28,6 +28,13 @@ Este documento serve para acompanhar a evolução técnica do projeto Hexomel. A
 
 - **PROJETO.md**: Criação de um ficheiro técnico detalhado com os objetivos do projeto, tecnologias utilizadas e arquitetura do código para fins de estudo.
 
+### 5. Novo Dashboard e Redesign Administrativo (Colgaia Style)
+
+- **Interface de Alta Fidelidade**: Implementação do design inspirado no projeto "Colgaia", com sidebar moderna, cartões de estatísticas e cores Eco-Green.
+- **Fluxo de Login Otimizado**: Autenticação unificada com redirecionamento imediato para `admin.html` para perfis administrativos.
+- **Rastreio de Faturação**: Implementada lógica de cálculo de receita no dashboard baseada em transações pagas/enviadas.
+- **UX Responsiva**: Sidebar oculta em mobile, substituída por uma barra de navegação inferior intuitiva.
+
 ---
 
 ## 🛠️ Próximos Passos (Planeamento)
