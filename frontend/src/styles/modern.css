@@ -1266,6 +1266,102 @@ body {
   background-color: #fff8e6 !important;
 }
 
-.upload-area:hover .hover-visible {
-  opacity: 1 !important;
+
+/* --- Admin Dashboard Specifics --- */
+
+.admin-card-stat {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.admin-card-stat:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.2rem;
+}
+
+/* Hexomel Theme Admin Colors */
+.bg-soft-gold {
+    background-color: #fffbeb;
+    color: #b45309;
+}
+
+.bg-soft-green {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.bg-soft-blue {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.bg-soft-purple {
+    background-color: #f3e8ff;
+    color: #9333ea;
+}
+
+.bg-soft-red {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+/* Navbar Admin Adjustments */
+.navbar-enhanced .btn-auth-enhanced {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Sidebar Adjustments */
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.tracking-wider {
+    letter-spacing: 0.05em;
+}
+
+.admin-nav-link {
+    border-radius: 10px;
+    margin-bottom: 4px;
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.admin-nav-link:hover {
+    background: #f8fafc;
+    color: var(--primary-green);
+}
+
+.admin-nav-link.active {
+    background: #fffbeb;
+    color: var(--primary-gold); /* Hexomel Gold */
+    border-color: #fef3c7;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.admin-nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+/* Dashboard Welcome Card */
+.admin-card.welcome-banner {
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+    border: 1px solid #fef3c7;
 }

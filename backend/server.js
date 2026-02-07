@@ -703,7 +703,7 @@ app.delete(
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Picture, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente, Nome, Email, Telefone, Picture, Data_Resgistro, UserType FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -719,6 +719,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
       email: user.Email,
       phone: user.Telefone,
       picture: user.Picture,
+      role: user.UserType,
       dateRegistered: user.Data_Resgistro,
       orders,
     });

@@ -69,8 +69,10 @@ Para este projeto, optámos pelo **SQLite**.
 - **Autenticação Google**: ID do Google configurado: `566495487980-k2ten8upqs965tsjdvja8jvehv006tj7.apps.googleusercontent.com`.
 
 ## 9. Como Correr o Projeto (Guia Rápido)
-1. **Frontend**: No terminal da pasta raiz, corre `npm install` e depois `npm run dev`.
-2. **Backend**: Na pasta `backend/`, corre `npm install` e depois `npm run dev`.
+1. **Unificado**: No terminal da pasta raiz (hexomel_vite), corre `npm install` e depois `npm run dev`. Isto iniciará o Frontend e o Backend ao mesmo tempo.
+2. **Individual (opcional)**:
+   - **Frontend**: Na pasta `frontend/`, corre `npm run dev`.
+   - **Backend**: Na pasta `backend/`, corre `npm run dev`.
 3. **Base de Dados**: Não é necessária configuração externa. O ficheiro `database.db` é criado e gerido automaticamente.
 
 ## 10. Gestão Visual da Base de Dados (SQLite Viewer)

@@ -23,33 +23,32 @@ class AdminUI {
     }
 
     this.setupEventListeners();
-    this.injectNavbar();
-    this.initTagInput(); // Initialize tags once globally
-    await this.loadProducts(); // Default view
+    this.setupEventListeners();
+    // Navbar is now static, just init auth
+    this.initAuth();
+    this.initTagInput();
+    this.switchSection("dashboard"); // Default view
   }
 
-  async injectNavbar() {
+  async initAuth() {
     try {
-      const response = await fetch("index.html");
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const navbar = doc.querySelector(".navbar-enhanced");
-      if (navbar) {
-        // Remove cart button from admin navbar to avoid confusion or fix its logic
-        const cartBtn = navbar.querySelector(".cart-navbar-separate");
-        if (cartBtn) cartBtn.remove();
-
-        document.getElementById("navbar-placeholder").appendChild(navbar);
-
-        // Re-initialize auth section in navbar
-        const { updateNav, getLoggedUser } = await import("./auth.js");
+        const { updateNav, getLoggedUser, logout } = await import("./auth.js");
         updateNav(getLoggedUser());
-      }
-    } catch (error) {
-      console.error("Erro ao injetar navbar:", error);
+        
+        // Setup Logout
+        const logoutBtn = document.getElementById("logout-btn");
+        if(logoutBtn) {
+            logoutBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                logout();
+            });
+        }
+    } catch (e) {
+        console.error("Auth init error", e);
     }
   }
+
+  // injectNavbar removed - static in HTML
 
   setupEventListeners() {
     // Nav switching
@@ -119,9 +118,40 @@ class AdminUI {
     document.getElementById(`${sectionId}-section`).classList.add("active");
 
     // Load Data
+    if (sectionId === "dashboard") this.loadDashboardStats();
     if (sectionId === "products") this.loadProducts();
     if (sectionId === "customers") this.loadUsers();
     if (sectionId === "orders") this.loadOrders();
+  }
+
+  async loadDashboardStats() {
+      try {
+        // Fetch all data in parallel
+        await Promise.all([this.loadProducts(), this.loadUsers(), this.loadOrders()]);
+
+        // Update Users
+        const userCount = this.users.length;
+        const totalUsersEl = document.getElementById("dash-total-users");
+        if(totalUsersEl) totalUsersEl.innerText = userCount;
+
+        // Update Products
+        const prodCount = this.products.length;
+        const totalProdsEl = document.getElementById("dash-total-products");
+        if(totalProdsEl) totalProdsEl.innerText = prodCount;
+        
+        // Update Orders
+        const orderCount = this.orders.length;
+        const totalOrdersEl = document.getElementById("dash-total-orders");
+        if(totalOrdersEl) totalOrdersEl.innerText = orderCount;
+
+        // Calculate Low Stock (less than 5 units)
+        const lowStockCount = this.products.filter(p => p.Stock < 5).length;
+        const lowStockEl = document.getElementById("dash-low-stock");
+        if(lowStockEl) lowStockEl.innerText = lowStockCount;
+
+      } catch (e) {
+        console.error("Error loading dashboard stats", e);
+      }
   }
 
   // --- PRODUCTS ---
