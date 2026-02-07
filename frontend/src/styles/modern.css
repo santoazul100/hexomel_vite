@@ -27,6 +27,10 @@
 
   /* Transitions */
   --transition-smooth: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+  /* Brand Colors from Logo */
+  --logo-purple: #3b315b;
+  --logo-yellow: #f4b400;
 }
 
 body {
@@ -52,10 +56,21 @@ body {
 }
 
 .navbar-brand {
-  font-weight: 800;
-  font-size: 1.7rem;
-  color: var(--primary-green) !important;
-  letter-spacing: -1px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none !important;
+}
+
+.navbar-logo {
+  height: 65px;
+  width: auto;
+  object-fit: contain;
+  transition: var(--transition-smooth);
+}
+
+.navbar-enhanced.scrolled .navbar-logo {
+  height: 50px;
 }
 
 .nav-link {
@@ -72,16 +87,34 @@ body {
 
 /* Auth Buttons - teste_1 Style */
 .cart-navbar-separate {
-  margin-right: 2rem;
-  padding: 8px 15px;
-  background: rgba(244, 180, 0, 0.05);
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  margin-right: 1.5rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(244, 180, 0, 0.08);
+  border-radius: 50%; /* Circular for better aesthetics */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
 }
 
 .cart-navbar-separate:hover {
-  background: rgba(244, 180, 0, 0.1);
-  transform: translateY(-2px);
+  background: rgba(244, 180, 0, 0.15);
+  transform: translateY(-2px) scale(1.05);
+}
+
+#cart-badge {
+  font-size: 0.7rem;
+  padding: 4px 6px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  top: 5px !important;
+  right: 5px !important;
 }
 .btn-auth-enhanced {
   padding: 0.6rem 1.5rem;
@@ -463,30 +496,43 @@ body {
 
 /* --- Premium Soft Grey Footer --- */
 .footer-premium {
-  background: #3d4446 !important; /* Slightly Softer Charcoal Grey */
-  color: rgba(255, 255, 255, 0.85);
+  background: #1e2122 !important; /* Even Darker for premium feel */
+  color: #ffffff;
   padding: 80px 0 40px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .footer-brand {
-  font-weight: 800;
-  font-size: 1.8rem;
-  color: var(--secondary-gold) !important;
-  letter-spacing: -1px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  text-decoration: none !important;
+}
+
+.footer-logo {
+  height: 80px; /* Slightly smaller to fit in the badge */
+  width: auto;
+  object-fit: contain;
+  background: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+  display: block;
 }
 
 .footer-heading {
   font-size: 1.1rem;
   font-weight: 700;
-  color: white;
+  color: #f4b400; /* Use brand yellow for headings to pop */
   margin-bottom: 1.5rem;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .footer-link {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   text-decoration: none;
   font-weight: 400;
   transition: var(--transition-smooth);
@@ -495,7 +541,7 @@ body {
 }
 
 .footer-link:hover {
-  color: var(--secondary-gold) !important;
+  color: #f4b400 !important;
   transform: translateX(5px);
 }
 
@@ -505,16 +551,17 @@ body {
 }
 
 .social-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px; /* Matching the logo badge radius */
   display: flex;
   align-items: center;
   justify-content: center;
   color: white !important;
-  transition: var(--transition-smooth);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 1.2rem;
 }
 
 .social-icon:hover {
@@ -550,13 +597,17 @@ body {
 .btn-nav-auth-filled {
   background: var(--primary-gold) !important;
   color: white !important;
-  border: none !important;
+  border: 1px solid var(--primary-gold) !important;
   padding: 10px 24px !important;
   border-radius: 12px !important;
   font-weight: 700 !important;
   font-size: 0.95rem !important;
   transition: all 0.3s ease !important;
   box-shadow: 0 4px 12px rgba(244, 180, 0, 0.2) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 44px; /* Explicit height to match cart and outline */
 }
 
 .btn-nav-auth-filled:hover {
@@ -568,12 +619,16 @@ body {
 .btn-nav-auth-outline {
   background: transparent !important;
   color: var(--primary-gold) !important;
-  border: 2px solid var(--primary-gold) !important;
-  padding: 8px 22px !important;
+  border: 1px solid var(--primary-gold) !important;
+  padding: 10px 24px !important;
   border-radius: 12px !important;
   font-weight: 700 !important;
   font-size: 0.95rem !important;
   transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 44px; /* Explicit height to match cart and filled */
 }
 
 .btn-nav-auth-outline:hover {
@@ -1181,14 +1236,16 @@ body {
 
 .table-premium tbody tr {
   background: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-  transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+  transition:
+    transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1),
+    box-shadow 0.2s;
   border-radius: 12px;
 }
 
 .table-premium tbody tr:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
   z-index: 10;
   position: relative;
 }
@@ -1234,7 +1291,7 @@ body {
   height: 48px;
   object-fit: cover;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .btn-action-premium {
@@ -1266,102 +1323,103 @@ body {
   background-color: #fff8e6 !important;
 }
 
-
 /* --- Admin Dashboard Specifics --- */
 
 .admin-card-stat {
-    transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .admin-card-stat:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
 
 .icon-box {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    font-size: 1.2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 1.2rem;
 }
 
 /* Hexomel Theme Admin Colors */
 .bg-soft-gold {
-    background-color: #fffbeb;
-    color: #b45309;
+  background-color: #fffbeb;
+  color: #b45309;
 }
 
 .bg-soft-green {
-    background-color: #dcfce7;
-    color: #166534;
+  background-color: #dcfce7;
+  color: #166534;
 }
 
 .bg-soft-blue {
-    background-color: #e0f2fe;
-    color: #0284c7;
+  background-color: #e0f2fe;
+  color: #0284c7;
 }
 
 .bg-soft-purple {
-    background-color: #f3e8ff;
-    color: #9333ea;
+  background-color: #f3e8ff;
+  color: #9333ea;
 }
 
 .bg-soft-red {
-    background-color: #fee2e2;
-    color: #dc2626;
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 
 .ls-1 {
-    letter-spacing: 1px;
+  letter-spacing: 1px;
 }
 
 /* Navbar Admin Adjustments */
 .navbar-enhanced .btn-auth-enhanced {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
 }
 
 /* Sidebar Adjustments */
 .text-xs {
-    font-size: 0.75rem;
+  font-size: 0.75rem;
 }
 
 .tracking-wider {
-    letter-spacing: 0.05em;
+  letter-spacing: 0.05em;
 }
 
 .admin-nav-link {
-    border-radius: 10px;
-    margin-bottom: 4px;
-    color: #64748b;
-    font-weight: 500;
-    transition: all 0.2s;
-    border: 1px solid transparent;
+  border-radius: 10px;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid transparent;
 }
 
 .admin-nav-link:hover {
-    background: #f8fafc;
-    color: var(--primary-green);
+  background: #f8fafc;
+  color: var(--primary-green);
 }
 
 .admin-nav-link.active {
-    background: #fffbeb;
-    color: var(--primary-gold); /* Hexomel Gold */
-    border-color: #fef3c7;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  background: #fffbeb;
+  color: var(--primary-gold); /* Hexomel Gold */
+  border-color: #fef3c7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .admin-nav-link i {
-    width: 20px;
-    text-align: center;
-    margin-right: 10px;
+  width: 20px;
+  text-align: center;
+  margin-right: 10px;
 }
 
 /* Dashboard Welcome Card */
 .admin-card.welcome-banner {
-    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
-    border: 1px solid #fef3c7;
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+  border: 1px solid #fef3c7;
 }

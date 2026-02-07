@@ -23,10 +23,20 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 let db;
 
 // Initialize Database
-initDB().then((database) => {
-  db = database;
-  console.log("SQLite Database connected and initialized.");
-});
+initDB()
+  .then((database) => {
+    db = database;
+    console.log("SQLite Database connected and initialized.");
+
+    // Start Server ONLY after DB is ready
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
+  });
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
@@ -822,8 +832,4 @@ app.delete("/api/user/profile", authenticateToken, async (req, res) => {
     console.error("Account deletion error:", error);
     res.status(500).json({ error: "Server error" });
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
 });

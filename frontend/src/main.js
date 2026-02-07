@@ -68,6 +68,27 @@ window.closeAuthModal = function () {
   document.body.style.overflow = "";
 };
 
+// Global utility to close all active overlays/modals
+window.closeAllPopups = function () {
+  // 1. Close Auth Modal
+  window.closeAuthModal();
+
+  // 2. Close Cart Sidebar
+  if (window.cart && typeof window.cart.toggle === "function") {
+    window.cart.toggle(false);
+  }
+
+  // 3. Close Product Details
+  if (typeof window.closeProductDetails === "function") {
+    window.closeProductDetails();
+  }
+
+  // 4. Close Checkout Modal
+  if (window.cart && typeof window.cart.closeCheckoutModal === "function") {
+    window.cart.closeCheckoutModal();
+  }
+};
+
 window.togglePasswordVisibility = function (id) {
   const input = document.getElementById(id);
   const icon = input.nextElementSibling.querySelector("i");
@@ -133,7 +154,9 @@ function injectAuthModal() {
     <div class="auth-overlay" id="authOverlay">
       <div class="auth-card-v2">
         <div class="auth-header-row">
-          <div class="auth-logo-v2">Hexomel</div>
+          <div class="auth-logo-v2">
+            <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" style="height: 50px; width: auto;">
+          </div>
           <div class="auth-header-right-v2">
             <div class="auth-switcher-v2">
               <button class="auth-pill active" id="pill-login" onclick="window.toggleAuthMode('login')">Entrar</button>

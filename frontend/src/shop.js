@@ -24,7 +24,12 @@ async function fetchProducts() {
       name: p.Nome,
       price: Number(p.Preco), // Fix: Ensure price is a number
       description: p.Descricao,
-      category: p.ID_Categoria === 2 ? "Derivados" : "Méls",
+      category:
+        p.ID_Categoria === 2
+          ? "Derivados"
+          : p.ID_Categoria === 3
+            ? "Acessórios"
+            : "Méls",
       image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
       weight: "500g",
       tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
@@ -91,14 +96,12 @@ function renderProducts() {
 // Filtering Logic
 function applyFilters() {
   // 1. Get checked categories
-  const selectedCategories = [
-    document.getElementById("cat-mel")?.checked ? "Méls" : null,
-    document.getElementById("cat-polen")?.checked ? "Derivados" : null,
-    document.getElementById("cat-acessorios")?.checked ? "Acessórios" : null,
-  ].filter((c) => c !== null);
+  const melPuro = document.getElementById("cat-mel")?.checked;
+  const polen = document.getElementById("cat-polen")?.checked;
+  const acessorios = document.getElementById("cat-acessorios")?.checked;
 
   // 2. Get price range
-  const maxPrice = document.getElementById("priceRange")?.value || 100;
+  const maxPrice = Number(document.getElementById("priceRange")?.value || 100);
 
   // Filter
   filteredProducts = products.filter((p) => {
@@ -242,6 +245,7 @@ window.toggleFavorite = async function (productId) {
   const token = localStorage.getItem("token");
 
   if (!token) {
+    window.closeAllPopups();
     Swal.fire({
       title: "Iniciar Sessão",
       text: "Precisas de estar logado para guardar favoritos.",

@@ -109,6 +109,7 @@ class CartManager {
   async addItem(productId, quantity = 1) {
     const token = localStorage.getItem("token");
     if (!token) {
+      window.closeAllPopups();
       Swal.fire({
         title: "Iniciar Sessão",
         text: "Precisas de estar logado para adicionar produtos ao carrinho.",
@@ -149,12 +150,14 @@ class CartManager {
 
   async checkout() {
     if (this.items.length === 0) {
+      window.closeAllPopups();
       Swal.fire("O carrinho está vazio!", "", "info");
       return;
     }
 
     const token = localStorage.getItem("token");
     if (!token) {
+      window.closeAllPopups();
       Swal.fire({
         title: "Login Necessário",
         text: "Por favor, inicie sessão para finalizar a compra.",
@@ -338,7 +341,7 @@ class CartManager {
 
       const data = await res.json();
       if (res.ok) {
-        this.closeCheckoutModal();
+        window.closeAllPopups();
         Swal.fire({
           icon: "success",
           title: "Encomenda Confirmada!",

@@ -15,6 +15,7 @@ export const initializeAuthForms = () => {
       ).value;
 
       if (password !== confirmPassword) {
+        window.closeAllPopups(); // Ensure modal is closed before alert
         return Swal.fire("Erro", "As passwords não coincidem", "error");
       }
 
@@ -54,16 +55,12 @@ export const initializeAuthForms = () => {
             window.location.reload();
           });
         } else {
-          if (typeof window.closeAuthModal === "function") {
-            window.closeAuthModal();
-          }
+          window.closeAllPopups();
           Swal.fire("Erro", data.error, "error");
         }
       } catch (error) {
         console.error("Registration failed:", error);
-        if (typeof window.closeAuthModal === "function") {
-          window.closeAuthModal();
-        }
+        window.closeAllPopups();
         Swal.fire("Erro", "Não foi possível conectar ao servidor.", "error");
       }
     });
@@ -110,16 +107,12 @@ export const initializeAuthForms = () => {
             }
           });
         } else {
-          if (typeof window.closeAuthModal === "function") {
-            window.closeAuthModal();
-          }
+          window.closeAllPopups();
           Swal.fire("Login Falhou", data.error, "error");
         }
       } catch (error) {
         console.error("Login failed:", error);
-        if (typeof window.closeAuthModal === "function") {
-          window.closeAuthModal();
-        }
+        window.closeAllPopups();
         Swal.fire("Erro", "Não foi possível conectar ao servidor.", "error");
       }
     });
@@ -191,9 +184,7 @@ const handleGoogleCallback = async (response) => {
         window.location.reload();
       });
     } else {
-      if (typeof window.closeAuthModal === "function") {
-        window.closeAuthModal();
-      }
+      window.closeAllPopups();
       Swal.fire(
         "Login Falhou",
         data.error || "Autenticação Google falhou",
@@ -202,9 +193,7 @@ const handleGoogleCallback = async (response) => {
     }
   } catch (error) {
     console.error("Google Auth Error:", error);
-    if (typeof window.closeAuthModal === "function") {
-      window.closeAuthModal();
-    }
+    window.closeAllPopups();
     Swal.fire("Erro", "Erro na autenticação externa", "error");
   }
 };
@@ -216,7 +205,13 @@ window.addEventListener("load", initializeGoogleAuth);
 // Update Navigation based on login status
 export function updateNav(user) {
   const authSection = document.getElementById("authSection");
+  const cartIconContainer = document.querySelector(".cart-navbar-separate");
   if (!authSection) return;
+
+  // Toggle cart visibility based on session
+  if (cartIconContainer) {
+    cartIconContainer.style.display = user ? "flex" : "none";
+  }
 
   if (user) {
     // Prioritize picture, then avatar, then default
@@ -267,8 +262,10 @@ export function updateNav(user) {
     });
   } else {
     authSection.innerHTML = `
-      <button class="btn btn-nav-auth-filled" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
-      <button class="btn btn-nav-auth-outline" onclick="window.openAuthModal('register')">Criar Conta</button>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-nav-auth-filled" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
+        <button class="btn btn-nav-auth-outline" onclick="window.openAuthModal('register')">Criar Conta</button>
+      </div>
     `;
   }
 }
