@@ -73,12 +73,12 @@ class BeeSystem {
     this.bees.forEach((bee, index) => {
       const offset = index * 1.5;
 
-      // 1. Expansive Floating (Doubled amplitudes for "broad" movement)
+      // 1. Expansive Floating (Reduced for calmer feel)
       const floatX =
-        Math.sin(time + offset) * 35 + Math.cos(time * 0.5 + offset) * 15;
+        Math.sin(time + offset) * 20 + Math.cos(time * 0.5 + offset) * 10;
       const floatY =
-        Math.cos(time * 0.7 + offset) * 40 + Math.sin(time * 0.3 + offset) * 20;
-      const rotate = Math.sin(time * 0.4 + offset) * 25;
+        Math.cos(time * 0.7 + offset) * 25 + Math.sin(time * 0.3 + offset) * 10;
+      const rotate = Math.sin(time * 0.4 + offset) * 15;
 
       // 2. Pronounced Parallax
       const depth = 50 + (index % 3) * 25; // Broadened range: 50, 75, or 100px
@@ -94,6 +94,8 @@ class BeeSystem {
 }
 
 // Auto-start
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => new BeeSystem());
+} else {
   new BeeSystem();
-});
+}

@@ -6,6 +6,7 @@
     <title>Hexomel</title>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <script src="src/pre-load.js"></script>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -88,6 +89,13 @@
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+        border-color: #e2e8f0;
       }
 
       .product-table th {
@@ -165,7 +173,7 @@
         padding-bottom: 4px; /* Adjust for pills */
       }
       .tag-pill {
-        background-color: var(--primary-color);
+        background-color: var(--primary-green, #1c5236);
         color: white;
         padding: 2px 8px;
         border-radius: 12px;
@@ -192,18 +200,18 @@
       }
       .tag-suggestion {
         cursor: pointer;
-        border: 1px solid var(--border-color);
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
         padding: 2px 8px;
         font-size: 0.8rem;
-        color: var(--text-color);
+        color: #64748b;
         transition: all 0.2s;
         background: white;
       }
       .tag-suggestion:hover {
-        background-color: var(--light-bg);
-        border-color: var(--primary-color);
-        color: var(--primary-color);
+        background-color: #f8fafc;
+        border-color: var(--primary-green, #1c5236);
+        color: var(--primary-green, #1c5236);
       }
       .admin-section {
         display: none;
@@ -213,14 +221,8 @@
         display: block;
       }
 
-      /* Navbar override for Admin */
-      .navbar-enhanced {
-        background: white !important;
-        border-bottom: 1px solid #e2e8f0;
-        position: fixed !important;
-      }
       .admin-layout {
-        padding-top: 80px; /* Offset for fixed navbar */
+        padding-top: 100px; /* Offset for fixed navbar + breathing room */
       }
       .admin-sidebar {
         top: 80px;
@@ -229,9 +231,9 @@
     </style>
   </head>
   <body>
-    <!-- Navbar (Premium Overhaul) - Copied from index.html -->
+    <!-- Navbar (Premium Overhaul) -->
     <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
-      <div class="container-fluid px-4">
+      <div class="container">
         <a class="navbar-brand" href="index.html">
           <img
             src="/images/logo_hexomel.webp"
@@ -248,7 +250,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto gap-4">
+          <ul class="navbar-nav mx-auto gap-4">
             <li class="nav-item">
               <a class="nav-link" href="index.html">Início</a>
             </li>
@@ -263,28 +265,23 @@
             </li>
           </ul>
 
-          <div class="d-flex align-items-center gap-3 ms-lg-4" id="authSection">
-            <!-- Injected by main.js or admin specific auth -->
-            <div class="dropdown">
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
               <button
-                class="btn btn-auth-enhanced register dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
+                id="cart-btn"
+                class="btn btn-link text-decoration-none text-dark position-relative p-0"
               >
-                <i class="fas fa-user-shield me-2"></i> Admin
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span
+                  id="cart-badge"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                  >0</span
+                >
               </button>
-              <ul
-                class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2"
-                style="border-radius: 12px"
-              >
-                <li>
-                  <a class="dropdown-item rounded py-2" href="#" id="logout-btn"
-                    ><i class="fas fa-sign-out-alt me-2 text-danger"></i>
-                    Sair</a
-                  >
-                </li>
-              </ul>
+            </div>
+
+            <div class="d-flex align-items-center gap-3" id="authSection">
+              <!-- Injected by main.js -->
             </div>
           </div>
         </div>
@@ -315,7 +312,7 @@
         </nav>
       </aside>
 
-      <main class="admin-main">
+      <main class="admin-main" style="padding-top: 2rem">
         <!-- DASHBOARD OVERVIEW SECTION -->
         <section id="dashboard-section" class="admin-section active">
           <!-- Welcome Header -->
@@ -323,23 +320,37 @@
             class="admin-card mb-4 border-0 shadow-sm"
             style="
               background: linear-gradient(135deg, #ffffff 0%, #fefdf5 100%);
+              border: 1px solid rgba(244, 180, 0, 0.2) !important;
             "
           >
             <div class="row align-items-center">
-              <div class="col-md-8">
+              <div class="col-md-9">
                 <span
-                  class="text-uppercase text-muted small fw-bold ls-1 mb-2 d-block"
-                  >Bem-vindo</span
+                  class="text-uppercase small fw-bold mb-2 d-inline-block px-3 py-1 rounded-pill"
+                  style="
+                    background: rgba(244, 180, 0, 0.15);
+                    color: #b48500;
+                    letter-spacing: 1px;
+                  "
+                  >Bem-vindo ao Painel</span
                 >
-                <h1 class="fw-bold text-dark mb-2">Administrador do Sistema</h1>
-                <p class="text-muted mb-0">
+                <h1
+                  class="fw-bold text-dark mt-3 mb-2"
+                  style="font-family: var(--font-heading)"
+                >
+                  Administrador do Sistema
+                </h1>
+                <p class="text-muted mb-0 fs-5">
                   Visão geral e gestão dos dados principais.
                 </p>
               </div>
-              <div class="col-md-4 text-end d-none d-md-block">
+              <div class="col-md-3 text-end d-none d-md-block">
                 <i
-                  class="fas fa-user-shield fa-4x"
-                  style="color: rgba(201, 176, 55, 0.1)"
+                  class="fas fa-crown fa-5x"
+                  style="
+                    color: rgba(244, 180, 0, 0.15);
+                    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+                  "
                 ></i>
               </div>
             </div>

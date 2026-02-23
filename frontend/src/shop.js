@@ -11,35 +11,75 @@ const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
 // State
 let products = [];
 let filteredProducts = [];
+let categories = [];
 let userFavorites = [];
 
-// Fetch products from API
+// Fetch products from API and categories
 async function fetchProducts() {
   try {
+    // 1. Fetch Categories first to make naming dynamic
+    const catRes = await fetch(`${API_URL}/categories`);
+    categories = await catRes.json();
+
+    // Render dynamic category filters
+    renderCategoryFilters();
+
+    // 2. Fetch Products
     const res = await fetch(`${API_URL}/products`);
     const data = await res.json();
 
-    products = data.map((p) => ({
-      id: p.ID_Produto,
-      name: p.Nome,
-      price: Number(p.Preco), // Fix: Ensure price is a number
-      description: p.Descricao,
-      category:
-        p.ID_Categoria === 2
-          ? "Derivados"
-          : p.ID_Categoria === 3
-            ? "Acessórios"
-            : "Méls",
-      image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
-      weight: "500g",
-      tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
-    }));
+    products = data.map((p) => {
+      // Find category name by ID dynamically
+      const catObj = categories.find((c) => c.ID_Categoria === p.ID_Categoria);
+      const catName = catObj ? catObj.Nome : "Sem Categoria";
+
+      return {
+        id: p.ID_Produto,
+        name: p.Nome,
+        price: Number(p.Preco),
+        description: p.Descricao,
+        category: catName,
+        categoryId: p.ID_Categoria,
+        image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
+        weight: "500g",
+        tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
+        rating: p.Rating || 0,
+        reviewCount: p.ReviewCount || 0,
+      };
+    });
 
     filteredProducts = [...products];
     renderProducts();
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching data:", error);
   }
+}
+
+// Dynamically Render Category Checkboxes in the Sidebar
+function renderCategoryFilters() {
+  const container = document.getElementById("dynamic-categories-container");
+  if (!container) return; // if shop.html is not updated yet
+
+  container.innerHTML = categories
+    .map(
+      (cat) => `
+    <label class="custom-checkbox-container">
+      <input
+        type="checkbox"
+        id="cat-${cat.ID_Categoria}"
+        class="custom-checkbox-input category-filter-checkbox"
+        data-cat-id="${cat.ID_Categoria}"
+      />
+      <span class="custom-checkbox-visual"></span>
+      <span class="checkbox-label-text">${cat.Nome}</span>
+    </label>
+  `,
+    )
+    .join("");
+
+  // Re-bind events for newly created checkboxes
+  const newCheckboxes = document.querySelectorAll(".category-filter-checkbox");
+  newCheckboxes.forEach((cb) => cb.addEventListener("change", applyFilters));
 }
 
 // Render products (Nike Style)
@@ -57,7 +97,7 @@ function renderProducts() {
     .map(
       (product) => `
     <div class="col-md-6 col-lg-4 mb-4">
-      <div class="product-card-premium h-100 position-relative">
+      <div class="product-card-premium h-100 position-relative d-flex flex-column">
         <div class="product-img-container" style="cursor: pointer" onclick="window.openProductDetails(${product.id})">
           <div class="product-tags-container">
             ${product.tags
@@ -70,20 +110,32 @@ function renderProducts() {
           </div>
           <img src="${product.image}" alt="${product.name}" onerror="this.src='${fallbackImage}'">
         </div>
-        <div class="p-4">
-          <div onclick="window.openProductDetails(${product.id})" style="cursor: pointer">
-              <h5 class="fw-bold mb-1">${product.name}</h3>
-              <p class="text-muted small mb-3">${product.category} • ${product.weight}</p>
+        <div class="p-4 d-flex flex-column flex-grow-1">
+          <div onclick="window.openProductDetails(${product.id})" style="cursor: pointer" class="mb-3">
+              <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${product.name}</h3>
+              <div class="star-rating">
+                ${generateStars(product.rating)} 
+                <span class="text-muted small">(${product.reviewCount})</span>
+              </div>
+              <p class="text-muted small mb-0">${product.category} • ${product.weight}</p>
           </div>
-          <div class="d-flex justify-content-between align-items-center mt-3 gap-2">
+          <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
             <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
             
-            <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
-                    style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
-                    id="btn-fav-${product.id}"
-                    onclick="window.toggleFavorite(${product.id})">
-                <i class="fas fa-heart"></i>
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                      style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
+                      onclick="event.stopPropagation(); window.addToCart(${product.id})"
+                      title="Adicionar ao Carrinho">
+                  <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
+              </button>
+              <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
+                      style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                      id="btn-fav-${product.id}"
+                      onclick="window.toggleFavorite(${product.id})">
+                  <i class="fas fa-heart"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -95,10 +147,13 @@ function renderProducts() {
 
 // Filtering Logic
 function applyFilters() {
-  // 1. Get checked categories
-  const melPuro = document.getElementById("cat-mel")?.checked;
-  const polen = document.getElementById("cat-polen")?.checked;
-  const acessorios = document.getElementById("cat-acessorios")?.checked;
+  // 1. Get checked dynamic categories
+  const checkedBoxes = document.querySelectorAll(
+    ".category-filter-checkbox:checked",
+  );
+  const selectedCatIds = Array.from(checkedBoxes).map((cb) =>
+    Number(cb.getAttribute("data-cat-id")),
+  );
 
   // 2. Get price range
   const maxPrice = Number(document.getElementById("priceRange")?.value || 100);
@@ -106,12 +161,10 @@ function applyFilters() {
   // Filter
   filteredProducts = products.filter((p) => {
     let catMatch = true;
-    // If any category filter is checked, product must match one of them
-    if (melPuro || polen || acessorios) {
-      catMatch = false;
-      if (melPuro && p.category === "Méls") catMatch = true;
-      if (polen && p.category === "Derivados") catMatch = true;
-      if (acessorios && p.category === "Acessórios") catMatch = true;
+
+    // If any category filter is checked, product must belong to one of the selected categories
+    if (selectedCatIds.length > 0) {
+      catMatch = selectedCatIds.includes(p.categoryId);
     }
 
     let priceMatch = p.price <= maxPrice;
@@ -141,17 +194,22 @@ window.openProductDetails = async function (productId) {
           <h2 class="minimal-title">${product.name}</h2>
           <div class="minimal-price">€${product.price.toFixed(2)}</div>
           
-          <div class="minimal-description">
-            ${product.description || "Trench com gola de lapela em tecido de contraste. Capuz removível ajustável com botão de pressão. Manga comprida com presilha e botão. Bolsos de chapa com aba e botões de pressão à frente."}
-          </div>
           
-          <div class="quantity-selector">
+          <div class="progress mb-4" style="height: 5px;">
+             <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+          </div>
+
+          <div class="minimal-description">
+            ${product.description || "Descrição do produto não disponível."}
+          </div>
+
+          <div class="quantity-selector mt-4">
              <button class="qty-btn" onclick="window.updateModalQty(-1)">-</button>
              <input type="number" id="modal-qty" class="qty-input" value="1" min="1" readonly>
              <button class="qty-btn" onclick="window.updateModalQty(1)">+</button>
           </div>
           
-          <div class="minimal-actions">
+          <div class="minimal-actions mb-5">
             <button class="btn-minimal-add" onclick="window.addToCartFromDetails(${product.id})">
               ADICIONAR
             </button>
@@ -162,20 +220,94 @@ window.openProductDetails = async function (productId) {
               <i class="fas fa-heart" ></i>
           </button>
           </div>
+
+          <!-- Reviews Section -->
+           <div class="reviews-section">
+            <h3 class="reviews-title">Avaliações</h3>
+            <div id="reviews-list-${product.id}" class="review-list">
+                <p class="text-muted">A carregar avaliações...</p>
+            </div>
+            
+            <div class="review-form-container">
+                <label class="form-label">A sua avaliação</label>
+                <div class="rating-input d-flex gap-1" id="rating-input-stars">
+                    <i class="far fa-star" data-value="1"></i>
+                    <i class="far fa-star" data-value="2"></i>
+                    <i class="far fa-star" data-value="3"></i>
+                    <i class="far fa-star" data-value="4"></i>
+                    <i class="far fa-star" data-value="5"></i>
+                </div>
+                <input type="hidden" id="review-rating-value" value="0">
+                
+                <label class="form-label mt-3">O seu comentário</label>
+                <textarea id="review-comment" class="review-textarea" placeholder="Partilhe a sua experiência..."></textarea>
+                
+                <button class="btn-submit-review" onclick="window.submitReview(${product.id})">Enviar Avaliação</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `;
 
-  document.getElementById("detailsOverlay")?.remove();
+  /* Prevent double modal */
+  const existing = document.getElementById("detailsOverlay");
+  if (existing) existing.remove();
+
   document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+  // Setup Star Rating Interactions
+  const stars = document.querySelectorAll("#rating-input-stars i");
+  const hiddenInput = document.getElementById("review-rating-value");
+
+  stars.forEach((star) => {
+    // Hover effect
+    star.addEventListener("mouseover", function () {
+      const val = parseInt(this.getAttribute("data-value"));
+      stars.forEach((s, idx) => {
+        if (idx < val) {
+          s.classList.remove("far");
+          s.classList.add("fas", "hovered");
+          s.style.color = "#f4d03f";
+        } else {
+          s.classList.remove("fas", "hovered");
+          s.classList.add("far");
+          s.style.color = "#ddd";
+        }
+      });
+    });
+
+    // Reset on mouseout
+    star.parentNode.addEventListener("mouseout", function () {
+      const currentRating = parseInt(hiddenInput.value);
+      window.setRating(currentRating); // Reset to selected
+    });
+
+    // Click to select
+    star.addEventListener("click", function () {
+      const val = parseInt(this.getAttribute("data-value"));
+      window.setRating(val);
+
+      // Add a little pop animation class
+      this.classList.add("pop-anim");
+      setTimeout(() => this.classList.remove("pop-anim"), 300);
+    });
+  });
+
+  // Animation
+  setTimeout(() => {
+    document.getElementById("detailsOverlay").classList.add("active");
+  }, 10);
+
+  // Load Reviews
+  window.loadReviews(productId);
 
   // Check favorite state handled by isFavorited in template, but modal btn needs specific ID check if opened later
   updateModalFavBtn(productId);
 
   setTimeout(() => {
     document.getElementById("detailsOverlay").classList.add("active");
-    document.body.style.overflow = "hidden";
+    document.documentElement.classList.add("modal-open");
   }, 10);
 };
 
@@ -192,7 +324,7 @@ window.closeProductDetails = function () {
   overlay.classList.remove("active");
   setTimeout(() => {
     overlay.remove();
-    document.body.style.overflow = "";
+    document.documentElement.classList.remove("modal-open");
   }, 400);
 };
 
@@ -301,13 +433,140 @@ window.addToCart = function (productId) {
   cart.addItem(productId);
 };
 
+// Helper: Generate Stars HTML
+function generateStars(rating) {
+  let starsHtml = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) {
+      starsHtml += '<i class="fas fa-star filled" style="color: #f4b400"></i>';
+    } else if (i - 0.5 <= rating) {
+      starsHtml +=
+        '<i class="fas fa-star-half-alt filled" style="color: #f4b400"></i>';
+    } else {
+      starsHtml += '<i class="far fa-star" style="color: #ddd"></i>';
+    }
+  }
+  return starsHtml;
+}
+
+// Fetch and Render Reviews
+window.loadReviews = async (productId) => {
+  const container = document.getElementById(`reviews-list-${productId}`);
+  if (!container) return;
+  try {
+    const res = await fetch(`${API_URL}/products/${productId}/reviews`);
+    if (!res.ok) throw new Error("Failed");
+    const reviews = await res.json();
+
+    if (reviews.length === 0) {
+      container.innerHTML =
+        '<p class="text-muted">Ainda não existem avaliações. Seja o primeiro!</p>';
+      return;
+    }
+
+    container.innerHTML = reviews
+      .map(
+        (r) => `
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-info">
+                         <img src="${r.ClienteFoto && r.ClienteFoto !== "null" ? r.ClienteFoto : "https://ui-avatars.com/api/?name=" + r.ClienteNome + "&background=random"}" class="reviewer-avatar" referrerpolicy="no-referrer" onerror="this.src='https://ui-avatars.com/api/?name=${r.ClienteNome}&background=random'">
+                         <span>${r.ClienteNome}</span>
+                    </div>
+                    <div class="star-rating" style="font-size: 0.8rem">${generateStars(r.Nota)}</div>
+                </div>
+                <div class="review-text">${r.Comentario || ""}</div>
+                <div class="review-date text-end mt-2">${new Date(r.Data_Avaliacao).toLocaleDateString()}</div>
+            </div>
+        `,
+      )
+      .join("");
+  } catch (err) {
+    console.error(err);
+    container.innerHTML =
+      '<p class="text-danger">Erro ao carregar avaliações.</p>';
+  }
+};
+
+// Rating Input Logic
+window.setRating = (rating) => {
+  document.getElementById("review-rating-value").value = rating;
+  const stars = document.querySelectorAll("#rating-input-stars i");
+  stars.forEach((star, index) => {
+    if (index < rating) {
+      star.classList.remove("far");
+      star.classList.remove("hovered");
+      star.classList.add("fas", "filled");
+      star.style.color = "#f4b400";
+    } else {
+      star.classList.remove("fas", "filled");
+      star.classList.remove("hovered");
+      star.classList.add("far");
+      star.style.color = "#ddd";
+    }
+  });
+};
+
+// Submit Review
+window.submitReview = async (productId) => {
+  const rating = document.getElementById("review-rating-value").value;
+  const comment = document.getElementById("review-comment").value;
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    Swal.fire(
+      "Login Necessário",
+      "Por favor, faça login para avaliar.",
+      "info",
+    );
+    return;
+  }
+
+  if (rating == 0) {
+    Swal.fire(
+      "Atenção",
+      "Por favor, selecione uma classificação (estrelas).",
+      "warning",
+    );
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/products/${productId}/reviews`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ rating: Number(rating), comment }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      window.closeProductDetails(); // Close the product details modal
+      Swal.fire("Sucesso", "Avaliação enviada!", "success");
+      // clear form
+      document.getElementById("review-comment").value = "";
+      window.setRating(0);
+    } else {
+      Swal.fire("Erro", data.error || "Falha ao enviar avaliação", "error");
+    }
+  } catch (err) {
+    console.error(err);
+    Swal.fire("Erro", "Erro de conexão", "error");
+  }
+};
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchProducts();
   await fetchFavorites(); // Get latest from DB
 
   // Bind Filter Events
-  const filters = document.querySelectorAll(".form-check-input, #priceRange");
+  const filters = document.querySelectorAll(
+    ".custom-checkbox-input, #priceRange",
+  );
   filters.forEach((f) => {
     f.addEventListener("change", applyFilters);
     f.addEventListener("input", applyFilters); // For range slider

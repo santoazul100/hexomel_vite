@@ -24,13 +24,10 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <!-- Pre-load state detection -->
+    <script src="src/pre-load.js"></script>
   </head>
   <body>
-    <!-- Scattered Bees Layer -->
-    <div class="bee-container">
-      <img src="abelha/abelha.webp" class="bee-decoration" alt="Bees" />
-      <img src="abelha/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
-    </div>
     <!-- Navbar (Premium Overhaul) -->
     <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
       <div class="container">
@@ -65,29 +62,56 @@
             </li>
           </ul>
 
-          <div class="cart-navbar-separate ms-lg-4">
-            <button
-              id="cart-btn"
-              class="btn btn-link text-decoration-none text-dark position-relative p-0"
-            >
-              <i class="fas fa-shopping-cart fs-5"></i>
-              <span
-                id="cart-badge"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
-                >0</span
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+              <button
+                id="cart-btn"
+                class="btn btn-link text-decoration-none text-dark position-relative p-0"
               >
-            </button>
-          </div>
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span
+                  id="cart-badge"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                  >0</span
+                >
+              </button>
+            </div>
 
-          <div class="d-flex align-items-center gap-3" id="authSection">
-            <!-- Injected by main.js -->
+            <div class="d-flex align-items-center gap-3" id="authSection">
+              <!-- Injected by main.js -->
+            </div>
           </div>
         </div>
       </div>
     </nav>
 
-    <main class="py-5 mt-5">
-      <div class="container py-5 mt-4">
+    <main class="py-5 mt-5 position-relative overflow-hidden">
+      <!-- Floating Bees -->
+      <div
+        class="bee-container z-0"
+        style="
+          position: absolute;
+          width: 100%;
+          height: 100vh;
+          pointer-events: none;
+          top: 0;
+          left: 0;
+        "
+      >
+        <img
+          src="abelha/abelha.webp"
+          class="bee-decoration"
+          alt="Bees"
+          style="top: 10%; left: 8%; width: 55px"
+        />
+        <img
+          src="abelha/abelha_inverso.webp"
+          class="bee-decoration"
+          alt="Bees"
+          style="top: 35%; right: 10%; width: 40px"
+        />
+      </div>
+      <div class="container py-5 mt-4 position-relative z-1">
         <div class="row g-5">
           <div class="col-lg-6 animate-fade-up">
             <h1

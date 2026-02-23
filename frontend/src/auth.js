@@ -208,10 +208,26 @@ export function updateNav(user) {
   const cartIconContainer = document.querySelector(".cart-navbar-separate");
   if (!authSection) return;
 
+  // Check if we already rendered this specific state to prevent flashing
+  const currentState = authSection.getAttribute("data-user-state");
+  const newState = user
+    ? `logged-${user.id || user.ID_Utilizador || user.email}`
+    : "guest";
+
+  if (currentState === newState && authSection.classList.contains("loaded")) {
+    return; // Already rendered correctly
+  }
+
+  // If we are in the middle of a transition from pre-load to full load,
+  // and the state matches, we might still want to render to ensure
+  // all event listeners and dynamic data are attached.
+
   // Toggle cart visibility based on session
   if (cartIconContainer) {
     cartIconContainer.style.display = user ? "flex" : "none";
   }
+
+  authSection.setAttribute("data-user-state", newState);
 
   if (user) {
     // Prioritize picture, then avatar, then default
@@ -226,7 +242,7 @@ export function updateNav(user) {
           <!-- Profile Dropdown -->
           <div class="dropdown">
               <div class="profile-avatar-container" data-bs-toggle="dropdown" aria-expanded="false">
-                  <img src="${avatar}" alt="User" class="user-avatar-navbar" onerror="this.onerror=null;this.src='/images/default-user.png'">
+                  <img src="${avatar}" alt="User" class="user-avatar-navbar" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='/images/default-user.png'">
                   <span class="user-name-navbar d-none d-md-block">${firstName}</span>
               </div>
               <ul class="dropdown-menu dropdown-menu-end dropdown-menu-premium animate-fade-in">
@@ -241,7 +257,6 @@ export function updateNav(user) {
                       }</p>
                   </li>
                   <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
-                  <li><a class="dropdown-item dropdown-item-premium" href="orders.html"><i class="fas fa-history me-2"></i> Encomendas</a></li>
                   ${
                     user.role?.toLowerCase() === "admin" ||
                     user.userType?.toLowerCase() === "admin" ||
@@ -268,4 +283,10 @@ export function updateNav(user) {
       </div>
     `;
   }
+
+  // Add the loaded class with a tiny delay to trigger CSS transition anti-FOUC
+  setTimeout(() => {
+    authSection.classList.add("loaded");
+    if (cartIconContainer) cartIconContainer.classList.add("loaded");
+  }, 10);
 }

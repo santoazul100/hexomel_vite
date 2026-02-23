@@ -9,9 +9,18 @@ class CartManager {
 
   async init() {
     this.createCartUI();
-    this.createCheckoutModal(); // Init modal
+    this.createCheckoutModal();
+    this.renderBadgeOnly(); // Show badge as early as possible
     await this.syncWithBackend();
     this.render();
+  }
+
+  renderBadgeOnly() {
+    const badge = document.getElementById("cart-badge");
+    if (badge) {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      badge.textContent = cart.length;
+    }
   }
 
   createCartUI() {
@@ -49,13 +58,15 @@ class CartManager {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
         z-index: 10001;
         width: 90%;
         max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
         animation: fadeIn 0.3s ease;
       }
       .checkout-modal.active { display: block; }
@@ -206,6 +217,11 @@ class CartManager {
   toggle(show) {
     document.getElementById("cart-sidebar").classList.toggle("open", show);
     document.getElementById("cart-overlay").classList.toggle("show", show);
+    if (show) {
+      document.documentElement.classList.add("modal-open");
+    } else {
+      document.documentElement.classList.remove("modal-open");
+    }
   }
 
   render() {
@@ -226,13 +242,16 @@ class CartManager {
                     ).toFixed(2)}</div>
                 </div>
                 
-                <div class="cart-item-controls">
-                    <button class="cart-qty-btn" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
-                    <span class="cart-qty-val">${item.Quantidade}</span>
-                    <button class="cart-qty-btn" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                <div class="cart-item-controls" style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+                    <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+                        <button class="cart-qty-btn" style="border: none; background: white; padding: 4px 10px; cursor: pointer; color: #64748b;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
+                        <span class="cart-qty-val" style="padding: 4px 12px; font-weight: 600; font-size: 0.95rem;">${item.Quantidade}</span>
+                        <button class="cart-qty-btn" style="border: none; background: white; padding: 4px 10px; cursor: pointer; color: #64748b;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                    </div>
                     
-                    <button class="cart-remove-btn" onclick="cart.removeItem(${item.ID_itemCarrinho})">
-                        <i class="fas fa-trash"></i> Remover
+                    <button class="cart-remove-btn" onclick="cart.removeItem(${item.ID_itemCarrinho})" style="background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ff8a8a; font-size: 0.85rem; cursor: pointer; padding: 0; margin-left: auto; transition: color 0.2s;">
+                        <i class="fas fa-trash-alt" style="font-size: 1.1rem; margin-bottom: 2px;"></i>
+                        <span style="font-weight: 500;">Remover</span>
                     </button>
                 </div>
             </div>
@@ -258,38 +277,96 @@ class CartManager {
     modal.className = "checkout-modal";
     modal.id = "checkout-modal";
     modal.innerHTML = `
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0 fw-bold">Finalizar Compra</h4>
-        <button type="button" class="btn-close" onclick="cart.closeCheckoutModal()"></button>
-      </div>
-      <form id="checkout-form">
-        <div class="mb-3">
-          <label class="form-label small fw-bold">Morada de Entrega</label>
-          <input type="text" class="form-control form-control-v2" required placeholder="Rua, Cidade, Código Postal">
+      <div class="checkout-modal-header" style="text-align: center; margin-bottom: 1.25rem;">
+        <div style="background: linear-gradient(135deg, var(--primary-gold) 0%, #ffc107 100%); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; color: white; font-size: 1.2rem; box-shadow: 0 8px 20px rgba(244, 180, 0, 0.3);">
+          <i class="fas fa-shopping-basket"></i>
         </div>
-        <div class="mb-3">
-          <label class="form-label small fw-bold">Pagamento (Simulação)</label>
-          <div class="d-flex gap-2">
-            <div class="border rounded p-2 flex-grow-1 text-center" style="cursor:pointer; border-color: var(--primary-color)!important">
-              <i class="fas fa-credit-card me-2"></i> Cartão
+        <h5 class="fw-bold mb-1" style="font-family: var(--font-heading); color: var(--text-dark);">Finalizar Encomenda</h5>
+        <p class="text-muted small mb-0" style="font-size: 0.8rem;">Complete os seus dados para receber o seu mel</p>
+      </div>
+      
+      <form id="checkout-form">
+        <div class="checkout-section mb-3">
+          <label class="form-label fw-bold small text-uppercase mb-1" style="letter-spacing: 1px; color: #64748b; font-size: 0.75rem;">Dados de Entrega</label>
+          <div class="mb-2">
+            <div class="input-group-v2">
+              <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
+              <input type="text" id="checkout-address" class="form-control" required placeholder="Morada Completa (Rua, Nº, CP, Cidade)">
             </div>
-            <div class="border rounded p-2 flex-grow-1 text-center text-muted">
-              <i class="fas fa-university me-2"></i> MB Way
+          </div>
+          <div class="mb-2">
+            <div class="input-group-v2">
+              <span class="input-icon"><i class="fas fa-phone"></i></span>
+              <input type="tel" id="checkout-phone" class="form-control" required placeholder="Telefone de Contacto" pattern="[0-9]{9,}">
             </div>
           </div>
         </div>
-        <div class="mb-4">
-           <label class="form-label small fw-bold">Dados do Cartão (Mock)</label>
-           <input type="text" class="form-control form-control-v2 mb-2" value="4242 4242 4242 4242" disabled>
-           <div class="row g-2">
-             <div class="col-6"><input type="text" class="form-control form-control-v2" value="12/28" disabled></div>
-             <div class="col-6"><input type="text" class="form-control form-control-v2" value="123" disabled></div>
-           </div>
+
+        <div class="checkout-section mb-3">
+          <label class="form-label fw-bold small text-uppercase mb-1" style="letter-spacing: 1px; color: #64748b; font-size: 0.75rem;">Método de Pagamento</label>
+          <div class="payment-options d-flex gap-2">
+            <div class="payment-card active" style="flex: 1; border: 2px solid var(--primary-gold); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; background: #fffdf5; transition: all 0.2s; box-shadow: 0 4px 12px rgba(244, 180, 0, 0.1);">
+              <i class="fas fa-credit-card d-block mb-1" style="font-size: 1.2rem; color: var(--primary-gold);"></i>
+              <span class="small fw-bold text-dark">Cartão</span>
+            </div>
+            <div class="payment-card disabled" style="flex: 1; border: 2px solid transparent; background: #f8fafc; border-radius: 12px; padding: 12px; text-align: center; cursor: not-allowed; opacity: 0.7; transition: all 0.2s;">
+              <i class="fas fa-university d-block mb-1" style="font-size: 1.2rem; color: #94a3b8;"></i>
+              <span class="small fw-bold text-muted">MB Way</span>
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary w-100" id="confirm-checkout-btn">
-          Pagar e Encomendar
+
+        <div class="order-summary-mini mb-3" style="background: linear-gradient(to right, #f8fafc, #f1f5f9); padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted fw-medium small">Total a pagar:</span>
+            <span class="fw-bold h4 mb-0" id="checkout-final-total" style="color: var(--primary-gold); font-family: var(--font-heading);">€0.00</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="confirm-checkout-btn" style="border-radius: 12px; font-size: 1.05rem; box-shadow: 0 8px 20px rgba(244, 180, 0, 0.3); transition: all 0.3s; background: linear-gradient(135deg, var(--primary-gold) 0%, #ffc107 100%); border: none;">
+          Confirmar e Pagar
         </button>
+        
+        <button class="btn btn-link w-100 text-muted small mt-2 py-1 fw-medium" type="button" onclick="cart.closeCheckoutModal()" style="text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#1e293b'" onmouseout="this.style.color='#64748b'">Cancelar e voltar ao carrinho</button>
       </form>
+      
+      <style>
+        .input-group-v2 {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .input-icon {
+          position: absolute;
+          left: 15px;
+          color: #94a3b8;
+          z-index: 10;
+          font-size: 1rem;
+        }
+        .input-group-v2 .form-control {
+          padding-left: 45px;
+          height: 46px;
+          border-radius: 10px;
+          border: 2px solid #e2e8f0;
+          background-color: #f8fafc;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-size: 0.9rem;
+          color: #1e293b;
+        }
+        .input-group-v2 .form-control:focus {
+          border-color: var(--primary-gold);
+          background-color: #ffffff;
+          box-shadow: 0 0 0 4px rgba(244, 180, 0, 0.15);
+          outline: none;
+        }
+        .input-group-v2 .form-control::placeholder {
+          color: #94a3b8;
+        }
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 25px rgba(244, 180, 0, 0.4) !important;
+        }
+      </style>
     `;
 
     document.body.appendChild(overlay);
@@ -305,57 +382,100 @@ class CartManager {
   }
 
   openCheckoutModal() {
+    const total = this.items.reduce(
+      (sum, item) => sum + item.Preco * item.Quantidade,
+      0,
+    );
+    document.getElementById("checkout-final-total").textContent =
+      `€${total.toFixed(2)}`;
+
     document.getElementById("checkout-modal").classList.add("active");
     document.getElementById("checkout-overlay").classList.add("active");
     this.toggle(false); // Close cart sidebar
+    document.documentElement.classList.add("modal-open"); // Block body scroll
   }
 
   closeCheckoutModal() {
     document.getElementById("checkout-modal").classList.remove("active");
     document.getElementById("checkout-overlay").classList.remove("active");
+    document.documentElement.classList.remove("modal-open"); // Restore scroll
   }
 
   async handlePaymentSimulation() {
     const btn = document.getElementById("confirm-checkout-btn");
+    const address = document.getElementById("checkout-address").value;
+    const phone = document.getElementById("checkout-phone").value;
+
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border"></span> Processando...';
+    btn.innerHTML =
+      '<span class="spinner-border"></span> Processando Pagamento...';
     btn.disabled = true;
 
     // Simulate network delay for payment
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 2000));
 
     // Proceed to backend checkout
-    await this.processBackendCheckout();
+    await this.processBackendCheckout(address, phone);
 
     btn.innerHTML = originalText;
     btn.disabled = false;
   }
 
-  async processBackendCheckout() {
+  async processBackendCheckout(address, phone) {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_URL}/cart/checkout`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ address, phone }),
       });
 
       const data = await res.json();
       if (res.ok) {
+        this.closeCheckoutModal();
         window.closeAllPopups();
+
         Swal.fire({
           icon: "success",
-          title: "Encomenda Confirmada!",
-          html: `<p>Obrigado pela sua compra.</p><p class="small text-muted">Um email de confirmação foi enviado.</p>`,
-          confirmButtonColor: "var(--primary-gold)",
+          title: '<span style="color: #f4b400">Encomenda Confirmada!</span>',
+          html: `
+            <div style="text-align: center;">
+              <p>Obrigado pela sua compra, a nossa colmeia já está a trabalhar nela!</p>
+              <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 1px solid #e2e8f0;">
+                <p class="small text-muted mb-0">Um email de confirmação foi enviado para a sua conta.</p>
+                <p class="small fw-bold mt-1">ID da Encomenda: #${data.orderId}</p>
+              </div>
+            </div>
+          `,
+          confirmButtonColor: "#f4b400",
+          confirmButtonText: "Continuar a Comprar",
         });
+
         this.items = [];
         this.render();
       } else {
-        Swal.fire("Erro", data.error || "Falha na encomenda", "error");
+        Swal.fire({
+          title: "Erro",
+          text: data.error || "Falha na encomenda",
+          icon: "error",
+          customClass: {
+            container: "swal-top-layer",
+          },
+        });
       }
     } catch (error) {
       console.error("Checkout Request Failed", error);
-      Swal.fire("Erro", "Falha de comunicação com o servidor", "error");
+      Swal.fire({
+        title: "Erro",
+        text: "Falha de comunicação com o servidor",
+        icon: "error",
+        customClass: {
+          container: "swal-top-layer",
+        },
+      });
     }
   }
 }

@@ -6,6 +6,7 @@ class AdminUI {
     this.products = [];
     this.users = [];
     this.orders = [];
+    this.categories = []; // newly added
     this.token = localStorage.getItem("token");
     this.userData = JSON.parse(localStorage.getItem("user"));
     this.currentTags = new Set(); // Stores active tags for the modal
@@ -23,28 +24,39 @@ class AdminUI {
     }
 
     this.setupEventListeners();
-    this.setupEventListeners();
     // Navbar is now static, just init auth
     this.initAuth();
+
+    // Init Cart for the Navbar
+    try {
+      const { cart } = await import("./cart.js");
+      const cartBtn = document.getElementById("cart-btn");
+      if (cartBtn) {
+        cartBtn.addEventListener("click", () => cart.toggle(true));
+      }
+    } catch (e) {
+      console.error("Cart init error", e);
+    }
+
     this.initTagInput();
     this.switchSection("dashboard"); // Default view
   }
 
   async initAuth() {
     try {
-        const { updateNav, getLoggedUser, logout } = await import("./auth.js");
-        updateNav(getLoggedUser());
-        
-        // Setup Logout
-        const logoutBtn = document.getElementById("logout-btn");
-        if(logoutBtn) {
-            logoutBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                logout();
-            });
-        }
+      const { updateNav, getLoggedUser, logout } = await import("./auth.js");
+      updateNav(getLoggedUser());
+
+      // Setup Logout
+      const logoutBtn = document.getElementById("logout-btn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          logout();
+        });
+      }
     } catch (e) {
-        console.error("Auth init error", e);
+      console.error("Auth init error", e);
     }
   }
 
@@ -80,7 +92,7 @@ class AdminUI {
 
     // Trigger file input when clicking the box
     if (trigger && fileInput) {
-        trigger.addEventListener("click", () => fileInput.click());
+      trigger.addEventListener("click", () => fileInput.click());
     }
 
     if (fileInput) {
@@ -92,11 +104,11 @@ class AdminUI {
             preview.src = e.target.result;
             preview.style.display = "block";
             // Check if placeholder exists (it might be hidden)
-            if(placeholder) placeholder.style.display = "none";
+            if (placeholder) placeholder.style.display = "none";
           };
           reader.readAsDataURL(file);
         } else {
-            // Keep existing logic for clearing
+          // Keep existing logic for clearing
         }
       });
     }
@@ -119,39 +131,45 @@ class AdminUI {
 
     // Load Data
     if (sectionId === "dashboard") this.loadDashboardStats();
-    if (sectionId === "products") this.loadProducts();
+    if (sectionId === "products") {
+      this.loadCategories(); // Always ensure categories are loaded for product view
+      this.loadProducts();
+    }
     if (sectionId === "customers") this.loadUsers();
     if (sectionId === "orders") this.loadOrders();
   }
 
   async loadDashboardStats() {
-      try {
-        // Fetch all data in parallel
-        await Promise.all([this.loadProducts(), this.loadUsers(), this.loadOrders()]);
+    try {
+      // Fetch all data in parallel
+      await Promise.all([
+        this.loadProducts(),
+        this.loadUsers(),
+        this.loadOrders(),
+      ]);
 
-        // Update Users
-        const userCount = this.users.length;
-        const totalUsersEl = document.getElementById("dash-total-users");
-        if(totalUsersEl) totalUsersEl.innerText = userCount;
+      // Update Users
+      const userCount = this.users.length;
+      const totalUsersEl = document.getElementById("dash-total-users");
+      if (totalUsersEl) totalUsersEl.innerText = userCount;
 
-        // Update Products
-        const prodCount = this.products.length;
-        const totalProdsEl = document.getElementById("dash-total-products");
-        if(totalProdsEl) totalProdsEl.innerText = prodCount;
-        
-        // Update Orders
-        const orderCount = this.orders.length;
-        const totalOrdersEl = document.getElementById("dash-total-orders");
-        if(totalOrdersEl) totalOrdersEl.innerText = orderCount;
+      // Update Products
+      const prodCount = this.products.length;
+      const totalProdsEl = document.getElementById("dash-total-products");
+      if (totalProdsEl) totalProdsEl.innerText = prodCount;
 
-        // Calculate Low Stock (less than 5 units)
-        const lowStockCount = this.products.filter(p => p.Stock < 5).length;
-        const lowStockEl = document.getElementById("dash-low-stock");
-        if(lowStockEl) lowStockEl.innerText = lowStockCount;
+      // Update Orders
+      const orderCount = this.orders.length;
+      const totalOrdersEl = document.getElementById("dash-total-orders");
+      if (totalOrdersEl) totalOrdersEl.innerText = orderCount;
 
-      } catch (e) {
-        console.error("Error loading dashboard stats", e);
-      }
+      // Calculate Low Stock (less than 5 units)
+      const lowStockCount = this.products.filter((p) => p.Stock < 5).length;
+      const lowStockEl = document.getElementById("dash-low-stock");
+      if (lowStockEl) lowStockEl.innerText = lowStockCount;
+    } catch (e) {
+      console.error("Error loading dashboard stats", e);
+    }
   }
 
   // --- PRODUCTS ---
@@ -170,9 +188,18 @@ class AdminUI {
 
   renderProducts() {
     const container = document.getElementById("product-list-body");
+
+    if (this.products.length === 0) {
+      container.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Nenhum produto cadastrado.</td></tr>`;
+      return;
+    }
+
     container.innerHTML = this.products
-      .map(
-        (p) => `
+      .map((p) => {
+        const category =
+          this.categories?.find((c) => c.ID_Categoria === p.ID_Categoria)
+            ?.Nome || `CAT ${p.ID_Categoria}`;
+        return `
             <tr>
                 <td>
                     <div class="d-flex align-items-center gap-3">
@@ -190,7 +217,7 @@ class AdminUI {
                     </span>
                 </td>
                 <td>
-                    <span class="badge bg-light text-dark border">${p.ID_Categoria === 1 ? "Méls" : "Derivados"}</span>
+                    <span class="badge bg-light text-dark border">${category}</span>
                 </td>
                 <td class="text-end">
                     <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
@@ -201,8 +228,8 @@ class AdminUI {
                     </button>
                 </td>
             </tr>
-        `,
-      )
+        `;
+      })
       .join("");
   }
 
@@ -222,6 +249,12 @@ class AdminUI {
 
   renderUsers() {
     const container = document.getElementById("customer-list-body");
+
+    if (this.users.length === 0) {
+      container.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Nenhum cliente registado.</td></tr>`;
+      return;
+    }
+
     container.innerHTML = this.users
       .map(
         (u) => `
@@ -231,7 +264,7 @@ class AdminUI {
                 <td><span class="badge bg-light text-dark">${u.UserType}</span></td>
                 <td>${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id ? "disabled" : ""}>
+                    <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""}>
                         <i class="fas fa-user-minus"></i>
                     </button>
                 </td>
@@ -257,6 +290,12 @@ class AdminUI {
 
   renderOrders() {
     const container = document.getElementById("order-list-body");
+
+    if (this.orders.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Sem encomendas no momento.</td></tr>`;
+      return;
+    }
+
     container.innerHTML = this.orders
       .map(
         (o) => `
@@ -306,6 +345,18 @@ class AdminUI {
   }
 
   async deleteUser(id) {
+    const userToDel = this.users.find(
+      (u) => String(u.ID_Cliente) === String(id),
+    );
+    if (userToDel && userToDel.UserType?.toLowerCase() === "admin") {
+      Swal.fire(
+        "Aviso",
+        "Não é possível remover contas de administrador.",
+        "warning",
+      );
+      return;
+    }
+
     const result = await Swal.fire({
       title: "Remover Cliente?",
       text: "Esta ação apagará a conta e todo o histórico!",
@@ -331,13 +382,36 @@ class AdminUI {
   }
 
   // --- PRODUCT CRUD HELPERS (existing logic) ---
+
+  async loadCategories() {
+    try {
+      const response = await fetch(`${API_URL}/categories`);
+      if (response.ok) {
+        this.categories = await response.json();
+        this.populateCategorySelect();
+      }
+    } catch (e) {
+      console.error("Failed to load categories", e);
+    }
+  }
+
+  populateCategorySelect() {
+    const select = document.getElementById("prod-categoria");
+    if (!select) return;
+
+    select.innerHTML = this.categories
+      .map((c) => `<option value="${c.ID_Categoria}">${c.Nome}</option>`)
+      .join("");
+  }
+
   resetForm() {
+    this.populateCategorySelect(); // Ensure populated before showing
     document.getElementById("productForm").reset();
     document.getElementById("product-id").value = "";
     document.getElementById("prod-imagem").value = ""; // Clear hidden path
     document.getElementById("prod-image-preview").style.display = "none";
     document.getElementById("prod-image-placeholder").style.display = "block";
-    
+
     document.getElementById("modalTitle").innerText = "Novo Produto";
     this.currentTags.clear(); // Clear tags on form reset
     this.renderTagPills();
@@ -345,6 +419,7 @@ class AdminUI {
   }
 
   editProduct(id) {
+    this.populateCategorySelect(); // Ensure populated before showing
     const p = this.products.find(
       (prod) => String(prod.ID_Produto) === String(id),
     );
@@ -355,19 +430,19 @@ class AdminUI {
     document.getElementById("prod-stock").value = p.Stock;
     document.getElementById("prod-categoria").value = p.ID_Categoria;
     document.getElementById("prod-descricao").value = p.Descricao || "";
-    
+
     // Handle Image
     document.getElementById("prod-imagem").value = p.Imagem || "";
     const preview = document.getElementById("prod-image-preview");
     const placeholder = document.getElementById("prod-image-placeholder");
-    
+
     if (p.Imagem) {
-        preview.src = p.Imagem;
-        preview.style.display = "block";
-        if(placeholder) placeholder.style.display = "none";
+      preview.src = p.Imagem;
+      preview.style.display = "block";
+      if (placeholder) placeholder.style.display = "none";
     } else {
-        preview.style.display = "none";
-        if(placeholder) placeholder.style.display = "block";
+      preview.style.display = "none";
+      if (placeholder) placeholder.style.display = "block";
     }
 
     // Initialize Tags
@@ -396,24 +471,28 @@ class AdminUI {
     // Handle File Upload
     const fileInput = document.getElementById("prod-image-file");
     if (fileInput && fileInput.files.length > 0) {
-        const formData = new FormData();
-        formData.append("image", fileInput.files[0]);
-        
-        try {
-            const uploadRes = await fetch(`${API_URL}/upload`, {
-                method: "POST",
-                body: formData // No headers, browser sets multipart/form-data
-            });
-            if (uploadRes.ok) {
-                const data = await uploadRes.json();
-                imagem = data.path; // Update image path
-            } else {
-                console.error("Upload failed");
-                Swal.fire("Aviso", "Falha no upload da imagem, a guardar sem imagem nova.", "warning");
-            }
-        } catch (err) {
-            console.error("Upload error", err);
+      const formData = new FormData();
+      formData.append("image", fileInput.files[0]);
+
+      try {
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData, // No headers, browser sets multipart/form-data
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          imagem = data.path; // Update image path
+        } else {
+          console.error("Upload failed");
+          Swal.fire(
+            "Aviso",
+            "Falha no upload da imagem, a guardar sem imagem nova.",
+            "warning",
+          );
         }
+      } catch (err) {
+        console.error("Upload error", err);
+      }
     }
 
     const method = id ? "PUT" : "POST";
@@ -480,8 +559,10 @@ class AdminUI {
   initTagInput() {
     const input = document.getElementById("tag-input-field");
     const container = document.getElementById("tag-input-container");
-    const suggestionsContainer = document.getElementById("available-tags-suggestions");
-    
+    const suggestionsContainer = document.getElementById(
+      "available-tags-suggestions",
+    );
+
     if (!input || !container) return;
 
     // Focus input when clicking container
@@ -494,7 +575,11 @@ class AdminUI {
         this.addTag(input.value);
         input.value = "";
       }
-      if (e.key === "Backspace" && input.value === "" && this.currentTags.size > 0) {
+      if (
+        e.key === "Backspace" &&
+        input.value === "" &&
+        this.currentTags.size > 0
+      ) {
         const lastTag = Array.from(this.currentTags).pop();
         this.removeTag(lastTag);
       }
@@ -502,12 +587,12 @@ class AdminUI {
 
     // Event Delegation for Suggestions
     if (suggestionsContainer) {
-        suggestionsContainer.addEventListener("click", (e) => {
-            if (e.target.classList.contains("tag-suggestion")) {
-                const tag = e.target.dataset.tag;
-                if (tag) this.addTag(tag);
-            }
-        });
+      suggestionsContainer.addEventListener("click", (e) => {
+        if (e.target.classList.contains("tag-suggestion")) {
+          const tag = e.target.dataset.tag;
+          if (tag) this.addTag(tag);
+        }
+      });
     }
 
     this.renderSuggestions();
@@ -531,17 +616,17 @@ class AdminUI {
   renderTagPills() {
     const container = document.getElementById("selected-tags-container");
     if (!container) return;
-    
+
     container.innerHTML = "";
-    Array.from(this.currentTags).forEach(tag => {
-        const span = document.createElement("span");
-        span.className = "tag-pill";
-        span.innerHTML = `${tag} <span class="remove-tag">×</span>`;
-        span.querySelector(".remove-tag").onclick = (e) => {
-            e.stopPropagation(); // Prevent container focus
-            this.removeTag(tag);
-        };
-        container.appendChild(span);
+    Array.from(this.currentTags).forEach((tag) => {
+      const span = document.createElement("span");
+      span.className = "tag-pill";
+      span.innerHTML = `${tag} <span class="remove-tag">×</span>`;
+      span.querySelector(".remove-tag").onclick = (e) => {
+        e.stopPropagation(); // Prevent container focus
+        this.removeTag(tag);
+      };
+      container.appendChild(span);
     });
   }
 
@@ -551,9 +636,16 @@ class AdminUI {
 
     // Collect all unique tags from existing products
     const allTags = new Set([
-      "Novo", "Destaque", "Desconto", "Esgotado", "Premium", "Mel", "Pólen", "Própolis"
-    ]); 
-    
+      "Novo",
+      "Destaque",
+      "Desconto",
+      "Esgotado",
+      "Premium",
+      "Mel",
+      "Pólen",
+      "Própolis",
+    ]);
+
     this.products.forEach((p) => {
       if (p.Tags) {
         p.Tags.split(",").forEach((t) => allTags.add(t.trim()));
@@ -561,10 +653,15 @@ class AdminUI {
     });
 
     // Filter out already selected tags
-    const suggestions = Array.from(allTags).filter((t) => !this.currentTags.has(t));
+    const suggestions = Array.from(allTags).filter(
+      (t) => !this.currentTags.has(t),
+    );
 
     container.innerHTML = suggestions
-      .map(tag => `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`)
+      .map(
+        (tag) =>
+          `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`,
+      )
       .join("");
   }
 }

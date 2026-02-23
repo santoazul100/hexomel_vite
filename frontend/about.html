@@ -24,13 +24,10 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <!-- Pre-load state detection -->
+    <script src="src/pre-load.js"></script>
   </head>
   <body>
-    <!-- Scattered Bees Layer -->
-    <div class="bee-container">
-      <img src="abelha/abelha.webp" class="bee-decoration" alt="Bees" />
-      <img src="abelha/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
-    </div>
     <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
       <div class="container">
         <a class="navbar-brand" href="index.html">
@@ -64,126 +61,236 @@
             </li>
           </ul>
 
-          <div class="cart-navbar-separate ms-lg-4">
-            <button
-              id="cart-btn"
-              class="btn btn-link text-decoration-none text-dark position-relative p-0"
-            >
-              <i class="fas fa-shopping-cart fs-5"></i>
-              <span
-                id="cart-badge"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
-                >0</span
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+              <button
+                id="cart-btn"
+                class="btn btn-link text-decoration-none text-dark position-relative p-0"
               >
-            </button>
-          </div>
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span
+                  id="cart-badge"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                  >0</span
+                >
+              </button>
+            </div>
 
-          <div class="d-flex align-items-center gap-3" id="authSection">
-            <!-- Injected by main.js -->
+            <div class="d-flex align-items-center gap-3" id="authSection">
+              <!-- Injected by main.js -->
+            </div>
           </div>
         </div>
       </div>
     </nav>
 
-    <main class="py-5 mt-5">
-      <!-- Hero Section Mini -->
-      <section
-        class="py-5 mt-4 text-center bg-light position-relative overflow-hidden"
-      >
-        <div class="container animate-fade-up">
-          <h1 class="display-4 fw-bold" style="color: var(--primary-green)">
-            Nossa História
-          </h1>
-          <p class="text-muted lead mx-auto" style="max-width: 700px">
-            De uma pequena colmeia familiar à excelência em mel artesanal para
-            todo o país. Conheça a paixão que nos move.
+    <main>
+      <!-- Premium Hero Section -->
+      <section class="about-hero text-center position-relative">
+        <!-- Floating Bees (Reused from index) -->
+        <div
+          class="bee-container"
+          style="
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+          "
+        >
+          <img src="abelha/abelha.webp" class="bee-decoration" alt="Bees" />
+          <img
+            src="abelha/abelha_inverso.webp"
+            class="bee-decoration"
+            alt="Bees"
+          />
+        </div>
+
+        <div class="container position-relative z-1 animate-fade-up">
+          <span class="product-badge-premium mb-3 d-inline-block"
+            >NOSSA ESSÊNCIA</span
+          >
+          <h1 class="about-hero-title">Mais que Mel,<br />Uma Tradição Viva</h1>
+          <p class="about-hero-subtitle">
+            Desde 1984, dedicamo-nos à arte da apicultura na Serra da Estrela,
+            transformando a magia da natureza num néctar puro e inigualável.
           </p>
         </div>
       </section>
 
-      <section class="py-5">
+      <!-- The Story Section -->
+      <section class="about-story-section">
         <div class="container">
           <div class="row align-items-center g-5">
-            <div class="col-lg-6">
-              <div class="premium-card p-0 overflow-hidden border-0 shadow-lg">
+            <div class="col-lg-6 animate-fade-up">
+              <div class="about-image-wrapper">
                 <img
-                  src="https://images.unsplash.com/photo-1587334274328-64186a80aeee?auto=format&fit=crop&q=80&w=1000"
+                  src="/images/hero.png"
+                  alt="O Nosso Mel"
                   class="img-fluid"
-                  alt="Nossa Colmeia"
                 />
+                <div class="glass-quote-card">
+                  <p class="mb-0 fw-bold fst-italic text-dark">
+                    "Onde a pureza da montanha encontra o cuidado artesanal."
+                  </p>
+                  <small
+                    class="text-uppercase tracking-wider text-muted mt-2 d-block"
+                    >— Família Hexomel</small
+                  >
+                </div>
               </div>
             </div>
-            <div class="col-lg-6 animate-fade-up">
-              <h2 class="fw-bold mb-4" style="color: var(--primary-green)">
-                Compromisso com a Natureza
-              </h2>
-              <p class="text-muted mb-4 fs-5">
-                Fundada em 2020, a Hexomel nasceu com o objetivo de resgatar as
-                tradições apícolas artesanais, garantindo um produto que não só
-                beneficia a saúde dos nossos clientes, mas também protege o
-                ecossistema.
-              </p>
-              <div
-                class="premium-card p-4 border-start border-4 mb-4"
-                style="border-color: var(--secondary-gold) !important"
+            <div class="col-lg-6 animate-fade-up" style="animation-delay: 0.2s">
+              <span
+                class="text-uppercase small fw-bold text-muted tracking-wider mb-2 d-block"
+                >A Nossa Origem</span
               >
-                <p class="mb-0 fw-bold opacity-75">
-                  "O mel é o único alimento que dura para sempre nas condições
-                  certas. Nós cuidamos para que essas condições comecem na
-                  colmeia."
-                </p>
-              </div>
-              <p class="text-muted">
-                Trabalhamos com pequenos produtores locais que partilham dos
-                nossos valores de sustentabilidade e respeito total pela vida
-                selvagem.
+              <h2
+                class="display-5 fw-bold mb-4"
+                style="color: var(--primary-green)"
+              >
+                De Geração em Geração
+              </h2>
+              <p class="lead mb-4" style="color: var(--text-dark)">
+                A Hexomel não é apenas uma marca; é um legado familiar que
+                nasceu do respeito profundo pelo ciclo da vida e pelas abelhas.
               </p>
+              <p class="text-muted mb-4">
+                Localizados no coração de Portugal, trabalhamos em simbiose com
+                a biodiversidade local. Não apressamos a natureza, acompanhamos
+                o seu ritmo. É este tempo, dedicado e paciente, que confere ao
+                nosso mel as suas propriedades terapêuticas e o seu perfil
+                aromático distinto.
+              </p>
+
+              <div class="row g-4 mt-2">
+                <div class="col-sm-6">
+                  <h4 class="fw-bold fs-3 text-dark mb-1">40+</h4>
+                  <p class="text-muted small text-uppercase tracking-wider">
+                    Anos de Experiência
+                  </p>
+                </div>
+                <div class="col-sm-6">
+                  <h4 class="fw-bold fs-3 text-dark mb-1">100%</h4>
+                  <p class="text-muted small text-uppercase tracking-wider">
+                    Biológico
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Values Section -->
-      <section class="py-5 bg-light">
+      <!-- Core Values Section -->
+      <section class="py-5" style="background-color: var(--bg-clean)">
         <div class="container py-5">
-          <div class="text-center mb-5">
-            <h2 class="fw-bold h1" style="color: var(--primary-green)">
-              Nossos Valores
+          <div class="text-center mb-5 animate-fade-up">
+            <h2 class="display-5 fw-bold" style="color: var(--primary-green)">
+              O Que Nos Move
             </h2>
+            <div
+              class="mx-auto"
+              style="
+                width: 60px;
+                height: 3px;
+                background: var(--secondary-gold);
+                margin-top: 20px;
+              "
+            ></div>
           </div>
+
           <div class="row g-4">
-            <div class="col-md-4">
-              <div class="premium-card text-center p-5">
-                <div class="fs-1 mb-4">🌍</div>
-                <h4 class="fw-bold">Sustentabilidade</h4>
+            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.1s">
+              <div class="value-card-premium">
+                <div class="value-icon-wrapper">
+                  <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Sustentabilidade</h4>
                 <p class="text-muted mb-0">
-                  Protegemos a biodiversidade através de práticas de apicultura
-                  ética e regenerativa.
+                  Protegemos a biodiversidade garantindo práticas apícolas que
+                  não esgotam, mas regeneram o ecossistema local.
                 </p>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="premium-card text-center p-5">
-                <div class="fs-1 mb-4">🛡️</div>
-                <h4 class="fw-bold">Transparência</h4>
+
+            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.2s">
+              <div class="value-card-premium">
+                <div class="value-icon-wrapper">
+                  <i class="fa-solid fa-droplet"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Pureza Absoluta</h4>
                 <p class="text-muted mb-0">
-                  Rastreabilidade total desde o néctar na flor até ao frasco que
-                  chega à sua mesa.
+                  Extração a frio e sem filtração agressiva. O mel chega ao seu
+                  frasco exatamente como a natureza o criou.
                 </p>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="premium-card text-center p-5">
-                <div class="fs-1 mb-4">⭐</div>
-                <h4 class="fw-bold">Qualidade</h4>
+
+            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.3s">
+              <div class="value-card-premium">
+                <div class="value-icon-wrapper">
+                  <i class="fa-solid fa-hand-holding-heart"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Comércio Justo</h4>
                 <p class="text-muted mb-0">
-                  Exigimos os mais altos padrões de pureza, sabor e aroma em
-                  cada lote.
+                  Valorizamos a comunidade local, apoiando pequenos produtores e
+                  mantendo viva a economia rural da região.
                 </p>
               </div>
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section
+        class="py-5 position-relative overflow-hidden"
+        style="background: var(--primary-green)"
+      >
+        <div
+          class="container py-5 text-center animate-fade-up position-relative z-1"
+        >
+          <h2 class="display-5 fw-bold text-white mb-4">
+            Descubra o Sabor da Tradição
+          </h2>
+          <p class="lead text-white-50 mb-5 mx-auto" style="max-width: 600px">
+            Deixe-se envolver pela riqueza e complexidade da nossa coleção de
+            méis premium. Uma experiência sensorial única.
+          </p>
+          <a
+            href="shop.html"
+            class="btn btn-auth-filled"
+            style="
+              background: var(--secondary-gold) !important;
+              color: var(--primary-green-dark) !important;
+              border: none;
+              padding: 15px 40px !important;
+              font-size: 1.1rem !important;
+              display: inline-flex !important;
+              width: auto;
+            "
+            >Visitar a Loja <i class="fa-solid fa-arrow-right ms-2"></i
+          ></a>
+        </div>
+        <!-- Decorative subtle background element -->
+        <div
+          style="
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(
+              circle,
+              rgba(255, 255, 255, 0.05) 0%,
+              transparent 70%
+            );
+            border-radius: 50%;
+          "
+        ></div>
       </section>
     </main>
 
@@ -229,7 +336,14 @@
             <ul class="list-unstyled">
               <li><a href="index.html" class="footer-link">Início</a></li>
               <li><a href="shop.html" class="footer-link">Produtos</a></li>
-              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li>
+                <a
+                  href="about.html"
+                  class="footer-link"
+                  style="color: #f4b400 !important"
+                  >Sobre</a
+                >
+              </li>
               <li><a href="contact.html" class="footer-link">Contactos</a></li>
             </ul>
           </div>

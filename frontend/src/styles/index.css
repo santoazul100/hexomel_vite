@@ -72,6 +72,18 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-y: scroll; /* Prevents layout shift caused by scrollbar appearing/disappearing */
+}
+
+/* Modal Scroll Lock */
+html.modal-open,
+html.modal-open body {
+  overflow: hidden !important;
+}
+
+/* Ensure SweetAlert shows above our checkout modal */
+.swal-top-layer {
+  z-index: 10005 !important;
 }
 
 body {
@@ -148,7 +160,35 @@ p {
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow-md);
   z-index: 1000;
-  padding: var(--space-lg) 0;
+}
+
+/* Auth Section Fade-In (Anti-FOUC) */
+#authSection {
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.cart-navbar-separate {
+  display: none !important; /* Default to hidden */
+}
+
+/* Instant show if classes present from pre-load.js */
+.auth-user-present #authSection,
+#authSection.loaded {
+  opacity: 1;
+}
+
+.auth-user-present .cart-navbar-separate,
+.cart-navbar-separate.loaded {
+  display: flex !important;
+  opacity: 1;
+}
+
+@media (min-width: 992px) {
+  .navbar-right-fixed {
+    min-width: 280px;
+    justify-content: flex-end;
+  }
 }
 
 .nav-container {

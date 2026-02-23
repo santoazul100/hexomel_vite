@@ -59,13 +59,13 @@ window.openAuthModal = function (mode = "login") {
 
   window.toggleAuthMode(mode);
   overlay.classList.add("active");
-  document.body.style.overflow = "hidden"; // Prevent scroll
+  document.documentElement.classList.add("modal-open"); // Prevent scroll
 };
 
 window.closeAuthModal = function () {
   const overlay = document.getElementById("authOverlay");
   overlay?.classList.remove("active");
-  document.body.style.overflow = "";
+  document.documentElement.classList.remove("modal-open");
 };
 
 // Global utility to close all active overlays/modals
@@ -137,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   injectAuthModal();
   initializeAuthForms();
   updateNav(getLoggedUser());
+  highlightActiveNavLink();
 
   // Cart logic
   const cartBtn = document.getElementById("cart-btn");
@@ -144,6 +145,28 @@ document.addEventListener("DOMContentLoaded", () => {
     cartBtn.addEventListener("click", () => cart.toggle(true));
   }
 });
+
+function highlightActiveNavLink() {
+  const currentPath = window.location.pathname;
+  const navLinks = document.querySelectorAll(".nav-link");
+
+  navLinks.forEach((link) => {
+    const href = link.getAttribute("href");
+    if (!href) return;
+
+    // Check if current path ends with the href OR if it's the root/index
+    const isHome =
+      (currentPath === "/" || currentPath.endsWith("index.html")) &&
+      href === "index.html";
+    const isMatch = currentPath.endsWith(href);
+
+    if (isHome || (href !== "index.html" && isMatch)) {
+      link.classList.add("active");
+    } else {
+      link.classList.remove("active");
+    }
+  });
+}
 
 function injectAuthModal() {
   // Force remove existing modal to ensure updates (dev fix)

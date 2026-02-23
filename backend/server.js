@@ -222,10 +222,57 @@ app.post("/api/auth/google", async (req, res) => {
   }
 });
 
+// Get all categories (Public view)
+app.get("/api/categories", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT * FROM categoria");
+    res.json(rows);
+  } catch (error) {
+    console.error("Categories fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Create category (Admin view)
+app.post(
+  "/api/admin/categories",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { nome } = req.body;
+    if (!nome) {
+      return res.status(400).json({ error: "Nome da categoria é obrigatório" });
+    }
+    try {
+      const result = await db.run("INSERT INTO categoria (Nome) VALUES (?)", [
+        nome,
+      ]);
+      const newCategory = await db.get(
+        "SELECT * FROM categoria WHERE ID_Categoria = ?",
+        [result.lastID],
+      );
+      res.status(201).json(newCategory);
+    } catch (error) {
+      console.error("Create category error:", error);
+      res
+        .status(500)
+        .json({ error: "Database error. Category might already exist." });
+    }
+  },
+);
+
 // Get all products (Public view)
 app.get("/api/products", async (req, res) => {
   try {
-    const rows = await db.all("SELECT * FROM produto ORDER BY ID_Produto DESC");
+    const rows = await db.all(`
+      SELECT p.*, 
+      COALESCE(AVG(a.Nota), 0) as Rating, 
+      COUNT(a.ID_Avaliacao) as ReviewCount
+      FROM produto p
+      LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+      GROUP BY p.ID_Produto
+      ORDER BY p.ID_Produto DESC
+    `);
     res.json(rows);
   } catch (error) {
     console.error("Products fetch error:", error);
@@ -504,12 +551,14 @@ initMailer().catch(console.error);
 
 // Checkout Route
 app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
+  const { address, phone } = req.body;
+
   try {
     // 1. Get Cart
     const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
       req.user.id,
     ]);
-    if (!cart) return res.status(400).json({ error: "Cart not found" });
+    if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
 
     const items = await db.all(
       `SELECT ic.*, p.Nome, p.Preco 
@@ -520,7 +569,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
     );
 
     if (items.length === 0)
-      return res.status(400).json({ error: "Cart is empty" });
+      return res.status(400).json({ error: "Carrinho vazio" });
 
     // 2. Calculate Total
     const total = items.reduce(
@@ -530,13 +579,22 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
 
     // 3. Create Order
     const result = await db.run(
-      "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status) VALUES (?, ?, ?, 'Pago')",
-      [req.user.id, new Date().toISOString(), total],
+      "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, ?, ?, 'Pendente', ?, ?)",
+      [req.user.id, new Date().toISOString(), total, address, phone],
     );
     const orderId = result.lastID;
 
-    // 4. Move items to Order Items (if a table existed, but we'll simplified transaction)
-    // In a real app we would have item_encomenda. For now we just track the order.
+    // 4. Move items to Order Items e update Stock
+    for (const item of items) {
+      await db.run(
+        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+        [orderId, item.ID_Produto, item.Quantidade, item.Preco],
+      );
+      await db.run(
+        "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
+        [item.Quantidade, item.ID_Produto],
+      );
+    }
 
     // 5. Clear Cart
     await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [
@@ -549,26 +607,93 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       [req.user.id],
     );
 
-    if (transporter) {
-      const info = await transporter.sendMail({
-        from: '"Hexomel 🐝" <loja@hexomel.pt>', // sender address
-        to: user.Email, // list of receivers
-        subject: `Confirmação de Encomenda #${orderId}`, // Subject line
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h1 style="color: #f4b400;">Obrigado pela sua encomenda, ${user.Nome}!</h1>
-            <p>A sua encomenda <strong>#${orderId}</strong> foi confirmada.</p>
-            <h3>Resumo:</h3>
-            <ul>
-              ${items.map((i) => `<li>${i.Nome} x${i.Quantidade} - ${(i.Preco * i.Quantidade).toFixed(2)}€</li>`).join("")}
-            </ul>
-            <p><strong>Total: ${total.toFixed(2)}€</strong></p>
-            <p>Obrigado por escolher o Hexomel!</p>
+    if (transporter && user && user.Email) {
+      const emailContent = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
+          <div style="background: #f4b400; padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Hexomel 🐝</h1>
+            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Obrigado pela sua encomenda, ${user.Nome}!</p>
           </div>
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; line-height: 1.6;">A sua encomenda <strong>#${orderId}</strong> foi confirmada e está a ser processada pela nossa colmeia.</p>
+            
+            <h3 style="border-bottom: 2px solid #f4b400; padding-bottom: 10px; margin-top: 30px;">Resumo da Encomenda</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="text-align: left; background: #fafafa;">
+                  <th style="padding: 12px; border-bottom: 1px solid #eee;">Produto</th>
+                  <th style="padding: 12px; border-bottom: 1px solid #eee;">Qtd</th>
+                  <th style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items
+                  .map(
+                    (i) => `
+                  <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${i.Nome}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${i.Quantidade}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${(i.Preco * i.Quantidade).toFixed(2)}€</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" style="padding: 20px 12px; font-weight: bold; font-size: 18px;">Total</td>
+                  <td style="padding: 20px 12px; font-weight: bold; font-size: 18px; text-align: right; color: #f4b400;">${total.toFixed(2)}€</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div style="background: #fff9e6; padding: 20px; border-radius: 8px; margin-top: 20px;">
+              <h4 style="margin: 0 0 10px 0; color: #856404;">Informações de Entrega</h4>
+              <p style="margin: 0; font-size: 14px;"><strong>Morada:</strong> ${address || "Não fornecida"}</p>
+              <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Telefone:</strong> ${phone || "Não fornecido"}</p>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 14px; color: #666; text-align: center;">
+              Se tiver alguma dúvida, responda a este email ou contacte-nos através do nosso site.
+            </p>
+          </div>
+          <div style="background: #fafafa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+            <p style="margin: 0; font-size: 12px; color: #999;">Hexomel - Produtos Apícolas de Qualidade Superior</p>
+          </div>
+        </div>
+      `;
+
+      // User Email
+      transporter
+        .sendMail({
+          from: '"Hexomel 🐝" <loja@hexomel.pt>',
+          to: user.Email,
+          subject: `Confirmação de Encomenda #${orderId} - Hexomel`,
+          html: emailContent,
+        })
+        .then((info) => {
+          console.log("Customer email sent: %s", info.messageId);
+          console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+        })
+        .catch((err) => console.error("Customer email failed:", err));
+
+      // Admin Email Notification
+      transporter
+        .sendMail({
+          from: '"Hexomel System" <system@hexomel.pt>',
+          to: "admin@hexomel.pt", // In a real app, this would be a config variable
+          subject: `Nova Encomenda Recebida! #${orderId}`,
+          html: `
+          <h1>Nova Encomenda #${orderId}</h1>
+          <p><strong>Cliente:</strong> ${user.Nome} (${user.Email})</p>
+          <p><strong>Total:</strong> ${total.toFixed(2)}€</p>
+          <p><strong>Morada:</strong> ${address}</p>
+          <p><strong>Telefone:</strong> ${phone}</p>
+          <hr>
+          <p>Ver detalhes no painel de administração.</p>
         `,
-      });
-      console.log("Message sent: %s", info.messageId);
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+        })
+        .catch((err) => console.error("Admin notification failed:", err));
     }
 
     res.json({ message: "Checkout successful", orderId });
@@ -600,56 +725,6 @@ app.get("/api/clients", authenticateToken, isAdmin, async (req, res) => {
   } catch (error) {
     console.error("Error fetching clients:", error);
     res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Checkout
-app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
-  try {
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
-    if (!cart) return res.status(400).json({ error: "Cart is empty" });
-
-    const items = await db.all(
-      `SELECT ic.*, p.Preco FROM item_carrinho ic 
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
-
-    if (items.length === 0)
-      return res.status(400).json({ error: "Cart is empty" });
-
-    const total = items.reduce(
-      (sum, item) => sum + item.Preco * item.Quantidade,
-      0,
-    );
-
-    const orderResult = await db.run(
-      "INSERT INTO encomenda (ID_Cliente, Total) VALUES (?, ?)",
-      [req.user.id, total],
-    );
-    const orderId = orderResult.lastID;
-
-    for (const item of items) {
-      await db.run(
-        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-        [orderId, item.ID_Produto, item.Quantidade, item.Preco],
-      );
-      await db.run(
-        "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
-        [item.Quantidade, item.ID_Produto],
-      );
-    }
-
-    await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [
-      cart.ID_Carrinho,
-    ]);
-    res.json({ message: "Order placed successfully!", orderId });
-  } catch (error) {
-    console.error("Checkout error:", error);
-    res.status(500).json({ error: "Checkout failed" });
   }
 });
 
@@ -829,7 +904,62 @@ app.delete("/api/user/profile", authenticateToken, async (req, res) => {
     await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
-    console.error("Account deletion error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// REVIEWS ROUTES
+// Get reviews for a product
+app.get("/api/products/:id/reviews", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const reviews = await db.all(
+      `SELECT a.*, c.Nome as ClienteNome, c.Picture as ClienteFoto 
+       FROM avaliacao a
+       JOIN cliente c ON a.ID_Cliente = c.ID_Cliente
+       WHERE a.ID_Produto = ?
+       ORDER BY a.Data_Avaliacao DESC`,
+      [id],
+    );
+    res.json(reviews);
+  } catch (error) {
+    console.error("Reviews fetch error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Add a review
+app.post("/api/products/:id/reviews", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { rating, comment } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: "Invalid rating (1-5)" });
+  }
+
+  try {
+    // Check if user already reviewed this product
+    const existing = await db.get(
+      "SELECT * FROM avaliacao WHERE ID_Cliente = ? AND ID_Produto = ?",
+      [req.user.id, id],
+    );
+
+    if (existing) {
+      // Update existing review
+      await db.run(
+        "UPDATE avaliacao SET Nota = ?, Comentario = ?, Data_Avaliacao = CURRENT_TIMESTAMP WHERE ID_Avaliacao = ?",
+        [rating, comment, existing.ID_Avaliacao],
+      );
+      return res.json({ message: "Review updated" });
+    }
+
+    await db.run(
+      "INSERT INTO avaliacao (ID_Produto, ID_Cliente, Nota, Comentario) VALUES (?, ?, ?, ?)",
+      [id, req.user.id, rating, comment],
+    );
+    res.json({ message: "Review added successfully" });
+  } catch (error) {
+    console.error("Add review error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });

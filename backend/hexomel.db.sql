@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS encomenda (
   Data_Encomenda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   Total DECIMAL(10,2) NOT NULL,
   Status TEXT DEFAULT 'Pendente',
+  Morada TEXT,
+  Telefone TEXT,
   FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
 );
 
