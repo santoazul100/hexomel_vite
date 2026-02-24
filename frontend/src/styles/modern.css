@@ -373,13 +373,24 @@ main {
 .product-badge {
   background: var(--primary-green);
   color: white;
-  padding: 0.4rem 1rem;
-  border-radius: 50px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 0.4rem 1.1rem;
+  /* Rural touch: leaf-like asymmetric borders or simple rustic tags */
+  border-radius: 12px 0 12px 0;
+  font-size: 0.75rem;
+  font-weight: 700;
   z-index: 2;
   text-transform: uppercase;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  letter-spacing: 1.5px;
+  /* A more stamped/rustic shadow */
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.product-badge:hover {
+  transform: translateY(-2px) translateX(-2px);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
 }
 
 .product-tags-container {
@@ -392,22 +403,32 @@ main {
   z-index: 10;
 }
 
-/* Tag Specific Colors */
+/* Tag Specific Colors - Earthy Rural Tones */
 .tag-novo {
-  background: #2ecc71 !important;
+  /* Fresh Leaf Green */
+  background: #558b2f !important;
+  color: #fff !important;
 }
 .tag-desconto {
-  background: #e74c3c !important;
+  /* Baked Clay / Terracotta */
+  background: #d84315 !important;
+  color: #fff !important;
 }
 .tag-destaque {
-  background: #f1c40f !important;
-  color: #333 !important;
+  /* Warm Honey / Wheat */
+  background: #fbc02d !important;
+  color: #4e342e !important;
+  border: 1px solid #f9a825;
 }
 .tag-edição-limitada {
-  background: #9b59b6 !important;
+  /* Deep Plum */
+  background: #6a1b9a !important;
+  color: #fff !important;
 }
 .tag-oferta {
-  background: #3498db !important;
+  /* River Slate Blue */
+  background: #455a64 !important;
+  color: #fff !important;
 }
 
 /* --- Auth Modal Overhaul --- */

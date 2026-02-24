@@ -173,19 +173,22 @@
         padding-bottom: 4px; /* Adjust for pills */
       }
       .tag-pill {
-        background-color: var(--primary-green, #1c5236);
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.85rem;
+        background-color: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        font-weight: 500;
         animation: fadeIn 0.2s ease;
       }
       .tag-pill .remove-tag {
         cursor: pointer;
-        background: rgba(255, 255, 255, 0.3);
+        color: #94a3b8;
+        background: transparent;
         border-radius: 50%;
         width: 16px;
         height: 16px;
@@ -193,7 +196,11 @@
         align-items: center;
         justify-content: center;
         line-height: 1;
-        font-size: 12px;
+        font-size: 14px;
+        transition: color 0.2s;
+      }
+      .tag-pill .remove-tag:hover {
+        color: #ef4444;
       }
       .tag-pill .remove-tag:hover {
         background: rgba(255, 255, 255, 0.5);
@@ -313,45 +320,34 @@
       </aside>
 
       <main class="admin-main" style="padding-top: 2rem">
-        <!-- DASHBOARD OVERVIEW SECTION -->
         <section id="dashboard-section" class="admin-section active">
           <!-- Welcome Header -->
           <div
             class="admin-card mb-4 border-0 shadow-sm"
             style="
-              background: linear-gradient(135deg, #ffffff 0%, #fefdf5 100%);
-              border: 1px solid rgba(244, 180, 0, 0.2) !important;
+              background: #fff;
+              border: 1px solid #e2e8f0 !important;
             "
           >
             <div class="row align-items-center">
-              <div class="col-md-9">
+              <div class="col-md-10">
                 <span
                   class="text-uppercase small fw-bold mb-2 d-inline-block px-3 py-1 rounded-pill"
                   style="
-                    background: rgba(244, 180, 0, 0.15);
-                    color: #b48500;
+                    background: #f1f5f9;
+                    color: #64748b;
                     letter-spacing: 1px;
                   "
                   >Bem-vindo ao Painel</span
                 >
                 <h1
                   class="fw-bold text-dark mt-3 mb-2"
-                  style="font-family: var(--font-heading)"
                 >
                   Administrador do Sistema
                 </h1>
                 <p class="text-muted mb-0 fs-5">
                   Visão geral e gestão dos dados principais.
                 </p>
-              </div>
-              <div class="col-md-3 text-end d-none d-md-block">
-                <i
-                  class="fas fa-crown fa-5x"
-                  style="
-                    color: rgba(244, 180, 0, 0.15);
-                    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
-                  "
-                ></i>
               </div>
             </div>
           </div>
@@ -370,7 +366,7 @@
                     <span class="d-block text-muted small mb-1"
                       >Total utilizadores</span
                     >
-                    <h2 id="dash-total-users" class="fw-bold mb-0">73</h2>
+                    <h2 id="dash-total-users" class="fw-bold mb-0">0</h2>
                   </div>
                   <div
                     class="icon-box bg-soft-blue text-primary rounded-3 p-2 d-flex align-items-center justify-content-center"
@@ -387,7 +383,7 @@
               </div>
             </div>
 
-            <!-- Total Locais (Reused as Categories for now or similar) -->
+            <!-- Total Products -->
             <div class="col-md-3">
               <div
                 class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
@@ -399,7 +395,7 @@
                     <span class="d-block text-muted small mb-1"
                       >Total produtos</span
                     >
-                    <h2 id="dash-total-products" class="fw-bold mb-0">21</h2>
+                    <h2 id="dash-total-products" class="fw-bold mb-0">0</h2>
                   </div>
                   <div
                     class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center"
@@ -416,7 +412,7 @@
               </div>
             </div>
 
-            <!-- Check-ins (Using as Orders) -->
+            <!-- Orders -->
             <div class="col-md-3">
               <div
                 class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
@@ -428,7 +424,7 @@
                     <span class="d-block text-muted small mb-1"
                       >Encomendas (Total)</span
                     >
-                    <h2 id="dash-total-orders" class="fw-bold mb-0">3</h2>
+                    <h2 id="dash-total-orders" class="fw-bold mb-0">0</h2>
                   </div>
                   <div
                     class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center"
@@ -445,7 +441,7 @@
               </div>
             </div>
 
-            <!-- Denuncias (Using as Alerts/Low Stock) -->
+            <!-- Low Stock -->
             <div class="col-md-3">
               <div
                 class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
@@ -457,7 +453,7 @@
                     <span class="d-block text-muted small mb-1"
                       >Stock baixo</span
                     >
-                    <h2 id="dash-low-stock" class="fw-bold mb-0">1</h2>
+                    <h2 id="dash-low-stock" class="fw-bold mb-0">0</h2>
                   </div>
                   <div
                     class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center"
@@ -474,16 +470,7 @@
               </div>
             </div>
           </div>
-
-          <!-- Welcome Bottom Banner -->
-          <div class="admin-card border-0 shadow-sm text-center py-5">
-            <h3 class="fw-bold" style="color: var(--primary-green)">
-              Bem-vindo ao Dashboard
-            </h3>
-            <p class="text-muted">
-              Utilize o menu lateral para gerir produtos, clientes e visualizar
-              encomendas.
-            </p>
+        </section>
           </div>
         </section>
 
