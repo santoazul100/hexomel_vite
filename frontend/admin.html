@@ -310,6 +310,12 @@
           <a class="admin-nav-link" data-section="products">
             <i class="fas fa-box"></i> Produtos
           </a>
+          <a class="admin-nav-link" data-section="categories">
+            <i class="fas fa-tags"></i> Categorias
+          </a>
+          <a class="admin-nav-link" data-section="origins">
+            <i class="fas fa-map-marker-alt"></i> Origens
+          </a>
           <a class="admin-nav-link" data-section="customers">
             <i class="fas fa-users"></i> Clientes
           </a>
@@ -324,10 +330,7 @@
           <!-- Welcome Header -->
           <div
             class="admin-card mb-4 border-0 shadow-sm"
-            style="
-              background: #fff;
-              border: 1px solid #e2e8f0 !important;
-            "
+            style="background: #fff; border: 1px solid #e2e8f0 !important"
           >
             <div class="row align-items-center">
               <div class="col-md-10">
@@ -340,9 +343,7 @@
                   "
                   >Bem-vindo ao Painel</span
                 >
-                <h1
-                  class="fw-bold text-dark mt-3 mb-2"
-                >
+                <h1 class="fw-bold text-dark mt-3 mb-2">
                   Administrador do Sistema
                 </h1>
                 <p class="text-muted mb-0 fs-5">
@@ -471,8 +472,6 @@
             </div>
           </div>
         </section>
-          </div>
-        </section>
 
         <!-- PRODUCTS SECTION -->
         <section id="products-section" class="admin-section">
@@ -508,6 +507,69 @@
                   </tr>
                 </thead>
                 <tbody id="product-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- CATEGORIES SECTION -->
+        <section id="categories-section" class="admin-section">
+          <header
+            class="d-flex justify-content-between align-items-center mb-4"
+          >
+            <div>
+              <h2 class="fw-bold mb-1">Gestão de Categorias</h2>
+              <p class="text-muted small">
+                Adicione, edite ou remova categorias de produtos.
+              </p>
+            </div>
+            <button class="btn btn-add-product" onclick="adminUI.addCategory()">
+              <i class="fas fa-plus me-2"></i> Nova Categoria
+            </button>
+          </header>
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th style="width: 70%">Nome da Categoria</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="category-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ORIGINS SECTION -->
+        <section id="origins-section" class="admin-section">
+          <header
+            class="d-flex justify-content-between align-items-center mb-4"
+          >
+            <div>
+              <h2 class="fw-bold mb-1">Gestão de Origens</h2>
+              <p class="text-muted small">
+                Adicione, edite ou remova as localizações de origem dos
+                produtos.
+              </p>
+            </div>
+            <button class="btn btn-add-product" onclick="adminUI.addOrigin()">
+              <i class="fas fa-plus me-2"></i> Nova Origem
+            </button>
+          </header>
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th style="width: 70%">Nome da Origem</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="origin-list-body"></tbody>
               </table>
             </div>
           </div>
@@ -638,7 +700,7 @@
                       />
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                       <label
                         class="form-label small fw-bold text-uppercase text-muted"
                         >Categoria</label
@@ -646,10 +708,22 @@
                       <select
                         id="prod-categoria"
                         class="form-select form-control-v2"
+                        required
                       >
-                        <option value="1">Méls</option>
-                        <option value="2">Derivados</option>
-                        <option value="3">Acessórios</option>
+                        <option value="">Selecionar...</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label
+                        class="form-label small fw-bold text-uppercase text-muted"
+                        >Origem</label
+                      >
+                      <select
+                        id="prod-origem"
+                        class="form-select form-control-v2"
+                      >
+                        <option value="">Selecionar...</option>
                       </select>
                     </div>
 

@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { initDB } from "./config/db.js";
+import { initDB, db } from "./config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
@@ -20,13 +20,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-let db;
-
 // Initialize Database
 initDB()
-  .then((database) => {
-    db = database;
-    console.log("SQLite Database connected and initialized.");
+  .then(() => {
+    console.log("MySQL Database connected and initialized.");
 
     // Start Server ONLY after DB is ready
     app.listen(PORT, () => {
@@ -101,7 +98,7 @@ app.post("/api/auth/register", async (req, res) => {
     );
 
     // Auto-login: Get the new user
-    const user = await db.get("SELECT * FROM cliente WHERE id = ?", [
+    const user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [
       result.lastID,
     ]);
 
@@ -187,7 +184,7 @@ app.post("/api/auth/google", async (req, res) => {
         "INSERT INTO cliente (Nome, Email, Senha, Picture) VALUES (?, ?, ?, ?)",
         [name, email, randomPass, picture],
       );
-      user = await db.get("SELECT * FROM cliente WHERE id = ?", [
+      user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [
         result.lastID,
       ]);
     } else if (!user.Picture && picture) {
@@ -232,7 +229,6 @@ app.get("/api/categories", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
-
 // Create category (Admin view)
 app.post(
   "/api/admin/categories",
@@ -254,9 +250,126 @@ app.post(
       res.status(201).json(newCategory);
     } catch (error) {
       console.error("Create category error:", error);
-      res
-        .status(500)
-        .json({ error: "Database error. Category might already exist." });
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Get all origins (Public view)
+app.get("/api/origins", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT * FROM origem ORDER BY Nome ASC");
+    res.json(rows);
+  } catch (error) {
+    console.error("Origins fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Create origin (Admin view)
+app.post("/api/admin/origins", authenticateToken, isAdmin, async (req, res) => {
+  const { nome } = req.body;
+  if (!nome) {
+    return res.status(400).json({ error: "Nome da origem é obrigatório" });
+  }
+  try {
+    const result = await db.run("INSERT INTO origem (Nome) VALUES (?)", [nome]);
+    const newOrigin = await db.get("SELECT * FROM origem WHERE ID_Origem = ?", [
+      result.lastID,
+    ]);
+    res.status(201).json(newOrigin);
+  } catch (error) {
+    console.error("Create origin error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Update origin (Admin view)
+app.put(
+  "/api/admin/origins/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { nome } = req.body;
+    if (!nome) {
+      return res.status(400).json({ error: "Nome da origem é obrigatório" });
+    }
+    try {
+      await db.run("UPDATE origem SET Nome = ? WHERE ID_Origem = ?", [
+        nome,
+        id,
+      ]);
+      const updatedOrigin = await db.get(
+        "SELECT * FROM origem WHERE ID_Origem = ?",
+        [id],
+      );
+      res.json(updatedOrigin);
+    } catch (error) {
+      console.error("Update origin error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Delete origin (Admin view)
+app.delete(
+  "/api/admin/origins/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      await db.run("DELETE FROM origem WHERE ID_Origem = ?", [id]);
+      res.json({ message: "Origin deleted successfully" });
+    } catch (error) {
+      console.error("Delete origin error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update category (Admin view)
+app.put(
+  "/api/admin/categories/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { nome } = req.body;
+    if (!nome) {
+      return res.status(400).json({ error: "Nome da categoria é obrigatório" });
+    }
+    try {
+      await db.run("UPDATE categoria SET Nome = ? WHERE ID_Categoria = ?", [
+        nome,
+        id,
+      ]);
+      const updatedCategory = await db.get(
+        "SELECT * FROM categoria WHERE ID_Categoria = ?",
+        [id],
+      );
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error("Update category error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Delete category (Admin view)
+app.delete(
+  "/api/admin/categories/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      await db.run("DELETE FROM categoria WHERE ID_Categoria = ?", [id]);
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Delete category error:", error);
+      res.status(500).json({ error: "Database error" });
     }
   },
 );
@@ -298,12 +411,20 @@ app.post(
   authenticateToken,
   isAdmin,
   async (req, res) => {
-    const { nome, preco, stock, idCategoria, descricao, imagem, tags } =
-      req.body;
+    const {
+      nome,
+      preco,
+      stock,
+      idCategoria,
+      idOrigem,
+      descricao,
+      imagem,
+      tags,
+    } = req.body;
     try {
       const result = await db.run(
-        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, Descricao, Imagem, Tags) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [nome, preco, stock, idCategoria, descricao, imagem, tags],
+        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags],
       );
       const newProduct = await db.get(
         "SELECT * FROM produto WHERE ID_Produto = ?",
@@ -324,12 +445,30 @@ app.put(
   isAdmin,
   async (req, res) => {
     const { id } = req.params;
-    const { nome, preco, stock, idCategoria, descricao, imagem, tags } =
-      req.body;
+    const {
+      nome,
+      preco,
+      stock,
+      idCategoria,
+      idOrigem,
+      descricao,
+      imagem,
+      tags,
+    } = req.body;
     try {
       await db.run(
-        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, Descricao = ?, Imagem = ?, Tags = ? WHERE ID_Produto = ?",
-        [nome, preco, stock, idCategoria, descricao, imagem, tags, id],
+        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Imagem = ?, Tags = ? WHERE ID_Produto = ?",
+        [
+          nome,
+          preco,
+          stock,
+          idCategoria,
+          idOrigem,
+          descricao,
+          imagem,
+          tags,
+          id,
+        ],
       );
       const updatedProduct = await db.get(
         "SELECT * FROM produto WHERE ID_Produto = ?",
@@ -900,10 +1039,21 @@ app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
 // Delete account
 app.delete("/api/user/profile", authenticateToken, async (req, res) => {
   try {
+    // Prevent admin from deleting themselves
+    const userRole = req.user.role ? req.user.role.toLowerCase() : "";
+    if (userRole === "admin") {
+      return res
+        .status(400)
+        .json({
+          error: "Cannot delete an admin account through clinical profile.",
+        });
+    }
+
     // Note: ON DELETE CASCADE in schema handles related tables (cart, favorites, etc.)
     await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
+    console.error("Account deletion error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });

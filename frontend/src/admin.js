@@ -132,9 +132,12 @@ class AdminUI {
     // Load Data
     if (sectionId === "dashboard") this.loadDashboardStats();
     if (sectionId === "products") {
-      this.loadCategories(); // Always ensure categories are loaded for product view
+      this.loadCategories();
+      this.loadOrigins();
       this.loadProducts();
     }
+    if (sectionId === "categories") this.loadCategories();
+    if (sectionId === "origins") this.loadOrigins();
     if (sectionId === "customers") this.loadUsers();
     if (sectionId === "orders") this.loadOrders();
   }
@@ -218,6 +221,12 @@ class AdminUI {
                 </td>
                 <td>
                     <span class="badge bg-light text-dark border">${category}</span>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark border">${
+                      this.origins?.find((o) => o.ID_Origem === p.ID_Origem)
+                        ?.Nome || "N/A"
+                    }</span>
                 </td>
                 <td class="text-end">
                     <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
@@ -389,9 +398,145 @@ class AdminUI {
       if (response.ok) {
         this.categories = await response.json();
         this.populateCategorySelect();
+        this.renderCategories();
       }
     } catch (e) {
       console.error("Failed to load categories", e);
+    }
+  }
+
+  renderCategories() {
+    const container = document.getElementById("category-list-body");
+    if (!container) return;
+
+    if (this.categories.length === 0) {
+      container.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Nenhuma categoria registada.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = this.categories
+      .map(
+        (c) => `
+            <tr>
+                <td class="fw-bold text-muted">#${c.ID_Categoria}</td>
+                <td class="fw-bold">${c.Nome}</td>
+                <td class="text-end">
+                    <button class="btn-action-premium me-1" onclick="adminUI.editCategory('${c.ID_Categoria}')" title="Editar">
+                        <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                    </button>
+                    <button class="btn-action-premium delete" onclick="adminUI.deleteCategory('${c.ID_Categoria}')" title="Eliminar">
+                        <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                    </button>
+                </td>
+            </tr>
+        `,
+      )
+      .join("");
+  }
+
+  async addCategory() {
+    const { value: nome } = await Swal.fire({
+      title: "Nova Categoria",
+      input: "text",
+      inputLabel: "Nome da Categoria",
+      inputPlaceholder: "Ex: Mel Biológico",
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) return "O nome é obrigatório!";
+      },
+    });
+
+    if (nome) {
+      try {
+        const res = await fetch(`${API_URL}/admin/categories`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ nome }),
+        });
+        if (!res.ok) throw new Error("Erro ao criar categoria");
+
+        await this.loadCategories();
+        Swal.fire("Criada!", "Categoria adicionada.", "success");
+      } catch (e) {
+        Swal.fire("Erro", e.message, "error");
+      }
+    }
+  }
+
+  async editCategory(id) {
+    const category = this.categories.find(
+      (c) => String(c.ID_Categoria) === String(id),
+    );
+    if (!category) return;
+
+    const { value: nome } = await Swal.fire({
+      title: "Editar Categoria",
+      input: "text",
+      inputLabel: "Novo nome da Categoria",
+      inputValue: category.Nome,
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) return "O nome é obrigatório!";
+      },
+    });
+
+    if (nome && nome !== category.Nome) {
+      try {
+        const res = await fetch(`${API_URL}/admin/categories/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ nome }),
+        });
+        if (!res.ok) throw new Error("Erro ao editar categoria");
+
+        await this.loadCategories();
+        Swal.fire("Atualizada!", "Categoria modificada.", "success");
+      } catch (e) {
+        Swal.fire("Erro", e.message, "error");
+      }
+    }
+  }
+
+  async deleteCategory(id) {
+    const productsInCat = this.products.filter(
+      (p) => String(p.ID_Categoria) === String(id),
+    );
+    if (productsInCat.length > 0) {
+      Swal.fire(
+        "Aviso",
+        `Esta categoria possui ${productsInCat.length} produto(s). Remova-os ou altere as suas categorias primeiro.`,
+        "warning",
+      );
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Tem a certeza?",
+      text: "Esta ação apagará a categoria.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, eliminar!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/admin/categories/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (!response.ok) throw new Error("Erro ao eliminar categoria");
+        Swal.fire("Eliminada", "", "success");
+        await this.loadCategories();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
     }
   }
 
@@ -405,7 +550,8 @@ class AdminUI {
   }
 
   resetForm() {
-    this.populateCategorySelect(); // Ensure populated before showing
+    this.populateCategorySelect();
+    this.populateOriginSelect();
     document.getElementById("productForm").reset();
     document.getElementById("product-id").value = "";
     document.getElementById("prod-imagem").value = ""; // Clear hidden path
@@ -429,6 +575,8 @@ class AdminUI {
     document.getElementById("prod-preco").value = p.Preco;
     document.getElementById("prod-stock").value = p.Stock;
     document.getElementById("prod-categoria").value = p.ID_Categoria;
+    document.getElementById("prod-origem").value =
+      p.ID_Origin || p.idOrigem || p.ID_Origem || "";
     document.getElementById("prod-descricao").value = p.Descricao || "";
 
     // Handle Image
@@ -464,6 +612,8 @@ class AdminUI {
     const idCategoria = parseInt(
       document.getElementById("prod-categoria").value,
     );
+    const idOrigem =
+      parseInt(document.getElementById("prod-origem").value) || null;
     const descricao = document.getElementById("prod-descricao").value;
     let imagem = document.getElementById("prod-imagem").value; // Default to existing
     const tags = Array.from(this.currentTags).join(", ");
@@ -511,6 +661,7 @@ class AdminUI {
           preco,
           stock,
           idCategoria,
+          idOrigem,
           descricao,
           imagem,
           tags,
@@ -663,6 +814,167 @@ class AdminUI {
           `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`,
       )
       .join("");
+  }
+
+  // --- ORIGINS ---
+  async loadOrigins() {
+    try {
+      const response = await fetch(`${API_URL}/origins`);
+      if (response.ok) {
+        this.origins = await response.json();
+        this.populateOriginSelect();
+        this.renderOrigins();
+      }
+    } catch (e) {
+      console.error("Failed to load origins", e);
+    }
+  }
+
+  renderOrigins() {
+    const container = document.getElementById("origin-list-body");
+    if (!container) return;
+
+    if (this.origins.length === 0) {
+      container.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Nenhuma origem registada.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = this.origins
+      .map(
+        (o) => `
+            <tr>
+                <td class="fw-bold text-muted">#${o.ID_Origem}</td>
+                <td class="fw-bold">${o.Nome}</td>
+                <td class="text-end">
+                    <button class="btn-action-premium me-1" onclick="adminUI.editOrigin('${o.ID_Origem}')" title="Editar">
+                        <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                    </button>
+                    <button class="btn-action-premium delete" onclick="adminUI.deleteOrigin('${o.ID_Origem}')" title="Eliminar">
+                        <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                    </button>
+                </td>
+            </tr>
+        `,
+      )
+      .join("");
+  }
+
+  async addOrigin() {
+    const { value: nome } = await Swal.fire({
+      title: "Nova Origem",
+      input: "text",
+      inputLabel: "Nome da Origem",
+      inputPlaceholder: "Ex: Serra da Estrela",
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) return "O nome é obrigatório!";
+      },
+    });
+
+    if (nome) {
+      try {
+        const res = await fetch(`${API_URL}/admin/origins`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ nome }),
+        });
+        if (!res.ok) throw new Error("Erro ao criar origem");
+
+        await this.loadOrigins();
+        Swal.fire("Criada!", "Origem adicionada.", "success");
+      } catch (e) {
+        Swal.fire("Erro", e.message, "error");
+      }
+    }
+  }
+
+  async editOrigin(id) {
+    const origin = this.origins.find((o) => String(o.ID_Origem) === String(id));
+    if (!origin) return;
+
+    const { value: nome } = await Swal.fire({
+      title: "Editar Origem",
+      input: "text",
+      inputLabel: "Novo nome da Origem",
+      inputValue: origin.Nome,
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) return "O nome é obrigatório!";
+      },
+    });
+
+    if (nome && nome !== origin.Nome) {
+      try {
+        const res = await fetch(`${API_URL}/admin/origins/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ nome }),
+        });
+        if (!res.ok) throw new Error("Erro ao editar origem");
+
+        await this.loadOrigins();
+        Swal.fire("Atualizada!", "Origem modificada.", "success");
+      } catch (e) {
+        Swal.fire("Erro", e.message, "error");
+      }
+    }
+  }
+
+  async deleteOrigin(id) {
+    const productsInOri = this.products.filter(
+      (p) => String(p.ID_Origem) === String(id),
+    );
+    if (productsInOri.length > 0) {
+      Swal.fire(
+        "Aviso",
+        `Esta origem possui ${productsInOri.length} produto(s). Remova-os ou altere as suas origens primeiro.`,
+        "warning",
+      );
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Tem a certeza?",
+      text: "Esta ação apagará a origem.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, eliminar!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/admin/origins/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (!response.ok) throw new Error("Erro ao eliminar origem");
+        Swal.fire("Eliminada", "", "success");
+        await this.loadOrigins();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  populateOriginSelect() {
+    const select = document.getElementById("prod-origem");
+    if (!select) return;
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">Selecionar...</option>';
+    this.origins.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.ID_Origem;
+      opt.textContent = o.Nome;
+      select.appendChild(opt);
+    });
+    select.value = currentVal;
   }
 }
 

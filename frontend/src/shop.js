@@ -12,26 +12,35 @@ const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
 let products = [];
 let filteredProducts = [];
 let categories = [];
+let origins = [];
 let userFavorites = [];
 
 // Fetch products from API and categories
 async function fetchProducts() {
   try {
-    // 1. Fetch Categories first to make naming dynamic
-    const catRes = await fetch(`${API_URL}/categories`);
-    categories = await catRes.json();
+    // 1. Fetch Categories and Origins first to make naming dynamic
+    const [catRes, oriRes] = await Promise.all([
+      fetch(`${API_URL}/categories`),
+      fetch(`${API_URL}/origins`),
+    ]);
 
-    // Render dynamic category filters
+    categories = await catRes.json();
+    origins = await oriRes.json();
+
+    // Render dynamic filters
     renderCategoryFilters();
+    renderOriginFilters();
 
     // 2. Fetch Products
     const res = await fetch(`${API_URL}/products`);
     const data = await res.json();
 
     products = data.map((p) => {
-      // Find category name by ID dynamically
       const catObj = categories.find((c) => c.ID_Categoria === p.ID_Categoria);
       const catName = catObj ? catObj.Nome : "Sem Categoria";
+
+      const oriObj = origins.find((o) => o.ID_Origem === p.ID_Origem);
+      const oriName = oriObj ? oriObj.Nome : "N/A";
 
       return {
         id: p.ID_Produto,
@@ -39,7 +48,9 @@ async function fetchProducts() {
         price: Number(p.Preco),
         description: p.Descricao,
         category: catName,
+        origin: oriName,
         categoryId: p.ID_Categoria,
+        originId: p.ID_Origem,
         image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
         weight: "500g",
         tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
@@ -82,6 +93,33 @@ function renderCategoryFilters() {
   newCheckboxes.forEach((cb) => cb.addEventListener("change", applyFilters));
 }
 
+// Dynamically Render Origin Checkboxes in the Sidebar
+function renderOriginFilters() {
+  const container = document.getElementById("dynamic-origins-container");
+  if (!container) return;
+
+  container.innerHTML = origins
+    .map(
+      (ori) => `
+    <label class="custom-checkbox-container">
+      <input
+        type="checkbox"
+        id="ori-${ori.ID_Origem}"
+        class="custom-checkbox-input origin-filter-checkbox"
+        data-ori-id="${ori.ID_Origem}"
+      />
+      <span class="custom-checkbox-visual"></span>
+      <span class="checkbox-label-text">${ori.Nome}</span>
+    </label>
+  `,
+    )
+    .join("");
+
+  // Re-bind events
+  const newCheckboxes = document.querySelectorAll(".origin-filter-checkbox");
+  newCheckboxes.forEach((cb) => cb.addEventListener("change", applyFilters));
+}
+
 // Render products (Nike Style)
 function renderProducts() {
   const grid = document.getElementById("products-grid");
@@ -118,6 +156,7 @@ function renderProducts() {
                 <span class="text-muted small">(${product.reviewCount})</span>
               </div>
               <p class="text-muted small mb-0">${product.category} • ${product.weight}</p>
+              <p class="text-muted smaller mb-0"><i class="fas fa-map-marker-alt me-1"></i>${product.origin}</p>
           </div>
           <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
             <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
@@ -148,12 +187,13 @@ function renderProducts() {
 // Filtering Logic
 function applyFilters() {
   // 1. Get checked dynamic categories
-  const checkedBoxes = document.querySelectorAll(
-    ".category-filter-checkbox:checked",
-  );
-  const selectedCatIds = Array.from(checkedBoxes).map((cb) =>
-    Number(cb.getAttribute("data-cat-id")),
-  );
+  const selectedCatIds = Array.from(
+    document.querySelectorAll(".category-filter-checkbox:checked"),
+  ).map((cb) => Number(cb.getAttribute("data-cat-id")));
+
+  const selectedOriIds = Array.from(
+    document.querySelectorAll(".origin-filter-checkbox:checked"),
+  ).map((cb) => Number(cb.getAttribute("data-ori-id")));
 
   // 2. Get price range
   const maxPrice = Number(document.getElementById("priceRange")?.value || 100);
@@ -161,16 +201,33 @@ function applyFilters() {
   // Filter
   filteredProducts = products.filter((p) => {
     let catMatch = true;
+    let oriMatch = true;
 
-    // If any category filter is checked, product must belong to one of the selected categories
     if (selectedCatIds.length > 0) {
       catMatch = selectedCatIds.includes(p.categoryId);
     }
 
+    if (selectedOriIds.length > 0) {
+      oriMatch = selectedOriIds.includes(p.originId);
+    }
+
     let priceMatch = p.price <= maxPrice;
 
-    return catMatch && priceMatch;
+    return catMatch && oriMatch && priceMatch;
   });
+
+  // 3. Apply Multi-Directional Sorting
+  const sortValue =
+    document.getElementById("sort-select")?.value || "Mais recentes";
+
+  if (sortValue === "Preço: Baixo-Alto") {
+    filteredProducts.sort((a, b) => a.price - b.price);
+  } else if (sortValue === "Preço: Alto-Baixo") {
+    filteredProducts.sort((a, b) => b.price - a.price);
+  } else {
+    // Default: Newest (using ID as proxy for date if no date field)
+    filteredProducts.sort((a, b) => b.id - a.id);
+  }
 
   renderProducts();
 }
@@ -565,7 +622,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Bind Filter Events
   const filters = document.querySelectorAll(
-    ".custom-checkbox-input, #priceRange",
+    ".custom-checkbox-input, #priceRange, #sort-select",
   );
   filters.forEach((f) => {
     f.addEventListener("change", applyFilters);

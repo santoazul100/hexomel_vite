@@ -84,7 +84,7 @@
       </div>
     </nav>
 
-    <main class="py-5 mt-5 position-relative overflow-hidden">
+    <main class="py-5 mt-5 position-relative">
       <!-- Floating Bees -->
       <div
         class="bee-container z-0"
@@ -118,62 +118,59 @@
               <h3 class="filter-title-premium">Filtros</h3>
 
               <!-- Categories -->
-              <div class="filter-group-premium">
-                <h5 class="filter-subheading">Categorias</h5>
-
-                <div id="dynamic-categories-container">
-                  <!-- Injected by shop.js from database -->
+              <details class="filter-accordion" open>
+                <summary class="filter-summary">
+                  <h5 class="filter-subheading mb-0">Categorias</h5>
+                  <i class="fas fa-chevron-down accordion-icon"></i>
+                </summary>
+                <div class="filter-content">
+                  <div id="dynamic-categories-container">
+                    <!-- Injected by shop.js from database -->
+                  </div>
                 </div>
-              </div>
+              </details>
 
               <!-- Origin -->
-              <div class="filter-group-premium">
-                <h5 class="filter-subheading">Origem</h5>
-
-                <label class="custom-checkbox-container">
-                  <input
-                    type="checkbox"
-                    id="ori-serra"
-                    class="custom-checkbox-input"
-                  />
-                  <span class="custom-checkbox-visual"></span>
-                  <span class="checkbox-label-text">Serra da Estrela</span>
-                </label>
-
-                <label class="custom-checkbox-container">
-                  <input
-                    type="checkbox"
-                    id="ori-alentejo"
-                    class="custom-checkbox-input"
-                  />
-                  <span class="custom-checkbox-visual"></span>
-                  <span class="checkbox-label-text">Alentejo</span>
-                </label>
-              </div>
+              <details class="filter-accordion" open>
+                <summary class="filter-summary">
+                  <h5 class="filter-subheading mb-0">Origem</h5>
+                  <i class="fas fa-chevron-down accordion-icon"></i>
+                </summary>
+                <div class="filter-content">
+                  <div id="dynamic-origins-container">
+                    <!-- Injected by shop.js from database -->
+                  </div>
+                </div>
+              </details>
 
               <!-- Price -->
-              <div class="filter-group-premium">
-                <h5 class="filter-subheading">Preço Máximo</h5>
-                <input
-                  type="range"
-                  class="range-slider-premium"
-                  id="priceRange"
-                  min="0"
-                  max="50"
-                  step="1"
-                  value="50"
-                  oninput="
-                    document.getElementById('priceVal').textContent =
-                      this.value + '€'
-                  "
-                />
-                <div
-                  class="d-flex justify-content-between mt-2 font-monospace smaller text-muted"
-                >
-                  <span>0€</span>
-                  <span id="priceVal" class="fw-bold text-dark">50€</span>
+              <details class="filter-accordion" open>
+                <summary class="filter-summary">
+                  <h5 class="filter-subheading mb-0">Preço Máximo</h5>
+                  <i class="fas fa-chevron-down accordion-icon"></i>
+                </summary>
+                <div class="filter-content">
+                  <input
+                    type="range"
+                    class="range-slider-premium"
+                    id="priceRange"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value="50"
+                    oninput="
+                      document.getElementById('priceVal').textContent =
+                        this.value + '€'
+                    "
+                  />
+                  <div
+                    class="d-flex justify-content-between mt-2 font-monospace smaller text-muted"
+                  >
+                    <span>0€</span>
+                    <span id="priceVal" class="fw-bold text-dark">50€</span>
+                  </div>
                 </div>
-              </div>
+              </details>
             </div>
           </aside>
 
@@ -186,6 +183,7 @@
               <div class="d-flex align-items-center">
                 <span class="text-muted small me-2">Ordenar:</span>
                 <select
+                  id="sort-select"
                   class="form-select border-0 bg-transparent fw-bold"
                   style="width: auto; cursor: pointer"
                 >

@@ -127,15 +127,15 @@ function renderProfile(data) {
 
   // Generic fallback
   avatarEl.onerror = function () {
-      console.warn("Avatar failed to load:", this.src);
-      this.onerror = null;
-      // Fallback to local default if the remote (Google) one fails
-      if (this.src.includes("default-user.png")) {
-          // If even local fails (super unlikely), use placeholder
-           this.src = "https://placehold.co/160x160/f4b400/fff?text=Hexomel";
-      } else {
-          this.src = "/images/default-user.png";
-      }
+    console.warn("Avatar failed to load:", this.src);
+    this.onerror = null;
+    // Fallback to local default if the remote (Google) one fails
+    if (this.src.includes("default-user.png")) {
+      // If even local fails (super unlikely), use placeholder
+      this.src = "https://placehold.co/160x160/f4b400/fff?text=Hexomel";
+    } else {
+      this.src = "/images/default-user.png";
+    }
   };
 
   // Update nav and localStorage to match fresh data
@@ -174,6 +174,16 @@ function renderProfile(data) {
                 <a href="shop.html" class="btn btn-sm btn-auth-enhanced register">Ir para a Loja</a>
             </div>
         `;
+  }
+
+  // Hide delete button for admins
+  const deleteBtn = document.getElementById("delete-account-btn");
+  if (
+    deleteBtn &&
+    (data.role?.toLowerCase() === "admin" ||
+      data.UserType?.toLowerCase() === "admin")
+  ) {
+    deleteBtn.style.display = "none";
   }
 
   fetchFavorites();

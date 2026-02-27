@@ -1,68 +1,78 @@
-import { open } from "sqlite";
-import sqlite3 from "sqlite3";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
-let db;
+let pool;
 
 export const initDB = async () => {
+  pool = mysql.createPool({
+    host: process.env.DB_HOST || "localhost",
+    port: process.env.DB_PORT || 3306,
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME || "hexomel",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    charset: "utf8mb4",
+  });
+
+  // Test the connection
   try {
-    const dbPath = path.join(__dirname, "../database.db");
-    const sqlPath = path.join(__dirname, "../hexomel.db.sql");
-
-    const dbExists = fs.existsSync(dbPath);
-
-    db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database,
-    });
-
-    // Initialize schema if first time
-    if (!dbExists) {
-      console.log("Initializing SQLite schema...");
-      const sql = fs.readFileSync(sqlPath, "utf8");
-      await db.exec(sql);
-      console.log("Schema initialized.");
-    }
-
-    // Run migrations (ensure tables exist even if DB was already created)
-    await db
-      .exec(
-        `
-      CREATE TABLE IF NOT EXISTS categoria (
-        ID_Categoria INTEGER PRIMARY KEY AUTOINCREMENT,
-        Nome TEXT NOT NULL UNIQUE
-      );
-      INSERT OR IGNORE INTO categoria (ID_Categoria, Nome) VALUES (1, 'Méls');
-      INSERT OR IGNORE INTO categoria (ID_Categoria, Nome) VALUES (2, 'Derivados');
-      INSERT OR IGNORE INTO categoria (ID_Categoria, Nome) VALUES (3, 'Acessórios');
-
-      -- Migration for encomenda table
-      ALTER TABLE encomenda ADD COLUMN Morada TEXT;
-      ALTER TABLE encomenda ADD COLUMN Telefone TEXT;
-    `,
-      )
-      .catch((err) => {
-        // Ignore errors if columns already exist
-        if (
-          !err.message.includes("duplicate column name") &&
-          !err.message.includes("already exists")
-        ) {
-          console.warn("Migration warning:", err.message);
-        }
-      });
-
-    console.log("SQLite Database connected successfully.");
-    return db;
+    const conn = await pool.getConnection();
+    conn.release();
+    console.log("MySQL Database connected successfully.");
   } catch (error) {
-    console.error("SQLite connection error:", error);
+    console.error("MySQL connection error:", error);
     throw error;
   }
+
+  // Return a sqlite-compatible wrapper so server.js needs no changes
+  return db;
 };
 
-export const getPool = () => db; // Renamed compatibility export
+// SQLite-compatible wrapper around mysql2 pool
+export const db = {
+  /**
+   * Fetch a single row. Equivalent to sqlite's db.get()
+   */
+  get: async (sql, params = []) => {
+    const [rows] = await pool.execute(sql, params);
+    return rows[0] || null;
+  },
+
+  /**
+   * Fetch all rows. Equivalent to sqlite's db.all()
+   */
+  all: async (sql, params = []) => {
+    const [rows] = await pool.execute(sql, params);
+    return rows;
+  },
+
+  /**
+   * Run a statement (INSERT/UPDATE/DELETE). Equivalent to sqlite's db.run()
+   * Returns { lastID, changes } to stay compatible with existing server.js code.
+   */
+  run: async (sql, params = []) => {
+    const [result] = await pool.execute(sql, params);
+    return { lastID: result.insertId, changes: result.affectedRows };
+  },
+
+  /**
+   * Execute raw SQL (used for schema migrations).
+   * mysql2 doesn't support multiple statements in execute(), so we split on semicolons.
+   */
+  exec: async (sql) => {
+    const statements = sql
+      .split(";")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    for (const statement of statements) {
+      await pool.query(statement);
+    }
+  },
+};
+
+export const getPool = () => pool;
 export const getDB = () => db;

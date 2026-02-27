@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "/api";
 import Swal from "sweetalert2";
 
 class CartManager {
