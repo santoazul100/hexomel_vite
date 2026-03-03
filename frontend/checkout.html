@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Hexomel</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="src/styles/checkout.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="icon" href="/favicon.webp" type="image/x-icon">
+</head>
+
+<body class="checkout-body">
+
+    <header class="checkout-header">
+        <div class="container">
+            <a href="shop.html" class="back-to-shop" title="Voltar à Loja">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="checkout-logo-container">
+                <img src="/images/logo_hexomel.webp" alt="Hexomel Logo">
+            </div>
+            <div class="checkout-secure">
+                <i class="fas fa-shield-alt"></i>
+                <span>Checkout 100% Seguro</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="checkout-stepper-container">
+        <div class="container">
+            <div class="worten-stepper">
+                <div class="worten-step active" id="step-1">
+                    <div class="worten-step-circle">1</div>
+                    <span class="worten-step-label">Identificação</span>
+                </div>
+                <div class="worten-step" id="step-2">
+                    <div class="worten-step-circle">2</div>
+                    <span class="worten-step-label">Morada</span>
+                </div>
+                <div class="worten-step" id="step-3">
+                    <div class="worten-step-circle">3</div>
+                    <span class="worten-step-label">Entrega</span>
+                </div>
+                <div class="worten-step" id="step-4">
+                    <div class="worten-step-circle">4</div>
+                    <span class="worten-step-label">Pagamento</span>
+                </div>
+                <div class="worten-step" id="step-5">
+                    <div class="worten-step-circle">5</div>
+                    <span class="worten-step-label">Revisão</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <div class="checkout-main-grid">
+            <!-- Left Side: Forms -->
+            <div class="checkout-forms">
+                <h1 class="checkout-title" id="page-title">Dados de Faturação</h1>
+
+                <div class="checkout-card">
+                    <form id="checkout-main-form">
+                        <!-- Step 1 Content: Faturação -->
+                        <div id="step-content-1">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="worten-form-group">
+                                    <input type="text" id="nome" class="worten-input" placeholder=" " required>
+                                    <label class="worten-label">Nome</label>
+                                </div>
+                                <div class="worten-form-group">
+                                    <input type="text" id="apelido" class="worten-input" placeholder=" ">
+                                    <label class="worten-label">Apelido</label>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="worten-form-group">
+                                    <input type="text" id="nif" class="worten-input" placeholder=" ">
+                                    <label class="worten-label">NIF (opcional)</label>
+                                </div>
+                                <div class="worten-form-group">
+                                    <input type="tel" id="telemovel" class="worten-input" placeholder=" " required>
+                                    <label class="worten-label">Telemóvel</label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-worten-primary"
+                                onclick="window.checkoutManager.nextStep()">Continuar para Entrega</button>
+                        </div>
+
+                        <!-- Step 2 Content: Local de Entrega -->
+                        <div id="step-content-2" class="d-none">
+                            <div class="worten-form-group">
+                                <input type="text" id="morada" class="worten-input" placeholder=" " required>
+                                <label class="worten-label">Morada completa</label>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                                <div class="worten-form-group">
+                                    <input type="text" id="cod-postal" class="worten-input" placeholder=" " required>
+                                    <label class="worten-label">Código postal</label>
+                                </div>
+                                <div class="worten-form-group">
+                                    <input type="text" id="cidade" class="worten-input" placeholder=" " required>
+                                    <label class="worten-label">Cidade</label>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="button" class="btn-worten-secondary"
+                                    onclick="window.checkoutManager.prevStep()">Voltar</button>
+                                <button type="button" class="btn-worten-primary" style="margin-top:0"
+                                    onclick="window.checkoutManager.nextStep()">Continuar</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 Content: Opções de Entrega -->
+                        <div id="step-content-3" class="d-none">
+                            <div class="selection-card selected">
+                                <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
+                                    <input type="radio" name="envio" value="ctt" checked
+                                        style="accent-color: var(--primary-gold); width: 22px; height: 22px;">
+                                    <div style="flex: 1">
+                                        <div style="font-weight: 700;">CTT Expresso</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-medium);">Entrega em sua casa
+                                            entre 2 a 3 dias úteis</div>
+                                    </div>
+                                    <div style="font-weight: 700; color: var(--primary-gold-dark);">€4.90</div>
+                                </label>
+                            </div>
+                            <div class="selection-card">
+                                <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
+                                    <input type="radio" name="envio" value="loja"
+                                        style="accent-color: var(--primary-gold); width: 22px; height: 22px;">
+                                    <div style="flex: 1">
+                                        <div style="font-weight: 700;">Levantamento em Loja</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-medium);">Disponível no nosso
+                                            apiário central (Grátis)</div>
+                                    </div>
+                                    <div style="font-weight: 700; color: var(--success-color);">Grátis</div>
+                                </label>
+                            </div>
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="button" class="btn-worten-secondary"
+                                    onclick="window.checkoutManager.prevStep()">Voltar</button>
+                                <button type="button" class="btn-worten-primary" style="margin-top:0"
+                                    onclick="window.checkoutManager.nextStep()">Continuar para Pagamento</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 Content: Pagamento -->
+                        <div id="step-content-4" class="d-none">
+                            <div class="selection-card selected">
+                                <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
+                                    <input type="radio" name="pagamento" value="cartao" checked
+                                        style="accent-color: var(--primary-gold); width: 22px; height: 22px;">
+                                    <i class="fas fa-credit-card"
+                                        style="font-size: 1.2rem; color: var(--text-medium);"></i>
+                                    <div style="flex: 1">
+                                        <div style="font-weight: 700;">Cartão de Crédito / Débito</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-medium);">Processamento seguro
+                                            via STRIPE</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="selection-card">
+                                <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
+                                    <input type="radio" name="pagamento" value="mbway"
+                                        style="accent-color: var(--primary-gold); width: 22px; height: 22px;">
+                                    <i class="fas fa-mobile-alt"
+                                        style="font-size: 1.2rem; color: var(--text-medium);"></i>
+                                    <div style="flex: 1">
+                                        <div style="font-weight: 700;">MB Way</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-medium);">Pagamento
+                                            instantâneo no telemóvel</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="button" class="btn-worten-secondary"
+                                    onclick="window.checkoutManager.prevStep()">Voltar</button>
+                                <button type="button" class="btn-worten-primary" style="margin-top:0"
+                                    onclick="window.checkoutManager.nextStep()">Rever a Encomenda</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 5 Content: Revisão -->
+                        <div id="step-content-5" class="d-none">
+                            <div class="checkout-card"
+                                style="padding: 25px; border: 1px dashed var(--border-color); background: var(--off-white);">
+                                <div style="margin-bottom: 20px;">
+                                    <h5 style="font-weight: 700; margin-bottom: 8px; font-family: var(--font-heading);">
+                                        Detalhes de Entrega</h5>
+                                    <p id="review-morada"
+                                        style="margin:0; font-size: 0.95rem; color: var(--text-medium);"></p>
+                                    <p id="review-contacto"
+                                        style="margin:0; font-size: 0.95rem; color: var(--text-medium);"></p>
+                                </div>
+                                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+                                <div style="margin-bottom: 10px;">
+                                    <h5 style="font-weight: 700; margin-bottom: 8px; font-family: var(--font-heading);">
+                                        Método de Pagamento</h5>
+                                    <p id="review-pagamento"
+                                        style="margin:0; font-size: 0.95rem; color: var(--text-medium);">Cartão de
+                                        Crédito</p>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="button" class="btn-worten-secondary"
+                                    onclick="window.checkoutManager.prevStep()">Editar Dados</button>
+                                <button type="submit" class="btn-worten-primary" style="margin-top:0"
+                                    id="final-submit-btn">Finalizar e Pagar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Side: Order Summary -->
+            <aside class="checkout-sidebar">
+                <div class="order-summary-card">
+                    <h2 class="summary-title">Resumo do Pedido</h2>
+
+                    <div id="summary-items-list">
+                        <!-- Items injected by JS -->
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal-val">€0,00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Envio</span>
+                            <span id="shipping-val">€0,00</span>
+                        </div>
+                        <div class="summary-row summary-total">
+                            <span>Total (IVA incl.)</span>
+                            <span class="total-price" id="total-val">€0,00</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: center; font-size: 0.8rem; color: var(--text-light);">
+                        <p><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Devoluções grátis
+                            até 30 dias</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <footer style="padding: 60px 0 30px; text-align: center; color: var(--text-light); font-size: 0.9rem;">
+        <div class="container">
+            <p>&copy; 2026 <strong>Hexomel</strong>. Mel Puro da Nossa Serra.</p>
+            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px; font-size: 1.2rem;">
+                <i class="fab fa-cc-visa"></i>
+                <i class="fab fa-cc-mastercard"></i>
+                <i class="fab fa-apple-pay"></i>
+                <i class="fab fa-google-pay"></i>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="src/checkout.js"></script>
+</body>
+
+</html>

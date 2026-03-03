@@ -10,10 +10,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initializeTabs();
 
-  // Initialize Edit Form
-  const editForm = document.getElementById("editProfileForm");
-  if (editForm) {
-    editForm.addEventListener("submit", handleProfileUpdate);
+  // Initialize Inline Edit Toggles
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".edit-toggle-btn");
+    if (btn) {
+      const section = btn.getAttribute("data-section");
+      toggleEditMode(section);
+    }
+  });
+
+  // Initialize Personal Data Form
+  const personalForm = document.getElementById("personal-edit-form");
+  if (personalForm) {
+    personalForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleUserDataSave("personal");
+    });
+  }
+
+  // Initialize Delivery Data Form
+  const deliveryForm = document.getElementById("delivery-edit-form");
+  if (deliveryForm) {
+    deliveryForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleUserDataSave("delivery");
+    });
   }
 
   // Initialize Password Change Form
@@ -66,6 +87,130 @@ function initializeTabs() {
   });
 }
 
+function toggleEditMode(section) {
+  const container = document.querySelector(`[data-section="${section}"]`).closest(".premium-card");
+  const viewMode = container.querySelector(`#${section}-view`);
+  const editMode = container.querySelector(`#${section}-edit-form`);
+  const btn = container.querySelector(`.edit-toggle-btn`);
+
+  const isEditing = !editMode.classList.contains("d-none");
+
+  if (isEditing) {
+    // Switch to View
+    editMode.classList.add("d-none");
+    viewMode.classList.remove("d-none");
+    btn.querySelector(".view-mode").classList.remove("d-none");
+    btn.querySelector(".edit-mode").classList.add("d-none");
+  } else {
+    // Switch to Edit
+    populateEditInputs(section);
+    editMode.classList.remove("d-none");
+    viewMode.classList.add("d-none");
+    btn.querySelector(".view-mode").classList.add("d-none");
+    btn.querySelector(".edit-mode").classList.remove("d-none");
+  }
+}
+
+function populateEditInputs(section) {
+  if (!currentUserData) return;
+
+  if (section === "personal") {
+    document.getElementById("input-name").value = currentUserData.name || "";
+    document.getElementById("input-email").value = currentUserData.email || "";
+  } else if (section === "delivery") {
+    document.getElementById("input-phone").value = currentUserData.phone || "";
+
+    // Parse address: "Rua X, 0000-000 Cidade"
+    if (currentUserData.address) {
+      const parts = currentUserData.address.split(", ");
+      const street = parts[0] || "";
+      const rest = parts.slice(1).join(", ");
+      const restWords = rest.split(" ");
+      const zip = restWords[0] || "";
+      const city = restWords.slice(1).join(" ") || "";
+
+      document.getElementById("input-address").value = street;
+      document.getElementById("input-zip").value = zip;
+      document.getElementById("input-city").value = city;
+    } else {
+      document.getElementById("input-address").value = "";
+      document.getElementById("input-zip").value = "";
+      document.getElementById("input-city").value = "";
+    }
+  }
+}
+
+async function handleUserDataSave(section) {
+  const token = localStorage.getItem("token");
+  let payload = {};
+
+  if (section === "personal") {
+    payload = {
+      name: document.getElementById("input-name").value,
+      email: document.getElementById("input-email").value,
+    };
+  } else if (section === "delivery") {
+    const street = document.getElementById("input-address").value;
+    const zip = document.getElementById("input-zip").value;
+    const city = document.getElementById("input-city").value;
+    const address = street ? `${street}, ${zip} ${city}` : "";
+
+    payload = {
+      phone: document.getElementById("input-phone").value,
+      address: address,
+    };
+  }
+
+  showInlineStatus("saving");
+
+  try {
+    const res = await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showInlineStatus("saved");
+
+      // Update Local State
+      currentUserData = { ...currentUserData, ...payload };
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem("user", JSON.stringify({ ...localUser, ...payload }));
+
+      // Refresh UI Components
+      renderProfile(currentUserData);
+      toggleEditMode(section); // Return to view mode
+      updateNav(JSON.parse(localStorage.getItem("user")));
+    } else {
+      showInlineStatus("error", data.error);
+    }
+  } catch (error) {
+    console.error("Save error:", error);
+    showInlineStatus("error");
+  }
+}
+
+function showInlineStatus(type, msg) {
+  const el = document.getElementById("inline-save-status");
+  if (!el) return;
+
+  if (type === "saving") {
+    el.innerHTML = `<span class="badge" style="background:var(--primary-gold,#f4b400);color:#000;font-size:.8rem;padding:.4em .8em"><i class="fas fa-spinner fa-spin me-1"></i>A guardar alterações...</span>`;
+  } else if (type === "saved") {
+    el.innerHTML = `<span class="badge bg-success" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-check-circle me-1"></i>Alterações provocadas com sucesso!</span>`;
+    setTimeout(() => { el.innerHTML = ""; }, 3000);
+  } else if (type === "error") {
+    el.innerHTML = `<span class="badge bg-danger" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-exclamation-circle me-1"></i>Erro: ${msg || "Falha ao gravar"}</span>`;
+    setTimeout(() => { el.innerHTML = ""; }, 5000);
+  }
+}
+
 async function fetchProfileData() {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -86,8 +231,6 @@ async function fetchProfileData() {
     }
 
     const data = await res.json();
-    console.log("Profile Data Loaded:", data);
-    console.log("Orders found:", data.orders?.length || 0);
     currentUserData = data;
     renderProfile(data);
   } catch (error) {
@@ -98,15 +241,11 @@ async function fetchProfileData() {
       text: error.message || "Não foi possível carregar os teus dados.",
       confirmButtonColor: "#f4b400",
     });
-
-    document.getElementById("profile-name").innerText = "Erro ao carregar";
-    document.getElementById("orders-list").innerHTML =
-      `<div class="text-center py-4 text-danger">Erro: ${error.message}</div>`;
   }
 }
 
 function renderProfile(data) {
-  // Use standardized lowercase keys
+  // Header Elements
   const name = data.name || "Utilizador";
   const email = data.email || "";
   const pictureUrl = data.picture;
@@ -114,40 +253,58 @@ function renderProfile(data) {
   document.getElementById("profile-name").innerText = name;
   document.getElementById("profile-email").innerText = email;
 
-  const avatarEl = document.getElementById("profile-avatar-large");
-  console.log("Avatar Debug:", { pictureUrl, name });
+  const addressEl = document.getElementById("profile-address");
+  if (addressEl) {
+    addressEl.innerHTML = data.address
+      ? `<i class="fas fa-map-marker-alt me-1"></i> ${data.address}`
+      : `<i class="fas fa-map-marker-alt me-1"></i> Morada não definida`;
+  }
 
-  // Explicit check for non-empty string
+  // Tab View Mode Elements
+  const viewName = document.getElementById("view-name");
+  if (viewName) viewName.innerText = name;
+
+  const viewEmail = document.getElementById("view-email");
+  if (viewEmail) viewEmail.innerText = email;
+
+  const viewPhone = document.getElementById("view-phone");
+  if (viewPhone) viewPhone.innerText = data.phone || "Não definido";
+
+  const viewAddress = document.getElementById("view-address");
+  if (viewAddress) viewAddress.innerText = data.address || "Morada não definida";
+
+  const viewCity = document.getElementById("view-city");
+  if (viewCity) {
+    if (data.address) {
+      const parts = data.address.split(", ");
+      const rest = parts.slice(1).join(", ");
+      const restWords = rest.split(" ");
+      viewCity.innerText = restWords.slice(1).join(" ") || "Não definida";
+    } else {
+      viewCity.innerText = "Não definida";
+    }
+  }
+
+  // Avatar Handling
+  const avatarEl = document.getElementById("profile-avatar-large");
   if (pictureUrl && pictureUrl.trim() !== "") {
     avatarEl.src = pictureUrl;
   } else {
-    // Default avatar local asset
     avatarEl.src = "/images/default-user.png";
   }
 
-  // Generic fallback
   avatarEl.onerror = function () {
-    console.warn("Avatar failed to load:", this.src);
     this.onerror = null;
-    // Fallback to local default if the remote (Google) one fails
-    if (this.src.includes("default-user.png")) {
-      // If even local fails (super unlikely), use placeholder
-      this.src = "https://placehold.co/160x160/f4b400/fff?text=Hexomel";
-    } else {
-      this.src = "/images/default-user.png";
-    }
+    this.src = "/images/default-user.png";
   };
 
-  // Update nav and localStorage to match fresh data
-  const updatedUser = { ...data, orders: undefined };
-  localStorage.setItem("user", JSON.stringify(updatedUser));
-  updateNav(updatedUser);
-
   // Orders
-  const ordersList = document.getElementById("orders-list");
-  const orders = data.orders || [];
-  console.log("Rendering orders:", orders);
+  renderOrders(data.orders || []);
+  fetchFavorites();
+}
 
+function renderOrders(orders) {
+  const ordersList = document.getElementById("orders-list");
   if (orders.length > 0) {
     ordersList.innerHTML = orders
       .map(
@@ -166,7 +323,6 @@ function renderProfile(data) {
       )
       .join("");
   } else {
-    console.log("No orders found, showing empty state");
     ordersList.innerHTML = `
             <div class="text-center py-5 opacity-50 bg-light rounded-4 border">
                 <i class="fas fa-shopping-basket fs-1 mb-3"></i>
@@ -175,72 +331,27 @@ function renderProfile(data) {
             </div>
         `;
   }
-
-  // Hide delete button for admins
-  const deleteBtn = document.getElementById("delete-account-btn");
-  if (
-    deleteBtn &&
-    (data.role?.toLowerCase() === "admin" ||
-      data.UserType?.toLowerCase() === "admin")
-  ) {
-    deleteBtn.style.display = "none";
-  }
-
-  fetchFavorites();
 }
 
 async function fetchFavorites() {
   const token = localStorage.getItem("token");
   const favGrid = document.getElementById("favorites-grid");
 
-  if (!token) {
-    console.warn("No token found, skipping favorites fetch");
-    renderFavorites([]);
-    return;
-  }
+  if (!token || !favGrid) return;
 
   try {
-    // Show loading state
-    favGrid.innerHTML = `
-      <div class="col-12 text-center py-5">
-        <div class="spinner-border text-warning" role="status">
-          <span class="visually-hidden">Carregando...</span>
-        </div>
-        <p class="mt-3 text-muted">A carregar favoritos...</p>
-      </div>
-    `;
-
-    console.log("Fetching favorites from /api/favorites...");
     const res = await fetch("/api/favorites", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    console.log("Favorites response status:", res.status);
-
-    if (!res.ok) {
-      const errorData = await res
-        .json()
-        .catch(() => ({ error: "Unknown error" }));
-      throw new Error(errorData.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error("Failed to fetch favorites");
 
     const favorites = await res.json();
-    console.log("Favorites loaded:", favorites);
     renderFavorites(favorites);
   } catch (error) {
     console.error("Favorites fetch error:", error);
-    favGrid.innerHTML = `
-      <div class="col-12 text-center py-5 text-danger">
-        <i class="fas fa-exclamation-triangle fs-1 mb-3"></i>
-        <p>Erro ao carregar favoritos</p>
-        <p class="small text-muted">${error.message}</p>
-        <button onclick="window.location.reload()" class="btn btn-sm btn-auth-enhanced register mt-3">
-          Tentar Novamente
-        </button>
-      </div>
-    `;
   }
 }
 
@@ -253,7 +364,7 @@ function renderFavorites(favorites) {
             <div class="col-md-6 col-xl-4">
               <div class="premium-card p-3 h-100 d-flex flex-column gap-3">
                   <div class="text-center">
-                    <img src="/img/produtos/${fav.ID_Produto}.webp" alt="${fav.Nome}" style="width: 100%; height: 120px; object-fit: contain;" onerror="this.src='https://placehold.co/150x120/f6f6f6/e0e0e0?text=Honeycomb'">
+                    <img src="/img/produtos/${fav.ID_Produto}.webp" alt="${fav.Nome}" style="width: 100%; height: 120px; object-fit: contain;" onerror="this.src='/images/logo_hexomel.webp'">
                   </div>
                   <div class="flex-grow-1">
                       <div class="fw-bold small text-truncate">${fav.Nome}</div>
@@ -293,63 +404,6 @@ window.removeFromFavorites = async function (productId) {
   }
 };
 
-window.openEditModal = function () {
-  if (!currentUserData) return;
-  document.getElementById("edit-name").value = currentUserData.name || "";
-  document.getElementById("edit-email").value = currentUserData.email || "";
-  document.getElementById("edit-phone").value = currentUserData.phone || "";
-
-  const modal = new bootstrap.Modal(
-    document.getElementById("editProfileModal"),
-  );
-  modal.show();
-};
-
-async function handleProfileUpdate(e) {
-  e.preventDefault();
-  const token = localStorage.getItem("token");
-  const name = document.getElementById("edit-name").value;
-  const email = document.getElementById("edit-email").value;
-  const phone = document.getElementById("edit-phone").value;
-
-  try {
-    const res = await fetch("/api/user/profile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name, email, phone }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      Swal.fire({
-        icon: "success",
-        title: "Perfil Atualizado!",
-        text: "As tuas alterações foram guardadas com sucesso.",
-        confirmButtonColor: "#f4b400",
-      }).then(() => {
-        bootstrap.Modal.getInstance(
-          document.getElementById("editProfileModal"),
-        ).hide();
-        fetchProfileData();
-        const localUser = JSON.parse(localStorage.getItem("user") || "{}");
-        localUser.name = name;
-        localUser.email = email;
-        localStorage.setItem("user", JSON.stringify(localUser));
-        updateNav(localUser);
-      });
-    } else {
-      Swal.fire("Erro", data.error || "Falha ao atualizar perfil", "error");
-    }
-  } catch (error) {
-    console.error("Update error:", error);
-    Swal.fire("Erro", "Ocorreu um erro ao comunicar com o servidor.", "error");
-  }
-}
-
 async function handlePasswordUpdate(e) {
   e.preventDefault();
   const token = localStorage.getItem("token");
@@ -362,11 +416,7 @@ async function handlePasswordUpdate(e) {
   }
 
   if (newPassword.length < 6) {
-    return Swal.fire(
-      "Erro",
-      "A nova password deve ter pelo menos 6 caracteres",
-      "error",
-    );
+    return Swal.fire("Erro", "A nova password deve ter pelo menos 6 caracteres", "error");
   }
 
   try {
@@ -440,35 +490,32 @@ async function handleDeleteAccount() {
     }
   }
 }
-// Handle Avatar Upload
+
 async function handleAvatarUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  // Validate file type
   if (!file.type.startsWith("image/")) {
     Swal.fire({
       icon: "error",
-      title: "Ficheiro InvÃ¡lido",
-      text: "Por favor, seleciona uma imagem vÃ¡lida.",
+      title: "Ficheiro Inválido",
+      text: "Por favor, seleciona uma imagem válida.",
       confirmButtonColor: "#f4b400",
     });
     return;
   }
 
-  // Validate file size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
     Swal.fire({
       icon: "error",
       title: "Ficheiro Muito Grande",
-      text: "A imagem deve ter no mÃ¡ximo 5MB.",
+      text: "A imagem deve ter no máximo 5MB.",
       confirmButtonColor: "#f4b400",
     });
     return;
   }
 
   try {
-    // Show loading
     Swal.fire({
       title: "A carregar...",
       text: "A atualizar a tua foto de perfil",
@@ -478,11 +525,9 @@ async function handleAvatarUpload(e) {
       },
     });
 
-    // Convert image to base64
     const reader = new FileReader();
     reader.onload = async (event) => {
       const base64Image = event.target.result;
-
       const token = localStorage.getItem("token");
       const res = await fetch("/api/user/profile/picture", {
         method: "PUT",
@@ -498,10 +543,7 @@ async function handleAvatarUpload(e) {
         throw new Error(errorData.error || "Erro ao atualizar foto");
       }
 
-      // Update UI
       document.getElementById("profile-avatar-large").src = base64Image;
-
-      // Update localStorage and nav
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       user.picture = base64Image;
       localStorage.setItem("user", JSON.stringify(user));
@@ -514,22 +556,16 @@ async function handleAvatarUpload(e) {
         confirmButtonColor: "#f4b400",
       });
     };
-
-    reader.onerror = () => {
-      throw new Error("Erro ao ler o ficheiro");
-    };
-
     reader.readAsDataURL(file);
   } catch (error) {
     console.error("Avatar upload error:", error);
     Swal.fire({
       icon: "error",
       title: "Erro",
-      text: error.message || "NÃ£o foi possÃ­vel atualizar a foto.",
+      text: error.message || "Não foi possível atualizar a foto.",
       confirmButtonColor: "#f4b400",
     });
   } finally {
-    // Reset file input
     e.target.value = "";
   }
 }

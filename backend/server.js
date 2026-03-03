@@ -721,6 +721,15 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, ?, ?, 'Pendente', ?, ?)",
       [req.user.id, new Date().toISOString(), total, address, phone],
     );
+
+    // 3b. Sync to Profile (Update user address/phone if provided)
+    if (address || phone) {
+      await db.run(
+        "UPDATE cliente SET Morada = COALESCE(?, Morada), Telefone = COALESCE(?, Telefone) WHERE ID_Cliente = ?",
+        [address, phone, req.user.id]
+      );
+    }
+
     const orderId = result.lastID;
 
     // 4. Move items to Order Items e update Stock
@@ -767,16 +776,16 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
               </thead>
               <tbody>
                 ${items
-                  .map(
-                    (i) => `
+          .map(
+            (i) => `
                   <tr>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${i.Nome}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${i.Quantidade}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${(i.Preco * i.Quantidade).toFixed(2)}€</td>
                   </tr>
                 `,
-                  )
-                  .join("")}
+          )
+          .join("")}
               </tbody>
               <tfoot>
                 <tr>
@@ -927,7 +936,7 @@ app.delete(
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Picture, Data_Resgistro, UserType FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, Data_Resgistro, UserType FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -942,6 +951,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
       name: user.Nome,
       email: user.Email,
       phone: user.Telefone,
+      address: user.Morada,
       picture: user.Picture,
       role: user.UserType,
       dateRegistered: user.Data_Resgistro,
@@ -954,7 +964,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
 });
 
 app.put("/api/user/profile", authenticateToken, async (req, res) => {
-  const { name, email, phone } = req.body;
+  const { name, email, phone, address } = req.body;
   try {
     // Basic validation
     if (!name || !email) {
@@ -971,8 +981,8 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
     }
 
     await db.run(
-      "UPDATE cliente SET Nome = ?, Email = ?, Telefone = ? WHERE ID_Cliente = ?",
-      [name, email, phone || null, req.user.id],
+      "UPDATE cliente SET Nome = ?, Email = ?, Telefone = ?, Morada = ? WHERE ID_Cliente = ?",
+      [name, email, phone || null, address || null, req.user.id],
     );
 
     res.json({ message: "Profile updated successfully" });
