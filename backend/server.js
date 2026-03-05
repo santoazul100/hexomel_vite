@@ -690,7 +690,8 @@ initMailer().catch(console.error);
 
 // Checkout Route
 app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
-  const { address, phone } = req.body;
+  const { address, phone, nome, apelido } = req.body;
+  const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   try {
     // 1. Get Cart
@@ -722,11 +723,11 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       [req.user.id, new Date().toISOString(), total, address, phone],
     );
 
-    // 3b. Sync to Profile (Update user address/phone if provided)
-    if (address || phone) {
+    // 3b. Sync to Profile (Update user name, address, phone if provided)
+    if (fullName || address || phone) {
       await db.run(
-        "UPDATE cliente SET Morada = COALESCE(?, Morada), Telefone = COALESCE(?, Telefone) WHERE ID_Cliente = ?",
-        [address, phone, req.user.id]
+        "UPDATE cliente SET Nome = COALESCE(?, Nome), Morada = COALESCE(?, Morada), Telefone = COALESCE(?, Telefone) WHERE ID_Cliente = ?",
+        [fullName || null, address, phone, req.user.id],
       );
     }
 
@@ -776,16 +777,16 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
               </thead>
               <tbody>
                 ${items
-          .map(
-            (i) => `
+                  .map(
+                    (i) => `
                   <tr>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${i.Nome}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${i.Quantidade}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${(i.Preco * i.Quantidade).toFixed(2)}€</td>
                   </tr>
                 `,
-          )
-          .join("")}
+                  )
+                  .join("")}
               </tbody>
               <tfoot>
                 <tr>
@@ -963,6 +964,39 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
   }
 });
 
+// Get Order Items
+app.get(
+  "/api/user/orders/:orderId/items",
+  authenticateToken,
+  async (req, res) => {
+    const { orderId } = req.params;
+    try {
+      // Verify order belongs to user
+      const order = await db.get(
+        "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+        [orderId, req.user.id],
+      );
+
+      if (!order) {
+        return res.status(404).json({ error: "Encomenda não encontrada" });
+      }
+
+      const items = await db.all(
+        `SELECT ie.*, p.Nome, p.Imagem, p.ID_Produto 
+       FROM item_encomenda ie 
+       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
+       WHERE ie.ID_Encomenda = ?`,
+        [orderId],
+      );
+
+      res.json(items);
+    } catch (error) {
+      console.error("Fetch order items error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+);
+
 app.put("/api/user/profile", authenticateToken, async (req, res) => {
   const { name, email, phone, address } = req.body;
   try {
@@ -1052,11 +1086,9 @@ app.delete("/api/user/profile", authenticateToken, async (req, res) => {
     // Prevent admin from deleting themselves
     const userRole = req.user.role ? req.user.role.toLowerCase() : "";
     if (userRole === "admin") {
-      return res
-        .status(400)
-        .json({
-          error: "Cannot delete an admin account through clinical profile.",
-        });
+      return res.status(400).json({
+        error: "Cannot delete an admin account through clinical profile.",
+      });
     }
 
     // Note: ON DELETE CASCADE in schema handles related tables (cart, favorites, etc.)

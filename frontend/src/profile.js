@@ -88,7 +88,9 @@ function initializeTabs() {
 }
 
 function toggleEditMode(section) {
-  const container = document.querySelector(`[data-section="${section}"]`).closest(".premium-card");
+  const container = document
+    .querySelector(`[data-section="${section}"]`)
+    .closest(".premium-card");
   const viewMode = container.querySelector(`#${section}-view`);
   const editMode = container.querySelector(`#${section}-edit-form`);
   const btn = container.querySelector(`.edit-toggle-btn`);
@@ -181,7 +183,10 @@ async function handleUserDataSave(section) {
       // Update Local State
       currentUserData = { ...currentUserData, ...payload };
       const localUser = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({ ...localUser, ...payload }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...localUser, ...payload }),
+      );
 
       // Refresh UI Components
       renderProfile(currentUserData);
@@ -204,10 +209,14 @@ function showInlineStatus(type, msg) {
     el.innerHTML = `<span class="badge" style="background:var(--primary-gold,#f4b400);color:#000;font-size:.8rem;padding:.4em .8em"><i class="fas fa-spinner fa-spin me-1"></i>A guardar alterações...</span>`;
   } else if (type === "saved") {
     el.innerHTML = `<span class="badge bg-success" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-check-circle me-1"></i>Alterações provocadas com sucesso!</span>`;
-    setTimeout(() => { el.innerHTML = ""; }, 3000);
+    setTimeout(() => {
+      el.innerHTML = "";
+    }, 3000);
   } else if (type === "error") {
     el.innerHTML = `<span class="badge bg-danger" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-exclamation-circle me-1"></i>Erro: ${msg || "Falha ao gravar"}</span>`;
-    setTimeout(() => { el.innerHTML = ""; }, 5000);
+    setTimeout(() => {
+      el.innerHTML = "";
+    }, 5000);
   }
 }
 
@@ -271,7 +280,8 @@ function renderProfile(data) {
   if (viewPhone) viewPhone.innerText = data.phone || "Não definido";
 
   const viewAddress = document.getElementById("view-address");
-  if (viewAddress) viewAddress.innerText = data.address || "Morada não definida";
+  if (viewAddress)
+    viewAddress.innerText = data.address || "Morada não definida";
 
   const viewCity = document.getElementById("view-city");
   if (viewCity) {
@@ -314,9 +324,14 @@ function renderOrders(orders) {
                     <div class="fw-bold">Encomenda #${order.id}</div>
                     <div class="small text-muted">${new Date(order.date).toLocaleDateString("pt-PT")}</div>
                 </div>
-                <div class="text-end">
-                    <div class="fw-bold" style="color: var(--primary-green)">€${(parseFloat(order.total) || 0).toFixed(2)}</div>
-                    <span class="badge rounded-pill ${order.status === "Pendente" ? "bg-warning text-dark" : "bg-success"}">${order.status}</span>
+                <div class="text-end d-flex flex-column align-items-end gap-2">
+                    <div>
+                        <div class="fw-bold" style="color: var(--primary-green)">€${(parseFloat(order.total) || 0).toFixed(2)}</div>
+                        <span class="badge rounded-pill ${order.status === "Pendente" ? "bg-warning text-dark" : "bg-success"}">${order.status}</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-warning py-1 px-3 rounded-pill" onclick="window.viewOrderDetails(${order.id})">
+                        <i class="fas fa-eye me-1"></i> Detalhes
+                    </button>
                 </div>
             </div>
         `,
@@ -416,7 +431,11 @@ async function handlePasswordUpdate(e) {
   }
 
   if (newPassword.length < 6) {
-    return Swal.fire("Erro", "A nova password deve ter pelo menos 6 caracteres", "error");
+    return Swal.fire(
+      "Erro",
+      "A nova password deve ter pelo menos 6 caracteres",
+      "error",
+    );
   }
 
   try {
@@ -569,3 +588,92 @@ async function handleAvatarUpload(e) {
     e.target.value = "";
   }
 }
+
+window.viewOrderDetails = async function (orderId) {
+  const token = localStorage.getItem("token");
+  const content = document.getElementById("order-details-content");
+
+  // Use bootstrap from window if not imported (it's loaded via CDN in profile.html)
+  const modalEl = document.getElementById("orderDetailsModal");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  content.innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-warning" role="status">
+        <span class="visually-hidden">A carregar...</span>
+      </div>
+    </div>
+  `;
+
+  modal.show();
+
+  try {
+    const res = await fetch(`/api/user/orders/${orderId}/items`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) throw new Error("Falha ao carregar detalhes");
+
+    const items = await res.json();
+
+    let itemsHtml = `
+      <div class="order-id-display mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+        <span class="text-muted small">ID da Encomenda</span>
+        <span class="fw-bold">#${orderId}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-borderless align-middle">
+          <thead class="text-muted small fw-bold">
+            <tr>
+              <th colspan="2">Produto</th>
+              <th class="text-center">Qtd</th>
+              <th class="text-end">Preço</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    let total = 0;
+    items.forEach((item) => {
+      const itemTotal = item.Quantidade * item.Preco_Unitario;
+      total += itemTotal;
+      itemsHtml += `
+        <tr>
+          <td style="width: 60px;">
+            <img src="${item.Imagem || "/img/produtos/" + item.ID_Produto + ".webp"}" 
+                 class="rounded-3 shadow-sm" style="width: 50px; height: 50px; object-fit: cover;"
+                 onerror="this.src='/images/logo_hexomel.webp'">
+          </td>
+          <td>
+            <div class="fw-bold small text-wrap">${item.Nome}</div>
+            <div class="text-muted small">€${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
+          </td>
+          <td class="text-center small">${item.Quantidade}</td>
+          <td class="text-end fw-bold small">€${itemTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    itemsHtml += `
+          </tbody>
+          <tfoot class="border-top">
+            <tr>
+              <td colspan="3" class="pt-3 fw-bold">Total da Encomenda</td>
+              <td class="pt-3 text-end fw-bold fs-5 text-warning">€${total.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+
+    content.innerHTML = itemsHtml;
+  } catch (error) {
+    console.error("Order details error:", error);
+    content.innerHTML = `
+      <div class="alert alert-danger rounded-4 py-4 text-center">
+        <i class="fas fa-exclamation-triangle fs-2 mb-2 d-block"></i>
+        Erro ao carregar os detalhes da encomenda.
+      </div>
+    `;
+  }
+};

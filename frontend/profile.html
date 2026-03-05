@@ -1,358 +1,592 @@
 <!doctype html>
 <html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hexomel</title>
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <script src="src/pre-load.js"></script>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hexomel</title>
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.webp" type="image/x-icon" />
-  <script src="src/pre-load.js"></script>
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="src/styles/index.css" />
-  <link rel="stylesheet" href="src/styles/modern.css" />
-</head>
+  <body>
+    <!-- Navbar (Premium Overhaul) -->
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img
+            src="/images/logo_hexomel.webp"
+            alt="Hexomel Logo"
+            class="navbar-logo"
+          />
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav mx-auto gap-4">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="shop.html">Produtos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contactos</a>
+            </li>
+          </ul>
 
-<body>
-  <!-- Navbar (Premium Overhaul) -->
-  <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
-    <div class="container">
-      <a class="navbar-brand" href="index.html">
-        <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" />
-      </a>
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav mx-auto gap-4">
-          <li class="nav-item">
-            <a class="nav-link" href="index.html">Início</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="shop.html">Produtos</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="about.html">Sobre</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="contact.html">Contactos</a>
-          </li>
-        </ul>
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+              <button
+                id="cart-btn"
+                class="btn btn-link text-decoration-none text-dark position-relative p-0"
+              >
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span
+                  id="cart-badge"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                  >0</span
+                >
+              </button>
+            </div>
 
-        <div class="d-flex align-items-center navbar-right-fixed">
-          <div class="cart-navbar-separate me-3">
-            <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
-              <i class="fas fa-shopping-cart fs-5"></i>
-              <span id="cart-badge"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
-            </button>
-          </div>
-
-          <div class="d-flex align-items-center gap-3" id="authSection">
-            <!-- Injected by main.js -->
+            <div class="d-flex align-items-center gap-3" id="authSection">
+              <!-- Injected by main.js -->
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </nav>
+    </nav>
 
-  <main class="py-5 mt-5 position-relative overflow-hidden">
-    <!-- Floating Bees -->
-    <div class="bee-container z-0" style="
+    <main class="py-5 mt-5 position-relative overflow-hidden">
+      <!-- Floating Bees -->
+      <div
+        class="bee-container z-0"
+        style="
           position: absolute;
           width: 100%;
           height: 100vh;
           pointer-events: none;
           top: 0;
           left: 0;
-        ">
-      <img src="abelha/abelha.webp" class="bee-decoration" alt="Bees" style="top: 5%; right: 8%; width: 50px" />
-      <img src="abelha/abelha_inverso.webp" class="bee-decoration" alt="Bees"
-        style="bottom: 25%; left: 5%; width: 45px" />
-    </div>
-    <div class="container mt-3 position-relative z-1">
-      <!-- Profile Header Card -->
-      <div class="premium-card profile-header p-0 overflow-hidden border-0 mb-4 animate-fade-up">
-        <div class="profile-banner bg-warning opacity-25" style="height: 140px"></div>
-        <div class="p-4 pt-0 d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4"
-          style="margin-top: -80px">
-          <div class="position-relative profile-avatar-wrapper">
-            <img id="profile-avatar-large"
-              src="https://ui-avatars.com/api/?name=User&background=f4b400&color=fff&size=160" alt="Avatar"
-              class="rounded-circle border border-4 border-white shadow-lg"
-              style="width: 160px; height: 160px; object-fit: cover" referrerpolicy="no-referrer" />
-            <button class="profile-camera-btn" id="upload-avatar-btn" title="Alterar foto de perfil">
-              <i class="fas fa-camera"></i>
-            </button>
-            <input type="file" id="avatar-file-input" accept="image/*" style="display: none" />
-          </div>
-          <div class="flex-grow-1 text-center text-md-start mb-3">
-            <h1 class="profile-name mb-2" id="profile-name">Carregando...</h1>
-            <p class="profile-email mb-1" id="profile-email">
-              email@exemplo.com
-            </p>
-            <p class="profile-address small text-muted mb-3" id="profile-address">
-              <i class="fas fa-map-marker-alt me-1"></i> Morada não definida
-            </p>
-          </div>
-        </div>
+        "
+      >
+        <img
+          src="abelha/abelha.webp"
+          class="bee-decoration"
+          alt="Bees"
+          style="top: 5%; right: 8%; width: 50px"
+        />
+        <img
+          src="abelha/abelha_inverso.webp"
+          class="bee-decoration"
+          alt="Bees"
+          style="bottom: 25%; left: 5%; width: 45px"
+        />
       </div>
-
-      <div class="row g-4">
-        <!-- Left Sidebar: Tabs -->
-        <div class="col-lg-3">
-          <div class="premium-card p-3 d-flex flex-column gap-2">
-            <button class="btn btn-profile-tab active" data-tab="orders">
-              <i class="fas fa-shopping-basket me-2"></i>Encomendas
-            </button>
-            <button class="btn btn-profile-tab" data-tab="delivery">
-              <i class="fas fa-user-edit me-2"></i>Dados Pessoais
-            </button>
-            <button class="btn btn-profile-tab" data-tab="favorites">
-              <i class="fas fa-heart me-2"></i>Favoritos
-            </button>
-            <button class="btn btn-profile-tab" data-tab="security">
-              <i class="fas fa-shield-alt me-2"></i>Segurança
-            </button>
-            <button class="btn btn-profile-tab text-danger" id="delete-account-btn">
-              <i class="fas fa-user-slash me-2"></i>Eliminar Conta
-            </button>
+      <div class="container mt-3 position-relative z-1">
+        <!-- Profile Header Card -->
+        <div
+          class="premium-card profile-header p-0 overflow-hidden border-0 mb-4 animate-fade-up"
+        >
+          <div
+            class="profile-banner bg-warning opacity-25"
+            style="height: 140px"
+          ></div>
+          <div
+            class="p-4 pt-0 d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4"
+            style="margin-top: -80px"
+          >
+            <div class="position-relative profile-avatar-wrapper">
+              <img
+                id="profile-avatar-large"
+                src="https://ui-avatars.com/api/?name=User&background=f4b400&color=fff&size=160"
+                alt="Avatar"
+                class="rounded-circle border border-4 border-white shadow-lg"
+                style="width: 160px; height: 160px; object-fit: cover"
+                referrerpolicy="no-referrer"
+              />
+              <button
+                class="profile-camera-btn"
+                id="upload-avatar-btn"
+                title="Alterar foto de perfil"
+              >
+                <i class="fas fa-camera"></i>
+              </button>
+              <input
+                type="file"
+                id="avatar-file-input"
+                accept="image/*"
+                style="display: none"
+              />
+            </div>
+            <div class="flex-grow-1 text-center text-md-start mb-3">
+              <h1 class="profile-name mb-2" id="profile-name">Carregando...</h1>
+              <p class="profile-email mb-1" id="profile-email">
+                email@exemplo.com
+              </p>
+              <p
+                class="profile-address small text-muted mb-3"
+                id="profile-address"
+              >
+                <i class="fas fa-map-marker-alt me-1"></i> Morada não definida
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Main Content: Tab Panes -->
-        <div class="col-lg-9">
-          <!-- Orders Tab -->
-          <div class="profile-tab-content active" id="tab-orders">
-            <h3 class="fw-bold mb-4">As Minhas Encomendas</h3>
-            <div id="orders-list" class="d-flex flex-column gap-3">
-              <div class="text-center py-5 opacity-50">
-                Carregando encomendas...
-              </div>
+        <div class="row g-4">
+          <!-- Left Sidebar: Tabs -->
+          <div class="col-lg-3">
+            <div class="premium-card p-3 d-flex flex-column gap-2">
+              <button class="btn btn-profile-tab active" data-tab="orders">
+                <i class="fas fa-shopping-basket me-2"></i>Encomendas
+              </button>
+              <button class="btn btn-profile-tab" data-tab="delivery">
+                <i class="fas fa-user-edit me-2"></i>Dados Pessoais
+              </button>
+              <button class="btn btn-profile-tab" data-tab="favorites">
+                <i class="fas fa-heart me-2"></i>Favoritos
+              </button>
+              <button class="btn btn-profile-tab" data-tab="security">
+                <i class="fas fa-shield-alt me-2"></i>Segurança
+              </button>
+              <button
+                class="btn btn-profile-tab text-danger"
+                id="delete-account-btn"
+              >
+                <i class="fas fa-user-slash me-2"></i>Eliminar Conta
+              </button>
             </div>
           </div>
 
-          <!-- Personal & Delivery Data Tab -->
-          <div class="profile-tab-content" id="tab-delivery" style="display: none">
-            <h3 class="fw-bold mb-1">Dados Pessoais e Entrega</h3>
-            <p class="text-muted small mb-4">Gere as tuas informações e moradas de envio para um checkout instantâneo.
-            </p>
-
-            <div class="d-flex flex-column gap-4" style="max-width: 800px">
-              <!-- Inline Save Status -->
-              <div id="inline-save-status" style="min-height: 20px;"></div>
-
-              <!-- Personal Info Card -->
-              <div class="premium-card p-0 overflow-hidden border">
-                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-                  <h6 class="mb-0 fw-bold"><i class="fas fa-user me-2 text-warning"></i>Identificação</h6>
-                  <button class="btn btn-sm btn-link text-decoration-none p-0 edit-toggle-btn" data-section="personal">
-                    <span class="view-mode"><i class="fas fa-pen me-1"></i>Editar</span>
-                    <span class="edit-mode d-none"><i class="fas fa-times me-1"></i>Cancelar</span>
-                  </button>
+          <!-- Main Content: Tab Panes -->
+          <div class="col-lg-9">
+            <!-- Orders Tab -->
+            <div class="profile-tab-content active" id="tab-orders">
+              <h3 class="fw-bold mb-4">As Minhas Encomendas</h3>
+              <div id="orders-list" class="d-flex flex-column gap-3">
+                <div class="text-center py-5 opacity-50">
+                  Carregando encomendas...
                 </div>
-                <div class="p-4">
-                  <!-- View Mode -->
-                  <div id="personal-view" class="row g-3">
-                    <div class="col-md-6">
-                      <div class="text-muted small mb-1">Nome Completo</div>
-                      <div class="fw-medium" id="view-name">Carregando...</div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="text-muted small mb-1">Email</div>
-                      <div class="fw-medium" id="view-email">email@exemplo.com</div>
-                    </div>
+              </div>
+            </div>
+
+            <!-- Personal & Delivery Data Tab -->
+            <div
+              class="profile-tab-content"
+              id="tab-delivery"
+              style="display: none"
+            >
+              <h3 class="fw-bold mb-1">Dados Pessoais e Entrega</h3>
+              <p class="text-muted small mb-4">
+                Gere as tuas informações e moradas de envio para um checkout
+                instantâneo.
+              </p>
+
+              <div class="d-flex flex-column gap-4" style="max-width: 800px">
+                <!-- Inline Save Status -->
+                <div id="inline-save-status" style="min-height: 20px"></div>
+
+                <!-- Personal Info Card -->
+                <div class="premium-card p-0 overflow-hidden border">
+                  <div
+                    class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center"
+                  >
+                    <h6 class="mb-0 fw-bold">
+                      <i class="fas fa-user me-2 text-warning"></i>Identificação
+                    </h6>
+                    <button
+                      class="btn btn-sm btn-link text-decoration-none p-0 edit-toggle-btn"
+                      data-section="personal"
+                    >
+                      <span class="view-mode"
+                        ><i class="fas fa-pen me-1"></i>Editar</span
+                      >
+                      <span class="edit-mode d-none"
+                        ><i class="fas fa-times me-1"></i>Cancelar</span
+                      >
+                    </button>
                   </div>
-                  <!-- Edit Mode -->
-                  <form id="personal-edit-form" class="d-none animate-fade-in">
-                    <div class="row g-3">
+                  <div class="p-4">
+                    <!-- View Mode -->
+                    <div id="personal-view" class="row g-3">
                       <div class="col-md-6">
-                        <label class="form-label small fw-bold">Nome Completo</label>
-                        <input type="text" id="input-name" class="auth-input mb-0" required />
+                        <div class="text-muted small mb-1">Nome Completo</div>
+                        <div class="fw-medium" id="view-name">
+                          Carregando...
+                        </div>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label small fw-bold">Email</label>
-                        <input type="email" id="input-email" class="auth-input mb-0" required />
+                        <div class="text-muted small mb-1">Email</div>
+                        <div class="fw-medium" id="view-email">
+                          email@exemplo.com
+                        </div>
                       </div>
-                      <div class="col-12 mt-4 text-end">
-                        <button type="submit" class="btn btn-auth-enhanced register btn-sm px-4">Guardar</button>
+                    </div>
+                    <!-- Edit Mode -->
+                    <form
+                      id="personal-edit-form"
+                      class="d-none animate-fade-in"
+                    >
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label small fw-bold"
+                            >Nome Completo</label
+                          >
+                          <input
+                            type="text"
+                            id="input-name"
+                            class="auth-input mb-0"
+                            required
+                          />
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label small fw-bold">Email</label>
+                          <input
+                            type="email"
+                            id="input-email"
+                            class="auth-input mb-0"
+                            required
+                          />
+                        </div>
+                        <div class="col-12 mt-4 text-end">
+                          <button
+                            type="submit"
+                            class="btn btn-auth-enhanced register btn-sm px-4"
+                          >
+                            Guardar
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Delivery Info Card -->
-              <div class="premium-card p-0 overflow-hidden border">
-                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-                  <h6 class="mb-0 fw-bold"><i class="fas fa-truck me-2 text-warning"></i>Morada de Entrega</h6>
-                  <button class="btn btn-sm btn-link text-decoration-none p-0 edit-toggle-btn" data-section="delivery">
-                    <span class="view-mode"><i class="fas fa-pen me-1"></i>Editar</span>
-                    <span class="edit-mode d-none"><i class="fas fa-times me-1"></i>Cancelar</span>
-                  </button>
-                </div>
-                <div class="p-4">
-                  <!-- View Mode -->
-                  <div id="delivery-view" class="row g-3">
-                    <div class="col-md-6">
-                      <div class="text-muted small mb-1">Telemóvel</div>
-                      <div class="fw-medium" id="view-phone">Não definido</div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="text-muted small mb-1">Cidade</div>
-                      <div class="fw-medium" id="view-city">Não definida</div>
-                    </div>
-                    <div class="col-12">
-                      <div class="text-muted small mb-1">Morada Completa</div>
-                      <div class="fw-medium" id="view-address">Morada não definida</div>
-                    </div>
+                    </form>
                   </div>
-                  <!-- Edit Mode -->
-                  <form id="delivery-edit-form" class="d-none animate-fade-in">
-                    <div class="row g-3">
+                </div>
+
+                <!-- Delivery Info Card -->
+                <div class="premium-card p-0 overflow-hidden border">
+                  <div
+                    class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center"
+                  >
+                    <h6 class="mb-0 fw-bold">
+                      <i class="fas fa-truck me-2 text-warning"></i>Morada de
+                      Entrega
+                    </h6>
+                    <button
+                      class="btn btn-sm btn-link text-decoration-none p-0 edit-toggle-btn"
+                      data-section="delivery"
+                    >
+                      <span class="view-mode"
+                        ><i class="fas fa-pen me-1"></i>Editar</span
+                      >
+                      <span class="edit-mode d-none"
+                        ><i class="fas fa-times me-1"></i>Cancelar</span
+                      >
+                    </button>
+                  </div>
+                  <div class="p-4">
+                    <!-- View Mode -->
+                    <div id="delivery-view" class="row g-3">
                       <div class="col-md-6">
-                        <label class="form-label small fw-bold">Telemóvel</label>
-                        <input type="tel" id="input-phone" class="auth-input mb-0" placeholder="9XXXXXXXX" />
+                        <div class="text-muted small mb-1">Telemóvel</div>
+                        <div class="fw-medium" id="view-phone">
+                          Não definido
+                        </div>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label small fw-bold">Cidade</label>
-                        <input type="text" id="input-city" class="auth-input mb-0" placeholder="Cidade" />
+                        <div class="text-muted small mb-1">Cidade</div>
+                        <div class="fw-medium" id="view-city">Não definida</div>
                       </div>
-                      <div class="col-md-8">
-                        <label class="form-label small fw-bold">Morada (Rua e Nº)</label>
-                        <input type="text" id="input-address" class="auth-input mb-0" placeholder="Rua..." />
-                      </div>
-                      <div class="col-md-4">
-                        <label class="form-label small fw-bold">Cód-Postal</label>
-                        <input type="text" id="input-zip" class="auth-input mb-0" placeholder="0000-000"
-                          maxlength="8" />
-                      </div>
-                      <div class="col-12 mt-4 text-end">
-                        <button type="submit" class="btn btn-auth-enhanced register btn-sm px-4">Guardar Morada</button>
+                      <div class="col-12">
+                        <div class="text-muted small mb-1">Morada Completa</div>
+                        <div class="fw-medium" id="view-address">
+                          Morada não definida
+                        </div>
                       </div>
                     </div>
-                  </form>
+                    <!-- Edit Mode -->
+                    <form
+                      id="delivery-edit-form"
+                      class="d-none animate-fade-in"
+                    >
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label small fw-bold"
+                            >Telemóvel</label
+                          >
+                          <input
+                            type="tel"
+                            id="input-phone"
+                            class="auth-input mb-0"
+                            placeholder="9XXXXXXXX"
+                          />
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label small fw-bold">Cidade</label>
+                          <input
+                            type="text"
+                            id="input-city"
+                            class="auth-input mb-0"
+                            placeholder="Cidade"
+                          />
+                        </div>
+                        <div class="col-md-8">
+                          <label class="form-label small fw-bold"
+                            >Morada (Rua e Nº)</label
+                          >
+                          <input
+                            type="text"
+                            id="input-address"
+                            class="auth-input mb-0"
+                            placeholder="Rua..."
+                          />
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label small fw-bold"
+                            >Cód-Postal</label
+                          >
+                          <input
+                            type="text"
+                            id="input-zip"
+                            class="auth-input mb-0"
+                            placeholder="0000-000"
+                            maxlength="8"
+                          />
+                        </div>
+                        <div class="col-12 mt-4 text-end">
+                          <button
+                            type="submit"
+                            class="btn btn-auth-enhanced register btn-sm px-4"
+                          >
+                            Guardar Morada
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hint -->
+              <div
+                class="mt-4 p-3 bg-light rounded-3 d-flex align-items-center gap-3"
+                style="max-width: 800px"
+              >
+                <i class="fas fa-info-circle text-warning fs-5"></i>
+                <div class="small text-muted">
+                  A tua morada de entrega será usada automaticamente no checkout
+                  para tua conveniência.
                 </div>
               </div>
             </div>
 
-            <!-- Hint -->
-            <div class="mt-4 p-3 bg-light rounded-3 d-flex align-items-center gap-3" style="max-width: 800px">
-              <i class="fas fa-info-circle text-warning fs-5"></i>
-              <div class="small text-muted">A tua morada de entrega será usada automaticamente no checkout para tua
-                conveniência.</div>
+            <!-- Favorites Tab -->
+            <div
+              class="profile-tab-content"
+              id="tab-favorites"
+              style="display: none"
+            >
+              <h3 class="fw-bold mb-4">Os Meus Favoritos</h3>
+              <div id="favorites-grid" class="row g-4">
+                <div class="text-center py-5 opacity-50">
+                  Ainda não tens favoritos...
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Favorites Tab -->
-          <div class="profile-tab-content" id="tab-favorites" style="display: none">
-            <h3 class="fw-bold mb-4">Os Meus Favoritos</h3>
-            <div id="favorites-grid" class="row g-4">
-              <div class="text-center py-5 opacity-50">
-                Ainda não tens favoritos...
+            <!-- Security Tab -->
+            <div
+              class="profile-tab-content"
+              id="tab-security"
+              style="display: none"
+            >
+              <h3 class="fw-bold mb-4">Configurações de Segurança</h3>
+              <div class="premium-card p-4" style="max-width: 600px">
+                <form id="changePasswordForm">
+                  <h5 class="fw-bold mb-3">Alterar Palavra-passe</h5>
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >Palavra-passe Atual</label
+                    >
+                    <input
+                      type="password"
+                      id="current-password"
+                      class="auth-input mb-0"
+                      required
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >Nova Palavra-passe</label
+                    >
+                    <input
+                      type="password"
+                      id="new-password"
+                      class="auth-input mb-0"
+                      required
+                      placeholder="Pelo menos 6 caracteres"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >Confirmar Nova Palavra-passe</label
+                    >
+                    <input
+                      type="password"
+                      id="confirm-new-password"
+                      class="auth-input mb-0"
+                      required
+                      placeholder="Repete a nova password"
+                    />
+                  </div>
+                  <button type="submit" class="btn btn-auth-enhanced register">
+                    Guardar Nova Password
+                  </button>
+                </form>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </main>
 
-          <!-- Security Tab -->
-          <div class="profile-tab-content" id="tab-security" style="display: none">
-            <h3 class="fw-bold mb-4">Configurações de Segurança</h3>
-            <div class="premium-card p-4" style="max-width: 600px">
-              <form id="changePasswordForm">
-                <h5 class="fw-bold mb-3">Alterar Palavra-passe</h5>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold">Palavra-passe Atual</label>
-                  <input type="password" id="current-password" class="auth-input mb-0" required
-                    placeholder="••••••••" />
+    <!-- Order Details Modal -->
+    <div
+      class="modal fade"
+      id="orderDetailsModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="modal-header border-0 p-4 pb-0">
+            <h5 class="modal-title fw-bold fs-4" id="orderModalLabel">
+              Detalhes da Encomenda
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <div id="order-details-content">
+              <!-- Content injected by profile.js -->
+              <div class="text-center py-4">
+                <div class="spinner-border text-warning" role="status">
+                  <span class="visually-hidden">A carregar...</span>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold">Nova Palavra-passe</label>
-                  <input type="password" id="new-password" class="auth-input mb-0" required
-                    placeholder="Pelo menos 6 caracteres" />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold">Confirmar Nova Palavra-passe</label>
-                  <input type="password" id="confirm-new-password" class="auth-input mb-0" required
-                    placeholder="Repete a nova password" />
-                </div>
-                <button type="submit" class="btn btn-auth-enhanced register">
-                  Guardar Nova Password
-                </button>
-              </form>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Footer Premium (Same as others) -->
-  <footer class="footer-premium mt-5">
-    <div class="container">
-      <div class="row g-4">
-        <div class="col-lg-4">
-          <h3 class="footer-brand mb-3">Hexomel</h3>
-          <p class="mb-4" style="max-width: 300px">
-            Dedicados à produção de mel 100% natural, preservando a pureza e a
-            tradição apícola em cada gota.
-          </p>
-          <div class="social-links">
-            <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+          <div class="modal-footer border-0 p-4 pt-0">
+            <button
+              type="button"
+              class="btn btn-auth-enhanced login w-100 py-2"
+              data-bs-dismiss="modal"
+            >
+              Fechar
+            </button>
           </div>
         </div>
-        <div class="col-lg-2 ms-lg-auto">
-          <h5 class="footer-heading">Navegação</h5>
-          <ul class="list-unstyled">
-            <li><a href="index.html" class="footer-link">Início</a></li>
-            <li><a href="shop.html" class="footer-link">Produtos</a></li>
-            <li><a href="about.html" class="footer-link">Sobre</a></li>
-            <li><a href="contact.html" class="footer-link">Contactos</a></li>
-          </ul>
-        </div>
-        <div class="col-lg-2">
-          <h5 class="footer-heading">Pedido</h5>
-          <ul class="list-unstyled">
-            <li><a href="#" class="footer-link">Carrinho</a></li>
-            <li><a href="#" class="footer-link">A minha conta</a></li>
-            <li><a href="#" class="footer-link">FAQ</a></li>
-            <li><a href="#" class="footer-link">Termos</a></li>
-          </ul>
-        </div>
-        <div class="col-lg-3">
-          <h5 class="footer-heading">Contactos</h5>
-          <p class="small mb-2">
-            <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
-            Estrela, Portugal
-          </p>
-          <p class="small mb-2">
-            <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
-          </p>
-          <p class="small mb-4">
-            <i class="fas fa-envelope me-2 text-warning"></i> info@hexomel.pt
-          </p>
-        </div>
-      </div>
-      <hr class="my-5 opacity-10" />
-      <div class="text-center small opacity-50">
-        <p class="mb-0">
-          &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
-          reservados.
-        </p>
       </div>
     </div>
-  </footer>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="src/beeAnimation.js"></script>
-  <script type="module" src="src/main.js"></script>
-  <script type="module" src="src/profile.js"></script>
-</body>
+    <!-- Footer Premium (Same as others) -->
+    <footer class="footer-premium mt-5">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <h3 class="footer-brand mb-3">Hexomel</h3>
+            <p class="mb-4" style="max-width: 300px">
+              Dedicados à produção de mel 100% natural, preservando a pureza e a
+              tradição apícola em cada gota.
+            </p>
+            <div class="social-links">
+              <a href="#" class="social-icon"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="social-icon"
+                ><i class="fab fa-whatsapp"></i
+              ></a>
+            </div>
+          </div>
+          <div class="col-lg-2 ms-lg-auto">
+            <h5 class="footer-heading">Navegação</h5>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="footer-link">Início</a></li>
+              <li><a href="shop.html" class="footer-link">Produtos</a></li>
+              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2">
+            <h5 class="footer-heading">Pedido</h5>
+            <ul class="list-unstyled">
+              <li><a href="#" class="footer-link">Carrinho</a></li>
+              <li><a href="#" class="footer-link">A minha conta</a></li>
+              <li><a href="#" class="footer-link">FAQ</a></li>
+              <li><a href="#" class="footer-link">Termos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3">
+            <h5 class="footer-heading">Contactos</h5>
+            <p class="small mb-2">
+              <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+              Estrela, Portugal
+            </p>
+            <p class="small mb-2">
+              <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+            </p>
+            <p class="small mb-4">
+              <i class="fas fa-envelope me-2 text-warning"></i> info@hexomel.pt
+            </p>
+          </div>
+        </div>
+        <hr class="my-5 opacity-10" />
+        <div class="text-center small opacity-50">
+          <p class="mb-0">
+            &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+            reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/profile.js"></script>
+  </body>
 </html>
