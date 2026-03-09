@@ -7,10 +7,10 @@ class CartManager {
     this.init();
   }
 
-  init() {
+  async init() {
     this.createCartUI();
     this.renderBadgeOnly(); // Show badge as early as possible
-    this.syncWithBackend();
+    await this.syncWithBackend();
     this.render();
   }
 
@@ -18,11 +18,17 @@ class CartManager {
     const badge = document.getElementById("cart-badge");
     if (badge) {
       const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      badge.textContent = cart.length;
+      const total = cart.reduce(
+        (sum, item) => sum + (item.Quantidade || item.quantity || 0),
+        0,
+      );
+      badge.textContent = total;
     }
   }
 
   createCartUI() {
+    if (window.location.pathname.includes("/checkout.html")) return;
+
     // Create Sidebar
     const sidebar = document.createElement("div");
     sidebar.className = "cart-sidebar";
@@ -229,6 +235,8 @@ class CartManager {
     const totalEl = document.getElementById("cart-total");
     const badge = document.getElementById("cart-badge");
 
+    if (!container) return; // Prevent error on checkout page
+
     let total = 0;
     container.innerHTML = this.items
       .map((item) => {
@@ -238,8 +246,8 @@ class CartManager {
                 <div class="d-flex justify-content-between">
                     <div class="cart-item-title">${item.Nome}</div>
                     <div style="font-weight: 600;">€${(
-            item.Preco * item.Quantidade
-          ).toFixed(2)}</div>
+                      item.Preco * item.Quantidade
+                    ).toFixed(2)}</div>
                 </div>
                 
                 <div class="cart-item-controls" style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
@@ -265,7 +273,8 @@ class CartManager {
     }
 
     totalEl.textContent = `€${total.toFixed(2)}`;
-    if (badge) badge.textContent = this.items.length;
+    const totalQty = this.items.reduce((sum, item) => sum + item.Quantidade, 0);
+    if (badge) badge.textContent = totalQty;
   }
 }
 

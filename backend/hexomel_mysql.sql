@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS `cliente` (
   `Nome` varchar(120) NOT NULL,
   `Email` varchar(120) NOT NULL,
   `Senha` varchar(255) NOT NULL,
-  `Telefone` varchar(20) DEFAULT NULL,
   `Picture` TEXT,
   `UserType` varchar(20) DEFAULT 'client',
+  `Bio` TEXT DEFAULT NULL,
   `Data_Resgistro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ID_Cliente`),
   UNIQUE KEY `Email` (`Email`)
@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS `categoria` (
 INSERT IGNORE INTO `categoria` (`ID_Categoria`, `Nome`) VALUES
 (1, 'Méls'),
 (2, 'Derivados'),
-(3, 'Acessórios');
+(3, 'Acessórios'),
+(4, 'Equipamento Apícola');
 
 -- --------------------------------------------------------
 
@@ -48,10 +49,13 @@ CREATE TABLE IF NOT EXISTS `produto` (
   `Preco` decimal(10,2) NOT NULL,
   `Stock` int(30) NOT NULL,
   `ID_Categoria` int(10) DEFAULT NULL,
+  `ID_Apicultor` int(10) DEFAULT NULL,
   `Descricao` TEXT,
   `Imagem` VARCHAR(255) DEFAULT NULL,
   `Tags` TEXT,
-  PRIMARY KEY (`ID_Produto`)
+  PRIMARY KEY (`ID_Produto`),
+  KEY `ID_Apicultor` (`ID_Apicultor`),
+  CONSTRAINT `fk_produto_apicultor` FOREIGN KEY (`ID_Apicultor`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO `produto` (`Nome`, `Preco`, `Stock`, `ID_Categoria`, `Descricao`, `Imagem`) VALUES
@@ -62,7 +66,10 @@ INSERT IGNORE INTO `produto` (`Nome`, `Preco`, `Stock`, `ID_Categoria`, `Descric
 ('Própolis Gotas Reais', 10.00, 20, 2, 'Antibiótico natural produzido pelas abelhas.', '/images/bee.png'),
 ('Mel com Favo de Ouro', 18.00, 15, 1, 'Mel virgem diretamente dentro do favo de cera natural.', '/images/wildflower.png'),
 ('Mel de Castanheiro Intenso', 14.50, 35, 1, 'Mel escuro e pouco doce, com um toque amadeirado.', '/images/acacia.png'),
-('Wildflower Blossom', 11.00, 60, 1, 'Uma mistura vibrante de pólens e néctares.', '/images/wildflower.png');
+('Wildflower Blossom', 11.00, 60, 1, 'Uma mistura vibrante de pólens e néctares.', '/images/wildflower.png'),
+('Fato de Apicultor Completo', 45.00, 10, 4, 'Fato de proteção integral com máscara ventilada.', '/images/fato_apicultor.png'),
+('Fumigador em Inox', 25.50, 15, 4, 'Fumigador resistente em aço inoxidável para maneio das colmeias.', '/images/fumigador.png'),
+('Espátula Simples', 8.00, 30, 4, 'Espátula metálica essencial para raspar própolis e separar quadros.', '/images/espatula.png');
 
 -- --------------------------------------------------------
 
@@ -153,4 +160,22 @@ CREATE TABLE IF NOT EXISTS `avaliacao` (
   KEY `ID_Cliente` (`ID_Cliente`),
   CONSTRAINT `fk_avaliacao_produto` FOREIGN KEY (`ID_Produto`) REFERENCES `produto` (`ID_Produto`) ON DELETE CASCADE,
   CONSTRAINT `fk_avaliacao_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: workshop
+CREATE TABLE IF NOT EXISTS `workshop` (
+  `ID_Workshop` int(10) NOT NULL AUTO_INCREMENT,
+  `Titulo` varchar(150) NOT NULL,
+  `Descricao` text NOT NULL,
+  `Data_Realizacao` datetime NOT NULL,
+  `Preco` decimal(10,2) NOT NULL,
+  `Vagas` int(11) NOT NULL,
+  `Imagem` varchar(255) DEFAULT NULL,
+  `ID_Apicultor` int(10) NOT NULL,
+  `Data_Criacao` timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (`ID_Workshop`),
+  KEY `ID_Apicultor` (`ID_Apicultor`),
+  CONSTRAINT `fk_workshop_apicultor` FOREIGN KEY (`ID_Apicultor`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

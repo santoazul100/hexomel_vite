@@ -177,6 +177,18 @@
                 <i class="fas fa-shield-alt me-2"></i>Segurança
               </button>
               <button
+                class="btn btn-profile-tab d-none"
+                data-tab="apicultor"
+                id="nav-tab-apicultor"
+                style="
+                  background-color: #fff9e6;
+                  border-left: 4px solid var(--primary-gold);
+                "
+              >
+                <i class="fas fa-box-open me-2 text-warning"></i>Área de
+                Apicultor
+              </button>
+              <button
                 class="btn btn-profile-tab text-danger"
                 id="delete-account-btn"
               >
@@ -470,6 +482,119 @@
                   </button>
                 </form>
               </div>
+
+              <!-- Novo Bloco: Tipo de Conta -->
+              <div class="premium-card p-4 mt-4" style="max-width: 600px">
+                <form id="changeRoleForm">
+                  <h5 class="fw-bold mb-1">Tipo de Conta</h5>
+                  <p class="text-muted small mb-3">
+                    As contas registadas via Google assumem por defeito
+                    "Cliente". Podes alternar a tua conta para
+                    <strong>Apicultor</strong> para aceder a produtos exclusivos
+                    ou reverter para Cliente.
+                  </p>
+
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold"
+                      >O meu tipo de conta atual</label
+                    >
+                    <select
+                      id="user-role-select"
+                      class="form-select auth-input mb-0"
+                      style="cursor: pointer"
+                      required
+                    >
+                      <option value="client">Cliente</option>
+                      <option value="apicultor">Apicultor</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    class="btn btn-auth-enhanced login"
+                    id="save-role-btn"
+                  >
+                    Atualizar Tipo de Conta
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- APICULTOR TAB -->
+            <div
+              id="tab-apicultor"
+              class="profile-tab-content animate-fade-in"
+              style="display: none"
+            >
+              <h4 class="fw-bold mb-4">
+                <i class="fas fa-box-open text-warning me-2"></i> Área Exclusiva
+                de Apicultor
+              </h4>
+
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="premium-card p-4 h-100 text-center">
+                    <div
+                      class="icon-circle mx-auto mb-3"
+                      style="
+                        width: 60px;
+                        height: 60px;
+                        background: rgba(244, 180, 0, 0.1);
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <i class="fas fa-plus fs-3 text-warning"></i>
+                    </div>
+                    <h5 class="fw-bold">Registar Produto</h5>
+                    <p class="text-muted small mb-3">
+                      Adiciona os teus novos lotes de mel, pólen ou equipamento
+                      apícola para os nossos clientes.
+                    </p>
+                    <button
+                      class="btn btn-auth-enhanced login w-100"
+                      data-bs-toggle="modal"
+                      data-bs-target="#apicultorProductModal"
+                    >
+                      Adicionar Produto
+                    </button>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="premium-card p-4 h-100 text-center">
+                    <div
+                      class="icon-circle mx-auto mb-3"
+                      style="
+                        width: 60px;
+                        height: 60px;
+                        background: rgba(244, 180, 0, 0.1);
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <i class="fas fa-chart-line fs-3 text-warning"></i>
+                    </div>
+                    <h5 class="fw-bold">As Minhas Vendas</h5>
+                    <p class="text-muted small mb-3">
+                      Acompanha o volume de encomendas dos teus produtos e gere
+                      o teu stock.
+                    </p>
+                    <button
+                      class="btn btn-outline-warning w-100"
+                      onclick="
+                        alert('O dashboard chegará na próxima atualização!')
+                      "
+                    >
+                      Ver Dashboard
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -514,6 +639,248 @@
             >
               Fechar
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Apicultor Product Registration Modal -->
+    <div
+      class="modal fade"
+      id="apicultorProductModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg premium-card">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">
+              <i class="fas fa-plus-circle text-warning me-2"></i>Registar Novo
+              Produto
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body pt-3 pb-4">
+            <form id="apicultor-add-product-form">
+              <div class="mb-3">
+                <label class="form-label small fw-bold"
+                  >Fotografia do Produto
+                  <span class="text-danger">*</span></label
+                >
+                <input
+                  type="file"
+                  id="api-produto-imagem"
+                  class="form-control auth-input"
+                  accept="image/*"
+                  required
+                />
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-8">
+                  <label class="form-label small fw-bold"
+                    >Nome do Produto <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="api-produto-nome"
+                    class="form-control auth-input"
+                    placeholder="Ex: Mel de Urze 500g"
+                    required
+                  />
+                </div>
+                <div class="col-4">
+                  <label class="form-label small fw-bold"
+                    >Preço (€) <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="number"
+                    id="api-produto-preco"
+                    class="form-control auth-input"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-bold"
+                    >Categoria <span class="text-danger">*</span></label
+                  >
+                  <select
+                    id="api-produto-cat"
+                    class="form-select auth-input"
+                    required
+                  >
+                    <option value="1">Mel (Néctar)</option>
+                    <option value="2">Produtos da Colmeia</option>
+                    <option value="3">Cabazes e Ofertas</option>
+                    <option value="4" selected>Equipamento Apícola</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold"
+                    >Stock Disponível <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="number"
+                    id="api-produto-stock"
+                    class="form-control auth-input"
+                    min="1"
+                    placeholder="Ex: 50"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label small fw-bold"
+                  >Descrição Curta <span class="text-danger">*</span></label
+                >
+                <textarea
+                  id="api-produto-desc"
+                  class="form-control auth-input"
+                  rows="3"
+                  placeholder="Apresenta os detalhes deste produto..."
+                  required
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                class="btn btn-auth-enhanced register w-100"
+                id="api-btn-submit-prod"
+              >
+                Adicionar ao Catálogo Público
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workshop Registration Modal -->
+    <div class="modal fade" id="workshopModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+          <div class="modal-header border-0 pb-0">
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-5 pt-4">
+            <div class="text-center mb-4">
+              <div
+                class="icon-circle mx-auto mb-3"
+                style="
+                  width: 60px;
+                  height: 60px;
+                  background: rgba(244, 180, 0, 0.1);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <i class="fas fa-users fs-3 text-warning"></i>
+              </div>
+              <h3 class="fw-bold mb-1">Nova Experiência</h3>
+              <p class="text-muted small">Agendar Workshop ou Visita Guiada</p>
+            </div>
+
+            <form id="apicultor-add-workshop-form">
+              <div class="mb-4">
+                <label class="form-label small fw-bold"
+                  >Imagem da Experiência</label
+                >
+                <input
+                  type="file"
+                  id="api-workshop-imagem"
+                  class="form-control auth-input"
+                  accept="image/*"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold"
+                  >Título <span class="text-danger">*</span></label
+                >
+                <input
+                  type="text"
+                  id="api-workshop-titulo"
+                  class="form-control auth-input"
+                  placeholder="Ex: Masterclass: Do Favo ao Frasco"
+                  required
+                />
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold"
+                    >Preço (€) <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="number"
+                    id="api-workshop-preco"
+                    class="form-control auth-input"
+                    step="0.01"
+                    min="0"
+                    placeholder="Ex: 25.00"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold"
+                    >Vagas <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="number"
+                    id="api-workshop-vagas"
+                    class="form-control auth-input"
+                    min="1"
+                    placeholder="Ex: 15"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold"
+                    >Data Realização <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="datetime-local"
+                    id="api-workshop-data"
+                    class="form-control auth-input"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label small fw-bold"
+                  >Descrição da Experiência
+                  <span class="text-danger">*</span></label
+                >
+                <textarea
+                  id="api-workshop-desc"
+                  class="form-control auth-input"
+                  rows="3"
+                  placeholder="O que os visitantes vão aprender..."
+                  required
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                class="btn btn-auth-enhanced register w-100"
+                id="api-btn-submit-workshop"
+              >
+                Publicar Experiência
+              </button>
+            </form>
           </div>
         </div>
       </div>

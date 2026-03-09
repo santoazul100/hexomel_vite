@@ -15,7 +15,7 @@ class HexomelApp {
   init() {
     this.renderNavbar();
     this.renderFooter();
-    this.renderCartSidebar();
+    // this.renderCartSidebar(); // Disabled to prevent duplicate carts (handled by cart.js)
     this.initBeeAnimations();
     this.updateCartBadge();
     this.bindGlobalEvents();
@@ -83,7 +83,7 @@ class HexomelApp {
 
     const total = this.cart.reduce(
       (sum, item) => sum + item.Preco * item.quantity,
-      0
+      0,
     );
     const itemCount = this.cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -93,8 +93,8 @@ class HexomelApp {
                 <div>
                     <h4 class="cart-title mb-1">Carrinho</h4>
                     <p class="cart-subtitle text-muted mb-0">${itemCount} ${
-      itemCount === 1 ? "item" : "itens"
-    }</p>
+                      itemCount === 1 ? "item" : "itens"
+                    }</p>
                 </div>
                 <button class="btn-close cart-close-btn" id="close-cart" aria-label="Fechar carrinho"></button>
             </div>
@@ -119,8 +119,8 @@ class HexomelApp {
                                     <img src="/img/${
                                       item.Imagem || "erro.png"
                                     }\" alt="${
-                              item.Nome
-                            }" onerror="this.src='https://placehold.co/80x80/e8f5e9/2d5f3f?text=Mel'">
+                                      item.Nome
+                                    }" onerror="this.src='https://placehold.co/80x80/e8f5e9/2d5f3f?text=Mel'">
                                 </div>
                                 <div class="cart-item-details">
                                     <h6 class="cart-item-name mb-1">${
@@ -131,7 +131,7 @@ class HexomelApp {
                                           item.quantity
                                         }x</span>
                                         <span class="cart-item-price">${Number(
-                                          item.Preco
+                                          item.Preco,
                                         ).toFixed(2)}€</span>
                                     </div>
                                 </div>
@@ -139,7 +139,7 @@ class HexomelApp {
                                     <i class="bi bi-x-lg"></i>
                                 </button>
                             </div>
-                        `
+                        `,
                           )
                           .join("")}
                     </div>
@@ -273,7 +273,7 @@ class HexomelApp {
   addToCart(product) {
     if (!product) return;
     const existing = this.cart.find(
-      (item) => item.ID_Produto === product.ID_Produto
+      (item) => item.ID_Produto === product.ID_Produto,
     );
     if (existing) {
       existing.quantity += 1;

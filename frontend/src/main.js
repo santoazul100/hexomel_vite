@@ -227,6 +227,13 @@ function injectAuthModal() {
               <input type="email" id="register-email-v2" class="auth-input-v2" placeholder="nome@exemplo.com" required>
             </div>
             <div class="auth-field-v2">
+              <label class="auth-label-v2">Tipo de Conta</label>
+              <select id="register-usertype-v2" class="auth-input-v2" required style="cursor:pointer;">
+                <option value="client">Cliente</option>
+                <option value="apicultor">Apicultor</option>
+              </select>
+            </div>
+            <div class="auth-field-v2">
               <label class="auth-label-v2">Password</label>
               <div class="password-wrapper-v2">
                 <input type="password" id="register-password-v2" class="auth-input-v2" placeholder="Mínimo 6 caracteres" required>

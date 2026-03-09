@@ -9,6 +9,7 @@ export const initializeAuthForms = () => {
       e.preventDefault();
       const fullName = document.getElementById("register-name-v2").value;
       const email = document.getElementById("register-email-v2").value;
+      const userType = document.getElementById("register-usertype-v2").value;
       const password = document.getElementById("register-password-v2").value;
       const confirmPassword = document.getElementById(
         "register-confirm-v2",
@@ -28,7 +29,13 @@ export const initializeAuthForms = () => {
         const res = await fetch(`${API_URL}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password }),
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            password,
+            userType,
+          }),
         });
 
         const data = await res.json();
@@ -253,7 +260,11 @@ export function updateNav(user) {
                         user.userType?.toLowerCase() === "admin" ||
                         user.UserType?.toLowerCase() === "admin"
                           ? "Administrador"
-                          : "Membro Premium"
+                          : user.role?.toLowerCase() === "apicultor" ||
+                              user.userType?.toLowerCase() === "apicultor" ||
+                              user.UserType?.toLowerCase() === "apicultor"
+                            ? "Apicultor"
+                            : "Cliente"
                       }</p>
                   </li>
                   <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>

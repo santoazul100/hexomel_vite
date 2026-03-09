@@ -270,7 +270,13 @@ class AdminUI {
             <tr>
                 <td><div class="fw-bold">${u.Nome}</div></td>
                 <td>${u.Email}</td>
-                <td><span class="badge bg-light text-dark">${u.UserType}</span></td>
+                <td>
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-light border p-1" onchange="adminUI.updateUserRole('${u.ID_Cliente}', this.value)" ${u.ID_Cliente === this.userData.id ? "disabled" : ""}>
+                        <option value="client" ${u.UserType === "client" ? "selected" : ""}>client</option>
+                        <option value="apicultor" ${u.UserType === "apicultor" ? "selected" : ""}>apicultor</option>
+                        <option value="admin" ${u.UserType === "admin" ? "selected" : ""}>admin</option>
+                    </select>
+                </td>
                 <td>${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
                 <td class="text-end">
                     <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""}>
@@ -387,6 +393,33 @@ class AdminUI {
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }
+    }
+  }
+
+  async updateUserRole(id, userType) {
+    try {
+      const response = await fetch(`${API_URL}/admin/users/${id}/role`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ userType }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Erro ao atualizar role");
+      }
+      Swal.fire({
+        icon: "success",
+        title: "Permissões de Conta Atualizadas",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      await this.loadUsers();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+      await this.loadUsers(); // revert UI change
     }
   }
 

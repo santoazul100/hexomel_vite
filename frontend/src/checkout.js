@@ -94,7 +94,11 @@ class CheckoutManager {
     const form = document.getElementById("checkout-main-form");
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      this.handleFinalSubmit();
+      if (this.currentStep === this.totalSteps) {
+        this.handleFinalSubmit();
+      } else {
+        this.nextStep();
+      }
     });
 
     // Shipping radio buttons - also handle visual feedback
@@ -137,7 +141,7 @@ class CheckoutManager {
 
       inputs.forEach((input) => {
         if (!input.value.trim()) {
-          input.style.borderColor = "var(--primary-gold)"; // Use brand color for highlight
+          input.style.borderColor = "var(--primary-green)"; // Use brand color for highlight
           valid = false;
         } else {
           input.style.borderColor = "var(--border-color)";
@@ -282,6 +286,7 @@ class CheckoutManager {
       const data = await res.json();
 
       if (res.ok) {
+        localStorage.removeItem("cart");
         Swal.fire({
           icon: "success",
           title: "Encomenda Confirmada!",

@@ -22,8 +22,39 @@ const PORT = process.env.PORT || 3000;
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Initialize Database
 initDB()
-  .then(() => {
+  .then(async () => {
     console.log("MySQL Database connected and initialized.");
+
+    try {
+      // Auto-migration for new features (ignores errors if exist)
+      await db
+        .run("ALTER TABLE cliente ADD COLUMN Bio TEXT DEFAULT NULL")
+        .catch(() => console.log("Bio col already exists"));
+
+      await db
+        .run(
+          `
+            CREATE TABLE IF NOT EXISTS workshop (
+                ID_Workshop int(10) NOT NULL AUTO_INCREMENT,
+                Titulo varchar(150) NOT NULL,
+                Descricao text NOT NULL,
+                Data_Realizacao datetime NOT NULL,
+                Preco decimal(10,2) NOT NULL,
+                Vagas int(11) NOT NULL,
+                Imagem varchar(255) DEFAULT NULL,
+                ID_Apicultor int(10) NOT NULL,
+                Data_Criacao timestamp DEFAULT current_timestamp(),
+                PRIMARY KEY (ID_Workshop),
+                KEY ID_Apicultor (ID_Apicultor),
+                CONSTRAINT fk_workshop_apicultor FOREIGN KEY (ID_Apicultor) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        )
+        .catch(() => console.log("Workshop table creation handled"));
+      console.log("Auto-migrations completed.");
+    } catch (err) {
+      console.log("Migration warning:", err);
+    }
 
     // Start Server ONLY after DB is ready
     app.listen(PORT, () => {
@@ -77,7 +108,7 @@ app.get("/health", (req, res) => {
 // AUTH ROUTES
 // Register
 app.post("/api/auth/register", async (req, res) => {
-  const { firstName, lastName, email, password, phone } = req.body;
+  const { firstName, lastName, email, password, phone, userType } = req.body;
 
   try {
     // Check if user exists
@@ -90,11 +121,17 @@ app.post("/api/auth/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const fullName = `${firstName} ${lastName}`;
+    const definedUserType = userType === "apicultor" ? "apicultor" : "client";
 
     // Insert user
     const result = await db.run(
-      "INSERT INTO cliente (Nome, Email, Senha) VALUES (?, ?, ?)",
-      [`${firstName} ${lastName}`.trim(), email, hashedPassword],
+      "INSERT INTO cliente (Nome, Email, Senha, UserType) VALUES (?, ?, ?, ?)",
+      [
+        `${firstName} ${lastName}`.trim(),
+        email,
+        hashedPassword,
+        definedUserType,
+      ],
     );
 
     // Auto-login: Get the new user
@@ -380,9 +417,11 @@ app.get("/api/products", async (req, res) => {
     const rows = await db.all(`
       SELECT p.*, 
       COALESCE(AVG(a.Nota), 0) as Rating, 
-      COUNT(a.ID_Avaliacao) as ReviewCount
+      COUNT(a.ID_Avaliacao) as ReviewCount,
+      c.Nome as ApicultorNome
       FROM produto p
       LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+      LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
       GROUP BY p.ID_Produto
       ORDER BY p.ID_Produto DESC
     `);
@@ -482,6 +521,124 @@ app.put(
   },
 );
 
+// APICULTOR PRODUCT CREATION
+app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
+  // Determine if the user has the Apicultor role
+  if (req.user.role !== "apicultor" && req.user.role !== "admin") {
+    return res
+      .status(403)
+      .json({ error: "Access denied. Apicultor role required." });
+  }
+
+  const { nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags } =
+    req.body;
+
+  try {
+    const result = await db.run(
+      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        nome,
+        preco,
+        stock,
+        idCategoria,
+        idOrigem || null,
+        descricao,
+        imagem,
+        tags || null,
+        req.user.id,
+      ],
+    );
+    const newProduct = await db.get(
+      "SELECT * FROM produto WHERE ID_Produto = ?",
+      [result.lastID],
+    );
+    res.status(201).json(newProduct);
+  } catch (error) {
+    console.error("Create apicultor product error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// APICULTOR PROFILE & WORKSHOPS
+app.patch("/api/apicultor/bio", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+  const { bio } = req.body;
+  try {
+    await db.run("UPDATE cliente SET Bio = ? WHERE ID_Cliente = ?", [
+      bio,
+      req.user.id,
+    ]);
+    res.json({ message: "Bio updated successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+  const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
+  try {
+    const result = await db.run(
+      "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [titulo, descricao, data_realizacao, preco, vagas, imagem, req.user.id],
+    );
+    res.status(201).json({ id: result.lastID });
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// PUBLIC APICULTOR ENDPOINTS
+app.get("/api/apicultores/:id", async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Picture as picture, Bio as bio FROM cliente WHERE ID_Cliente = ? AND UserType = 'apicultor'",
+      [req.params.id],
+    );
+    if (!user) return res.status(404).json({ error: "Apicultor not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/apicultores/:id/products", async (req, res) => {
+  try {
+    const products = await db.all(
+      "SELECT * FROM produto WHERE ID_Apicultor = ?",
+      [req.params.id],
+    );
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/apicultores/:id/workshops", async (req, res) => {
+  try {
+    const workshops = await db.all(
+      "SELECT * FROM workshop WHERE ID_Apicultor = ? ORDER BY Data_Realizacao ASC",
+      [req.params.id],
+    );
+    res.json(workshops);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/workshops", async (req, res) => {
+  try {
+    const workshops = await db.all(
+      "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente ORDER BY w.Data_Realizacao ASC",
+    );
+    res.json(workshops);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // ADMIN USER MANAGEMENT
 // Get all users (Admin view)
 app.get("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
@@ -518,6 +675,81 @@ app.delete(
     }
   },
 );
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow toggling between 'client' and 'apicultor'
+    if (userType !== "client" && userType !== "apicultor") {
+      return res
+        .status(400)
+        .json({ error: "Can only change between client and apicultor." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
 
 // ADMIN ORDER MANAGEMENT
 // Get all orders (Admin view)
@@ -937,7 +1169,7 @@ app.delete(
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, Data_Resgistro, UserType FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, Data_Resgistro, UserType, Bio FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -955,6 +1187,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
       address: user.Morada,
       picture: user.Picture,
       role: user.UserType,
+      bio: user.Bio,
       dateRegistered: user.Data_Resgistro,
       orders,
     });

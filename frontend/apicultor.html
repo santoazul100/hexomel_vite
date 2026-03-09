@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perfil do Apicultor - Hexomel</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <style>
+      .apicultor-header {
+        background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
+        padding: 80px 0 40px;
+        border-bottom: 1px solid rgba(244, 180, 0, 0.1);
+      }
+      .apicultor-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+      .bio-text {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #555;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .section-title {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 40px;
+      }
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: var(--primary-gold, #f4b400);
+        border-radius: 2px;
+      }
+      .workshop-card {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      }
+      .workshop-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      }
+      .workshop-img {
+        height: 200px;
+        object-fit: cover;
+      }
+      .badge-date {
+        background: rgba(244, 180, 0, 0.1);
+        color: #b58900;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top glass-nav">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="index.html">
+          <span class="text-warning">Hexo</span>mel
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto align-items-center">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="shop.html">Loja</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">Sobre</a>
+            </li>
+            <li class="nav-item dropdown" id="userDropdown">
+              <!-- Auth control injected by auth.js -->
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Apicultor Header -->
+    <section class="apicultor-header text-center">
+      <div class="container">
+        <img
+          src="assets/default-avatar.png"
+          id="api-photo"
+          class="apicultor-avatar mb-4"
+          alt="Apicultor"
+        />
+        <h1 class="fw-bold mb-2" id="api-name">Carregando...</h1>
+        <div class="d-flex justify-content-center gap-2 mb-4">
+          <span class="badge bg-warning text-dark"
+            ><i class="fas fa-certificate me-1"></i>Apicultor Verificado</span
+          >
+        </div>
+        <p class="bio-text italic mb-0" id="api-bio">
+          "A nossa paixão é cuidar das abelhas e trazer até si o melhor da
+          natureza."
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="py-5">
+      <div class="container">
+        <!-- Products Section -->
+        <section class="mb-5">
+          <div class="text-center">
+            <h2 class="section-title fw-bold">Produtos da Quinta</h2>
+          </div>
+          <div class="row g-4" id="api-products-grid">
+            <!-- Products injected by JS -->
+            <div class="text-center py-5">
+              <div class="spinner-border text-warning" role="status"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Workshops Section -->
+        <section class="pt-5">
+          <div class="text-center">
+            <h2 class="section-title fw-bold">Experiências e Workshops</h2>
+          </div>
+          <div class="row g-4" id="api-workshops-grid">
+            <!-- Workshops injected by JS -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-premium mt-5">
+      <!-- Standard Footer -->
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/apicultor.js"></script>
+  </body>
+</html>

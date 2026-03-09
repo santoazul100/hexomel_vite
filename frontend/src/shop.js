@@ -51,6 +51,8 @@ async function fetchProducts() {
         origin: oriName,
         categoryId: p.ID_Categoria,
         originId: p.ID_Origem,
+        apicultorId: p.ID_Apicultor || null,
+        apicultorName: p.ApicultorNome || "Hexomel",
         image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
         weight: "500g",
         tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
@@ -156,7 +158,17 @@ function renderProducts() {
                 <span class="text-muted small">(${product.reviewCount})</span>
               </div>
               <p class="text-muted small mb-0">${product.category} • ${product.weight}</p>
-              <p class="text-muted smaller mb-0"><i class="fas fa-map-marker-alt me-1"></i>${product.origin}</p>
+              <p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${product.origin}</p>
+              ${
+                product.apicultorId
+                  ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
+                      <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                      <a href="apicultor.html?id=${product.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
+                        ${product.apicultorName}
+                      </a>
+                    </p>`
+                  : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
+              }
           </div>
           <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
             <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
@@ -195,6 +207,10 @@ function applyFilters() {
     document.querySelectorAll(".origin-filter-checkbox:checked"),
   ).map((cb) => Number(cb.getAttribute("data-ori-id")));
 
+  const selectedVendors = Array.from(
+    document.querySelectorAll(".vendor-filter-checkbox:checked"),
+  ).map((cb) => cb.value);
+
   // 2. Get price range
   const maxPrice = Number(document.getElementById("priceRange")?.value || 100);
 
@@ -202,6 +218,7 @@ function applyFilters() {
   filteredProducts = products.filter((p) => {
     let catMatch = true;
     let oriMatch = true;
+    let vendorMatch = true;
 
     if (selectedCatIds.length > 0) {
       catMatch = selectedCatIds.includes(p.categoryId);
@@ -211,9 +228,22 @@ function applyFilters() {
       oriMatch = selectedOriIds.includes(p.originId);
     }
 
+    if (selectedVendors.length > 0) {
+      if (
+        selectedVendors.includes("hexomel") &&
+        selectedVendors.includes("apicultor")
+      ) {
+        vendorMatch = true; // Both selected, show all
+      } else if (selectedVendors.includes("hexomel")) {
+        vendorMatch = p.apicultorId === null; // Hexomel means no Apicultor
+      } else if (selectedVendors.includes("apicultor")) {
+        vendorMatch = p.apicultorId !== null; // Community means it has an Apicultor
+      }
+    }
+
     let priceMatch = p.price <= maxPrice;
 
-    return catMatch && oriMatch && priceMatch;
+    return catMatch && oriMatch && vendorMatch && priceMatch;
   });
 
   // 3. Apply Multi-Directional Sorting

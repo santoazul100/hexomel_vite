@@ -43,6 +43,12 @@ document.addEventListener("DOMContentLoaded", () => {
     passwordForm.addEventListener("submit", handlePasswordUpdate);
   }
 
+  // Initialize Role Change Form
+  const roleForm = document.getElementById("changeRoleForm");
+  if (roleForm) {
+    roleForm.addEventListener("submit", handleRoleUpdate);
+  }
+
   // Initialize Account Deletion
   const deleteBtn = document.getElementById("delete-account-btn");
   if (deleteBtn) {
@@ -59,6 +65,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     avatarFileInput.addEventListener("change", handleAvatarUpload);
+  }
+
+  // Initialize Apicultor Product Add Form
+  const apiProductForm = document.getElementById("apicultor-add-product-form");
+  if (apiProductForm) {
+    apiProductForm.addEventListener("submit", handleApicultorProductAdd);
+  }
+
+  // Initialize Apicultor Workshop Add Form
+  const apiWorkshopForm = document.getElementById(
+    "apicultor-add-workshop-form",
+  );
+  if (apiWorkshopForm) {
+    apiWorkshopForm.addEventListener("submit", handleApicultorWorkshopAdd);
   }
 });
 
@@ -262,6 +282,34 @@ function renderProfile(data) {
   document.getElementById("profile-name").innerText = name;
   document.getElementById("profile-email").innerText = email;
 
+  // Bio for Apicultores
+  const bioInput = document.getElementById("apicultor-bio-input");
+  if (bioInput) {
+    bioInput.value = data.bio || "";
+  }
+
+  // Render role selection
+  const roleSelect = document.getElementById("user-role-select");
+  if (roleSelect && data.role) {
+    roleSelect.value = data.role;
+    // Admins shouldn't manage their role here
+    if (data.role === "admin") {
+      roleSelect.disabled = true;
+      document.getElementById("save-role-btn").disabled = true;
+      roleSelect.innerHTML = `<option value="admin">Administrador (Gestão restrita)</option>`;
+    }
+
+    // Show Apicultor tab if role is apicultor
+    const apicultorTab = document.getElementById("nav-tab-apicultor");
+    if (apicultorTab) {
+      if (data.role === "apicultor") {
+        apicultorTab.classList.remove("d-none");
+      } else {
+        apicultorTab.classList.add("d-none");
+      }
+    }
+  }
+
   const addressEl = document.getElementById("profile-address");
   if (addressEl) {
     addressEl.innerHTML = data.address
@@ -464,6 +512,70 @@ async function handlePasswordUpdate(e) {
     }
   } catch (error) {
     console.error("Password update error:", error);
+    Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
+  }
+}
+
+async function handleRoleUpdate(e) {
+  e.preventDefault();
+  const token = localStorage.getItem("token");
+  const newRole = document.getElementById("user-role-select").value;
+
+  try {
+    const res = await fetch("/api/user/profile/role", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ userType: newRole }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      // Update local storage token and user Object so that Auth context updates
+      localStorage.setItem("token", data.token);
+
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localUser.role = data.newRole;
+      localStorage.setItem("user", JSON.stringify(localUser));
+
+      // Update UI components (like Nav logic if Apicultor)
+      updateNav(localUser);
+
+      // Toggle Apicultor tab instantly
+      const apicultorTab = document.getElementById("nav-tab-apicultor");
+      if (apicultorTab) {
+        if (data.newRole === "apicultor") {
+          apicultorTab.classList.remove("d-none");
+        } else {
+          apicultorTab.classList.add("d-none");
+
+          // If they were on the Apicultor tab, force them back to dashboard
+          if (apicultorTab.classList.contains("active")) {
+            document
+              .querySelector('.btn-profile-tab[data-tab="dashboard"]')
+              .click();
+          }
+        }
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Tipo de Conta Atualizado!",
+        text: `A tua conta funciona agora como ${newRole === "apicultor" ? "Apicultor" : "Cliente"}.`,
+        confirmButtonColor: "#f4b400",
+      });
+    } else {
+      Swal.fire(
+        "Erro",
+        data.error || "Falha ao atualizar tipo de conta",
+        "error",
+      );
+    }
+  } catch (error) {
+    console.error("Role update error:", error);
     Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
   }
 }
@@ -677,3 +789,227 @@ window.viewOrderDetails = async function (orderId) {
     `;
   }
 };
+
+async function handleApicultorProductAdd(e) {
+  e.preventDefault();
+
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const btn = document.getElementById("api-btn-submit-prod");
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A guardar...';
+  btn.disabled = true;
+
+  try {
+    // 1. Upload Image
+    const fileInput = document.getElementById("api-produto-imagem");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      throw new Error("Por favor, seleciona uma fotografia.");
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const uploadRes = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+      // Do not set Content-Type header when using FormData; browser sets it with boundary
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error("Erro ao carregar a imagem.");
+    }
+
+    const uploadData = await uploadRes.json();
+    const imagePath = uploadData.path;
+
+    // 2. Submit Product Data
+    const productData = {
+      nome: document.getElementById("api-produto-nome").value,
+      preco: parseFloat(document.getElementById("api-produto-preco").value),
+      idCategoria: parseInt(document.getElementById("api-produto-cat").value),
+      stock: parseInt(document.getElementById("api-produto-stock").value),
+      descricao: document.getElementById("api-produto-desc").value,
+      imagem: imagePath,
+    };
+
+    const res = await fetch("/api/apicultor/products", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(productData),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Erro ao adicionar o produto.");
+    }
+
+    // Success
+    Swal.fire({
+      icon: "success",
+      title: "Produto Registado",
+      text: "O teu produto já está disponível no catálogo!",
+      confirmButtonColor: "#f4b400",
+    });
+
+    // Close Modal and Reset Form
+    e.target.reset();
+    const modalEl = document.getElementById("apicultorProductModal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) {
+      modal.hide();
+    }
+  } catch (error) {
+    console.error("Add apicultor product error:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Falha no Registo",
+      text: error.message || "Ocorreu um erro no sistema.",
+      confirmButtonColor: "#f4b400",
+    });
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// Apicultor Bio Save
+window.saveBio = async function () {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const bioInput = document.getElementById("apicultor-bio-input");
+  const bio = bioInput ? bioInput.value : "";
+  const btn = document.getElementById("btn-save-bio");
+
+  if (!btn) return;
+
+  const originalText = btn.innerText;
+  btn.disabled = true;
+  btn.innerText = "A guardar...";
+
+  try {
+    const res = await fetch("/api/apicultor/bio", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ bio }),
+    });
+
+    if (res.ok) {
+      Swal.fire({
+        icon: "success",
+        title: "Sucesso",
+        text: "Biografia atualizada com sucesso!",
+        confirmButtonColor: "#f4b400",
+      });
+      // Update local data
+      if (currentUserData) currentUserData.bio = bio;
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Erro ao atualizar biografia.");
+    }
+  } catch (error) {
+    console.error("Save bio error:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Erro",
+      text: error.message,
+      confirmButtonColor: "#f4b400",
+    });
+  } finally {
+    btn.disabled = false;
+    btn.innerText = originalText;
+  }
+};
+
+// Apicultor Workshop Add
+async function handleApicultorWorkshopAdd(e) {
+  e.preventDefault();
+
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const btn = document.getElementById("api-btn-submit-workshop");
+  if (!btn) return;
+
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A guardar...';
+  btn.disabled = true;
+
+  try {
+    const fileInput = document.getElementById("api-workshop-imagem");
+    const file = fileInput.files[0];
+
+    if (!file)
+      throw new Error("Por favor, seleciona uma imagem para o workshop.");
+
+    // 1. Upload Image
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const uploadRes = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!uploadRes.ok) throw new Error("Erro ao carregar a imagem.");
+    const uploadData = await uploadRes.json();
+    const imagePath = uploadData.path;
+
+    // 2. Submit Workshop Data
+    const workshopData = {
+      titulo: document.getElementById("api-workshop-titulo").value,
+      descricao: document.getElementById("api-workshop-desc").value,
+      data_realizacao: document.getElementById("api-workshop-data").value,
+      preco: parseFloat(document.getElementById("api-workshop-preco").value),
+      vagas: parseInt(document.getElementById("api-workshop-vagas").value),
+      imagem: imagePath,
+    };
+
+    const res = await fetch("/api/apicultor/workshops", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(workshopData),
+    });
+
+    if (res.ok) {
+      Swal.fire({
+        icon: "success",
+        title: "Workshop Publicado",
+        text: "A tua formação está agora disponível na Hexomel!",
+        confirmButtonColor: "#f4b400",
+      });
+
+      e.target.reset();
+      const modalEl = document.getElementById("workshopModal");
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Erro ao publicar workshop.");
+    }
+  } catch (error) {
+    console.error("Add workshop error:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Erro",
+      text: error.message,
+      confirmButtonColor: "#f4b400",
+    });
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
