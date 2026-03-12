@@ -34,11 +34,15 @@ CREATE TABLE IF NOT EXISTS `categoria` (
   UNIQUE KEY `Nome` (`Nome`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO `categoria` (`ID_Categoria`, `Nome`) VALUES
-(1, 'Méls'),
-(2, 'Derivados'),
-(3, 'Acessórios'),
-(4, 'Equipamento Apícola');
+-- --------------------------------------------------------
+
+-- Table: origem
+CREATE TABLE IF NOT EXISTS `origem` (
+  `ID_Origem` int(10) NOT NULL AUTO_INCREMENT,
+  `Nome` varchar(120) NOT NULL,
+  PRIMARY KEY (`ID_Origem`),
+  UNIQUE KEY `Nome` (`Nome`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -49,27 +53,18 @@ CREATE TABLE IF NOT EXISTS `produto` (
   `Preco` decimal(10,2) NOT NULL,
   `Stock` int(30) NOT NULL,
   `ID_Categoria` int(10) DEFAULT NULL,
+  `ID_Origem` int(10) DEFAULT NULL,
   `ID_Apicultor` int(10) DEFAULT NULL,
   `Descricao` TEXT,
   `Imagem` VARCHAR(255) DEFAULT NULL,
   `Tags` TEXT,
   PRIMARY KEY (`ID_Produto`),
   KEY `ID_Apicultor` (`ID_Apicultor`),
-  CONSTRAINT `fk_produto_apicultor` FOREIGN KEY (`ID_Apicultor`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE SET NULL
+  KEY `ID_Origem` (`ID_Origem`),
+  CONSTRAINT `fk_produto_apicultor` FOREIGN KEY (`ID_Apicultor`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE SET NULL,
+  CONSTRAINT `fk_produto_origem` FOREIGN KEY (`ID_Origem`) REFERENCES `origem` (`ID_Origem`) ON DELETE SET NULL,
+  CONSTRAINT `fk_produto_categoria` FOREIGN KEY (`ID_Categoria`) REFERENCES `categoria` (`ID_Categoria`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT IGNORE INTO `produto` (`Nome`, `Preco`, `Stock`, `ID_Categoria`, `Descricao`, `Imagem`) VALUES
-('Mel de Rosmaninho Premium', 13.50, 50, 1, 'Mel suave e aromático colhido nas encostas da Serra da Estrela.', '/images/wildflower.png'),
-('Mel de Eucalipto Puro', 12.00, 30, 1, 'Mel com traços balsâmicos e sabor intenso.', '/images/acacia.png'),
-('Mel de Urze da Serra', 15.50, 40, 1, 'Sabor forte e persistente com notas florais profundas.', '/images/lavender.png'),
-('Pólen de Abelha Natural', 8.50, 25, 2, 'Superalimento rico em proteínas e vitaminas.', '/images/bee.png'),
-('Própolis Gotas Reais', 10.00, 20, 2, 'Antibiótico natural produzido pelas abelhas.', '/images/bee.png'),
-('Mel com Favo de Ouro', 18.00, 15, 1, 'Mel virgem diretamente dentro do favo de cera natural.', '/images/wildflower.png'),
-('Mel de Castanheiro Intenso', 14.50, 35, 1, 'Mel escuro e pouco doce, com um toque amadeirado.', '/images/acacia.png'),
-('Wildflower Blossom', 11.00, 60, 1, 'Uma mistura vibrante de pólens e néctares.', '/images/wildflower.png'),
-('Fato de Apicultor Completo', 45.00, 10, 4, 'Fato de proteção integral com máscara ventilada.', '/images/fato_apicultor.png'),
-('Fumigador em Inox', 25.50, 15, 4, 'Fumigador resistente em aço inoxidável para maneio das colmeias.', '/images/fumigador.png'),
-('Espátula Simples', 8.00, 30, 4, 'Espátula metálica essencial para raspar própolis e separar quadros.', '/images/espatula.png');
 
 -- --------------------------------------------------------
 

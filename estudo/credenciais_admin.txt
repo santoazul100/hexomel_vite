@@ -1,4 +1,0 @@
-Credenciais de Acesso Admin:
----------------------------
-Email: adminteste@gmail.com
-Password: admin123

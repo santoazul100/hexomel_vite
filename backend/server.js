@@ -1333,7 +1333,101 @@ app.delete("/api/user/profile", authenticateToken, async (req, res) => {
   }
 });
 
-// REVIEWS ROUTES
+// ADMIN ANALYTICS
+app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    // 1. Sales last 30 days
+    const sales30d = await db.all(`
+      SELECT DATE(Data_Encomenda) as date, SUM(Total) as revenue, COUNT(ID_Encomenda) as count
+      FROM encomenda
+      WHERE Status IN ('Pago', 'Enviado', 'Entregue')
+      AND Data_Encomenda >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      GROUP BY DATE(Data_Encomenda)
+      ORDER BY date ASC
+    `);
+
+    // 2. Product distribution by category
+    const distribution = await db.all(`
+      SELECT c.Nome as category, COUNT(p.ID_Produto) as count
+      FROM categoria c
+      LEFT JOIN produto p ON c.ID_Categoria = p.ID_Categoria
+      GROUP BY c.ID_Categoria
+    `);
+
+    // 3. Orders by Status
+    const ordersByStatus = await db.all(`
+      SELECT Status as status, COUNT(ID_Encomenda) as count
+      FROM encomenda
+      GROUP BY Status
+    `);
+
+    // 4. Top Selling Products (Top 10 by revenue)
+    const topProducts = await db.all(`
+      SELECT p.Nome as name, SUM(ie.Quantidade * ie.Preco_Unitario) as revenue
+      FROM item_encomenda ie
+      JOIN produto p ON ie.ID_Produto = p.ID_Produto
+      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
+      WHERE e.Status IN ('Pago', 'Enviado', 'Entregue')
+      GROUP BY p.ID_Produto
+      ORDER BY revenue DESC
+      LIMIT 10
+    `);
+
+    // 5. Sales by Beekeeper
+    const salesByBeekeeper = await db.all(`
+      SELECT c.Nome as name, SUM(ie.Quantidade * ie.Preco_Unitario) as revenue
+      FROM item_encomenda ie
+      JOIN produto p ON ie.ID_Produto = p.ID_Produto
+      JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
+      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
+      WHERE e.Status IN ('Pago', 'Enviado', 'Entregue')
+      AND c.UserType = 'apicultor'
+      GROUP BY c.ID_Cliente
+      ORDER BY revenue DESC
+    `);
+
+    // 6. Users Growth (Last 12 months)
+    const usersGrowth = await db.all(`
+      SELECT DATE_FORMAT(Data_Resgistro, '%Y-%m') as month, COUNT(ID_Cliente) as count
+      FROM cliente
+      WHERE Data_Resgistro >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+      GROUP BY month
+      ORDER BY month ASC
+    `);
+
+    // 7. Overall Stats
+    const stats = await db.get(`
+      SELECT 
+        SUM(CASE WHEN Status IN ('Pago', 'Enviado', 'Entregue') THEN Total ELSE 0 END) as totalRevenue,
+        COUNT(ID_Encomenda) as totalOrders,
+        (SELECT COUNT(*) FROM cliente) as totalUsers,
+        (SELECT COUNT(*) FROM produto) as totalProducts
+      FROM encomenda
+    `);
+
+    const totalRevenue = parseFloat(stats.totalRevenue || 0);
+    const totalOrders = stats.totalOrders || 0;
+    const aov = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0.00";
+
+    res.json({
+      sales30d,
+      distribution,
+      ordersByStatus,
+      topProducts,
+      salesByBeekeeper,
+      usersGrowth,
+      stats: {
+        ...stats,
+        totalRevenue: totalRevenue.toFixed(2),
+        avgOrderValue: aov
+      }
+    });
+  } catch (error) {
+    console.error("Analytics error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Get reviews for a product
 app.get("/api/products/:id/reviews", async (req, res) => {
   const { id } = req.params;

@@ -28,32 +28,22 @@ export const initDB = async () => {
     throw error;
   }
 
-  // Return a sqlite-compatible wrapper so server.js needs no changes
+  // Return the database object
   return db;
 };
 
-// SQLite-compatible wrapper around mysql2 pool
+// Database wrapper around mysql2 pool
 export const db = {
-  /**
-   * Fetch a single row. Equivalent to sqlite's db.get()
-   */
   get: async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows[0] || null;
   },
 
-  /**
-   * Fetch all rows. Equivalent to sqlite's db.all()
-   */
   all: async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
   },
 
-  /**
-   * Run a statement (INSERT/UPDATE/DELETE). Equivalent to sqlite's db.run()
-   * Returns { lastID, changes } to stay compatible with existing server.js code.
-   */
   run: async (sql, params = []) => {
     const [result] = await pool.execute(sql, params);
     return { lastID: result.insertId, changes: result.affectedRows };

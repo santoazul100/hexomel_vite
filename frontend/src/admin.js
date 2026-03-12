@@ -166,12 +166,241 @@ class AdminUI {
       const totalOrdersEl = document.getElementById("dash-total-orders");
       if (totalOrdersEl) totalOrdersEl.innerText = orderCount;
 
-      // Calculate Low Stock (less than 5 units)
+      // Update Low Stock (less than 5 units)
       const lowStockCount = this.products.filter((p) => p.Stock < 5).length;
       const lowStockEl = document.getElementById("dash-low-stock");
       if (lowStockEl) lowStockEl.innerText = lowStockCount;
+
+      // Load Charts
+      this.loadAnalytics();
     } catch (e) {
       console.error("Error loading dashboard stats", e);
+    }
+  }
+
+  async loadAnalytics() {
+    try {
+      const response = await fetch(`${API_URL}/admin/analytics`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar analítica");
+      const data = await response.json();
+
+      // Update Revenue Card
+      const revenueEl = document.getElementById("dash-total-revenue");
+      if (revenueEl && data.stats) {
+        revenueEl.innerText = `${data.stats.totalRevenue}€`;
+      }
+
+      // Update AOV Card
+      const aovEl = document.getElementById("dash-avg-order-value");
+      if (aovEl && data.stats) {
+        aovEl.innerText = `${data.stats.avgOrderValue}€`;
+      }
+
+      this.renderCharts(data);
+    } catch (e) {
+      console.error("Analytics load error", e);
+    }
+  }
+
+  renderCharts(data) {
+    const { sales30d, distribution, ordersByStatus, topProducts, salesByBeekeeper, usersGrowth } = data;
+
+    // --- SHARED STYLING ---
+    const goldenPalette = [
+      "#f4b400", // Gold
+      "#1c5236", // Green
+      "#0284c7", // Blue
+      "#9333ea", // Purple
+      "#ef4444", // Red
+      "#64748b", // Slate
+      "#f97316", // Orange
+      "#ec4899"  // Pink
+    ];
+
+    // 1. Sales Chart (Line)
+    const salesCtx = document.getElementById("salesChart")?.getContext("2d");
+    if (salesCtx) {
+      if (this.salesChart) this.salesChart.destroy();
+      
+      const gradient = salesCtx.createLinearGradient(0, 0, 0, 300);
+      gradient.addColorStop(0, "rgba(244, 180, 0, 0.4)");
+      gradient.addColorStop(1, "rgba(244, 180, 0, 0)");
+
+      this.salesChart = new Chart(salesCtx, {
+        type: "line",
+        data: {
+          labels: sales30d.length > 0 ? sales30d.map((s) => new Date(s.date).toLocaleDateString()) : ["Sem dados"],
+          datasets: [
+            {
+              label: "Receita (€)",
+              data: sales30d.length > 0 ? sales30d.map((s) => s.revenue) : [0],
+              borderColor: "#f4b400",
+              borderWidth: 2,
+              backgroundColor: gradient,
+              fill: true,
+              tension: 0.3,
+              pointRadius: sales30d.length > 0 ? 3 : 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(0,0,0,0.8)",
+              padding: 12,
+              callbacks: {
+                label: (context) => `Receita: ${context.parsed.y.toFixed(2)}€`
+              }
+            }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true,
+              grid: { color: "rgba(0,0,0,0.03)", drawBorder: false },
+              ticks: { callback: (value) => value + "€", maxTicksLimit: 5 }
+            },
+            x: { grid: { display: false }, ticks: { maxRotation: 0 } }
+          },
+        },
+      });
+    }
+
+    // 2. Category Chart (Doughnut)
+    const catCtx = document.getElementById("categoryChart")?.getContext("2d");
+    if (catCtx) {
+      if (this.catChart) this.catChart.destroy();
+      this.catChart = new Chart(catCtx, {
+        type: "doughnut",
+        data: {
+          labels: distribution.map((d) => d.category),
+          datasets: [{
+            data: distribution.map((d) => d.count),
+            backgroundColor: goldenPalette,
+            borderWidth: 0,
+            hoverOffset: 15
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true, padding: 20 } }
+          },
+        },
+      });
+    }
+
+    // 3. Orders by Status Chart (Doughnut)
+    const statusCtx = document.getElementById("orderStatusChart")?.getContext("2d");
+    if (statusCtx) {
+      if (this.statusChart) this.statusChart.destroy();
+      this.statusChart = new Chart(statusCtx, {
+        type: "doughnut",
+        data: {
+          labels: ordersByStatus.map(o => o.status),
+          datasets: [{
+            data: ordersByStatus.map(o => o.count),
+            backgroundColor: ["#fef08a", "#bbf7d0", "#bfdbfe", "#bae6fd", "#fecaca"],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: { legend: { position: "bottom", labels: { usePointStyle: true } } }
+        }
+      });
+    }
+
+    // 4. Users Growth Chart (Line)
+    const growthCtx = document.getElementById("usersGrowthChart")?.getContext("2d");
+    if (growthCtx) {
+      if (this.growthChart) this.growthChart.destroy();
+      this.growthChart = new Chart(growthCtx, {
+        type: "line",
+        data: {
+          labels: usersGrowth.map(u => u.month),
+          datasets: [{
+            label: "Novos Utilizadores",
+            data: usersGrowth.map(u => u.count),
+            borderColor: "#1c5236",
+            backgroundColor: "rgba(28, 82, 54, 0.1)",
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // 5. Top Products (Horizontal Bar)
+    const topCtx = document.getElementById("topProductsChart")?.getContext("2d");
+    if (topCtx) {
+      if (this.topChart) this.topChart.destroy();
+      this.topChart = new Chart(topCtx, {
+        type: "bar",
+        data: {
+          labels: topProducts.map(p => p.name),
+          datasets: [{
+            label: "Receita",
+            data: topProducts.map(p => p.revenue),
+            backgroundColor: "#f4b400",
+            borderRadius: 8
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { callback: v => v + "€" } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // 6. Sales by Beekeeper (Bar)
+    const beeCtx = document.getElementById("beekeeperSalesChart")?.getContext("2d");
+    if (beeCtx) {
+      if (this.beeChart) this.beeChart.destroy();
+      this.beeChart = new Chart(beeCtx, {
+        type: "bar",
+        data: {
+          labels: salesByBeekeeper.map(b => b.name),
+          datasets: [{
+            label: "Total de Vendas",
+            data: salesByBeekeeper.map(b => b.revenue),
+            backgroundColor: "#1c5236",
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { callback: v => v + "€" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
     }
   }
 
@@ -327,6 +556,8 @@ class AdminUI {
                         <option value="Pendente" ${o.Status === "Pendente" ? "selected" : ""}>Pendente</option>
                         <option value="Pago" ${o.Status === "Pago" ? "selected" : ""}>Pago</option>
                         <option value="Enviado" ${o.Status === "Enviado" ? "selected" : ""}>Enviado</option>
+                        <option value="Entregue" ${o.Status === "Entregue" ? "selected" : ""}>Entregue</option>
+                        <option value="Cancelado" ${o.Status === "Cancelado" ? "selected" : ""}>Cancelado</option>
                     </select>
                 </td>
             </tr>

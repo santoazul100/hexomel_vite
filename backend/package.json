@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "db:setup": "node setup_db.js"
+    "db:setup": "node scripts/setup_db.js",
+    "db:seed": "node scripts/seed_db.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -17,9 +18,7 @@
     "jsonwebtoken": "^9.0.0",
     "multer": "^2.0.2",
     "mysql2": "^3.16.1",
-    "nodemailer": "^7.0.12",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "nodemailer": "^7.0.12"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

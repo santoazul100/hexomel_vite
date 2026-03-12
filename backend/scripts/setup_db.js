@@ -21,12 +21,19 @@ const initDB = async () => {
 
     console.log("Connected to MySQL server.");
 
-    // 2. Read SQL file
-    const sqlPath = path.join(__dirname, "hexomel_mysql.sql");
+    // 2. Drop and Recreate Database for a clean start
+    console.log("Re-creating database hexomel...");
+    await connection.query("DROP DATABASE IF EXISTS `hexomel`;");
+    await connection.query("CREATE DATABASE `hexomel` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+    await connection.query("USE `hexomel`;");
+
+    // 3. Read SQL file
+    const sqlPath = path.join(__dirname, "..", "hexomel_mysql.sql");
     const sql = fs.readFileSync(sqlPath, "utf8");
 
     // 3. Execute SQL
     console.log("Executing SQL schema...");
+    // We Use the connection already opened with multipleStatements: true
     await connection.query(sql);
 
     console.log("Database initialized successfully!");

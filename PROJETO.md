@@ -42,6 +42,7 @@ O projeto **Hexomel** é um website premium de comércio eletrónico de mel port
 
 ## 3. Arquitetura Técnica
 
+- **MySQL**: Base de dados relacional gerida via **MySQL Workbench** para suporte robusto a transações e chaves estrangeiras.
 - **`frontend/src/beeAnimation.js`**: Motor de animação procedural responsável pela geração dinâmica e lógica de movimento das abelhas.
 - **`frontend/src/main.js`**: Lógica central da aplicação e gestão de estado da UI.
 - **`frontend/src/styles/index.css`**: Centralização de tokens de design e estilos responsivos.

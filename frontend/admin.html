@@ -17,6 +17,8 @@
     />
     <link rel="stylesheet" href="src/styles/index.css" />
     <link rel="stylesheet" href="src/styles/modern.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
         --admin-sidebar-width: 260px;
@@ -220,12 +222,84 @@
         border-color: var(--primary-green, #1c5236);
         color: var(--primary-green, #1c5236);
       }
+      
       .admin-section {
         display: none;
-        animation: fadeIn 0.4s ease-out;
       }
+      
       .admin-section.active {
         display: block;
+      }
+
+      /* Premium Refinements */
+      .glass-card {
+        background: white !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+      }
+
+      .admin-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+      }
+
+      .admin-card:hover {
+        border-color: var(--primary-gold);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      .icon-box {
+        transition: all 0.2s ease;
+      }
+
+      .admin-sidebar {
+        background: white;
+        border-right: 1px solid #e2e8f0;
+        left: 0;
+      }
+
+      .admin-nav-link {
+        position: relative;
+        transition: all 0.2s ease;
+        padding: 10px 16px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #64748b;
+        text-decoration: none;
+      }
+      
+      .admin-nav-link:hover {
+        background: #f8fafc;
+        color: var(--primary-gold);
+      }
+
+      .admin-nav-link::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 25%;
+        width: 3px;
+        height: 0;
+        background: var(--primary-gold);
+        transition: height 0.2s ease;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .admin-nav-link.active::after {
+        height: 50%;
+      }
+
+      .admin-nav-link.active {
+        background: #fff8e6;
+        color: var(--primary-gold);
+        font-weight: 600;
       }
 
       .admin-layout {
@@ -329,8 +403,7 @@
         <section id="dashboard-section" class="admin-section active">
           <!-- Welcome Header -->
           <div
-            class="admin-card mb-4 border-0 shadow-sm"
-            style="background: #fff; border: 1px solid #e2e8f0 !important"
+            class="admin-card glass-card mb-4 border-0"
           >
             <div class="row align-items-center">
               <div class="col-md-10">
@@ -356,117 +429,136 @@
           <!-- Stats Grid -->
           <div class="row g-4 mb-4">
             <!-- Total Users -->
-            <div class="col-md-3">
-              <div
-                class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
-              >
-                <div
-                  class="d-flex justify-content-between align-items-start mb-3"
-                >
+            <div class="col-md-2 col-sm-4">
+              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <span class="d-block text-muted small mb-1"
-                      >Total utilizadores</span
-                    >
-                    <h2 id="dash-total-users" class="fw-bold mb-0">0</h2>
+                    <span class="d-block text-muted small mb-1">Utilizadores</span>
+                    <h4 id="dash-total-users" class="fw-bold mb-0">0</h4>
                   </div>
-                  <div
-                    class="icon-box bg-soft-blue text-primary rounded-3 p-2 d-flex align-items-center justify-content-center"
-                    style="
-                      width: 40px;
-                      height: 40px;
-                      background-color: #e0f2fe;
-                      color: #0284c7;
-                    "
-                  >
-                    <i class="fas fa-users"></i>
+                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #e0f2fe; color: #0284c7;">
+                    <i class="fas fa-users" style="font-size: 0.9rem;"></i>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Total Products -->
-            <div class="col-md-3">
-              <div
-                class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
-              >
-                <div
-                  class="d-flex justify-content-between align-items-start mb-3"
-                >
+            <div class="col-md-2 col-sm-4">
+              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <span class="d-block text-muted small mb-1"
-                      >Total produtos</span
-                    >
-                    <h2 id="dash-total-products" class="fw-bold mb-0">0</h2>
+                    <span class="d-block text-muted small mb-1">Produtos</span>
+                    <h4 id="dash-total-products" class="fw-bold mb-0">0</h4>
                   </div>
-                  <div
-                    class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center"
-                    style="
-                      width: 40px;
-                      height: 40px;
-                      background-color: #dcfce7;
-                      color: #166534;
-                    "
-                  >
-                    <i class="fas fa-leaf"></i>
+                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #dcfce7; color: #166534;">
+                    <i class="fas fa-leaf" style="font-size: 0.9rem;"></i>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Orders -->
-            <div class="col-md-3">
-              <div
-                class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
-              >
-                <div
-                  class="d-flex justify-content-between align-items-start mb-3"
-                >
+            <div class="col-md-2 col-sm-4">
+              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <span class="d-block text-muted small mb-1"
-                      >Encomendas (Total)</span
-                    >
-                    <h2 id="dash-total-orders" class="fw-bold mb-0">0</h2>
+                    <span class="d-block text-muted small mb-1">Encomendas</span>
+                    <h4 id="dash-total-orders" class="fw-bold mb-0">0</h4>
                   </div>
-                  <div
-                    class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center"
-                    style="
-                      width: 40px;
-                      height: 40px;
-                      background-color: #f3e8ff;
-                      color: #9333ea;
-                    "
-                  >
-                    <i class="fas fa-check-circle"></i>
+                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #f3e8ff; color: #9333ea;">
+                    <i class="fas fa-check-circle" style="font-size: 0.9rem;"></i>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Low Stock -->
-            <div class="col-md-3">
-              <div
-                class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between"
-              >
-                <div
-                  class="d-flex justify-content-between align-items-start mb-3"
-                >
+            <!-- Revenue -->
+            <div class="col-md-3 col-sm-6">
+              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, #fff8e6 0%, #ffffff 100%); border: 1px solid #ffeeba !important;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <span class="d-block text-muted small mb-1"
-                      >Stock baixo</span
-                    >
-                    <h2 id="dash-low-stock" class="fw-bold mb-0">0</h2>
+                    <span class="d-block text-muted small mb-1">Receita Total</span>
+                    <h4 id="dash-total-revenue" class="fw-bold mb-0" style="color: #854d0e;">0.00€</h4>
                   </div>
-                  <div
-                    class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center"
-                    style="
-                      width: 40px;
-                      height: 40px;
-                      background-color: #fee2e2;
-                      color: #dc2626;
-                    "
-                  >
-                    <i class="fas fa-exclamation-triangle"></i>
+                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #fef3c7; color: #b45309;">
+                    <i class="fas fa-euro-sign" style="font-size: 0.9rem;"></i>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Average Order Value (KPI) -->
+            <div class="col-md-3 col-sm-6">
+              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px solid #bbf7d0 !important;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <span class="d-block text-muted small mb-1">Ticket Médio (AOV)</span>
+                    <h4 id="dash-avg-order-value" class="fw-bold mb-0" style="color: #166534;">0.00€</h4>
+                  </div>
+                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #dcfce7; color: #15803d;">
+                    <i class="fas fa-chart-line" style="font-size: 0.9rem;"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Sales and Orders Distribution -->
+          <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Tendência de Vendas (30 Dias)</h5>
+                <div style="height: 300px;">
+                  <canvas id="salesChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Estado das Encomendas</h5>
+                <div style="height: 300px;">
+                  <canvas id="orderStatusChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Categories and Users Growth -->
+          <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Produtos por Categoria</h5>
+                <div style="height: 300px;">
+                  <canvas id="categoryChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-8">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Crescimento de Utilizadores</h5>
+                <div style="height: 300px;">
+                  <canvas id="usersGrowthChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 3: Top Products and Sales by Beekeeper -->
+          <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Top 10 Produtos (Receita)</h5>
+                <div style="height: 350px;">
+                  <canvas id="topProductsChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Vendas por Apicultor</h5>
+                <div style="height: 350px;">
+                  <canvas id="beekeeperSalesChart"></canvas>
                 </div>
               </div>
             </div>
