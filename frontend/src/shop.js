@@ -24,6 +24,9 @@ async function fetchProducts() {
       fetch(`${API_URL}/origins`),
     ]);
 
+    if (!catRes.ok) throw new Error(`Falha ao carregar categorias: ${catRes.status}`);
+    if (!oriRes.ok) throw new Error(`Falha ao carregar origens: ${oriRes.status}`);
+
     categories = await catRes.json();
     origins = await oriRes.json();
 
@@ -33,6 +36,7 @@ async function fetchProducts() {
 
     // 2. Fetch Products
     const res = await fetch(`${API_URL}/products`);
+    if (!res.ok) throw new Error(`Falha ao carregar produtos: ${res.status}`);
     const data = await res.json();
 
     products = data.map((p) => {
@@ -62,6 +66,11 @@ async function fetchProducts() {
     });
 
     filteredProducts = [...products];
+    
+    // 3. Initialize dynamic price filter
+    const maxPrice = products.length > 0 ? Math.ceil(Math.max(...products.map(p => p.price))) : 100;
+    initPriceSlider(maxPrice);
+    
     renderProducts();
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -120,6 +129,17 @@ function renderOriginFilters() {
   // Re-bind events
   const newCheckboxes = document.querySelectorAll(".origin-filter-checkbox");
   newCheckboxes.forEach((cb) => cb.addEventListener("change", applyFilters));
+}
+
+// Initialize Price Slider based on dynamic data
+function initPriceSlider(max) {
+  const slider = document.getElementById("priceRange");
+  const priceVal = document.getElementById("priceVal");
+  if (!slider || !priceVal) return;
+
+  slider.max = max;
+  slider.value = max;
+  priceVal.textContent = max + "€";
 }
 
 // Render products (Nike Style)

@@ -158,69 +158,10 @@
         color: #22c55e;
       }
 
-      .form-control-v2 {
-        border-radius: 12px;
-        border: 2px solid #f1f5f9;
-        padding: 10px 16px;
-      }
-
-      .form-control-v2:focus {
-        border-color: var(--primary-gold);
-        box-shadow: none;
-      }
-
-      /* Tag Input Styles */
-      #tag-input-container {
-        cursor: text;
-        padding-bottom: 4px; /* Adjust for pills */
-      }
-      .tag-pill {
-        background-color: #f1f5f9;
-        color: #334155;
-        border: 1px solid #e2e8f0;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 500;
-        animation: fadeIn 0.2s ease;
-      }
-      .tag-pill .remove-tag {
-        cursor: pointer;
-        color: #94a3b8;
-        background: transparent;
-        border-radius: 50%;
-        width: 16px;
-        height: 16px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-        font-size: 14px;
-        transition: color 0.2s;
-      }
-      .tag-pill .remove-tag:hover {
-        color: #ef4444;
-      }
-      .tag-pill .remove-tag:hover {
-        background: rgba(255, 255, 255, 0.5);
-      }
-      .tag-suggestion {
-        cursor: pointer;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 2px 8px;
-        font-size: 0.8rem;
-        color: #64748b;
-        transition: all 0.2s;
-        background: white;
-      }
       .tag-suggestion:hover {
-        background-color: #f8fafc;
-        border-color: var(--primary-green, #1c5236);
-        color: var(--primary-green, #1c5236);
+        background-color: #fff8e6;
+        border-color: var(--primary-gold);
+        color: var(--primary-gold);
       }
       
       .admin-section {
@@ -229,6 +170,87 @@
       
       .admin-section.active {
         display: block;
+      }
+
+      /* Premium Admin Components */
+      .btn-action-premium {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .btn-action-premium:hover {
+        background: #f8fafc;
+        border-color: var(--primary-gold);
+        color: var(--primary-gold);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(244, 180, 0, 0.15);
+      }
+
+      .btn-action-premium.success:hover {
+        background: #f0fdf4;
+        border-color: #22c55e;
+        color: #22c55e;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+      }
+
+      .btn-action-premium.delete:hover {
+        background: #fef2f2;
+        border-color: #ef4444;
+        color: #ef4444;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+      }
+
+      .user-avatar-bubble {
+        width: 36px;
+        height: 36px;
+        background: #f1f5f9;
+        color: #64748b;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+
+      .badge-premium {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 5px 10px;
+        border-radius: 8px;
+        display: inline-block;
+      }
+
+      .badge-premium.pendente { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+      .badge-premium.aprovado { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+      .badge-premium.rejeitado { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+
+      .doc-link-premium {
+        color: #0284c7;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+
+      .doc-link-premium:hover {
+        color: #0369a1;
+        transform: translateX(3px);
       }
 
       /* Premium Refinements */
@@ -395,6 +417,9 @@
           </a>
           <a class="admin-nav-link" data-section="orders">
             <i class="fas fa-shopping-bag"></i> Encomendas
+          </a>
+          <a class="admin-nav-link" data-section="upgrade-requests">
+            <i class="fas fa-user-shield"></i> Pedidos de Apicultor
           </a>
         </nav>
       </aside>
@@ -715,6 +740,33 @@
                   </tr>
                 </thead>
                 <tbody id="order-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- UPGRADE REQUESTS SECTION -->
+        <section id="upgrade-requests-section" class="admin-section">
+          <header class="mb-4">
+            <h2 class="fw-bold mb-1">Pedidos de Apicultor</h2>
+            <p class="text-muted small">
+              Analise os pedidos dos utilizadores que pretendem vender produtos (Apicultores).
+            </p>
+          </header>
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>Utilizador</th>
+                    <th style="width: 30%">Motivo / Descrição</th>
+                    <th>Documento</th>
+                    <th>Data Pedido</th>
+                    <th>Estado</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="upgrade-list-body"></tbody>
               </table>
             </div>
           </div>

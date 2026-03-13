@@ -272,7 +272,7 @@ class CartManager {
         '<p style="text-align: center; color: var(--text-light); margin-top: 2rem;">O seu carrinho está vazio.</p>';
     }
 
-    totalEl.textContent = `€${total.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `€${total.toFixed(2)}`;
     const totalQty = this.items.reduce((sum, item) => sum + item.Quantidade, 0);
     if (badge) badge.textContent = totalQty;
   }

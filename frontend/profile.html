@@ -188,6 +188,9 @@
                 <i class="fas fa-box-open me-2 text-warning"></i>Área de
                 Apicultor
               </button>
+              <button class="btn btn-profile-tab" data-tab="upgrade" id="nav-tab-upgrade">
+                <i class="fas fa-arrow-up me-2"></i>Upgrade para Apicultor
+              </button>
               <button
                 class="btn btn-profile-tab text-danger"
                 id="delete-account-btn"
@@ -485,36 +488,126 @@
 
               <!-- Novo Bloco: Tipo de Conta -->
               <div class="premium-card p-4 mt-4" style="max-width: 600px">
-                <form id="changeRoleForm">
-                  <h5 class="fw-bold mb-1">Tipo de Conta</h5>
-                  <p class="text-muted small mb-3">
-                    As contas registadas via Google assumem por defeito
-                    "Cliente". Podes alternar a tua conta para
-                    <strong>Apicultor</strong> para aceder a produtos exclusivos
-                    ou reverter para Cliente.
-                  </p>
+                <h5 class="fw-bold mb-1">Tipo de Conta</h5>
+                <p class="text-muted small mb-4">
+                  Escolhe como queres interagir com a nossa plataforma. Podes alternar entre os perfis a qualquer momento.
+                </p>
 
+                <div class="row g-3 mb-4">
+                  <div class="col-6">
+                    <div
+                      class="role-choice-card p-3 rounded-4 text-center h-100 position-relative border-2 border"
+                      data-role="client"
+                      id="role-card-client"
+                      style="cursor: pointer; transition: all 0.3s ease"
+                    >
+                      <div
+                        class="icon-circle mx-auto mb-2"
+                        style="
+                          width: 45px;
+                          height: 45px;
+                          background: #f8f9fa;
+                          border-radius: 50%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        "
+                      >
+                        <i class="fas fa-user text-muted"></i>
+                      </div>
+                      <div class="fw-bold small">Cliente</div>
+                      <i
+                        class="fas fa-check-circle check-icon position-absolute top-0 end-0 m-2 d-none"
+                        style="color: var(--logo-yellow, #f4b400)"
+                      ></i>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div
+                      class="role-choice-card p-3 rounded-4 text-center h-100 position-relative border-2 border"
+                      data-role="apicultor"
+                      id="role-card-apicultor"
+                      style="cursor: pointer; transition: all 0.3s ease"
+                    >
+                      <div
+                        class="icon-circle mx-auto mb-2"
+                        style="
+                          width: 45px;
+                          height: 45px;
+                          background: #f8f9fa;
+                          border-radius: 50%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        "
+                      >
+                        <i class="fas fa-apple-whole text-muted"></i>
+                        <!-- Fallback icon instead of fa-bee if not available -->
+                      </div>
+                      <div class="fw-bold small">Apicultor</div>
+                      <i
+                        class="fas fa-check-circle check-icon position-absolute top-0 end-0 m-2 d-none"
+                        style="color: var(--logo-yellow, #f4b400)"
+                      ></i>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-auth-enhanced login w-100 opacity-50"
+                  id="save-role-btn-new"
+                  disabled
+                >
+                  Confirmar Alteração
+                </button>
+              </div>
+            </div>
+
+            <!-- Upgrade Request Tab -->
+            <div
+              class="profile-tab-content"
+              id="tab-upgrade"
+              style="display: none"
+            >
+              <h3 class="fw-bold mb-4">Pedido de Upgrade para Apicultor</h3>
+              <div class="premium-card p-4" style="max-width: 600px">
+                <div id="upgrade-status-banner" class="mb-4 d-none"></div>
+                <form id="upgrade-request-form">
+                  <p class="text-muted small mb-4">
+                    Queres vender os teus produtos na nossa plataforma? Envia um pedido para te tornares <strong>Apicultor</strong>. 
+                    Precisamos de uma breve descrição da tua atividade e de um documento comprovativo (ex: Registo de Exporação ou ID).
+                  </p>
                   <div class="mb-3">
                     <label class="form-label small fw-bold"
-                      >O meu tipo de conta atual</label
+                      >Descrição da Atividade/Pedido</label
                     >
-                    <select
-                      id="user-role-select"
-                      class="form-select auth-input mb-0"
-                      style="cursor: pointer"
+                    <textarea
+                      id="upgrade-desc"
+                      class="auth-input mb-0"
+                      rows="4"
                       required
-                    >
-                      <option value="client">Cliente</option>
-                      <option value="apicultor">Apicultor</option>
-                    </select>
+                      placeholder="Descreve brevemente o que pretendes vender ou a tua experiência..."
+                    ></textarea>
                   </div>
-
+                  <div class="mb-4">
+                    <label class="form-label small fw-bold"
+                      >Documento de Identificação/Comprovativo</label
+                    >
+                    <input
+                      type="file"
+                      id="upgrade-doc"
+                      class="auth-input mb-0"
+                      required
+                      accept=".pdf,image/*"
+                    />
+                  </div>
                   <button
                     type="submit"
-                    class="btn btn-auth-enhanced login"
-                    id="save-role-btn"
+                    class="btn btn-auth-enhanced register w-100"
+                    id="btn-submit-upgrade"
                   >
-                    Atualizar Tipo de Conta
+                    Enviar Pedido de Apicultor
                   </button>
                 </form>
               </div>
@@ -594,6 +687,42 @@
                     </button>
                   </div>
                 </div>
+
+                <!-- Downgrade Option -->
+                <div class="col-12">
+                  <div
+                    class="premium-card p-3 border-warning border-opacity-25 bg-warning bg-opacity-10 d-flex align-items-center justify-content-between"
+                  >
+                    <div class="d-flex align-items-center gap-3">
+                      <div
+                        class="icon-circle"
+                        style="
+                          width: 40px;
+                          height: 40px;
+                          background: #fff;
+                          border-radius: 50%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        "
+                      >
+                        <i class="fas fa-user-tag text-muted"></i>
+                      </div>
+                      <div>
+                        <div class="fw-bold small">Encerrar Perfil de Apicultor</div>
+                        <div class="text-muted" style="font-size: 0.75rem">
+                          Podes voltar a ser Cliente a qualquer momento.
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      id="btn-revert-client"
+                      class="btn btn-sm btn-outline-dark px-3"
+                    >
+                      Reverter para Cliente
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -651,12 +780,11 @@
       tabindex="-1"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg premium-card">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold">
-              <i class="fas fa-plus-circle text-warning me-2"></i>Registar Novo
-              Produto
+      <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content modal-premium border-0 shadow-lg">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold fs-4">
+              <i class="fas fa-plus-circle text-warning me-2"></i>Registar Novo Produto
             </h5>
             <button
               type="button"
@@ -665,98 +793,150 @@
               aria-label="Close"
             ></button>
           </div>
-          <div class="modal-body pt-3 pb-4">
+          <div class="modal-body">
             <form id="apicultor-add-product-form">
-              <div class="mb-3">
-                <label class="form-label small fw-bold"
-                  >Fotografia do Produto
-                  <span class="text-danger">*</span></label
+              <div class="row g-4">
+                <!-- Left Column: Inputs -->
+                <div class="col-lg-8">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Nome do Produto *</label>
+                      <input
+                        type="text"
+                        id="api-produto-nome"
+                        class="form-control form-control-v2"
+                        placeholder="Ex: Mel de Urze 500g"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Preço (€) *</label>
+                      <input
+                        type="number"
+                        id="api-produto-preco"
+                        class="form-control form-control-v2"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Stock Disponível *</label>
+                      <input
+                        type="number"
+                        id="api-produto-stock"
+                        class="form-control form-control-v2"
+                        min="1"
+                        placeholder="Ex: 50"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Categoria *</label>
+                      <select id="api-produto-cat" class="form-select form-control-v2" required>
+                        <option value="1">Mel (Néctar)</option>
+                        <option value="2">Produtos da Colmeia</option>
+                        <option value="3">Cabazes e Ofertas</option>
+                        <option value="4" selected>Equipamento Apícola</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Origem *</label>
+                      <select id="api-produto-origem" class="form-select form-control-v2" required>
+                        <option value="">Selecione a origem...</option>
+                        <!-- Injected by JS -->
+                      </select>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Descrição Curta *</label>
+                      <textarea
+                        id="api-produto-desc"
+                        class="form-control form-control-v2"
+                        rows="4"
+                        placeholder="Apresenta os detalhes deste produto para os teus clientes..."
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Tags</label>
+                      <div class="tag-input-wrapper">
+                        <div class="form-control form-control-v2 d-flex align-items-center flex-wrap gap-2" id="api-tag-input-container" style="min-height: 48px; cursor: text;">
+                          <div id="api-selected-tags-container" class="d-flex flex-wrap gap-1"></div>
+                          <input
+                            type="text"
+                            id="api-tag-input-field"
+                            class="border-0 bg-transparent flex-grow-1"
+                            placeholder="Adicionar tag..."
+                            style="outline: none; min-width: 120px;"
+                          />
+                        </div>
+                        <div id="api-available-tags-suggestions" class="d-flex flex-wrap gap-2 mt-2"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Column: Image Upload -->
+                <div class="col-lg-4">
+                  <label class="form-label small fw-bold text-uppercase text-muted mb-2">Fotografia do Produto *</label>
+                  <div class="image-upload-container">
+                    <input
+                      type="file"
+                      id="api-produto-imagem"
+                      class="d-none"
+                      referrerpolicy="no-referrer"
+                      accept="image/*"
+                      required
+                    />
+                    <div
+                      id="api-upload-trigger"
+                      class="upload-area d-flex flex-column align-items-center justify-content-center text-center p-3 border rounded-4 position-relative"
+                      style="height: 340px;"
+                    >
+                      <div id="api-image-placeholder" class="py-4">
+                        <div class="mb-3 text-muted opacity-50">
+                          <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                        </div>
+                        <span class="d-block fw-bold text-muted">Clique para carregar</span>
+                        <span class="small text-muted opacity-75">Imagem do seu Produto</span>
+                      </div>
+                      <img
+                        id="api-image-preview"
+                        src=""
+                        class="img-fluid rounded-3 w-100 h-100 object-fit-cover position-absolute top-0 start-0"
+                        style="display: none"
+                      />
+                      <div class="upload-overlay position-absolute top-0 start-0 w-100 h-100">
+                        <i class="fas fa-pen me-2"></i> Alterar Foto
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  class="btn btn-light px-4 fw-bold text-muted rounded-3"
+                  data-bs-dismiss="modal"
                 >
-                <input
-                  type="file"
-                  id="api-produto-imagem"
-                  class="form-control auth-input"
-                  accept="image/*"
-                  required
-                />
-              </div>
-              <div class="row g-2 mb-3">
-                <div class="col-8">
-                  <label class="form-label small fw-bold"
-                    >Nome do Produto <span class="text-danger">*</span></label
-                  >
-                  <input
-                    type="text"
-                    id="api-produto-nome"
-                    class="form-control auth-input"
-                    placeholder="Ex: Mel de Urze 500g"
-                    required
-                  />
-                </div>
-                <div class="col-4">
-                  <label class="form-label small fw-bold"
-                    >Preço (€) <span class="text-danger">*</span></label
-                  >
-                  <input
-                    type="number"
-                    id="api-produto-preco"
-                    class="form-control auth-input"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="row g-2 mb-3">
-                <div class="col-6">
-                  <label class="form-label small fw-bold"
-                    >Categoria <span class="text-danger">*</span></label
-                  >
-                  <select
-                    id="api-produto-cat"
-                    class="form-select auth-input"
-                    required
-                  >
-                    <option value="1">Mel (Néctar)</option>
-                    <option value="2">Produtos da Colmeia</option>
-                    <option value="3">Cabazes e Ofertas</option>
-                    <option value="4" selected>Equipamento Apícola</option>
-                  </select>
-                </div>
-                <div class="col-6">
-                  <label class="form-label small fw-bold"
-                    >Stock Disponível <span class="text-danger">*</span></label
-                  >
-                  <input
-                    type="number"
-                    id="api-produto-stock"
-                    class="form-control auth-input"
-                    min="1"
-                    placeholder="Ex: 50"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="mb-4">
-                <label class="form-label small fw-bold"
-                  >Descrição Curta <span class="text-danger">*</span></label
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-auth-enhanced register px-5 py-2"
+                  id="api-btn-submit-prod"
                 >
-                <textarea
-                  id="api-produto-desc"
-                  class="form-control auth-input"
-                  rows="3"
-                  placeholder="Apresenta os detalhes deste produto..."
-                  required
-                ></textarea>
+                  Adicionar ao Catálogo
+                </button>
               </div>
-              <button
-                type="submit"
-                class="btn btn-auth-enhanced register w-100"
-                id="api-btn-submit-prod"
-              >
-                Adicionar ao Catálogo Público
-              </button>
             </form>
           </div>
         </div>

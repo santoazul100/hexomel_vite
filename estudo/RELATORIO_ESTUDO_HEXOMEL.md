@@ -18,9 +18,10 @@ O **Hexomel** é uma plataforma premium de e-commerce para mel português, desen
 ## 2. Arquitetura do Sistema
 O projeto segue uma estrutura de **Single Page Application (SPA) logic** no frontend com uma **API RESTful** no backend.
 
-- **Comunicação**: O frontend comunica com o servidor via `Fetch API`, utilizando tokens **JWT** para autenticação segura.
-- **Segurança**: As passwords são protegidas com `bcryptjs` (hashing) e os acessos são validados por middlewares no servidor.
-- **Assets**: Imagens enviadas pelos utilizadores são armazenadas em `frontend/public/uploads/`.
+- **Comunicação**: O frontend comunica com o servidor via `Fetch API`, utilizando tokens **JWT** para autenticação segura e middleware de tratamento de erros para garantir robustez.
+- **Segurança**: As passwords são protegidas com `bcryptjs` (hashing) e os acessos são validados por middlewares no servidor para perfis Cliente, Apicultor e Admin.
+- **Assets**: Imagens de produtos e perfis são geridas via `multer` no backend e armazenadas em `frontend/public/uploads/`.
+- **UI Consistency**: Implementação de um sistema de design centralizado em `modern.css`, garantindo que componentes premium (tabelas, badges, botões e modais) sejam idênticos em toda a plataforma.
 
 ---
 
@@ -37,6 +38,8 @@ O projeto segue uma estrutura de **Single Page Application (SPA) logic** no fron
 3. **`encomenda`**: Registo de vendas com cálculo automático de faturação.
 4. **`workshop`**: Eventos dinâmicos organizados pelos apicultores.
 5. **`avaliacao`**: Sistema de feedback com notas de 1 a 5 estrelas.
+6. **`upgrade_requests`**: Registo e controlo de pedidos de privilégios administrativos.
+7. **`origem`**: Metadados geográficos para rastreabilidade do mel.
 
 ---
 
@@ -54,8 +57,16 @@ Para gerir o projeto de forma profissional, utilizamos exclusivamente o **MySQL 
 ---
 
 ## 6. Credenciais de Teste (Admin)
-- **Email**: `admin@hexomel.pt` (ou `adminteste@gmail.com`)
+- **Email**: `admin@hexomel.pt`
 - **Password**: `admin123`
+*(Utilizador de teste com acesso total ao Dashboard corporativo)*
+
+---
+## 7. Filosofia de Design e UX
+O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
+- **Tabelas Modernas**: Com sistema de iniciais em avatares e ações flutuantes.
+- **Micro-interações**: Feedback visual imediato em formulários e dashboards.
+- **UX Unificada**: O portal do Apicultor utiliza a mesma linguagem visual de alta qualidade do Painel de Administração.
 
 ---
 *Este relatório foi gerido e compactado para servir de base à documentação final da PAP.*

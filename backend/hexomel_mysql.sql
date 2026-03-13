@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS `cliente` (
   `Email` varchar(120) NOT NULL,
   `Senha` varchar(255) NOT NULL,
   `Picture` TEXT,
+  `Morada` TEXT DEFAULT NULL,
+  `Telefone` varchar(30) DEFAULT NULL,
   `UserType` varchar(20) DEFAULT 'client',
   `Bio` TEXT DEFAULT NULL,
   `Data_Resgistro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -173,4 +175,20 @@ CREATE TABLE IF NOT EXISTS `workshop` (
   PRIMARY KEY (`ID_Workshop`),
   KEY `ID_Apicultor` (`ID_Apicultor`),
   CONSTRAINT `fk_workshop_apicultor` FOREIGN KEY (`ID_Apicultor`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: upgrade_requests
+CREATE TABLE IF NOT EXISTS `upgrade_requests` (
+  `ID_Request` int(10) NOT NULL AUTO_INCREMENT,
+  `ID_Cliente` int(10) NOT NULL,
+  `Descricao` TEXT NOT NULL,
+  `Documento` varchar(255) NOT NULL,
+  `Status` varchar(20) DEFAULT 'Pendente', -- Pendente, Aprovado, Rejeitado
+  `Data_Pedido` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `Data_Processamento` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`ID_Request`),
+  KEY `ID_Cliente` (`ID_Cliente`),
+  CONSTRAINT `fk_upgrade_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

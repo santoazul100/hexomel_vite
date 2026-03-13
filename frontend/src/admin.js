@@ -140,6 +140,7 @@ class AdminUI {
     if (sectionId === "origins") this.loadOrigins();
     if (sectionId === "customers") this.loadUsers();
     if (sectionId === "orders") this.loadOrders();
+    if (sectionId === "upgrade-requests") this.loadUpgradeRequests();
   }
 
   async loadDashboardStats() {
@@ -494,27 +495,36 @@ class AdminUI {
     }
 
     container.innerHTML = this.users
-      .map(
-        (u) => `
+      .map((u) => {
+        const initials = u.Nome ? u.Nome.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) : "??";
+        return `
             <tr>
-                <td><div class="fw-bold">${u.Nome}</div></td>
-                <td>${u.Email}</td>
                 <td>
-                    <select class="form-select form-select-sm d-inline-block w-auto bg-light border p-1" onchange="adminUI.updateUserRole('${u.ID_Cliente}', this.value)" ${u.ID_Cliente === this.userData.id ? "disabled" : ""}>
-                        <option value="client" ${u.UserType === "client" ? "selected" : ""}>client</option>
-                        <option value="apicultor" ${u.UserType === "apicultor" ? "selected" : ""}>apicultor</option>
-                        <option value="admin" ${u.UserType === "admin" ? "selected" : ""}>admin</option>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="user-avatar-bubble">${initials}</div>
+                        <div>
+                            <div class="fw-bold text-dark">${u.Nome}</div>
+                            <div class="small text-muted">ID: #${u.ID_Cliente}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><div class="small text-dark">${u.Email}</div></td>
+                <td>
+                    <select class="form-select form-select-sm d-inline-block w-auto bg-light border p-1 rounded-3" onchange="adminUI.updateUserRole('${u.ID_Cliente}', this.value)">
+                        <option value="client" ${u.UserType === "client" ? "selected" : ""}>Cliente</option>
+                        <option value="apicultor" ${u.UserType === "apicultor" ? "selected" : ""}>Apicultor</option>
+                        <option value="admin" ${u.UserType === "admin" ? "selected" : ""}>Admin</option>
                     </select>
                 </td>
-                <td>${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
+                <td class="small text-muted">${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-light text-danger" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""}>
-                        <i class="fas fa-user-minus"></i>
+                    <button class="btn-action-premium delete" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""} title="Eliminar utilizador">
+                        <i class="fas fa-user-minus" style="font-size: 0.75rem;"></i>
                     </button>
                 </td>
             </tr>
-        `,
-      )
+        `;
+      })
       .join("");
   }
 
@@ -541,18 +551,23 @@ class AdminUI {
     }
 
     container.innerHTML = this.orders
-      .map(
-        (o) => `
+      .map((o) => {
+        const statusClass = o.Status.toLowerCase();
+        let premiumBadgeClass = "pendente"; // default
+        if (statusClass === "pago") premiumBadgeClass = "aprovado";
+        if (statusClass === "cancelado") premiumBadgeClass = "rejeitado";
+
+        return `
             <tr>
-                <td class="fw-bold">#${o.ID_Encomenda}</td>
-                <td>${o.ClienteNome}</td>
-                <td>${new Date(o.Data_Encomenda).toLocaleDateString()}</td>
+                <td class="fw-bold text-muted small">#${o.ID_Encomenda}</td>
+                <td><div class="fw-bold text-dark">${o.ClienteNome}</div></td>
+                <td class="small text-muted">${new Date(o.Data_Encomenda).toLocaleDateString()}</td>
                 <td class="fw-bold">${parseFloat(o.Total).toFixed(2)}€</td>
                 <td>
-                    <span class="badge-status badge-${o.Status.toLowerCase()}">${o.Status}</span>
+                    <span class="badge-premium ${premiumBadgeClass}">${o.Status}</span>
                 </td>
                 <td class="text-end">
-                    <select class="form-select form-select-sm d-inline-block w-auto" onchange="adminUI.updateOrderStatus('${o.ID_Encomenda}', this.value)">
+                    <select class="form-select form-select-sm d-inline-block w-auto rounded-3" onchange="adminUI.updateOrderStatus('${o.ID_Encomenda}', this.value)">
                         <option value="Pendente" ${o.Status === "Pendente" ? "selected" : ""}>Pendente</option>
                         <option value="Pago" ${o.Status === "Pago" ? "selected" : ""}>Pago</option>
                         <option value="Enviado" ${o.Status === "Enviado" ? "selected" : ""}>Enviado</option>
@@ -561,8 +576,8 @@ class AdminUI {
                     </select>
                 </td>
             </tr>
-        `,
-      )
+        `;
+      })
       .join("");
   }
 
@@ -647,7 +662,19 @@ class AdminUI {
         timer: 1000,
         showConfirmButton: false,
       });
-      await this.loadUsers();
+
+      // If current user downgraded themselves, logout
+      if (
+        String(id) === String(this.userData.id) &&
+        userType.toLowerCase() !== "admin"
+      ) {
+        setTimeout(async () => {
+          const { logout } = await import("./auth.js");
+          logout();
+        }, 1200);
+      } else {
+        await this.loadUsers();
+      }
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
       await this.loadUsers(); // revert UI change
@@ -1221,6 +1248,119 @@ class AdminUI {
         if (!response.ok) throw new Error("Erro ao eliminar origem");
         Swal.fire("Eliminada", "", "success");
         await this.loadOrigins();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  async loadUpgradeRequests() {
+    try {
+      const response = await fetch(`${API_URL}/admin/upgrade-requests`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar pedidos de Apicultor");
+      this.upgradeRequests = await response.json();
+      this.renderUpgradeRequests();
+    } catch (error) {
+      console.error(error);
+      Swal.fire(
+        "Erro",
+        "Não foi possível carregar os pedidos de Apicultor.",
+        "error",
+      );
+    }
+  }
+
+  renderUpgradeRequests() {
+    const container = document.getElementById("upgrade-list-body");
+    if (!container) return;
+
+    if (!this.upgradeRequests || this.upgradeRequests.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Sem pedidos de Apicultor no momento.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = this.upgradeRequests
+      .map((r) => {
+        const initials = r.ClienteNome ? r.ClienteNome.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) : "??";
+        const statusClass = r.Status.toLowerCase();
+        
+        return `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="user-avatar-bubble">${initials}</div>
+                        <div>
+                            <div class="fw-bold text-dark">${r.ClienteNome}</div>
+                            <div class="small text-muted">${r.ClienteEmail}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><div class="small text-muted text-wrap" style="max-width:300px; line-height: 1.4;">${r.Descricao}</div></td>
+                <td>
+                    <a href="${r.Documento}" target="_blank" class="doc-link-premium">
+                        <i class="fas fa-file-pdf"></i> Ver Doc
+                    </a>
+                </td>
+                <td class="small text-muted">${new Date(r.Data_Pedido).toLocaleDateString()}</td>
+                <td>
+                    <span class="badge-premium ${statusClass}">
+                        ${r.Status}
+                    </span>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                    ${
+                      r.Status === "Pendente"
+                        ? `
+                        <button class="btn-action-premium success" onclick="adminUI.processUpgradeRequest('${r.ID_Request}', 'Aprovado')" title="Aprovar">
+                            <i class="fas fa-check" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <button class="btn-action-premium delete" onclick="adminUI.processUpgradeRequest('${r.ID_Request}', 'Rejeitado')" title="Rejeitar">
+                            <i class="fas fa-times" style="font-size: 0.75rem;"></i>
+                        </button>
+                    `
+                        : `<span class="small text-muted fw-500">${new Date(r.Data_Processamento).toLocaleDateString()}</span>`
+                    }
+                    </div>
+                </td>
+            </tr>
+        `;
+      })
+      .join("");
+  }
+
+  async processUpgradeRequest(id, status) {
+    const action = status === "Aprovado" ? "aprovar" : "rejeitar";
+    const result = await Swal.fire({
+      title: `Confirmar ${action}?`,
+      text: `Tem a certeza que deseja ${action} este pedido de Apicultor?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: status === "Aprovado" ? "#198754" : "#dc3545",
+      confirmButtonText: "Sim, confirmar",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/admin/upgrade-requests/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ status }),
+        });
+
+        if (!response.ok) throw new Error("Erro ao processar pedido");
+
+        Swal.fire(
+          "Sucesso",
+          `Pedido ${status.toLowerCase()} com sucesso!`,
+          "success",
+        );
+        await this.loadUpgradeRequests();
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }

@@ -51,6 +51,25 @@ initDB()
         `,
         )
         .catch(() => console.log("Workshop table creation handled"));
+
+      await db
+        .run(
+          `
+            CREATE TABLE IF NOT EXISTS upgrade_requests (
+                ID_Request int(10) NOT NULL AUTO_INCREMENT,
+                ID_Cliente int(10) NOT NULL,
+                Descricao TEXT NOT NULL,
+                Documento varchar(255) NOT NULL,
+                Status varchar(20) DEFAULT 'Pendente',
+                Data_Pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                Data_Processamento TIMESTAMP NULL DEFAULT NULL,
+                PRIMARY KEY (ID_Request),
+                KEY ID_Cliente (ID_Cliente),
+                CONSTRAINT fk_upgrade_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        )
+        .catch(() => console.log("Upgrade requests table creation handled"));
       console.log("Auto-migrations completed.");
     } catch (err) {
       console.log("Migration warning:", err);
@@ -714,11 +733,22 @@ app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
   const { userType } = req.body;
 
   try {
-    // Only allow toggling between 'client' and 'apicultor'
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({ error: "Upgrade to Apicultor requires a verification request." });
+    }
+
     if (userType !== "client" && userType !== "apicultor") {
       return res
         .status(400)
-        .json({ error: "Can only change between client and apicultor." });
+        .json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
     }
 
     // Do not allow admins to change their own role here
@@ -816,7 +846,7 @@ app.get("/api/cart", authenticateToken, async (req, res) => {
     if (!cart) return res.json([]);
 
     const items = await db.all(
-      `SELECT ic.*, p.Nome, p.Preco, p.Stock 
+      `SELECT ic.*, p.Nome, p.Preco, p.Stock, p.Imagem
        FROM item_carrinho ic 
        JOIN produto p ON ic.ID_Produto = p.ID_Produto 
        WHERE ic.ID_Carrinho = ?`,
@@ -1425,6 +1455,112 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
   } catch (error) {
     console.error("Analytics error:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// UPGRADE REQUESTS
+// Submit upgrade request
+app.post(
+  "/api/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const { descricao } = req.body;
+      if (!req.file) {
+        return res.status(400).json({ error: "Document is required" });
+      }
+      if (!descricao) {
+        return res.status(400).json({ error: "Description is required" });
+      }
+
+      const relativePath = `/uploads/${req.file.filename}`;
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento) VALUES (?, ?, ?)",
+        [req.user.id, descricao, relativePath],
+      );
+
+      res.status(201).json({ message: "Upgrade request submitted successfully" });
+    } catch (error) {
+      console.error("Upgrade request submission error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Get all upgrade requests (Admin view)
+app.get(
+  "/api/admin/upgrade-requests",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const rows = await db.all(`
+      SELECT ur.*, c.Nome as ClienteNome, c.Email as ClienteEmail
+      FROM upgrade_requests ur
+      JOIN cliente c ON ur.ID_Cliente = c.ID_Cliente
+      ORDER BY ur.Data_Pedido DESC
+    `);
+      res.json(rows);
+    } catch (error) {
+      console.error("Admin upgrade requests fetch error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Process upgrade request (Approve/Reject)
+app.put(
+  "/api/admin/upgrade-requests/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body; // 'Aprovado' or 'Rejeitado'
+
+    if (status !== "Aprovado" && status !== "Rejeitado") {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    try {
+      const request = await db.get(
+        "SELECT * FROM upgrade_requests WHERE ID_Request = ?",
+        [id],
+      );
+      if (!request) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+
+      await db.run(
+        "UPDATE upgrade_requests SET Status = ?, Data_Processamento = CURRENT_TIMESTAMP WHERE ID_Request = ?",
+        [status, id],
+      );
+
+      if (status === "Aprovado") {
+        await db.run("UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?", [
+          request.ID_Cliente,
+        ]);
+      }
+
+      res.json({ message: `Request ${status.toLowerCase()} successfully` });
+    } catch (error) {
+      console.error("Process upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Check if current user has a pending request
+app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) => {
+  try {
+    const request = await db.get(
+      "SELECT Status FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+      [req.user.id],
+    );
+    res.json(request || { Status: "Nenhum" });
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
   }
 });
 

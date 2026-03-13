@@ -491,20 +491,22 @@ main {
 /* --- Premium Filter Sidebar --- */
 .premium-filter-container {
   background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 30px; /* More rounded */
+  padding: 2.5rem 2.5rem 1.5rem 2.5rem; /* Reduced bottom padding */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.03); /* Softer shadow */
+  border: 1px solid rgba(0, 0, 0, 0.02);
   position: sticky;
   top: 120px;
   max-height: calc(100vh - 160px);
   overflow-y: auto;
   transition: all 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 
-/* Custom discreet scrollbar for filters - Hidden by default */
+/* Custom discreet scrollbar for filters */
 .premium-filter-container::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 
 .premium-filter-container::-webkit-scrollbar-track {
@@ -512,29 +514,23 @@ main {
 }
 
 .premium-filter-container::-webkit-scrollbar-thumb {
-  background: transparent;
-  /* Invisible */
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 10px;
   transition: background 0.3s ease;
 }
 
 .premium-filter-container:hover::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.1);
-  /* Subtle on hover */
-}
-
-.premium-filter-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
 }
 
 .filter-title-premium {
   font-family: var(--font-heading, "Playfair Display", serif);
-  font-size: 1.5rem;
+  font-size: 2.2rem; /* Matches image better */
   font-weight: 700;
   color: var(--primary-green);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   position: relative;
-  padding-bottom: 0.8rem;
+  padding-bottom: 1rem;
 }
 
 .filter-title-premium::after {
@@ -542,7 +538,7 @@ main {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 40px;
+  width: 50px;
   height: 3px;
   background: var(--secondary-gold);
   border-radius: 10px;
@@ -555,8 +551,8 @@ main {
 /* Accordion Styles */
 .filter-accordion {
   margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .filter-accordion:last-child {
@@ -1689,10 +1685,126 @@ aside {
   background: #ef4444;
 }
 
-/* Image Upload Area Hover Effect */
+/* --- Premium Form Components --- */
+.form-control-v2 {
+  border-radius: 12px;
+  border: 2px solid #f1f5f9;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
+}
+
+.form-control-v2:focus {
+  border-color: var(--primary-gold);
+  box-shadow: none;
+  background-color: white;
+}
+
+.modal-premium {
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+.modal-premium .modal-header {
+  border-bottom: none;
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+
+.modal-premium .modal-body {
+  padding: 1.5rem;
+}
+
+.modal-premium .modal-footer {
+  border-top: none;
+  padding: 0.5rem 1.5rem 1.5rem;
+}
+
+/* Image Upload Area Premium */
+.image-upload-container {
+  height: 100%;
+}
+
+.upload-area {
+  cursor: pointer;
+  border: 2px dashed #cbd5e1 !important;
+  transition: all 0.2s;
+  background-color: #f8fafc;
+  overflow: hidden;
+  position: relative;
+}
+
 .upload-area:hover {
   border-color: var(--primary-gold) !important;
   background-color: #fff8e6 !important;
+}
+
+.upload-overlay {
+  transition: opacity 0.2s;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  opacity: 0;
+}
+
+.upload-area:hover .upload-overlay {
+  opacity: 1;
+}
+
+.hover-visible {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.upload-area:hover .hover-visible {
+  opacity: 1;
+}
+
+/* Tag Styles */
+.tag-input-wrapper {
+  position: relative;
+}
+
+.tag-pill {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+.tag-pill .remove-tag {
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.tag-pill .remove-tag:hover {
+  color: #ef4444;
+}
+
+.tag-suggestion {
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  transition: all 0.2s;
+  background: white;
+}
+
+.tag-suggestion:hover {
+  background-color: #fff8e6;
+  border-color: var(--primary-gold);
+  color: var(--primary-gold);
 }
 
 /* --- Admin Dashboard Specifics --- */

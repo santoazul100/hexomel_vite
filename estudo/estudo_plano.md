@@ -1,10 +1,10 @@
 # Plano de Estudo e Documentação
 
 ## 1. Tecnologias Utilizadas
-- **Frontend**: Vite + React
+- **Frontend**: Vite + Vanilla JavaScript (ES6+), Vanilla CSS (Design System centralizado em `modern.css`)
 - **Backend**: Node.js + Express
-- **Base de Dados**: MySQL (Gerida através do **MySQL Workbench**)
-- **Segurança**: JWT, bcryptjs, Google Auth
+- **Base de Dados**: MySQL (Driver `mysql2`) gerida via **MySQL Workbench**
+- **Segurança**: JWT, bcryptjs, Google Auth (OAuth 2.0)
 
 ## 2. Gestão de Dados
 O sistema utiliza uma base de dados MySQL para armazenar toda a informação do site.
@@ -24,6 +24,7 @@ Tabelas principais:
 ## 4. Localização dos Dados
 - **Dados Estruturados**: MySQL (`hexomel`)
 - **Imagens/Ficheiros**: `frontend/public/uploads/` (o caminho é guardado no MySQL)
+- **Estilos Premium**: `frontend/src/styles/modern.css` (centraliza a identidade visual)
 
 ## 5. Notas Importantes
 - O código do backend utiliza um adaptador no ficheiro `db.js` para facilitar a manipulação do MySQL, mantendo uma sintaxe simples e eficiente.

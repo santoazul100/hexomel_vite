@@ -118,7 +118,7 @@
               <h3 class="filter-title-premium">Filtros</h3>
 
               <!-- Categories -->
-              <details class="filter-accordion" open>
+              <details class="filter-accordion">
                 <summary class="filter-summary">
                   <h5 class="filter-subheading mb-0">Categorias</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
@@ -131,7 +131,7 @@
               </details>
 
               <!-- Origin -->
-              <details class="filter-accordion" open>
+              <details class="filter-accordion">
                 <summary class="filter-summary">
                   <h5 class="filter-subheading mb-0">Origem</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
@@ -144,7 +144,7 @@
               </details>
 
               <!-- Vendedor -->
-              <details class="filter-accordion" open>
+              <details class="filter-accordion">
                 <summary class="filter-summary">
                   <h5 class="filter-subheading mb-0">Vendedor</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
@@ -178,7 +178,7 @@
               </details>
 
               <!-- Price -->
-              <details class="filter-accordion" open>
+              <details class="filter-accordion">
                 <summary class="filter-summary">
                   <h5 class="filter-subheading mb-0">Preço Máximo</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
@@ -189,9 +189,9 @@
                     class="range-slider-premium"
                     id="priceRange"
                     min="0"
-                    max="50"
+                    max="100"
                     step="1"
-                    value="50"
+                    value="100"
                     oninput="
                       document.getElementById('priceVal').textContent =
                         this.value + '€'
@@ -201,7 +201,7 @@
                     class="d-flex justify-content-between mt-2 font-monospace smaller text-muted"
                   >
                     <span>0€</span>
-                    <span id="priceVal" class="fw-bold text-dark">50€</span>
+                    <span id="priceVal" class="fw-bold text-dark">100€</span>
                   </div>
                 </div>
               </details>

@@ -2,6 +2,7 @@ import { getLoggedUser, updateNav, logout } from "./auth.js";
 import Swal from "sweetalert2";
 
 let currentUserData = null;
+let selectedRole = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   fetchProfileData();
@@ -43,10 +44,21 @@ document.addEventListener("DOMContentLoaded", () => {
     passwordForm.addEventListener("submit", handlePasswordUpdate);
   }
 
-  // Initialize Role Change Form
-  const roleForm = document.getElementById("changeRoleForm");
-  if (roleForm) {
-    roleForm.addEventListener("submit", handleRoleUpdate);
+  // Initialize Role Change Cards
+  const roleCards = document.querySelectorAll(".role-choice-card");
+  roleCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const newRole = card.getAttribute("data-role");
+      if (currentUserData && currentUserData.role === "admin") return; // Admin can't change here
+
+      selectedRole = newRole;
+      updateRoleCardsUI();
+    });
+  });
+
+  const saveRoleBtn = document.getElementById("save-role-btn-new");
+  if (saveRoleBtn) {
+    saveRoleBtn.addEventListener("click", handleRoleUpdate);
   }
 
   // Initialize Account Deletion
@@ -71,6 +83,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const apiProductForm = document.getElementById("apicultor-add-product-form");
   if (apiProductForm) {
     apiProductForm.addEventListener("submit", handleApicultorProductAdd);
+    initBeekeeperTagInput();
+    loadBeekeeperOrigins();
   }
 
   // Initialize Apicultor Workshop Add Form
@@ -80,7 +94,84 @@ document.addEventListener("DOMContentLoaded", () => {
   if (apiWorkshopForm) {
     apiWorkshopForm.addEventListener("submit", handleApicultorWorkshopAdd);
   }
+
+  // Initialize Upgrade Request Form
+  const upgradeForm = document.getElementById("upgrade-request-form");
+  if (upgradeForm) {
+    upgradeForm.addEventListener("submit", handleUpgradeRequest);
+  }
+
+  // Initialize Beekeeper Downgrade
+  const revertBtn = document.getElementById("btn-revert-client");
+  if (revertBtn) {
+    revertBtn.addEventListener("click", handleBeekeeperDowngrade);
+  }
+
+  checkUpgradeStatus();
 });
+
+async function handleBeekeeperDowngrade() {
+  const result = await Swal.fire({
+    title: "Reverter para Cliente?",
+    text: "Deixarás de ter acesso à gestão de produtos e workshops. Poderás voltar a ser Apicultor mais tarde nas definições de segurança.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#f4b400",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Sim, reverter",
+    cancelButtonText: "Cancelar",
+  });
+
+  if (result.isConfirmed) {
+    // We already have a function that handles role updates
+    // We can simulate a form submit or call it directly if we refactor it
+    // For simplicity, let's just perform the fetch here or reuse handleRoleUpdate
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/user/profile/role", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userType: "client" }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+        localUser.role = "client";
+        localStorage.setItem("user", JSON.stringify(localUser));
+
+        updateNav(localUser);
+
+        // UI Refresh
+        const apicultorTab = document.getElementById("nav-tab-apicultor");
+        if (apicultorTab) apicultorTab.classList.add("d-none");
+
+        // Force switch to orders tab
+        document.querySelector('.btn-profile-tab[data-tab="orders"]').click();
+
+        // Update the role select in security tab if it exists
+        const roleSelect = document.getElementById("user-role-select");
+        if (roleSelect) roleSelect.value = "client";
+
+        Swal.fire({
+          icon: "success",
+          title: "Conta Revertida",
+          text: "A tua conta é agora do tipo Cliente.",
+          confirmButtonColor: "#f4b400",
+        });
+      } else {
+        throw new Error(data.error || "Falha ao reverter conta");
+      }
+    } catch (error) {
+      console.error("Downgrade error:", error);
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+}
 
 function initializeTabs() {
   const tabs = document.querySelectorAll(".btn-profile-tab[data-tab]");
@@ -288,19 +379,14 @@ function renderProfile(data) {
     bioInput.value = data.bio || "";
   }
 
-  // Render role selection
-  const roleSelect = document.getElementById("user-role-select");
-  if (roleSelect && data.role) {
-    roleSelect.value = data.role;
-    // Admins shouldn't manage their role here
-    if (data.role === "admin") {
-      roleSelect.disabled = true;
-      document.getElementById("save-role-btn").disabled = true;
-      roleSelect.innerHTML = `<option value="admin">Administrador (Gestão restrita)</option>`;
-    }
+    // Render role selection
+    selectedRole = data.role;
+    updateRoleCardsUI();
 
     // Show Apicultor tab if role is apicultor
     const apicultorTab = document.getElementById("nav-tab-apicultor");
+    const upgradeTabBtn = document.getElementById("nav-tab-upgrade");
+
     if (apicultorTab) {
       if (data.role === "apicultor") {
         apicultorTab.classList.remove("d-none");
@@ -308,7 +394,15 @@ function renderProfile(data) {
         apicultorTab.classList.add("d-none");
       }
     }
-  }
+
+    if (upgradeTabBtn) {
+      // Only show upgrade tab for regular clients
+      if (data.role === "client") {
+        upgradeTabBtn.classList.remove("d-none");
+      } else {
+        upgradeTabBtn.classList.add("d-none");
+      }
+    }
 
   const addressEl = document.getElementById("profile-address");
   if (addressEl) {
@@ -517,32 +611,38 @@ async function handlePasswordUpdate(e) {
 }
 
 async function handleRoleUpdate(e) {
-  e.preventDefault();
+  if (!selectedRole || !currentUserData) return;
+  if (selectedRole === currentUserData.role) return;
+
+  const btn = document.getElementById("save-role-btn-new");
   const token = localStorage.getItem("token");
-  const newRole = document.getElementById("user-role-select").value;
+  const originalText = btn.innerText;
 
   try {
+    btn.disabled = true;
+    btn.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-2"></span>A processar...';
+
     const res = await fetch("/api/user/profile/role", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ userType: newRole }),
+      body: JSON.stringify({ userType: selectedRole }),
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      // Update local storage token and user Object so that Auth context updates
       localStorage.setItem("token", data.token);
-
       const localUser = JSON.parse(localStorage.getItem("user") || "{}");
       localUser.role = data.newRole;
       localStorage.setItem("user", JSON.stringify(localUser));
 
-      // Update UI components (like Nav logic if Apicultor)
       updateNav(localUser);
+      currentUserData.role = data.newRole;
+      updateRoleCardsUI();
 
       // Toggle Apicultor tab instantly
       const apicultorTab = document.getElementById("nav-tab-apicultor");
@@ -551,11 +651,9 @@ async function handleRoleUpdate(e) {
           apicultorTab.classList.remove("d-none");
         } else {
           apicultorTab.classList.add("d-none");
-
-          // If they were on the Apicultor tab, force them back to dashboard
           if (apicultorTab.classList.contains("active")) {
             document
-              .querySelector('.btn-profile-tab[data-tab="dashboard"]')
+              .querySelector('.btn-profile-tab[data-tab="orders"]')
               .click();
           }
         }
@@ -563,20 +661,80 @@ async function handleRoleUpdate(e) {
 
       Swal.fire({
         icon: "success",
-        title: "Tipo de Conta Atualizado!",
-        text: `A tua conta funciona agora como ${newRole === "apicultor" ? "Apicultor" : "Cliente"}.`,
+        title: "Perfil Atualizado!",
+        text: `A tua conta funciona agora como ${selectedRole === "apicultor" ? "Apicultor" : "Cliente"}.`,
         confirmButtonColor: "#f4b400",
       });
     } else {
-      Swal.fire(
-        "Erro",
-        data.error || "Falha ao atualizar tipo de conta",
-        "error",
-      );
+      throw new Error(data.error || "Falha ao atualizar tipo de conta");
     }
   } catch (error) {
     console.error("Role update error:", error);
-    Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
+    Swal.fire("Erro", error.message, "error");
+    selectedRole = currentUserData.role;
+    updateRoleCardsUI();
+  } finally {
+    btn.disabled = false;
+    btn.innerText = originalText;
+  }
+}
+
+function updateRoleCardsUI() {
+  const roleCards = document.querySelectorAll(".role-choice-card");
+  const saveBtn = document.getElementById("save-role-btn-new");
+
+  roleCards.forEach((card) => {
+    const role = card.getAttribute("data-role");
+    const checkIcon = card.querySelector(".check-icon");
+
+    if (role === selectedRole) {
+      card.classList.add("active");
+      card.style.borderColor = "var(--logo-yellow, #f4b400)";
+      card.style.background = "rgba(244, 180, 0, 0.05)";
+      if (checkIcon) checkIcon.classList.remove("d-none");
+    } else {
+      card.classList.remove("active");
+      card.style.borderColor = "#dee2e6";
+      card.style.background = "#fff";
+      if (checkIcon) checkIcon.classList.add("d-none");
+    }
+
+    // Disable if admin
+    if (currentUserData && currentUserData.role === "admin") {
+      card.style.opacity = "0.7";
+      card.style.cursor = "not-allowed";
+      if (role === "admin") {
+        card.classList.add("active");
+      }
+    }
+
+    // Disable switching TO apicultor if currently a client (requires upgrade request)
+    if (currentUserData && currentUserData.role === "client" && role === "apicultor") {
+      card.style.opacity = "0.6";
+      card.style.cursor = "help";
+      card.title = "Para te tornares Apicultor, deves enviar um pedido de upgrade.";
+      // Add a small label if not exists
+      if (!card.querySelector(".upgrade-needed-label")) {
+        const span = document.createElement("span");
+        span.className = "upgrade-needed-label d-block text-warning small mt-1";
+        span.style.fontSize = "0.7rem";
+        span.innerText = "Requer Pedido";
+        card.appendChild(span);
+      }
+    }
+  });
+
+  if (saveBtn && currentUserData) {
+    // Only allow saving if role changed AND it's not a restricted target
+    const isClientTryingApicultor = currentUserData.role === "client" && selectedRole === "apicultor";
+    
+    if (selectedRole !== currentUserData.role && selectedRole !== "admin" && !isClientTryingApicultor) {
+      saveBtn.disabled = false;
+      saveBtn.classList.remove("opacity-50");
+    } else {
+      saveBtn.disabled = true;
+      saveBtn.classList.add("opacity-50");
+    }
   }
 }
 
@@ -790,6 +948,120 @@ window.viewOrderDetails = async function (orderId) {
   }
 };
 
+// Beekeeper Product Image Preview & Trigger
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#api-upload-trigger")) {
+    document.getElementById("api-produto-imagem").click();
+  }
+});
+
+document.addEventListener("change", (e) => {
+  if (e.target.id === "api-produto-imagem") {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const preview = document.getElementById("api-image-preview");
+        const placeholder = document.getElementById("api-image-placeholder");
+        preview.src = event.target.result;
+        preview.style.display = "block";
+        placeholder.style.display = "none";
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+});
+
+// --- BEEKEEPER TAG MANAGEMENT ---
+let beekeeperTags = new Set();
+function initBeekeeperTagInput() {
+  const input = document.getElementById("api-tag-input-field");
+  const container = document.getElementById("api-tag-input-container");
+  const suggestionsContainer = document.getElementById("api-available-tags-suggestions");
+
+  if (!input || !container) return;
+
+  container.addEventListener("click", () => input.focus());
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addBeekeeperTag(input.value);
+      input.value = "";
+    }
+    if (e.key === "Backspace" && input.value === "" && beekeeperTags.size > 0) {
+      const lastTag = Array.from(beekeeperTags).pop();
+      removeBeekeeperTag(lastTag);
+    }
+  });
+
+  if (suggestionsContainer) {
+    suggestionsContainer.addEventListener("click", (e) => {
+      if (e.target.classList.contains("tag-suggestion")) {
+        const tag = e.target.dataset.tag;
+        if (tag) addBeekeeperTag(tag);
+      }
+    });
+  }
+  renderBeekeeperSuggestions();
+}
+
+function addBeekeeperTag(tagName) {
+  const cleanTag = tagName.trim();
+  if (cleanTag && !beekeeperTags.has(cleanTag)) {
+    beekeeperTags.add(cleanTag);
+    renderBeekeeperTagPills();
+    renderBeekeeperSuggestions();
+  }
+}
+
+function removeBeekeeperTag(tagName) {
+  beekeeperTags.delete(tagName);
+  renderBeekeeperTagPills();
+  renderBeekeeperSuggestions();
+}
+
+function renderBeekeeperTagPills() {
+  const container = document.getElementById("api-selected-tags-container");
+  if (!container) return;
+  container.innerHTML = "";
+  Array.from(beekeeperTags).forEach((tag) => {
+    const span = document.createElement("span");
+    span.className = "tag-pill";
+    span.innerHTML = `${tag} <span class="remove-tag">×</span>`;
+    span.querySelector(".remove-tag").onclick = (e) => {
+      e.stopPropagation();
+      removeBeekeeperTag(tag);
+    };
+    container.appendChild(span);
+  });
+}
+
+function renderBeekeeperSuggestions() {
+  const container = document.getElementById("api-available-tags-suggestions");
+  if (!container) return;
+  const defaults = ["Novo", "Destaque", "Artesanal", "Puro", "Premium", "Pronto a Enviar"];
+  const suggestions = defaults.filter((t) => !beekeeperTags.has(t));
+  container.innerHTML = suggestions
+    .map((tag) => `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`)
+    .join("");
+}
+
+// --- BEEKEEPER ORIGINS ---
+async function loadBeekeeperOrigins() {
+  try {
+    const res = await fetch("/api/origins");
+    if (res.ok) {
+      const origins = await res.json();
+      const select = document.getElementById("api-produto-origem");
+      if (select) {
+        select.innerHTML = '<option value="">Selecione a origem...</option>' + 
+          origins.map(o => `<option value="${o.ID_Origem}">${o.Nome}</option>`).join("");
+      }
+    }
+  } catch (e) { console.error("Load origins error", e); }
+}
+
 async function handleApicultorProductAdd(e) {
   e.preventDefault();
 
@@ -831,9 +1103,11 @@ async function handleApicultorProductAdd(e) {
       nome: document.getElementById("api-produto-nome").value,
       preco: parseFloat(document.getElementById("api-produto-preco").value),
       idCategoria: parseInt(document.getElementById("api-produto-cat").value),
+      idOrigem: parseInt(document.getElementById("api-produto-origem").value) || null,
       stock: parseInt(document.getElementById("api-produto-stock").value),
       descricao: document.getElementById("api-produto-desc").value,
       imagem: imagePath,
+      tags: Array.from(beekeeperTags).join(", "),
     };
 
     const res = await fetch("/api/apicultor/products", {
@@ -860,6 +1134,13 @@ async function handleApicultorProductAdd(e) {
 
     // Close Modal and Reset Form
     e.target.reset();
+    document.getElementById("api-image-preview").src = "";
+    document.getElementById("api-image-preview").style.display = "none";
+    document.getElementById("api-image-placeholder").style.display = "block";
+    beekeeperTags.clear();
+    renderBeekeeperTagPills();
+    renderBeekeeperSuggestions();
+
     const modalEl = document.getElementById("apicultorProductModal");
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) {
@@ -1011,5 +1292,112 @@ async function handleApicultorWorkshopAdd(e) {
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
+  }
+}
+
+// Upgrade Request Handling
+async function handleUpgradeRequest(e) {
+  e.preventDefault();
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const btn = document.getElementById("btn-submit-upgrade");
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A enviar...';
+  btn.disabled = true;
+
+  try {
+    const descricao = document.getElementById("upgrade-desc").value;
+    const docFile = document.getElementById("upgrade-doc").files[0];
+
+    if (!docFile)
+      throw new Error("Por favor, seleciona um documento de verificação.");
+
+    const formData = new FormData();
+    formData.append("descricao", descricao);
+    formData.append("document", docFile);
+
+    const res = await fetch("/api/upgrade-request", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (res.ok) {
+      Swal.fire({
+        icon: "success",
+        title: "Pedido Enviado",
+        text: "O teu pedido de Apicultor foi enviado e será analisado pela administração.",
+        confirmButtonColor: "#f4b400",
+      });
+      e.target.reset();
+      checkUpgradeStatus();
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Erro ao enviar pedido.");
+    }
+  } catch (error) {
+    console.error("Upgrade request error:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Erro",
+      text: error.message,
+      confirmButtonColor: "#f4b400",
+    });
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+async function checkUpgradeStatus() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  try {
+    const res = await fetch("/api/user/upgrade-request-status", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const banner = document.getElementById("upgrade-status-banner");
+      const form = document.getElementById("upgrade-request-form");
+
+      if (data.Status && data.Status !== "Nenhum") {
+        banner.classList.remove("d-none");
+        let statusClass = "bg-warning-subtle text-warning-emphasis";
+        let statusIcon = "fa-clock";
+        let statusText = "O teu pedido para ser Apicultor está pendente de análise.";
+
+        if (data.Status === "Aprovado") {
+          statusClass = "bg-success-subtle text-success-emphasis";
+          statusIcon = "fa-check-circle";
+          statusText =
+            "O teu pedido de Apicultor foi aprovado! Re-inicia a sessão para ativar as tuas ferramentas de venda.";
+          form.classList.add("d-none");
+        } else if (data.Status === "Rejeitado") {
+          statusClass = "bg-danger-subtle text-danger-emphasis";
+          statusIcon = "fa-times-circle";
+          statusText =
+            "O teu pedido de Apicultor foi rejeitado. Podes tentar novamente mais tarde.";
+        } else {
+          form.classList.add("d-none");
+        }
+
+        banner.innerHTML = `
+          <div class="d-flex align-items-center gap-3 p-3 rounded-3 ${statusClass} border">
+            <i class="fas ${statusIcon} fs-4"></i>
+            <div class="small fw-bold">${statusText}</div>
+          </div>
+        `;
+      } else {
+        banner.classList.add("d-none");
+        form.classList.remove("d-none");
+      }
+    }
+  } catch (error) {
+    console.error("Check upgrade status error:", error);
   }
 }

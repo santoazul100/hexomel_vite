@@ -40,6 +40,7 @@ async function fetchProfile(id) {
 
 async function fetchProducts(id) {
   const res = await fetch(`/api/apicultores/${id}/products`);
+  if (!res.ok) throw new Error(`Falha ao carregar produtos do apicultor: ${res.status}`);
   const products = await res.json();
   const grid = document.getElementById("api-products-grid");
   grid.innerHTML = "";
@@ -75,6 +76,7 @@ async function fetchProducts(id) {
 
 async function fetchWorkshops(id) {
   const res = await fetch(`/api/apicultores/${id}/workshops`);
+  if (!res.ok) throw new Error(`Falha ao carregar workshops do apicultor: ${res.status}`);
   const workshops = await res.json();
   const grid = document.getElementById("api-workshops-grid");
   grid.innerHTML = "";
