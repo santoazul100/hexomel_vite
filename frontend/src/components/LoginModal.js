@@ -12,8 +12,8 @@ export function createLoginModal() {
             
             <form id="modal-login-form" class="auth-form">
                 <div class="floating-label-group">
-                    <input type="email" id="modal-email" class="floating-input" placeholder=" " required />
-                    <label class="floating-label">Email</label>
+                    <input type="text" id="modal-email" class="floating-input" placeholder=" " required autocomplete="username" />
+                    <label class="floating-label">Email ou Nome de utilizador</label>
                 </div>
                 <div class="floating-label-group">
                     <input type="password" id="modal-password" class="floating-input" placeholder=" " required />
@@ -95,14 +95,14 @@ export function createLoginModal() {
     .getElementById("modal-login-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("modal-email").value;
+      const identifier = document.getElementById("modal-email").value;
       const password = document.getElementById("modal-password").value;
 
       try {
-        const res = await fetch("http://localhost:3000/api/auth/login", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ identifier, password }),
         });
 
         const data = await res.json();

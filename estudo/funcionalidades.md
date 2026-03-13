@@ -36,12 +36,22 @@ Este documento detalha todas as funcionalidades implementadas no projeto Hexomel
 
 ### 🛡️ Administrador (Admin)
 *Acesso total ao Painel Administrativo (`admin.html`):*
-- **Dashboard de Analítica**: Gráficos dinâmicos (Chart.js) para receita de 30 dias, distribuição por categoria, pedidos por status, produtos top-venda, vendas por apicultor e crescimento de utilizadores.
-- **KPIs em Tempo Real**: Faturação total e Valor Médio de Encomenda (AOV).
+- **Dashboard de Analítica**: Gráficos dinâmicos (Chart.js) alimentados por um sistema de sementeira automática (40+ encomendas reais para amostragem), incluindo:
+    - Receita de 30 dias.
+    - Distribuição por categoria.
+    - Pedidos por status.
+    - Produtos top-venda (por receita).
+    - Vendas por apicultor.
+    - Crescimento de utilizadores (últimos 12 meses).
+- **KPIs em Tempo Real**: Faturação total, Valor Médio de Encomenda (AOV), total de utilizadores e produtos.
 - **Gestão de Categorias e Origens**: Controlo total sobre a organização do catálogo.
 - **Controlo de Utilizadores**: Promover utilizadores (Admin/Apicultor) ou remover contas.
 - **Gestão de Encomendas**: Interface visual premium com badges de estado e botões de ação estilizados.
-- **Gestão de Upgrades**: Painel de análise de documentos com sistema de aprovação/rejeição instantânea.
+- **Gestão de Upgrades (Premium Viewer)**: Sistema de análise de documentos com modal de visualização avançada (PDF/Imagens). Inclui:
+    - **Gestão de Estados**: Loaders inteligentes com transições fluidas e tratamento de erros.
+    - **Compatibilidade**: Lógica otimizada para evitar "race conditions" e conflitos de estilos (CSS !important).
+    - **Ações Rápidas**: Aprovação/Rejeição com atualização imediata de permissões na BD e download direto do ficheiro.
+
 
 ---
 

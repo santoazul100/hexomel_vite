@@ -458,7 +458,20 @@ class AdminUI {
                         ?.Nome || "N/A"
                     }</span>
                 </td>
+                <td>
+                    <span class="badge-premium ${p.Status === 'Pendente' ? 'pendente' : p.Status === 'Rejeitado' ? 'rejeitado' : 'aprovado'}">
+                        ${p.Status || 'Aprovado'}
+                    </span>
+                </td>
                 <td class="text-end">
+                    ${p.Status === 'Pendente' ? `
+                      <button class="btn-action-premium success me-1" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Aprovado')" title="Aprovar">
+                          <i class="fas fa-check" style="font-size: 0.8rem;"></i>
+                      </button>
+                      <button class="btn-action-premium delete me-1" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Rejeitado')" title="Rejeitar">
+                          <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+                      </button>
+                    ` : ""}
                     <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
                         <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
                     </button>
@@ -600,6 +613,29 @@ class AdminUI {
         showConfirmButton: false,
       });
       await this.loadOrders();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async updateProductStatus(id, status) {
+    try {
+      const response = await fetch(`${API_URL}/admin/products/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error("Falha ao atualizar estado do produto");
+      Swal.fire({
+        icon: "success",
+        title: `Produto ${status}`,
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      await this.loadProducts();
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
     }
@@ -1299,9 +1335,9 @@ class AdminUI {
                 </td>
                 <td><div class="small text-muted text-wrap" style="max-width:300px; line-height: 1.4;">${r.Descricao}</div></td>
                 <td>
-                    <a href="${r.Documento}" target="_blank" class="doc-link-premium">
+                    <button class="doc-link-premium border-0 bg-transparent" onclick="adminUI.viewDocument('${r.Documento}')">
                         <i class="fas fa-file-pdf"></i> Ver Doc
-                    </a>
+                    </button>
                 </td>
                 <td class="small text-muted">${new Date(r.Data_Pedido).toLocaleDateString()}</td>
                 <td>
@@ -1379,6 +1415,86 @@ class AdminUI {
       select.appendChild(opt);
     });
     select.value = currentVal;
+  }
+
+  viewDocument(path) {
+    const modalElement = document.getElementById("documentModal");
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) modal = new bootstrap.Modal(modalElement);
+    
+    const iframe = document.getElementById("doc-iframe");
+    const imgContainer = document.getElementById("doc-image-container");
+    const img = document.getElementById("doc-image");
+    const loader = document.getElementById("doc-viewer-loader");
+    const errorView = document.getElementById("doc-error-view");
+    const downloadBtn = document.getElementById("doc-download-link-btn");
+    const fallbackLink = document.getElementById("doc-fallback-download");
+
+    // Reset views
+    iframe.src = "";
+    iframe.classList.add("d-none");
+    imgContainer.classList.add("d-none");
+    errorView.classList.add("d-none");
+    
+    loader.classList.remove("d-none");
+    loader.classList.add("d-flex");
+
+    
+    // Set download links
+    downloadBtn.href = path;
+    fallbackLink.href = path;
+
+    modal.show();
+
+    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(path);
+    const isPDF = /\.pdf$/i.test(path);
+
+    // Add cache buster to avoid 304 issues and force fresh load if needed
+    const cacheBuster = `?t=${Date.now()}`;
+    const urlWithBuster = path + cacheBuster;
+
+    if (isImage) {
+      // CRITICAL: Set event handlers BEFORE setting src to avoid race conditions
+      img.onload = () => {
+        loader.classList.remove("d-flex");
+        loader.classList.add("d-none");
+        imgContainer.classList.remove("d-none");
+        imgContainer.classList.add("d-block");
+      };
+      img.onerror = () => {
+        loader.classList.remove("d-flex");
+        loader.classList.add("d-none");
+        errorView.classList.remove("d-none");
+        errorView.classList.add("d-flex");
+      };
+      img.src = urlWithBuster;
+    } else if (isPDF) {
+      // For PDFs, we still set onload handler first
+      iframe.onload = () => {
+        loader.classList.remove("d-flex");
+        loader.classList.add("d-none");
+        iframe.classList.remove("d-none");
+        iframe.classList.add("d-block");
+      };
+      iframe.src = urlWithBuster;
+
+      // Fallback if iframe fails to trigger onload (common with PDFs)
+      setTimeout(() => {
+        if (!loader.classList.contains("d-none")) {
+          loader.classList.remove("d-flex");
+          loader.classList.add("d-none");
+          iframe.classList.remove("d-none");
+          iframe.classList.add("d-block");
+        }
+      }, 2000);
+    } else {
+      loader.classList.remove("d-flex");
+      loader.classList.add("d-none");
+      errorView.classList.remove("d-none");
+      errorView.classList.add("d-flex");
+    }
+
+
   }
 }
 

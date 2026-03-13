@@ -32,6 +32,10 @@ initDB()
         .catch(() => console.log("Bio col already exists"));
 
       await db
+        .run("ALTER TABLE cliente ADD COLUMN Username VARCHAR(60) DEFAULT NULL")
+        .catch(() => console.log("Username col already exists"));
+
+      await db
         .run(
           `
             CREATE TABLE IF NOT EXISTS workshop (
@@ -185,17 +189,24 @@ app.post("/api/auth/register", async (req, res) => {
 
 // Login
 app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+  // Accept either `identifier` (new) or legacy `email` field
+  const identifier = req.body.identifier || req.body.email;
+  const { password } = req.body;
+
+  if (!identifier || !password) {
+    return res.status(400).json({ error: "Email/username e password são obrigatórios" });
+  }
 
   try {
-    const user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
+    // Try to find user by email
+    let user = await db.get("SELECT * FROM cliente WHERE Email = ?", [identifier]);
     if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: "Credenciais inválidas" });
     }
 
     const isMatch = await bcrypt.compare(password, user.Senha);
     if (!isMatch) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: "Credenciais inválidas" });
     }
 
     const token = jwt.sign(
@@ -441,6 +452,7 @@ app.get("/api/products", async (req, res) => {
       FROM produto p
       LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
+      WHERE p.Status = 'Aprovado' OR p.Status IS NULL
       GROUP BY p.ID_Produto
       ORDER BY p.ID_Produto DESC
     `);
@@ -540,6 +552,32 @@ app.put(
   },
 );
 
+// Update product status (Admin only)
+app.patch(
+  "/api/admin/products/:id/status",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!["Aprovado", "Pendente", "Rejeitado"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status." });
+    }
+    
+    try {
+      await db.run("UPDATE produto SET Status = ? WHERE ID_Produto = ?", [
+        status,
+        id,
+      ]);
+      res.json({ message: "Product status updated successfully", status });
+    } catch (error) {
+      console.error("Update product status error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
 // APICULTOR PRODUCT CREATION
 app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
   // Determine if the user has the Apicultor role
@@ -553,8 +591,9 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
     req.body;
 
   try {
+    const initialStatus = req.user.role === "admin" ? "Aprovado" : "Pendente";
     const result = await db.run(
-      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         nome,
         preco,
@@ -565,6 +604,7 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
         imagem,
         tags || null,
         req.user.id,
+        initialStatus,
       ],
     );
     const newProduct = await db.get(

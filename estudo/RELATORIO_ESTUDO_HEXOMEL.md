@@ -38,8 +38,9 @@ O projeto segue uma estrutura de **Single Page Application (SPA) logic** no fron
 3. **`encomenda`**: Registo de vendas com cálculo automático de faturação.
 4. **`workshop`**: Eventos dinâmicos organizados pelos apicultores.
 5. **`avaliacao`**: Sistema de feedback com notas de 1 a 5 estrelas.
-6. **`upgrade_requests`**: Registo e controlo de pedidos de privilégios administrativos.
+6. **`upgrade_requests`**: Registo e controlo de pedidos de privilégios de Apicultor, com suporte a armazenamento de provas documentais.
 7. **`origem`**: Metadados geográficos para rastreabilidade do mel.
+
 
 ---
 
@@ -57,9 +58,9 @@ Para gerir o projeto de forma profissional, utilizamos exclusivamente o **MySQL 
 ---
 
 ## 6. Credenciais de Teste (Admin)
-- **Email**: `admin@hexomel.pt`
-- **Password**: `admin123`
-*(Utilizador de teste com acesso total ao Dashboard corporativo)*
+- **Login/Email**: `admin`
+- **Password**: `admin`
+*(Utilizador de teste com acesso total ao Dashboard corporativo. Nota: O sistema suporta login por email ou identificador simplificado).*
 
 ---
 ## 7. Filosofia de Design e UX
@@ -67,6 +68,9 @@ O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Tabelas Modernas**: Com sistema de iniciais em avatares e ações flutuantes.
 - **Micro-interações**: Feedback visual imediato em formulários e dashboards.
 - **UX Unificada**: O portal do Apicultor utiliza a mesma linguagem visual de alta qualidade do Painel de Administração.
+- **Analytics Avançado**: Dashboard com integração total do `Chart.js`, processando dados reais de vendas, crescimento de utilizadores e produtividade de apicultores.
+- **Robustez de Visualização**: Sistema de visualização de documentos (Upgrade System) com tratamento de erros avançado, gestão de classes dinâmicas para loaders e suporte cross-browser para PDF e Imagens.
+
 
 ---
 *Este relatório foi gerido e compactado para servir de base à documentação final da PAP.*

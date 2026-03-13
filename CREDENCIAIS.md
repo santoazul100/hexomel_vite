@@ -4,8 +4,8 @@
 
 | Campo    | Valor                  |
 |----------|------------------------|
-| Email    | rodrigo@hexomel.pt     |
-| Password | admin123               |
+| User     | admin                  |
+| Password | admin                  |
 | URL      | http://localhost:5173/admin.html |
 
 ---

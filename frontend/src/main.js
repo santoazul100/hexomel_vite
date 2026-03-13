@@ -193,8 +193,8 @@ function injectAuthModal() {
         <div id="login-view-v2">
           <form id="loginFormV2">
             <div class="auth-field-v2">
-              <label class="auth-label-v2">Email</label>
-              <input type="email" id="login-email-v2" class="auth-input-v2" placeholder="nome@exemplo.com" required>
+              <label class="auth-label-v2">Email ou nome de utilizador</label>
+              <input type="text" id="login-email-v2" class="auth-input-v2" placeholder="email@exemplo.com ou username" required autocomplete="username">
             </div>
             <div class="auth-field-v2">
               <label class="auth-label-v2">Password</label>

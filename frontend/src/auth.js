@@ -77,14 +77,14 @@ export const initializeAuthForms = () => {
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("login-email-v2").value;
+      const identifier = document.getElementById("login-email-v2").value;
       const password = document.getElementById("login-password-v2").value;
 
       try {
         const res = await fetch(`${API_URL}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ identifier, password }),
         });
 
         const data = await res.json();
@@ -273,6 +273,13 @@ export function updateNav(user) {
                     user.userType?.toLowerCase() === "admin" ||
                     user.UserType?.toLowerCase() === "admin"
                       ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>'
+                      : ""
+                  }
+                  ${
+                    user.role?.toLowerCase() === "apicultor" ||
+                    user.userType?.toLowerCase() === "apicultor" ||
+                    user.UserType?.toLowerCase() === "apicultor"
+                      ? '<li><a class="dropdown-item dropdown-item-premium" href="dashboard-apicultor.html"><i class="fas fa-leaf me-2"></i> Painel Apicultor</a></li>'
                       : ""
                   }
                   <li><hr class="dropdown-divider opacity-50"></li>

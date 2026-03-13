@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS `produto` (
   `Descricao` TEXT,
   `Imagem` VARCHAR(255) DEFAULT NULL,
   `Tags` TEXT,
+  `Status` varchar(20) DEFAULT 'Aprovado',
   PRIMARY KEY (`ID_Produto`),
   KEY `ID_Apicultor` (`ID_Apicultor`),
   KEY `ID_Origem` (`ID_Origem`),

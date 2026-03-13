@@ -1,11 +1,16 @@
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const ADMIN_EMAIL = "rodrigo@hexomel.pt";
-const ADMIN_PASSWORD = "admin123";
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+const ADMIN_EMAIL = "admin";
+const ADMIN_PASSWORD = "admin";
 
 const resetAdmin = async () => {
   const connection = await mysql.createConnection({
@@ -15,20 +20,33 @@ const resetAdmin = async () => {
     database: "hexomel",
   });
 
-  const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  const hash = await bcrypt.hash("admin", 10);
 
-  const [result] = await connection.execute(
-    "UPDATE `cliente` SET `Senha` = ? WHERE `Email` = ?",
-    [hash, ADMIN_EMAIL]
+  // 1. Try to find any existing admin
+  const [admins] = await connection.execute(
+    "SELECT * FROM `cliente` WHERE `UserType` = 'admin' OR `Email` = ?",
+    [ADMIN_EMAIL]
   );
 
-  if (result.affectedRows === 0) {
-    console.error("❌ Admin not found! Make sure the seed was run first.");
+  if (admins.length > 0) {
+    // Update the first admin found
+    const adminId = admins[0].ID_Cliente;
+    await connection.execute(
+      "UPDATE `cliente` SET `Senha` = ?, `Nome` = ?, `Email` = ?, `UserType` = 'admin' WHERE `ID_Cliente` = ?",
+      [hash, "Admin", ADMIN_EMAIL, adminId]
+    );
+    console.log("✅ Admin updated successfully!");
   } else {
-    console.log("✅ Admin password reset successfully!");
-    console.log(`   Email:    ${ADMIN_EMAIL}`);
-    console.log(`   Password: ${ADMIN_PASSWORD}`);
+    // Create new admin
+    await connection.execute(
+      "INSERT INTO `cliente` (`Nome`, `Email`, `Senha`, `UserType`) VALUES (?, ?, ?, ?)",
+      ["Admin", ADMIN_EMAIL, hash, "admin"]
+    );
+    console.log("✅ New admin created successfully!");
   }
+
+  console.log(`   User/Email: admin / ${ADMIN_EMAIL}`);
+  console.log(`   Password:   admin`);
 
   await connection.end();
   process.exit(0);
