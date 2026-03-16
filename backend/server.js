@@ -966,27 +966,35 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
 // Email Configuration (Nodemailer)
 // Moved import to top
 
-// Create reusable transporter object using the default SMTP transport
-// For development, we use Ethereal.email
+// Email Configuration
 let transporter;
 
 async function initMailer() {
-  // Generate test SMTP service account from ethereal.email
-  // Only needed if you don't have a real mail account for testing
-  let testAccount = await nodemailer.createTestAccount();
-
-  // Create transporter object using the default SMTP transport
-  transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: testAccount.user, // generated ethereal user
-      pass: testAccount.pass, // generated ethereal password
-    },
-  });
-
-  console.log("Mailer initialized with Ethereal:", testAccount.user);
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: process.env.SMTP_PORT || 587,
+      secure: process.env.SMTP_PORT == 465, 
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+    console.log("Mailer initialized with real SMTP credentials.");
+  } else {
+    // Fallback to ethereal.email if no credentials are provided
+    let testAccount = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false, 
+      auth: {
+        user: testAccount.user, 
+        pass: testAccount.pass, 
+      },
+    });
+    console.log("Mailer initialized with Ethereal:", testAccount.user);
+  }
 }
 initMailer().catch(console.error);
 
