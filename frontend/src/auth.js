@@ -8,8 +8,8 @@ export const initializeAuthForms = () => {
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fullName = document.getElementById("register-name-v2").value;
+      const username = document.getElementById("register-username-v2").value;
       const email = document.getElementById("register-email-v2").value;
-      const userType = document.getElementById("register-usertype-v2").value;
       const password = document.getElementById("register-password-v2").value;
       const confirmPassword = document.getElementById(
         "register-confirm-v2",
@@ -33,8 +33,8 @@ export const initializeAuthForms = () => {
             firstName,
             lastName,
             email,
+            username,
             password,
-            userType,
           }),
         });
 

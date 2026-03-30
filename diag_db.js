@@ -1,37 +1,25 @@
-import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-import path from "path";
+import { initDB, db } from './backend/config/db.js';
 
-dotenv.config({ path: "c:/escola/pap/code/hexomel_vite/backend/.env" });
-
-const diagnose = async () => {
+async function checkDuplicates() {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "",
-      database: "hexomel",
-    });
-
-    console.log("Connected to hexomel database.");
+    await initDB();
+    console.log("Checking for duplicate emails...");
+    const rows = await db.all("SELECT Email, COUNT(*) as count FROM cliente GROUP BY Email HAVING count > 1");
+    if (rows.length > 0) {
+      console.log("Duplicate emails found:", rows);
+    } else {
+      console.log("No duplicate emails found in DB.");
+    }
     
-    const [tables] = await connection.query("SHOW TABLES");
-    console.log("Existing Tables:");
-    console.table(tables);
+    // Check if Email column is really Unique
+    const indexes = await db.all("SHOW INDEX FROM cliente WHERE Column_name = 'Email'");
+    console.log("Indexes for Email:", indexes);
 
-    const tablesToVerify = ['cliente', 'categoria', 'origem', 'produto', 'carrinho', 'item_carrinho', 'encomenda', 'item_encomenda', 'favoritos', 'avaliacao', 'workshop'];
-    const existingTableNames = tables.map(t => Object.values(t)[0]);
-    
-    console.log("\nVerification Status:");
-    tablesToVerify.forEach(t => {
-        const exists = existingTableNames.includes(t);
-        console.log(`${t}: ${exists ? "OK ✅" : "MISSING ❌"}`);
-    });
-
-    await connection.end();
-  } catch (error) {
-    console.error("DIAGNOSTIC FAILED:", error);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    process.exit();
   }
-};
+}
 
-diagnose();
+checkDuplicates();

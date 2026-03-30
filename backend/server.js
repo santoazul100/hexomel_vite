@@ -131,29 +131,37 @@ app.get("/health", (req, res) => {
 // AUTH ROUTES
 // Register
 app.post("/api/auth/register", async (req, res) => {
-  const { firstName, lastName, email, password, phone, userType } = req.body;
+  let { firstName, lastName, email, username, password } = req.body;
+
+  if (!email || !password || !firstName || !lastName || !username) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  }
+
+  email = email.toLowerCase().trim();
+  username = username.trim();
 
   try {
-    // Check if user exists
-    const row = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);
+    // Check if user exists by email OR username
+    const row = await db.get("SELECT * FROM cliente WHERE Email = ? OR (Username IS NOT NULL AND Username = ?)", [email, username]);
     if (row) {
-      return res.status(400).json({ error: "User already exists" });
+      const field = row.Email.toLowerCase() === email ? "Email" : "Nome de utilizador";
+      return res.status(400).json({ error: `${field} já está em uso.` });
     }
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const fullName = `${firstName} ${lastName}`;
-    const definedUserType = userType === "apicultor" ? "apicultor" : "client";
+    const fullName = `${firstName} ${lastName}`.trim();
 
-    // Insert user
+    // Insert user with Username (defaults to client)
     const result = await db.run(
-      "INSERT INTO cliente (Nome, Email, Senha, UserType) VALUES (?, ?, ?, ?)",
+      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType) VALUES (?, ?, ?, ?, ?)",
       [
-        `${firstName} ${lastName}`.trim(),
+        fullName,
         email,
+        username,
         hashedPassword,
-        definedUserType,
+        "client",
       ],
     );
 
@@ -177,6 +185,7 @@ app.post("/api/auth/register", async (req, res) => {
         id: user.ID_Cliente,
         name: user.Nome,
         email: user.Email,
+        username: user.Username,
         picture: user.Picture,
         role: user.UserType,
       },
@@ -190,16 +199,18 @@ app.post("/api/auth/register", async (req, res) => {
 // Login
 app.post("/api/auth/login", async (req, res) => {
   // Accept either `identifier` (new) or legacy `email` field
-  const identifier = req.body.identifier || req.body.email;
+  let identifier = req.body.identifier || req.body.email;
   const { password } = req.body;
 
   if (!identifier || !password) {
     return res.status(400).json({ error: "Email/username e password são obrigatórios" });
   }
 
+  identifier = identifier.toLowerCase().trim();
+
   try {
-    // Try to find user by email
-    let user = await db.get("SELECT * FROM cliente WHERE Email = ?", [identifier]);
+    // Try to find user by email OR username
+    let user = await db.get("SELECT * FROM cliente WHERE Email = ? OR Username = ?", [identifier, identifier]);
     if (!user) {
       return res.status(400).json({ error: "Credenciais inválidas" });
     }
@@ -241,7 +252,8 @@ app.post("/api/auth/google", async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    const email = payload.email.toLowerCase().trim();
+    const { name, picture } = payload;
     console.log("Google Login Payload:", { email, name, picture });
 
     let user = await db.get("SELECT * FROM cliente WHERE Email = ?", [email]);

@@ -107,6 +107,25 @@
         height: 60%;
       }
 
+      /* Sidebar Scrollbar */
+      .admin-sidebar {
+        overflow-y: auto;
+      }
+
+      .admin-sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .admin-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .admin-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+      }
+      .admin-sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
       /* Document Modal Scrollbar */
       .doc-viewer-container::-webkit-scrollbar {
         width: 8px;
