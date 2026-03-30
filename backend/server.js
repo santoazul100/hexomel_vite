@@ -46,6 +46,7 @@ initDB()
                 Preco decimal(10,2) NOT NULL,
                 Vagas int(11) NOT NULL,
                 Imagem varchar(255) DEFAULT NULL,
+                Status varchar(20) DEFAULT 'Pendente',
                 ID_Apicultor int(10) NOT NULL,
                 Data_Criacao timestamp DEFAULT current_timestamp(),
                 PRIMARY KEY (ID_Workshop),
@@ -55,6 +56,10 @@ initDB()
         `,
         )
         .catch(() => console.log("Workshop table creation handled"));
+
+      await db
+        .run("ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'")
+        .catch(() => console.log("Workshop Status col already exists"));
 
       await db
         .run(
@@ -293,6 +298,17 @@ app.get("/api/categories", async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Categories fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -329,6 +345,17 @@ app.get("/api/origins", async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Origins fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -347,6 +374,17 @@ app.post("/api/admin/origins", authenticateToken, isAdmin, async (req, res) => {
     res.status(201).json(newOrigin);
   } catch (error) {
     console.error("Create origin error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -459,6 +497,17 @@ app.get("/api/products", async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Products fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -471,6 +520,17 @@ app.get("/api/admin/products", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin products fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -614,6 +674,17 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
     res.status(201).json(newProduct);
   } catch (error) {
     console.error("Create apicultor product error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -630,6 +701,17 @@ app.patch("/api/apicultor/bio", authenticateToken, async (req, res) => {
     ]);
     res.json({ message: "Bio updated successfully" });
   } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -640,11 +722,291 @@ app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
   const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
   try {
     const result = await db.run(
-      "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, Status, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, 'Pendente', ?)",
       [titulo, descricao, data_realizacao, preco, vagas, imagem, req.user.id],
     );
     res.status(201).json({ id: result.lastID });
   } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// APICULTOR — Edit own product
+app.patch("/api/apicultor/products/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  const { id } = req.params;
+  const { nome, preco, stock, idCategoria, idOrigem, descricao, tags, imagem } = req.body;
+
+  try {
+    // Verify ownership
+    const existing = await db.get("SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?", [id, req.user.id]);
+    if (!existing && req.user.role !== "admin")
+      return res.status(404).json({ error: "Product not found or access denied." });
+
+    // Reset to Pendente when apicultor edits (needs re-approval)
+    const newStatus = req.user.role === "admin" ? existing?.Status : "Pendente";
+
+    await db.run(
+      "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Tags = ?, Imagem = ?, Status = ? WHERE ID_Produto = ?",
+      [nome, preco, stock, idCategoria, idOrigem || null, descricao, tags || null, imagem || existing?.Imagem, newStatus, id],
+    );
+    const updated = await db.get("SELECT * FROM produto WHERE ID_Produto = ?", [id]);
+    res.json(updated);
+  } catch (err) {
+    console.error("Apicultor patch product error:", err);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// APICULTOR — Delete own product
+app.delete("/api/apicultor/products/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  const { id } = req.params;
+  try {
+    const existing = await db.get("SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?", [id, req.user.id]);
+    if (!existing && req.user.role !== "admin")
+      return res.status(404).json({ error: "Product not found or access denied." });
+
+    await db.run("DELETE FROM produto WHERE ID_Produto = ?", [id]);
+    res.json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.error("Apicultor delete product error:", err);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// APICULTOR — Edit own workshop
+app.patch("/api/apicultor/workshops/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  const { id } = req.params;
+  const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
+
+  try {
+    const existing = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ? AND ID_Apicultor = ?", [id, req.user.id]);
+    if (!existing && req.user.role !== "admin")
+      return res.status(404).json({ error: "Workshop not found or access denied." });
+
+    await db.run(
+      "UPDATE workshop SET Titulo = ?, Descricao = ?, Data_Realizacao = ?, Preco = ?, Vagas = ?, Imagem = ?, Status = 'Pendente' WHERE ID_Workshop = ?",
+      [titulo, descricao, data_realizacao, preco, vagas, imagem || existing?.Imagem, id],
+    );
+    const updated = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ?", [id]);
+    res.json(updated);
+  } catch (err) {
+    console.error("Apicultor patch workshop error:", err);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// APICULTOR — Delete own workshop
+app.delete("/api/apicultor/workshops/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  const { id } = req.params;
+  try {
+    const existing = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ? AND ID_Apicultor = ?", [id, req.user.id]);
+    if (!existing && req.user.role !== "admin")
+      return res.status(404).json({ error: "Workshop not found or access denied." });
+
+    await db.run("DELETE FROM workshop WHERE ID_Workshop = ?", [id]);
+    res.json({ message: "Workshop deleted successfully" });
+  } catch (err) {
+    console.error("Apicultor delete workshop error:", err);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// APICULTOR — Get own sales/orders
+app.get("/api/apicultor/orders", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  try {
+    const rows = await db.all(`
+      SELECT DISTINCT e.*, c.Nome as ClienteNome 
+      FROM encomenda e
+      JOIN cliente c ON e.ID_Cliente = c.ID_Cliente
+      JOIN item_encomenda ie ON e.ID_Encomenda = ie.ID_Encomenda
+      JOIN produto p ON ie.ID_Produto = p.ID_Produto
+      WHERE p.ID_Apicultor = ?
+      ORDER BY e.Data_Encomenda DESC
+    `, [req.user.id]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Apicultor orders fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/apicultor/stats", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+  
+  const apicultorId = req.user.id;
+  
+  try {
+    // Basic Counts
+    const productsCount = await db.get("SELECT COUNT(*) as count FROM produto WHERE ID_Apicultor = ?", [apicultorId]);
+    const workshopsCount = await db.get("SELECT COUNT(*) as count FROM workshop WHERE ID_Apicultor = ?", [apicultorId]);
+    const pendingProducts = await db.get("SELECT COUNT(*) as count FROM produto WHERE ID_Apicultor = ? AND Status = 'Pendente'", [apicultorId]);
+    
+    // Total Earnings from Orders
+    const earnings = await db.get(`
+      SELECT SUM(ie.Quantidade * ie.Preco_Unitario) as total 
+      FROM item_encomenda ie
+      JOIN produto p ON ie.ID_Produto = p.ID_Produto
+      WHERE p.ID_Apicultor = ?
+    `, [apicultorId]);
+
+    // Categories Distribution
+    const categories = await db.all(`
+      SELECT c.Nome as category, COUNT(p.ID_Produto) as count 
+      FROM produto p
+      JOIN categoria c ON p.ID_Categoria = c.ID_Categoria
+      WHERE p.ID_Apicultor = ?
+      GROUP BY c.Nome
+    `, [apicultorId]);
+
+    // Status Distribution
+    const statuses = await db.all(`
+      SELECT Status, COUNT(*) as count 
+      FROM produto 
+      WHERE ID_Apicultor = ?
+      GROUP BY Status
+    `, [apicultorId]);
+
+    res.json({
+      summary: {
+        products: productsCount.count,
+        workshops: workshopsCount.count,
+        pendingProducts: pendingProducts.count,
+        totalEarnings: earnings.total || 0
+      },
+      categories,
+      statuses
+    });
+  } catch (err) {
+    console.error("Apicultor stats error:", err);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+  if (!["client", "apicultor"].includes(userType)) {
+    return res.status(400).json({ error: "Invalid role." });
+  }
+
+  try {
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Re-generate token with new role
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, UserType as role FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    const token = jwt.sign(user, SECRET_KEY, { expiresIn: "24h" });
+    res.json({ message: "Role updated successfully", user, token });
+  } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -659,6 +1021,17 @@ app.get("/api/apicultores/:id", async (req, res) => {
     if (!user) return res.status(404).json({ error: "Apicultor not found" });
     res.json(user);
   } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -671,6 +1044,17 @@ app.get("/api/apicultores/:id/products", async (req, res) => {
     );
     res.json(products);
   } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -683,6 +1067,17 @@ app.get("/api/apicultores/:id/workshops", async (req, res) => {
     );
     res.json(workshops);
   } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -690,13 +1085,73 @@ app.get("/api/apicultores/:id/workshops", async (req, res) => {
 app.get("/api/workshops", async (req, res) => {
   try {
     const workshops = await db.all(
-      "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente ORDER BY w.Data_Realizacao ASC",
+      "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.Status = 'Aprovado' ORDER BY w.Data_Realizacao ASC",
     );
     res.json(workshops);
   } catch (err) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
+
+// ADMIN WORKSHOPS MANAGEMENT
+app.get("/api/admin/workshops", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const workshops = await db.all(
+      "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente ORDER BY w.ID_Workshop DESC",
+    );
+    res.json(workshops);
+  } catch (error) {
+    console.error("Admin workshops fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.patch(
+  "/api/admin/workshops/:id/status",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!["Aprovado", "Pendente", "Rejeitado"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status." });
+    }
+    
+    try {
+      await db.run("UPDATE workshop SET Status = ? WHERE ID_Workshop = ?", [
+        status,
+        id,
+      ]);
+      res.json({ message: "Workshop status updated successfully", status });
+    } catch (error) {
+      console.error("Update workshop status error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // ADMIN USER MANAGEMENT
 // Get all users (Admin view)
@@ -708,6 +1163,17 @@ app.get("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin users fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -817,6 +1283,17 @@ app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Profile role update error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -834,6 +1311,17 @@ app.get("/api/admin/orders", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin orders fetch error:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -1175,6 +1663,17 @@ app.get("/api/clients", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Error fetching clients:", error);
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -1600,6 +2099,17 @@ app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) 
     );
     res.json(request || { Status: "Nenhum" });
   } catch (error) {
+        res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });

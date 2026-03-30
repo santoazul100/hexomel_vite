@@ -39,7 +39,29 @@ class AdminUI {
     }
 
     this.initTagInput();
+    this.initSidebar(); // Collapsed preference
     this.switchSection("dashboard"); // Default view
+  }
+
+  initSidebar() {
+    const adminLayout = document.getElementById("admin-layout");
+    const isCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+    if (isCollapsed && adminLayout) {
+      adminLayout.classList.add("sidebar-collapsed");
+    }
+
+    const toggleMain = document.getElementById("sidebar-toggle-main");
+    const toggleHide = document.getElementById("sidebar-hide");
+
+    const toggleLogic = () => {
+      if (adminLayout) {
+        const collapsed = adminLayout.classList.toggle("sidebar-collapsed");
+        localStorage.setItem("sidebarCollapsed", collapsed);
+      }
+    };
+
+    if (toggleMain) toggleMain.addEventListener("click", toggleLogic);
+    if (toggleHide) toggleHide.addEventListener("click", toggleLogic);
   }
 
   async initAuth() {
@@ -141,6 +163,7 @@ class AdminUI {
     if (sectionId === "customers") this.loadUsers();
     if (sectionId === "orders") this.loadOrders();
     if (sectionId === "upgrade-requests") this.loadUpgradeRequests();
+    if (sectionId === "workshops") this.loadWorkshops();
   }
 
   async loadDashboardStats() {
@@ -1397,6 +1420,99 @@ class AdminUI {
           "success",
         );
         await this.loadUpgradeRequests();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  async loadWorkshops() {
+    try {
+      const response = await fetch(`${API_URL}/admin/workshops`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar workshops");
+      this.workshopsList = await response.json();
+      this.renderWorkshops();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar os workshops.", "error");
+    }
+  }
+
+  renderWorkshops() {
+    const container = document.getElementById("workshops-tbody");
+    if (!container) return;
+
+    if (!this.workshopsList || this.workshopsList.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Sem workshops no momento.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = this.workshopsList
+      .map((w) => {
+        const apicultorNome = w.ApicultorNome || "Desconhecido";
+        const statusClass = w.Status ? w.Status.toLowerCase().replace(" ", "-") : "pendente";
+
+        return `
+            <tr>
+                <td><div class="fw-bold text-dark text-wrap" style="max-width:250px;">${w.Titulo}</div></td>
+                <td><div class="small text-muted">${apicultorNome}</div></td>
+                <td>
+                    <div class="small text-muted mb-1"><i class="far fa-calendar-alt me-1"></i>${new Date(w.Data_Realizacao).toLocaleDateString()}</div>
+                    <div class="small text-muted"><i class="fas fa-users me-1"></i>${w.Vagas} vagas</div>
+                </td>
+                <td class="fw-bold text-dark">${parseFloat(w.Preco).toFixed(2)}€</td>
+                <td><span class="badge-premium ${statusClass}">${w.Status || 'Pendente'}</span></td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                    ${
+                      (w.Status || "Pendente") === "Pendente"
+                        ? `
+                        <button class="btn-action-premium success" onclick="adminUI.processWorkshop(${w.ID_Workshop}, 'Aprovado')" title="Aprovar">
+                            <i class="fas fa-check" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <button class="btn-action-premium delete" onclick="adminUI.processWorkshop(${w.ID_Workshop}, 'Rejeitado')" title="Rejeitar">
+                            <i class="fas fa-times" style="font-size: 0.75rem;"></i>
+                        </button>
+                    `
+                        : `<span class="small text-muted fw-500">Já processado</span>`
+                    }
+                    </div>
+                </td>
+            </tr>
+        `;
+      })
+      .join("");
+  }
+
+  async processWorkshop(id, status) {
+    const action = status === "Aprovado" ? "aprovar" : "rejeitar";
+    const result = await Swal.fire({
+      title: `Confirmar ${action}?`,
+      text: `Tem a certeza que deseja ${action} este workshop?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: status === "Aprovado" ? "#198754" : "#dc3545",
+      confirmButtonText: "Sim, confirmar",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/admin/workshops/${id}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({ status }),
+        });
+
+        if (!response.ok) throw new Error("Erro ao processar workshop");
+
+        Swal.fire("Sucesso", `Workshop ${status.toLowerCase()} com sucesso!`, "success");
+        await this.loadWorkshops();
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }

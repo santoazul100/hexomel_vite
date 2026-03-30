@@ -38,30 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Initialize Password Change Form
-  const passwordForm = document.getElementById("changePasswordForm");
-  if (passwordForm) {
-    passwordForm.addEventListener("submit", handlePasswordUpdate);
-  }
 
-  // Initialize Role Change Cards
-  const roleCards = document.querySelectorAll(".role-choice-card");
-  roleCards.forEach((card) => {
-    card.addEventListener("click", () => {
-      const newRole = card.getAttribute("data-role");
-      if (currentUserData && currentUserData.role === "admin") return; // Admin can't change here
-
-      selectedRole = newRole;
-      updateRoleCardsUI();
-    });
-  });
-
-  const saveRoleBtn = document.getElementById("save-role-btn-new");
-  if (saveRoleBtn) {
-    saveRoleBtn.addEventListener("click", handleRoleUpdate);
-  }
-
-  // Initialize Account Deletion
   const deleteBtn = document.getElementById("delete-account-btn");
   if (deleteBtn) {
     deleteBtn.addEventListener("click", handleDeleteAccount);
@@ -78,100 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     avatarFileInput.addEventListener("change", handleAvatarUpload);
   }
-
-  // Initialize Apicultor Product Add Form
-  const apiProductForm = document.getElementById("apicultor-add-product-form");
-  if (apiProductForm) {
-    apiProductForm.addEventListener("submit", handleApicultorProductAdd);
-    initBeekeeperTagInput();
-    loadBeekeeperOrigins();
-  }
-
-  // Initialize Apicultor Workshop Add Form
-  const apiWorkshopForm = document.getElementById(
-    "apicultor-add-workshop-form",
-  );
-  if (apiWorkshopForm) {
-    apiWorkshopForm.addEventListener("submit", handleApicultorWorkshopAdd);
-  }
-
-  // Initialize Upgrade Request Form
-  const upgradeForm = document.getElementById("upgrade-request-form");
-  if (upgradeForm) {
-    upgradeForm.addEventListener("submit", handleUpgradeRequest);
-  }
-
-  // Initialize Beekeeper Downgrade
-  const revertBtn = document.getElementById("btn-revert-client");
-  if (revertBtn) {
-    revertBtn.addEventListener("click", handleBeekeeperDowngrade);
-  }
-
-  checkUpgradeStatus();
 });
-
-async function handleBeekeeperDowngrade() {
-  const result = await Swal.fire({
-    title: "Reverter para Cliente?",
-    text: "Deixarás de ter acesso à gestão de produtos e workshops. Poderás voltar a ser Apicultor mais tarde nas definições de segurança.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#f4b400",
-    cancelButtonColor: "#6c757d",
-    confirmButtonText: "Sim, reverter",
-    cancelButtonText: "Cancelar",
-  });
-
-  if (result.isConfirmed) {
-    // We already have a function that handles role updates
-    // We can simulate a form submit or call it directly if we refactor it
-    // For simplicity, let's just perform the fetch here or reuse handleRoleUpdate
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch("/api/user/profile/role", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userType: "client" }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem("token", data.token);
-        const localUser = JSON.parse(localStorage.getItem("user") || "{}");
-        localUser.role = "client";
-        localStorage.setItem("user", JSON.stringify(localUser));
-
-        updateNav(localUser);
-
-        // UI Refresh
-        const apicultorTab = document.getElementById("nav-tab-apicultor");
-        if (apicultorTab) apicultorTab.classList.add("d-none");
-
-        // Force switch to orders tab
-        document.querySelector('.btn-profile-tab[data-tab="orders"]').click();
-
-        // Update the role select in security tab if it exists
-        const roleSelect = document.getElementById("user-role-select");
-        if (roleSelect) roleSelect.value = "client";
-
-        Swal.fire({
-          icon: "success",
-          title: "Conta Revertida",
-          text: "A tua conta é agora do tipo Cliente.",
-          confirmButtonColor: "#f4b400",
-        });
-      } else {
-        throw new Error(data.error || "Falha ao reverter conta");
-      }
-    } catch (error) {
-      console.error("Downgrade error:", error);
-      Swal.fire("Erro", error.message, "error");
-    }
-  }
-}
 
 function initializeTabs() {
   const tabs = document.querySelectorAll(".btn-profile-tab[data-tab]");
@@ -379,24 +263,9 @@ function renderProfile(data) {
     bioInput.value = data.bio || "";
   }
 
-    // Render role selection
-    selectedRole = data.role;
-    updateRoleCardsUI();
-
-    // Show Apicultor tab if role is apicultor
-    const apicultorTab = document.getElementById("nav-tab-apicultor");
+    // Show Upgrade tab if role is client
     const upgradeTabBtn = document.getElementById("nav-tab-upgrade");
-
-    if (apicultorTab) {
-      if (data.role === "apicultor") {
-        apicultorTab.classList.remove("d-none");
-      } else {
-        apicultorTab.classList.add("d-none");
-      }
-    }
-
     if (upgradeTabBtn) {
-      // Only show upgrade tab for regular clients
       if (data.role === "client") {
         upgradeTabBtn.classList.remove("d-none");
       } else {
@@ -610,134 +479,6 @@ async function handlePasswordUpdate(e) {
   }
 }
 
-async function handleRoleUpdate(e) {
-  if (!selectedRole || !currentUserData) return;
-  if (selectedRole === currentUserData.role) return;
-
-  const btn = document.getElementById("save-role-btn-new");
-  const token = localStorage.getItem("token");
-  const originalText = btn.innerText;
-
-  try {
-    btn.disabled = true;
-    btn.innerHTML =
-      '<span class="spinner-border spinner-border-sm me-2"></span>A processar...';
-
-    const res = await fetch("/api/user/profile/role", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ userType: selectedRole }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      localStorage.setItem("token", data.token);
-      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
-      localUser.role = data.newRole;
-      localStorage.setItem("user", JSON.stringify(localUser));
-
-      updateNav(localUser);
-      currentUserData.role = data.newRole;
-      updateRoleCardsUI();
-
-      // Toggle Apicultor tab instantly
-      const apicultorTab = document.getElementById("nav-tab-apicultor");
-      if (apicultorTab) {
-        if (data.newRole === "apicultor") {
-          apicultorTab.classList.remove("d-none");
-        } else {
-          apicultorTab.classList.add("d-none");
-          if (apicultorTab.classList.contains("active")) {
-            document
-              .querySelector('.btn-profile-tab[data-tab="orders"]')
-              .click();
-          }
-        }
-      }
-
-      Swal.fire({
-        icon: "success",
-        title: "Perfil Atualizado!",
-        text: `A tua conta funciona agora como ${selectedRole === "apicultor" ? "Apicultor" : "Cliente"}.`,
-        confirmButtonColor: "#f4b400",
-      });
-    } else {
-      throw new Error(data.error || "Falha ao atualizar tipo de conta");
-    }
-  } catch (error) {
-    console.error("Role update error:", error);
-    Swal.fire("Erro", error.message, "error");
-    selectedRole = currentUserData.role;
-    updateRoleCardsUI();
-  } finally {
-    btn.disabled = false;
-    btn.innerText = originalText;
-  }
-}
-
-function updateRoleCardsUI() {
-  const roleCards = document.querySelectorAll(".role-choice-card");
-  const saveBtn = document.getElementById("save-role-btn-new");
-
-  roleCards.forEach((card) => {
-    const role = card.getAttribute("data-role");
-    const checkIcon = card.querySelector(".check-icon");
-
-    if (role === selectedRole) {
-      card.classList.add("active");
-      card.style.borderColor = "var(--logo-yellow, #f4b400)";
-      card.style.background = "rgba(244, 180, 0, 0.05)";
-      if (checkIcon) checkIcon.classList.remove("d-none");
-    } else {
-      card.classList.remove("active");
-      card.style.borderColor = "#dee2e6";
-      card.style.background = "#fff";
-      if (checkIcon) checkIcon.classList.add("d-none");
-    }
-
-    // Disable if admin
-    if (currentUserData && currentUserData.role === "admin") {
-      card.style.opacity = "0.7";
-      card.style.cursor = "not-allowed";
-      if (role === "admin") {
-        card.classList.add("active");
-      }
-    }
-
-    // Disable switching TO apicultor if currently a client (requires upgrade request)
-    if (currentUserData && currentUserData.role === "client" && role === "apicultor") {
-      card.style.opacity = "0.6";
-      card.style.cursor = "help";
-      card.title = "Para te tornares Apicultor, deves enviar um pedido de upgrade.";
-      // Add a small label if not exists
-      if (!card.querySelector(".upgrade-needed-label")) {
-        const span = document.createElement("span");
-        span.className = "upgrade-needed-label d-block text-warning small mt-1";
-        span.style.fontSize = "0.7rem";
-        span.innerText = "Requer Pedido";
-        card.appendChild(span);
-      }
-    }
-  });
-
-  if (saveBtn && currentUserData) {
-    // Only allow saving if role changed AND it's not a restricted target
-    const isClientTryingApicultor = currentUserData.role === "client" && selectedRole === "apicultor";
-    
-    if (selectedRole !== currentUserData.role && selectedRole !== "admin" && !isClientTryingApicultor) {
-      saveBtn.disabled = false;
-      saveBtn.classList.remove("opacity-50");
-    } else {
-      saveBtn.disabled = true;
-      saveBtn.classList.add("opacity-50");
-    }
-  }
-}
-
 async function handleDeleteAccount() {
   const result = await Swal.fire({
     title: "Tem a certeza?",
@@ -834,20 +575,44 @@ async function handleAvatarUpload(e) {
 
       document.getElementById("profile-avatar-large").src = base64Image;
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      user.picture = base64Image;
-      localStorage.setItem("user", JSON.stringify(user));
-      updateNav(user);
+      try {
+        const res = await fetch("/api/user/profile/picture", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ picture: base64Image }),
+        });
 
-      Swal.fire({
-        icon: "success",
-        title: "Foto Atualizada!",
-        text: "A tua foto de perfil foi atualizada com sucesso.",
-        confirmButtonColor: "#f4b400",
-      });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Erro ao atualizar foto");
+        }
+
+        document.getElementById("profile-avatar-large").src = base64Image;
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        user.picture = base64Image;
+        localStorage.setItem("user", JSON.stringify(user));
+        updateNav(user);
+
+        Swal.fire({
+          icon: "success",
+          title: "Foto Atualizada!",
+          text: "A tua foto de perfil foi atualizada com sucesso.",
+          confirmButtonColor: "#f4b400",
+        });
+      } catch (error) {
+        console.error("Avatar upload fetch error:", error);
+        Swal.fire("Erro", "Falha ao enviar a foto", "error");
+      }
+    };
+    reader.onerror = () => {
+      Swal.fire("Erro", "Erro ao ler o ficheiro", "error");
     };
     reader.readAsDataURL(file);
   } catch (error) {
-    console.error("Avatar upload error:", error);
+    console.error("Avatar upload general error:", error);
     Swal.fire({
       icon: "error",
       title: "Erro",
@@ -948,352 +713,6 @@ window.viewOrderDetails = async function (orderId) {
   }
 };
 
-// Beekeeper Product Image Preview & Trigger
-document.addEventListener("click", (e) => {
-  if (e.target.closest("#api-upload-trigger")) {
-    document.getElementById("api-produto-imagem").click();
-  }
-});
-
-document.addEventListener("change", (e) => {
-  if (e.target.id === "api-produto-imagem") {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const preview = document.getElementById("api-image-preview");
-        const placeholder = document.getElementById("api-image-placeholder");
-        preview.src = event.target.result;
-        preview.style.display = "block";
-        placeholder.style.display = "none";
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-});
-
-// --- BEEKEEPER TAG MANAGEMENT ---
-let beekeeperTags = new Set();
-function initBeekeeperTagInput() {
-  const input = document.getElementById("api-tag-input-field");
-  const container = document.getElementById("api-tag-input-container");
-  const suggestionsContainer = document.getElementById("api-available-tags-suggestions");
-
-  if (!input || !container) return;
-
-  container.addEventListener("click", () => input.focus());
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addBeekeeperTag(input.value);
-      input.value = "";
-    }
-    if (e.key === "Backspace" && input.value === "" && beekeeperTags.size > 0) {
-      const lastTag = Array.from(beekeeperTags).pop();
-      removeBeekeeperTag(lastTag);
-    }
-  });
-
-  if (suggestionsContainer) {
-    suggestionsContainer.addEventListener("click", (e) => {
-      if (e.target.classList.contains("tag-suggestion")) {
-        const tag = e.target.dataset.tag;
-        if (tag) addBeekeeperTag(tag);
-      }
-    });
-  }
-  renderBeekeeperSuggestions();
-}
-
-function addBeekeeperTag(tagName) {
-  const cleanTag = tagName.trim();
-  if (cleanTag && !beekeeperTags.has(cleanTag)) {
-    beekeeperTags.add(cleanTag);
-    renderBeekeeperTagPills();
-    renderBeekeeperSuggestions();
-  }
-}
-
-function removeBeekeeperTag(tagName) {
-  beekeeperTags.delete(tagName);
-  renderBeekeeperTagPills();
-  renderBeekeeperSuggestions();
-}
-
-function renderBeekeeperTagPills() {
-  const container = document.getElementById("api-selected-tags-container");
-  if (!container) return;
-  container.innerHTML = "";
-  Array.from(beekeeperTags).forEach((tag) => {
-    const span = document.createElement("span");
-    span.className = "tag-pill";
-    span.innerHTML = `${tag} <span class="remove-tag">×</span>`;
-    span.querySelector(".remove-tag").onclick = (e) => {
-      e.stopPropagation();
-      removeBeekeeperTag(tag);
-    };
-    container.appendChild(span);
-  });
-}
-
-function renderBeekeeperSuggestions() {
-  const container = document.getElementById("api-available-tags-suggestions");
-  if (!container) return;
-  const defaults = ["Novo", "Destaque", "Artesanal", "Puro", "Premium", "Pronto a Enviar"];
-  const suggestions = defaults.filter((t) => !beekeeperTags.has(t));
-  container.innerHTML = suggestions
-    .map((tag) => `<span class="tag-suggestion" data-tag="${tag}">+ ${tag}</span>`)
-    .join("");
-}
-
-// --- BEEKEEPER ORIGINS ---
-async function loadBeekeeperOrigins() {
-  try {
-    const res = await fetch("/api/origins");
-    if (res.ok) {
-      const origins = await res.json();
-      const select = document.getElementById("api-produto-origem");
-      if (select) {
-        select.innerHTML = '<option value="">Selecione a origem...</option>' + 
-          origins.map(o => `<option value="${o.ID_Origem}">${o.Nome}</option>`).join("");
-      }
-    }
-  } catch (e) { console.error("Load origins error", e); }
-}
-
-async function handleApicultorProductAdd(e) {
-  e.preventDefault();
-
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  const btn = document.getElementById("api-btn-submit-prod");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A guardar...';
-  btn.disabled = true;
-
-  try {
-    // 1. Upload Image
-    const fileInput = document.getElementById("api-produto-imagem");
-    const file = fileInput.files[0];
-
-    if (!file) {
-      throw new Error("Por favor, seleciona uma fotografia.");
-    }
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const uploadRes = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-      // Do not set Content-Type header when using FormData; browser sets it with boundary
-    });
-
-    if (!uploadRes.ok) {
-      throw new Error("Erro ao carregar a imagem.");
-    }
-
-    const uploadData = await uploadRes.json();
-    const imagePath = uploadData.path;
-
-    // 2. Submit Product Data
-    const productData = {
-      nome: document.getElementById("api-produto-nome").value,
-      preco: parseFloat(document.getElementById("api-produto-preco").value),
-      idCategoria: parseInt(document.getElementById("api-produto-cat").value),
-      idOrigem: parseInt(document.getElementById("api-produto-origem").value) || null,
-      stock: parseInt(document.getElementById("api-produto-stock").value),
-      descricao: document.getElementById("api-produto-desc").value,
-      imagem: imagePath,
-      tags: Array.from(beekeeperTags).join(", "),
-    };
-
-    const res = await fetch("/api/apicultor/products", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(productData),
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Erro ao adicionar o produto.");
-    }
-
-    // Success
-    Swal.fire({
-      icon: "success",
-      title: "Produto Registado",
-      text: "O teu produto já está disponível no catálogo!",
-      confirmButtonColor: "#f4b400",
-    });
-
-    // Close Modal and Reset Form
-    e.target.reset();
-    document.getElementById("api-image-preview").src = "";
-    document.getElementById("api-image-preview").style.display = "none";
-    document.getElementById("api-image-placeholder").style.display = "block";
-    beekeeperTags.clear();
-    renderBeekeeperTagPills();
-    renderBeekeeperSuggestions();
-
-    const modalEl = document.getElementById("apicultorProductModal");
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) {
-      modal.hide();
-    }
-  } catch (error) {
-    console.error("Add apicultor product error:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Falha no Registo",
-      text: error.message || "Ocorreu um erro no sistema.",
-      confirmButtonColor: "#f4b400",
-    });
-  } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
-}
-
-// Apicultor Bio Save
-window.saveBio = async function () {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  const bioInput = document.getElementById("apicultor-bio-input");
-  const bio = bioInput ? bioInput.value : "";
-  const btn = document.getElementById("btn-save-bio");
-
-  if (!btn) return;
-
-  const originalText = btn.innerText;
-  btn.disabled = true;
-  btn.innerText = "A guardar...";
-
-  try {
-    const res = await fetch("/api/apicultor/bio", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ bio }),
-    });
-
-    if (res.ok) {
-      Swal.fire({
-        icon: "success",
-        title: "Sucesso",
-        text: "Biografia atualizada com sucesso!",
-        confirmButtonColor: "#f4b400",
-      });
-      // Update local data
-      if (currentUserData) currentUserData.bio = bio;
-    } else {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Erro ao atualizar biografia.");
-    }
-  } catch (error) {
-    console.error("Save bio error:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Erro",
-      text: error.message,
-      confirmButtonColor: "#f4b400",
-    });
-  } finally {
-    btn.disabled = false;
-    btn.innerText = originalText;
-  }
-};
-
-// Apicultor Workshop Add
-async function handleApicultorWorkshopAdd(e) {
-  e.preventDefault();
-
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  const btn = document.getElementById("api-btn-submit-workshop");
-  if (!btn) return;
-
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A guardar...';
-  btn.disabled = true;
-
-  try {
-    const fileInput = document.getElementById("api-workshop-imagem");
-    const file = fileInput.files[0];
-
-    if (!file)
-      throw new Error("Por favor, seleciona uma imagem para o workshop.");
-
-    // 1. Upload Image
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const uploadRes = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!uploadRes.ok) throw new Error("Erro ao carregar a imagem.");
-    const uploadData = await uploadRes.json();
-    const imagePath = uploadData.path;
-
-    // 2. Submit Workshop Data
-    const workshopData = {
-      titulo: document.getElementById("api-workshop-titulo").value,
-      descricao: document.getElementById("api-workshop-desc").value,
-      data_realizacao: document.getElementById("api-workshop-data").value,
-      preco: parseFloat(document.getElementById("api-workshop-preco").value),
-      vagas: parseInt(document.getElementById("api-workshop-vagas").value),
-      imagem: imagePath,
-    };
-
-    const res = await fetch("/api/apicultor/workshops", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(workshopData),
-    });
-
-    if (res.ok) {
-      Swal.fire({
-        icon: "success",
-        title: "Workshop Publicado",
-        text: "A tua formação está agora disponível na Hexomel!",
-        confirmButtonColor: "#f4b400",
-      });
-
-      e.target.reset();
-      const modalEl = document.getElementById("workshopModal");
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-    } else {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Erro ao publicar workshop.");
-    }
-  } catch (error) {
-    console.error("Add workshop error:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Erro",
-      text: error.message,
-      confirmButtonColor: "#f4b400",
-    });
-  } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
-}
 
 // Upgrade Request Handling
 async function handleUpgradeRequest(e) {
