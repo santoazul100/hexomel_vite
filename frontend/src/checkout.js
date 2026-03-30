@@ -6,7 +6,7 @@ const API_URL = "/api";
 class CheckoutManager {
   constructor() {
     this.currentStep = 1;
-    this.totalSteps = 5;
+    this.totalSteps = 2;
     this.token = localStorage.getItem("token");
     this.userData = null;
     this.init();
@@ -172,11 +172,8 @@ class CheckoutManager {
 
   updateUI() {
     const stepLabels = [
-      "Identificação",
-      "Morada",
-      "Entrega",
-      "Pagamento",
-      "Revisão",
+      "Dados de Envio",
+      "Pagamento e Revisão",
     ];
 
     const titleEl = document.getElementById("page-title");
@@ -205,8 +202,8 @@ class CheckoutManager {
       }
     }
 
-    // Prepare Review Step (Step 5)
-    if (this.currentStep === 5) {
+    // Prepare Review Step (Step 2)
+    if (this.currentStep === 2) {
       const morada = document.getElementById("morada").value;
       const cp = document.getElementById("cod-postal").value;
       const cidade = document.getElementById("cidade").value;
