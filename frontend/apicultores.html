@@ -1,0 +1,98 @@
+﻿<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apicultores - Hexomel</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <!-- Pre-load state detection -->
+    <script src="src/pre-load.js"></script>
+  </head>
+  <body>
+    <!-- Navbar (Premium Overhaul) -->
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img
+            src="/images/logo_hexomel.webp"
+            alt="Hexomel Logo"
+            class="navbar-logo"
+          />
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav mx-auto gap-4">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="shop.html">Produtos</a>
+            </li>
+            <li class="nav-item">
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contactos</a>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+                <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+                  <i class="fas fa-shopping-cart fs-5"></i>
+                  <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+                </button>
+            </div>
+            <div class="d-flex align-items-center gap-3" id="authSection"></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main style="padding-top: 120px;">
+      <section class="container py-5">
+        <div class="text-center mb-5 animate-fade-up">
+          <span class="product-badge-premium mb-3 d-inline-block">NOSSOS PRODUTORES</span>
+          <h1 class="display-4 fw-bold" style="color: var(--primary-green)">Nossos Apicultores</h1>
+          <p class="text-muted fs-5">ConheÃ§a os apicultores que dedicam a sua vida Ã  produÃ§Ã£o do melhor mel artesanal.</p>
+        </div>
+
+        <div class="row g-4" id="beekeepers-grid">
+            <!-- Injected by apicultores.js -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-success" role="status"></div>
+            </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Standard -->
+    <!-- (Assuming common layout scripts will handle footer or it's copied) -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/apicultores.js"></script>
+  </body>
+</html>
+
