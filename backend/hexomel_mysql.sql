@@ -195,3 +195,17 @@ CREATE TABLE IF NOT EXISTS `upgrade_requests` (
   KEY `ID_Cliente` (`ID_Cliente`),
   CONSTRAINT `fk_upgrade_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- --------------------------------------------------------
+
+-- Table: interacao (Analytics & Behavioral Tracking)
+CREATE TABLE IF NOT EXISTS `interacao` (
+  `ID_Interacao` int(10) NOT NULL AUTO_INCREMENT,
+  `ID_Cliente` int(10) DEFAULT NULL, -- NULL if anonymous
+  `Tipo` varchar(50) NOT NULL,       -- page_view, click, search, add_to_cart, etc.
+  `Pagina` varchar(150) DEFAULT NULL,
+  `Dados` JSON DEFAULT NULL,         -- Extra metadata (productId, searchText, etc.)
+  `Data_Interacao` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`ID_Interacao`),
+  KEY `ID_Cliente` (`ID_Cliente`),
+  CONSTRAINT `fk_interacao_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

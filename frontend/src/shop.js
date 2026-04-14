@@ -4,6 +4,7 @@ const API_URL = "/api";
 // import "./styles/modern.css"; // Already in HTML
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
+import { logInteraction, trackPageView } from "./analytics.js";
 
 // Fallback images if files don't exist
 const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
@@ -234,11 +235,16 @@ function applyFilters() {
   // 2. Get price range
   const maxPrice = Number(document.getElementById("priceRange")?.value || 100);
 
+  // 3. Get search term
+  const searchInput = document.getElementById("product-search");
+  const searchTerm = searchInput?.value.toLowerCase().trim() || "";
+
   // Filter
   filteredProducts = products.filter((p) => {
     let catMatch = true;
     let oriMatch = true;
     let vendorMatch = true;
+    let searchMatch = true;
 
     if (selectedCatIds.length > 0) {
       catMatch = selectedCatIds.includes(p.categoryId);
@@ -261,10 +267,25 @@ function applyFilters() {
       }
     }
 
+    if (searchTerm) {
+      const nameMatch = p.name.toLowerCase().includes(searchTerm);
+      const descMatch = p.description?.toLowerCase().includes(searchTerm);
+      const tagMatch = p.tags?.some(t => t.toLowerCase().includes(searchTerm));
+      searchMatch = nameMatch || descMatch || tagMatch;
+    }
+
     let priceMatch = p.price <= maxPrice;
 
-    return catMatch && oriMatch && vendorMatch && priceMatch;
+    return catMatch && oriMatch && vendorMatch && priceMatch && searchMatch;
   });
+
+  // Track Search (Debounced logic or only if searchTerm has length)
+  if (searchTerm.length >= 3) {
+    if (window.searchLogTimeout) clearTimeout(window.searchLogTimeout);
+    window.searchLogTimeout = setTimeout(() => {
+        logInteraction("search", { term: searchTerm, resultsCount: filteredProducts.length });
+    }, 1000); // 1s debounce
+  }
 
   // 3. Apply Multi-Directional Sorting
   const sortValue =
@@ -286,6 +307,9 @@ function applyFilters() {
 window.openProductDetails = async function (productId) {
   const product = products.find((p) => p.id === productId);
   if (!product) return;
+
+  // Track product view interaction
+  logInteraction("product_view", { productId: product.id, productName: product.name });
 
   const modalHtml = `
     <div class="details-overlay" id="detailsOverlay">
@@ -537,7 +561,9 @@ window.toggleFavorite = async function (productId) {
 
 // Add to cart function (Old one for quick add if needed, but cards now open details)
 window.addToCart = function (productId) {
+  const product = products.find((p) => p.id === productId);
   cart.addItem(productId);
+  if (product) logInteraction("add_to_cart", { productId: product.id, productName: product.name });
 };
 
 // Helper: Generate Stars HTML
@@ -667,6 +693,7 @@ window.submitReview = async (productId) => {
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
+  trackPageView(); // Log page view
   await fetchProducts();
   await fetchFavorites(); // Get latest from DB
 

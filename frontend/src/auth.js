@@ -316,29 +316,22 @@ export function updateNav(user) {
                   <li class="px-3 py-2 border-bottom">
                       <p class="mb-0 fw-bold small text-truncate" style="max-width: 150px">${user.name || user.firstName} ${user.lastName ?? ""}</p>
                       <p class="mb-0 text-muted smaller">${
-                        user.role?.toLowerCase() === "admin" ||
-                        user.userType?.toLowerCase() === "admin" ||
-                        user.UserType?.toLowerCase() === "admin"
+                        user.role?.toLowerCase() === "admin"
                           ? "Administrador"
-                          : user.role?.toLowerCase() === "apicultor" ||
-                              user.userType?.toLowerCase() === "apicultor" ||
-                              user.UserType?.toLowerCase() === "apicultor"
+                          : user.role?.toLowerCase() === "apicultor"
                             ? "Apicultor"
                             : "Cliente"
                       }</p>
                   </li>
                   <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
+                  <li><a class="dropdown-item dropdown-item-premium" href="profile.html?tab=orders"><i class="fas fa-shopping-basket me-2"></i> As minhas encomendas</a></li>
                   ${
-                    user.role?.toLowerCase() === "admin" ||
-                    user.userType?.toLowerCase() === "admin" ||
-                    user.UserType?.toLowerCase() === "admin"
+                    user.role?.toLowerCase() === "admin"
                       ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>'
                       : ""
                   }
                   ${
-                    user.role?.toLowerCase() === "apicultor" ||
-                    user.userType?.toLowerCase() === "apicultor" ||
-                    user.UserType?.toLowerCase() === "apicultor"
+                    user.role?.toLowerCase() === "apicultor"
                       ? '<li><a class="dropdown-item dropdown-item-premium" href="dashboard-apicultor.html"><i class="fas fa-leaf me-2"></i> Painel Apicultor</a></li>'
                       : ""
                   }

@@ -468,6 +468,9 @@
           <a class="admin-nav-link" data-section="upgrade-requests">
             <i class="fas fa-user-shield"></i> <span>Pedidos de Apicultor</span>
           </a>
+          <a class="admin-nav-link" data-section="interactions">
+            <i class="fas fa-mouse-pointer"></i> <span>Interações</span>
+          </a>
         </nav>
       </aside>
 
@@ -816,6 +819,149 @@
                   </tr>
                 </thead>
                 <tbody id="upgrade-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- INTERACTIONS SECTION -->
+        <section id="interactions-section" class="admin-section">
+          <header class="mb-4">
+            <h2 class="fw-bold mb-1">Interações dos Utilizadores</h2>
+            <p class="text-muted small">
+              Análise do comportamento dos utilizadores no site (últimos 30 dias).
+            </p>
+          </header>
+
+          <!-- KPI Cards -->
+          <div class="row g-4 mb-4" id="interactions-kpis">
+            <div class="col-md-4">
+              <div class="admin-card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <span class="d-block text-muted small mb-1">Total de Eventos</span>
+                    <h4 id="int-total" class="fw-bold mb-0">—</h4>
+                  </div>
+                  <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#f3e8ff;color:#9333ea;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-bolt" style="font-size:0.9rem"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="admin-card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <span class="d-block text-muted small mb-1">Utilizadores Autenticados</span>
+                    <h4 id="int-logged" class="fw-bold mb-0">—</h4>
+                  </div>
+                  <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#dcfce7;color:#166534;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-user-check" style="font-size:0.9rem"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="admin-card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <span class="d-block text-muted small mb-1">Utilizadores Anónimos</span>
+                    <h4 id="int-anon" class="fw-bold mb-0">—</h4>
+                  </div>
+                  <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-user-secret" style="font-size:0.9rem"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1 -->
+          <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Eventos por Dia (14 Dias)</h5>
+                <div style="height: 260px;">
+                  <canvas id="intPerDayChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Tipo de Evento</h5>
+                <div style="height: 260px;">
+                  <canvas id="intByTypeChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Behavioral Detail -->
+          <div class="row g-4 mb-4">
+            <!-- Top Viewed Products -->
+            <div class="col-lg-6">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Produtos Mais Vistos</h5>
+                <div style="height: 300px;">
+                  <canvas id="intTopViewedChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <!-- Top Add-to-Cart -->
+            <div class="col-lg-6">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Mais Adicionados ao Carrinho</h5>
+                <div style="height: 300px;">
+                  <canvas id="intTopCartChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 3: Search & Clicks -->
+          <div class="row g-4 mb-4">
+            <!-- Top Searches -->
+            <div class="col-lg-5">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Termos Mais Pesquisados 🔍</h5>
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Termo</th>
+                        <th class="text-end">Vezes</th>
+                      </tr>
+                    </thead>
+                    <tbody id="int-searches-body">
+                      <!-- Injected by admin.js -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <!-- Top Clicks -->
+            <div class="col-lg-7">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-4">Principais Cliques (Heatmap Summary) ⚡</h5>
+                <div style="height: 350px;">
+                  <canvas id="intTopClicksChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pages Table -->
+          <div class="admin-card border-0 shadow-sm">
+            <h5 class="fw-bold mb-4">Páginas Mais Visitadas</h5>
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>Página</th>
+                    <th class="text-end">Visitas (30d)</th>
+                  </tr>
+                </thead>
+                <tbody id="int-pages-body"></tbody>
               </table>
             </div>
           </div>

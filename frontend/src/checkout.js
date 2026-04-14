@@ -1,5 +1,6 @@
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
+import { logInteraction } from "./analytics.js";
 
 const API_URL = "/api";
 
@@ -29,6 +30,12 @@ class CheckoutManager {
     this.renderSummary();
     this.setupListeners();
     this.updateUI();
+
+    // Track checkout start
+    logInteraction("checkout_start", {
+      itemCount: cart.items.length,
+      totalValue: cart.items.reduce((acc, item) => acc + item.Preco * item.Quantidade, 0).toFixed(2)
+    });
   }
 
   async fetchUserProfile() {
@@ -263,35 +270,61 @@ class CheckoutManager {
     const btn = document.getElementById("final-submit-btn");
     const originalText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = "A processar...";
+    btn.textContent = "A redirecionar...";
 
     const address = `${document.getElementById("morada").value}, ${document.getElementById("cod-postal").value} ${document.getElementById("cidade").value}`;
     const phone = document.getElementById("telemovel").value;
     const nome = document.getElementById("nome").value;
     const apelido = document.getElementById("apelido").value;
 
+    const shippingType = document.querySelector('input[name="envio"]:checked').value;
+    const shippingCost = shippingType === "ctt" ? 4.9 : 0;
+    const paymentType = document.querySelector('input[name="pagamento"]:checked').value;
+
     try {
-      const res = await fetch(`${API_URL}/cart/checkout`, {
+      // If it's MBWay, we use the manual checkout (Legacy)
+      // If it's Card, we use Stripe Checkout Session
+      const endpoint = paymentType === "cartao" ? "/api/checkout/create-session" : "/api/cart/checkout";
+      
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify({ address, phone, nome, apelido }),
+        body: JSON.stringify({ 
+          address, 
+          phone, 
+          nome, 
+          apelido,
+          shippingCost
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.removeItem("cart");
-        Swal.fire({
-          icon: "success",
-          title: "Encomenda Confirmada!",
-          text: `Obrigado pela sua compra. ID do pedido: #${data.orderId}`,
-          confirmButtonColor: "#f4b400",
-        }).then(() => {
-          window.location.href = "shop.html";
-        });
+        if (data.url) {
+          // Stripe Session (Real or Mock)
+          window.location.href = data.url;
+        } else {
+          // Manual Checkout Success (Legacy/MBWay)
+          logInteraction("order_placed", {
+            orderId: data.orderId,
+            total: data.total || 0,
+            itemCount: cart.items.length
+          });
+
+          localStorage.removeItem("cart");
+          Swal.fire({
+            icon: "success",
+            title: "Encomenda Confirmada!",
+            text: `Obrigado pela sua compra. ID do pedido: #${data.orderId}`,
+            confirmButtonColor: "#f4b400",
+          }).then(() => {
+            window.location.href = "shop.html";
+          });
+        }
       } else {
         Swal.fire({
           icon: "error",

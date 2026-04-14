@@ -1,4 +1,4 @@
-# Funcionalidades do Hexomel
+# Funcionalidades do Hexomel (Status: Atualizado Abr/2026)
 
 Este documento detalha todas as funcionalidades implementadas no projeto Hexomel, abrangendo as capacidades dos utilizadores, a gestão administrativa e os metadados dos produtos.
 
@@ -6,79 +6,66 @@ Este documento detalha todas as funcionalidades implementadas no projeto Hexomel
 
 ## 🍯 1. Funcionalidades Gerais do Site
 
-- **Premium Filter System**: Catálogo com filtros dinâmicos por categorias, origens, vendedores e preço (range dinâmico).
-- **Carrinho de Compras**: Gestão persistente de produtos através de `localStorage` e integração com a base de dados.
-- **BeeAnimator**: Sistema de animação procedimental de abelhas que interagem com o rato (Efeito Parallax Inverso).
-- **Design System Premium**: Interface minimalista com paleta "Golden & White", tipografia sofisticada e sistema de estilos centralizado (`modern.css`).
-- **Autenticação**: Sistema de login e registo seguro, incluindo suporte para **Google OAuth**.
+- **✅ BeeAnimator (Premium UX)**: Sistema de animação procedimental de abelhas. Utiliza matemática trigonométrica para simular voo dinâmico com **Efeito Parallax Inverso** (interação com o rato).
+- **✅ Design System Premium**: Interface minimalista com a paleta "Golden & White". Focado em Vanilla CSS (moderno) com tipografia sofisticada e componentes reutilizáveis.
+- **✅ Premium Filter System**: Catálogo com filtros dinâmicos cruzados por categorias, origens geográficas, vendedores e preço.
+- **✅ Carrinho de Compras**: Gestão persistente de produtos através de `localStorage` com sincronização automática e lógica de stock em tempo real.
+- **✅ Autenticação Multi-fator**: Sistema de login/registo seguro com hashing (bcrypt), tokens JWT e integração Nativa com **Google OAuth**.
+- **✅ Sistema de Analytics (Behavioral Logging)**: Monitorização silenciosa e não-bloqueante de interações:
+    - Page Views (rastreio de navegação).
+    - Product Views (análise de interesse).
+    - Add to Cart events (intenção de compra).
+    - Checkout Funnel steps (deteção de abandono).
+- **✅ Sistema de Notificações Toast**: Feedback visual premium para interações (Sucesso, Erro, Aviso) com animações dinâmicas.
+
 
 ---
 
 ## 👥 2. Papéis de Utilizador e Permissões
 
 ### 👤 Cliente (Visitor/Client)
-- **Navegação**: Consulta de produtos, apicultores e workshops.
-- **Perfil**: Gestão de dados pessoais, biografia e foto de perfil.
-- **Carrinho e Favoritos**: Adicionar produtos ao carrinho ou à lista de desejos.
-- **Encomendas**: Realizar compras e consultar o histórico/estado das encomendas.
-- **Avaliações**: Sistema de feedback com comentários e notas (1-5 estrelas) em produtos comprados.
-- **Histórico de Encomendas**: Visualização do estado e detalhes de compras passadas.
-- **Pedido de Upgrade**: Possibilidade de solicitar o estatuto de Administrador enviando descrição e documento comprovativo.
+- **Perfil Personalizado**: Gestão de dados, avatar (upload base64), biografia e segurança (mudança de password).
+- **Lista de Favoritos**: Sistema de desejos com persistência na base de dados.
+- **Histórico de Encomendas**: Visualização detalhada de compras passadas, incluindo estado de pagamento e envio.
+- **Detalhes de Encomenda**: Modal premium com visualização de itens comprados, quantidades e preços unitários.
+- **Pedido de Upgrade**: Solicitação para se tornar Apicultor através do envio de documentos e justificação.
 
-### 🐝 Apicultor (Apicultor)
+### 🐝 Apicultor (Partner)
 *Inclui todas as permissões de Cliente, acrescidas de:*
-- **Gestão de Produtos**: Registo de produtos via interface premium (2 colunas) com:
-    - **Image Preview**: Visualização imediata da foto antes do upload.
-    - **Tag Management**: Sistema intuitivo de etiquetas (Novo, Artesanal, etc.).
-    - **Dynamic Origins**: Seleção da origem geográfica do produto.
-- **Workshops**: Criar e gerir workshops (título, descrição, data, preço, vagas).
-- **Bio Profissional**: Espaço dedicado para apresentar a sua história e métodos de produção.
+- **Gestão de Produtos**: Interface de registo de mel e derivados com preview de imagem e tags.
+- **Dashboard de Vendas**: Métricas simplificadas sobre os seus produtos e workshops.
+- **Workshops**: Criação de eventos de apicultura com gestão de vagas e datas.
+- **✅ Sistema de Reservas**: Receção e processamento de inscrições de clientes em workshops.
+- **Bio Profissional**: Espaço para apresentação da quinta e métodos de produção.
 
-### 🛡️ Administrador (Admin)
-*Acesso total ao Painel Administrativo (`admin.html`):*
-- **Dashboard de Analítica**: Gráficos dinâmicos (Chart.js) alimentados por um sistema de sementeira automática (40+ encomendas reais para amostragem), incluindo:
-    - Receita de 30 dias.
-    - Distribuição por categoria.
-    - Pedidos por status.
-    - Produtos top-venda (por receita).
-    - Vendas por apicultor.
-    - Crescimento de utilizadores (últimos 12 meses).
-- **KPIs em Tempo Real**: Faturação total, Valor Médio de Encomenda (AOV), total de utilizadores e produtos.
-- **Gestão de Categorias e Origens**: Controlo total sobre a organização do catálogo.
-- **Controlo de Utilizadores**: Promover utilizadores (Admin/Apicultor) ou remover contas.
-- **Gestão de Encomendas**: Interface visual premium com badges de estado e botões de ação estilizados.
-- **Gestão de Upgrades (Premium Viewer)**: Sistema de análise de documentos com modal de visualização avançada (PDF/Imagens). Inclui:
-    - **Gestão de Estados**: Loaders inteligentes com transições fluidas e tratamento de erros.
-    - **Compatibilidade**: Lógica otimizada para evitar "race conditions" e conflitos de estilos (CSS !important).
-    - **Ações Rápidas**: Aprovação/Rejeição com atualização imediata de permissões na BD e download direto do ficheiro.
 
+### 🛡️ Administrador (Full Control)
+*Acesso ao Content Management System (CMS) customizado:*
+- **Dashboard de Analítica Avançada**: 6 gráficos dinâmicos (Chart.js) para suporte à decisão:
+    1.  **Receita 30d**: Evolução diária da faturação.
+    2.  **Distribuição Core**: Vendas por categoria de mel.
+    3.  **Estado das Encomendas**: Funil de processamento (Pendente, Pago, Enviado).
+    4.  **Crescimento de Rede**: Novos utilizadores nos últimos 12 meses.
+    5.  **Top Products**: Ranking de produtos por receita gerada.
+    6.  **Performance de Parceiros**: Vendas divididas por apicultor.
+- **KPIs em Tempo Real**: Faturação total, AOV (Average Order Value), total de utilizadores e interações globais.
+- **Gestão de Upgrades (Document Viewer)**: Analisador de documentos PDF/Imagem integrado para aprovação de novos apicultores.
+- **Moderação Global**: Edição e eliminação de produtos, utilizadores, categorias e origens.
 
 ---
 
 ## 🗂️ 3. Metadados e Organização
 
-### Categorias (Exemplos)
-*Sistema dinâmico onde o admin pode adicionar qualquer tipo:*
-- Mel de Urze
-- Mel de Eucalipto
-- Mel de Rosmaninho
-- Mel Multifloral
-
-### Origens (Exemplos)
-*Rastreabilidade geográfica do produto:*
-- Serra da Estrela
-- Alentejo Central
-- Trás-os-Montes
-- Algarve (Serra do Caldeirão)
-- Açores (Mel de Incenso)
-
-### Tags (Categorização Extra)
-- Novo / Artesanal / Premium / Destaque / Pronto a Enviar
+- **Categorias Dinâmicas**: Mel de Urze, Eucalipto, Rosmaninho, Multifloral, etc.
+- **Origens Geográficas**: Rastreio por regiões (Serra da Estrela, Alentejo, Açores, etc.).
+- **Sistema de Tags**: Categorização rápida (Premium, Novo, Promoção, Artesanal).
 
 ---
 
-## 💻 4. Arquitetura Técnica (Resumo)
+## 💻 4. Arquitetura Técnica
 
-- **Backend**: Node.js com Express e JWT para autenticação.
-- **Base de Dados**: MySQL (Relacional) com tabelas para clientes, produtos, categorias, origens, encomendas, favoritos, avaliações e pedidos de upgrade.
-- **Frontend**: Vanilla JS (Vite) focado em performance e animações fluidas.
+- **Backend**: Node.js v18+, Express, JWT, Multer (uploads), Nodemailer.
+- **Base de Dados**: MySQL Relacional (Esquema robusto com Constraints e Indexes).
+- **Frontend**: Vanilla JavaScript (ES6+), Vite, Chart.js, SweetAlert2.
+- **Segurança**: Middleware de validação de papéis, proteção de rotas API e sanitização de inputs.
+

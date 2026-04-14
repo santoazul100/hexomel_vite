@@ -13,6 +13,27 @@ let currentUserData = null;
 let selectedRole = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Check for tab parameter in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get("tab");
+  if (tab) {
+    const tabBtn = document.querySelector(`.btn-profile-tab[data-tab="${tab}"]`);
+    if (tabBtn) {
+      // Remove active from any other tab
+      document.querySelectorAll(".btn-profile-tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".profile-tab-content").forEach(c => {
+        c.classList.remove("active");
+        c.style.display = "none";
+      });
+      
+      tabBtn.classList.add("active");
+      const panel = document.getElementById(`tab-${tab}`);
+      if (panel) {
+        panel.classList.add("active");
+        panel.style.display = "block";
+      }
+    }
+  }
   fetchProfileData();
   const user = getLoggedUser();
   if (user) updateNav(user);
@@ -257,9 +278,9 @@ function showInlineStatus(type, msg) {
   if (!el) return;
 
   if (type === "saving") {
-    el.innerHTML = `<span class="badge" style="background:var(--primary-gold,#f4b400);color:#000;font-size:.8rem;padding:.4em .8em"><i class="fas fa-spinner fa-spin me-1"></i>A guardar alterações...</span>`;
+    el.innerHTML = `<span class="badge" style="background:var(--primary-gold,#f4b400);color:#000;font-size:.8rem;padding:.4em .8em"><i class="fas fa-spinner fa-spin me-1"></i>A guardar alteraÃ§Ãµes...</span>`;
   } else if (type === "saved") {
-    el.innerHTML = `<span class="badge bg-success" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-check-circle me-1"></i>Alterações provocadas com sucesso!</span>`;
+    el.innerHTML = `<span class="badge bg-success" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-check-circle me-1"></i>AlteraÃ§Ãµes provocadas com sucesso!</span>`;
     setTimeout(() => {
       el.innerHTML = "";
     }, 3000);
@@ -298,11 +319,12 @@ async function fetchProfileData() {
     Swal.fire({
       icon: "error",
       title: "Erro ao carregar perfil",
-      text: error.message || "Não foi possível carregar os teus dados.",
+      text: error.message || "NÃ£o foi possÃ­vel carregar os teus dados.",
       confirmButtonColor: "#f4b400",
     });
   }
 }
+
 
 function renderProfile(data) {
   // Header Elements
@@ -333,7 +355,7 @@ function renderProfile(data) {
   if (addressEl) {
     addressEl.innerHTML = data.address
       ? `<i class="fas fa-map-marker-alt me-1"></i> ${data.address}`
-      : `<i class="fas fa-map-marker-alt me-1"></i> Morada não definida`;
+      : `<i class="fas fa-map-marker-alt me-1"></i> Morada nÃ£o definida`;
   }
 
   // Tab View Mode Elements
@@ -344,11 +366,11 @@ function renderProfile(data) {
   if (viewEmail) viewEmail.innerText = email;
 
   const viewPhone = document.getElementById("view-phone");
-  if (viewPhone) viewPhone.innerText = data.phone || "Não definido";
+  if (viewPhone) viewPhone.innerText = data.phone || "NÃ£o definido";
 
   const viewAddress = document.getElementById("view-address");
   if (viewAddress)
-    viewAddress.innerText = data.address || "Morada não definida";
+    viewAddress.innerText = data.address || "Morada nÃ£o definida";
 
   const viewCity = document.getElementById("view-city");
   if (viewCity) {
@@ -356,9 +378,9 @@ function renderProfile(data) {
       const parts = data.address.split(", ");
       const rest = parts.slice(1).join(", ");
       const restWords = rest.split(" ");
-      viewCity.innerText = restWords.slice(1).join(" ") || "Não definida";
+      viewCity.innerText = restWords.slice(1).join(" ") || "NÃ£o definida";
     } else {
-      viewCity.innerText = "Não definida";
+      viewCity.innerText = "NÃ£o definida";
     }
   }
 
@@ -384,34 +406,38 @@ function renderOrders(orders) {
   const ordersList = document.getElementById("orders-list");
   if (orders.length > 0) {
     ordersList.innerHTML = orders
-      .map(
-        (order) => `
-            <div class="premium-card p-4 d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <div class="fw-bold">Encomenda #${order.id}</div>
-                    <div class="small text-muted">${new Date(order.date).toLocaleDateString("pt-PT")}</div>
-                </div>
-                <div class="text-end d-flex flex-column align-items-end gap-2">
-                    <div>
-                        <div class="fw-bold" style="color: var(--primary-green)">€${(parseFloat(order.total) || 0).toFixed(2)}</div>
-                        <span class="badge rounded-pill ${order.status === "Pendente" ? "bg-warning text-dark" : "bg-success"}">${order.status}</span>
-                    </div>
-                    <button class="btn btn-sm btn-outline-warning py-1 px-3 rounded-pill" onclick="window.viewOrderDetails(${order.id})">
-                        <i class="fas fa-eye me-1"></i> Detalhes
-                    </button>
-                </div>
+      .map((order) => {
+        const statusSteps = ["Pendente", "Pago", "Enviado", "Entregue"];
+        const curIdx = statusSteps.indexOf(order.status);
+        const sc = { Pendente: {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"}, Pago: {bg:"#f0fdf4",color:"#166534",icon:"fa-check-circle"}, Enviado: {bg:"#eff6ff",color:"#1d4ed8",icon:"fa-truck"}, Entregue: {bg:"#f0fdf4",color:"#15803d",icon:"fa-gift"}, Cancelado: {bg:"#fef2f2",color:"#991b1b",icon:"fa-times-circle"} }[order.status] || {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"};
+        const tl = statusSteps.map((s,i) => `<div class="order-timeline-step ${i<=curIdx?"active":""} ${i===curIdx?"current":""}"><div class="timeline-dot"></div><span class="timeline-label">${s}</span></div>`).join('<div class="timeline-line-connector"></div>');
+        return `<div class="order-card-premium animate-fade-up">
+          <div class="order-card-header">
+            <div class="d-flex align-items-center gap-3">
+              <div class="order-id-badge">#${order.id}</div>
+              <div><div class="fw-bold">Encomenda #${order.id}</div><div class="text-muted small">${new Date(order.date).toLocaleDateString("pt-PT",{year:"numeric",month:"long",day:"numeric"})}</div></div>
             </div>
-        `,
-      )
-      .join("");
+            <div class="text-end">
+              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">â‚¬${(parseFloat(order.total)||0).toFixed(2)}</div>
+              <span class="order-status-pill" style="background:${sc.bg};color:${sc.color}"><i class="fas ${sc.icon} me-1"></i>${order.status}</span>
+            </div>
+          </div>
+          <div class="order-timeline-container">${tl}</div>
+          <div class="order-card-actions">
+            <button class="btn btn-order-action primary" onclick="window.viewOrderDetails(${order.id})"><i class="fas fa-eye me-1"></i>Detalhes</button>
+            <button class="btn btn-order-action" onclick="window.downloadReceipt(${order.id})"><i class="fas fa-file-invoice me-1"></i>Recibo</button>
+            <button class="btn btn-order-action" onclick="window.resendReceipt(${order.id})"><i class="fas fa-envelope me-1"></i>Email</button>
+            <button class="btn btn-order-action success" onclick="window.reorderItems(${order.id})"><i class="fas fa-redo me-1"></i>Repetir</button>
+          </div>
+        </div>`;
+      }).join("");
   } else {
     ordersList.innerHTML = `
-            <div class="text-center py-5 opacity-50 bg-light rounded-4 border">
-                <i class="fas fa-shopping-basket fs-1 mb-3"></i>
-                <p>Ainda não fizeste nenhuma encomenda.</p>
-                <a href="shop.html" class="btn btn-sm btn-auth-enhanced register">Ir para a Loja</a>
-            </div>
-        `;
+      <div class="text-center py-5 opacity-50 bg-light rounded-4 border">
+        <i class="fas fa-shopping-basket fs-1 mb-3"></i>
+        <p>Ainda nÃ£o fizeste nenhuma encomenda.</p>
+        <a href="shop.html" class="btn btn-sm btn-auth-enhanced register">Ir para a Loja</a>
+      </div>`;
   }
 }
 
@@ -452,7 +478,7 @@ function renderFavorites(favorites) {
                   </div>
                   <div class="flex-grow-1">
                       <div class="fw-bold small text-truncate">${fav.Nome}</div>
-                      <div class="text-muted" style="font-size: 0.85rem;">€${(parseFloat(fav.Preco) || 0).toFixed(2)}</div>
+                      <div class="text-muted" style="font-size: 0.85rem;">â‚¬${(parseFloat(fav.Preco) || 0).toFixed(2)}</div>
                   </div>
                   <div class="d-flex gap-2">
                     <button onclick="window.location.href='product.html?id=${fav.ID_Produto}'" class="btn btn-sm btn-auth-enhanced login flex-grow-1 py-1">Ver</button>
@@ -467,7 +493,7 @@ function renderFavorites(favorites) {
     favGrid.innerHTML = `
             <div class="col-12 text-center py-5 opacity-50 bg-light rounded-4 border">
                 <i class="fas fa-heart fs-1 mb-3"></i>
-                <p>Ainda não tens favoritos.</p>
+                <p>Ainda nÃ£o tens favoritos.</p>
             </div>
         `;
   }
@@ -513,7 +539,7 @@ async function handlePasswordUpdate(e) {
   const confirmPassword = document.getElementById("confirm-new-password").value;
 
   if (newPassword !== confirmPassword) {
-    return Swal.fire("Erro", "As novas passwords não coincidem", "error");
+    return Swal.fire("Erro", "As novas passwords nÃ£o coincidem", "error");
   }
 
   if (newPassword.length < 6) {
@@ -570,7 +596,7 @@ async function handlePasswordUpdate(e) {
 async function handleDeleteAccount() {
   const result = await Swal.fire({
     title: "Tem a certeza?",
-    text: "Esta ação é irreversível e todos os seus dados serão eliminados!",
+    text: "Esta aÃ§Ã£o Ã© irreversÃ­vel e todos os seus dados serÃ£o eliminados!",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#d33",
@@ -605,7 +631,7 @@ async function handleDeleteAccount() {
         Swal.fire({
           icon: "success",
           title: "Conta Eliminada",
-          text: "A sua conta foi removida com sucesso. Esperamos vê-lo de novo!",
+          text: "A sua conta foi removida com sucesso. Esperamos vÃª-lo de novo!",
           confirmButtonColor: "#f4b400",
         }).then(() => {
           logout();
@@ -635,8 +661,8 @@ async function handleAvatarUpload(e) {
   if (!file.type.startsWith("image/")) {
     Swal.fire({
       icon: "error",
-      title: "Ficheiro Inválido",
-      text: "Por favor, seleciona uma imagem válida.",
+      title: "Ficheiro InvÃ¡lido",
+      text: "Por favor, seleciona uma imagem vÃ¡lida.",
       confirmButtonColor: "#f4b400",
     });
     return;
@@ -646,7 +672,7 @@ async function handleAvatarUpload(e) {
     Swal.fire({
       icon: "error",
       title: "Ficheiro Muito Grande",
-      text: "A imagem deve ter no máximo 5MB.",
+      text: "A imagem deve ter no mÃ¡ximo 5MB.",
       confirmButtonColor: "#f4b400",
     });
     return;
@@ -716,7 +742,7 @@ async function handleAvatarUpload(e) {
     Swal.fire({
       icon: "error",
       title: "Erro",
-      text: error.message || "Não foi possível atualizar a foto.",
+      text: error.message || "NÃ£o foi possÃ­vel atualizar a foto.",
       confirmButtonColor: "#f4b400",
     });
   } finally {
@@ -776,7 +802,7 @@ window.viewOrderDetails = async function (orderId) {
             <tr>
               <th colspan="2">Produto</th>
               <th class="text-center">Qtd</th>
-              <th class="text-end">Preço</th>
+              <th class="text-end">PreÃ§o</th>
             </tr>
           </thead>
           <tbody>
@@ -795,10 +821,10 @@ window.viewOrderDetails = async function (orderId) {
           </td>
           <td>
             <div class="fw-bold small text-wrap">${item.Nome}</div>
-            <div class="text-muted small">€${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
+            <div class="text-muted small">â‚¬${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
           </td>
           <td class="text-center small">${item.Quantidade}</td>
-          <td class="text-end fw-bold small">€${itemTotal.toFixed(2)}</td>
+          <td class="text-end fw-bold small">â‚¬${itemTotal.toFixed(2)}</td>
         </tr>
       `;
     });
@@ -808,7 +834,7 @@ window.viewOrderDetails = async function (orderId) {
           <tfoot class="border-top">
             <tr>
               <td colspan="3" class="pt-3 fw-bold">Total da Encomenda</td>
-              <td class="pt-3 text-end fw-bold fs-5 text-warning">€${total.toFixed(2)}</td>
+              <td class="pt-3 text-end fw-bold fs-5 text-warning">â‚¬${total.toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -826,6 +852,149 @@ window.viewOrderDetails = async function (orderId) {
     `;
   }
 };
+
+window.downloadReceipt = async function (orderId) {
+  const token = getAuthToken();
+  if (!token) return handleSessionExpired();
+
+  try {
+    Swal.fire({
+      title: "Gerando Recibo...",
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    const res = await fetch(`/api/user/orders/${orderId}/receipt`, {
+      headers: buildAuthHeaders(),
+    });
+    
+    if (!res.ok) throw new Error("Falha ao gerar recibo");
+
+    const html = await res.text();
+    const win = window.open("", "_blank");
+    win.document.write(html);
+    win.document.close();
+    
+    // Auto-print after fonts load
+    win.onload = () => {
+      setTimeout(() => {
+        win.print();
+        Swal.close();
+      }, 500);
+    };
+
+  } catch (error) {
+    console.error("Download receipt error:", error);
+    Swal.fire("Erro", "Não foi possível carregar o recibo para impressão.", "error");
+  }
+};
+
+window.resendReceipt = async function (orderId) {
+  const token = getAuthToken();
+  if (!token) return handleSessionExpired();
+
+  Swal.fire({
+    title: "Reenviar Recibo?",
+    text: "Enviaremos uma cópia do recibo para o teu email registado.",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Sim, reenviar",
+    confirmButtonColor: "#f4b400",
+    cancelButtonColor: "#718096",
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        Swal.fire({ title: "Enviando...", didOpen: () => { Swal.showLoading(); } });
+        const res = await fetch(`/api/user/orders/${orderId}/resend-receipt`, {
+          method: "POST",
+          headers: buildAuthHeaders(),
+        });
+        if (res.ok) {
+          Swal.fire({
+            icon: "success",
+            title: "Enviado!",
+            text: "O recibo foi enviado com sucesso. Verifica a tua caixa de entrada.",
+            confirmButtonColor: "#1a4d2e"
+          });
+        } else {
+          const data = await res.json();
+          throw new Error(data.error || "Falha ao enviar email");
+        }
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  });
+};
+
+window.reorderItems = async function (orderId) {
+  const token = getAuthToken();
+  if (!token) return handleSessionExpired();
+
+  try {
+    Swal.fire({
+      title: "A preparar re-encomenda...",
+      text: "A validar produtos e stock disponível",
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    const res = await fetch(`/api/user/orders/${orderId}/items`, {
+      headers: buildAuthHeaders(),
+    });
+    const items = await res.json();
+    
+    if (!items || items.length === 0) throw new Error("Não foram encontrados itens nesta encomenda.");
+
+    let addedCount = 0;
+    
+    // Use global cart object if available
+    if (window.cart && typeof window.cart.addItem === "function") {
+      for (const item of items) {
+        try {
+          // Check stock indirectly via adding
+          await window.cart.addItem(item.ID_Produto, item.Quantidade); 
+          addedCount++;
+        } catch (err) {
+          console.warn(`Could not add product ${item.ID_Produto}:`, err);
+        }
+      }
+      
+      if (addedCount === 0) {
+        Swal.fire("Aviso", "Infelizmente, os produtos desta encomenda já não estão disponíveis ou estão sem stock.", "warning");
+        return;
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "🛒 Carrinho Atualizado!",
+        text: `Adicionámos ${addedCount} produto(s) ao teu carrinho. Desejas finalizar a compra agora?`,
+        showCancelButton: true,
+        confirmButtonText: "Ir para o Checkout",
+        cancelButtonText: "Continuar a Comprar",
+        confirmButtonColor: "#1a4d2e",
+      }).then((result) => {
+        if (result.isConfirmed) window.location.href = "checkout.html";
+        else {
+           // Provide feedback that things are in the cart
+           window.cart.toggle(true);
+        }
+      });
+    } else {
+      // Fallback manual adding loop
+      for (const item of items) {
+        await fetch("/api/cart/add", {
+          method: "POST",
+          headers: { ...buildAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: item.ID_Produto, quantity: item.Quantidade }),
+        });
+      }
+      Swal.fire("Sucesso", "Produtos adicionados ao carrinho!", "success");
+    }
+  } catch (error) {
+    console.error("Reorder error:", error);
+    Swal.fire("Erro", "Não foi possível repetir a encomenda. Tenta novamente mais tarde.", "error");
+  }
+};
+
 
 
 // Upgrade Request Handling
@@ -849,7 +1018,7 @@ async function handleUpgradeRequest(e) {
     const docFile = document.getElementById("upgrade-doc").files[0];
 
     if (!docFile)
-      throw new Error("Por favor, seleciona um documento de verificação.");
+      throw new Error("Por favor, seleciona um documento de verificaÃ§Ã£o.");
 
     const formData = new FormData();
     formData.append("descricao", descricao);
@@ -872,7 +1041,7 @@ async function handleUpgradeRequest(e) {
       Swal.fire({
         icon: "success",
         title: "Pedido Enviado",
-        text: "O teu pedido de Apicultor foi enviado e será analisado pela administração.",
+        text: "O teu pedido de Apicultor foi enviado e serÃ¡ analisado pela administraÃ§Ã£o.",
         confirmButtonColor: "#f4b400",
       });
       e.target.reset();
@@ -917,13 +1086,13 @@ async function checkUpgradeStatus() {
         banner.classList.remove("d-none");
         let statusClass = "bg-warning-subtle text-warning-emphasis";
         let statusIcon = "fa-clock";
-        let statusText = "O teu pedido para ser Apicultor está pendente de análise.";
+        let statusText = "O teu pedido para ser Apicultor estÃ¡ pendente de anÃ¡lise.";
 
         if (data.Status === "Aprovado") {
           statusClass = "bg-success-subtle text-success-emphasis";
           statusIcon = "fa-check-circle";
           statusText =
-            "O teu pedido de Apicultor foi aprovado! Re-inicia a sessão para ativar as tuas ferramentas de venda.";
+            "O teu pedido de Apicultor foi aprovado! Re-inicia a sessÃ£o para ativar as tuas ferramentas de venda.";
           form.classList.add("d-none");
         } else if (data.Status === "Rejeitado") {
           statusClass = "bg-danger-subtle text-danger-emphasis";

@@ -1,4 +1,5 @@
 import { updateNav, getLoggedUser } from "./auth.js";
+import { toast } from "./toast.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const user = getLoggedUser();
@@ -11,6 +12,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "shop.html";
     return;
   }
+
+  // Global functions for the onclick handlers
+  window.reserveWorkshop = async (id) => {
+    const activeUser = getLoggedUser();
+    if (!activeUser) {
+        toast.warning("Inicie sessão para reservar a sua vaga!", "Autenticação Necessária");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/workshops/${id}/reserve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+            }
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+            toast.success(data.message || "Reserva efetuada com sucesso!");
+            // Reload workshops to update vacancy count
+            fetchWorkshops(apicultorId);
+        } else {
+            toast.error(data.error || "Não foi possível efetuar a reserva.");
+        }
+    } catch (err) {
+        toast.error("Erro de ligação ao servidor.");
+    }
+  };
 
   try {
     await Promise.all([
@@ -97,6 +127,7 @@ async function fetchWorkshops(id) {
     });
     const col = document.createElement("div");
     col.className = "col-lg-4 col-md-6";
+    const hasVagas = w.Vagas > 0;
     col.innerHTML = `
             <div class="workshop-card h-100">
                 <img src="${w.Imagem || "assets/default-workshop.png"}" class="workshop-img w-100" alt="${w.Titulo}">
@@ -108,7 +139,11 @@ async function fetchWorkshops(id) {
                         <span class="fs-4 fw-bold text-warning">${parseFloat(w.Preco).toFixed(2)}€</span>
                         <span class="text-muted small">${w.Vagas} vagas disponíveis</span>
                     </div>
-                    <button class="btn btn-warning w-100 mt-4 rounded-pill fw-bold" onclick="alert('Funcionalidade de Reserva em breve!')">Reservar Vaga</button>
+                    <button class="btn btn-warning w-100 mt-4 rounded-pill fw-bold" 
+                            onclick="window.reserveWorkshop(${w.ID_Workshop})" 
+                            ${!hasVagas ? 'disabled' : ''}>
+                        ${hasVagas ? 'Reservar Vaga' : 'Esgotado'}
+                    </button>
                 </div>
             </div>
         `;

@@ -164,6 +164,7 @@ class AdminUI {
     if (sectionId === "orders") this.loadOrders();
     if (sectionId === "upgrade-requests") this.loadUpgradeRequests();
     if (sectionId === "workshops") this.loadWorkshops();
+    if (sectionId === "interactions") this.loadInteractions();
   }
 
   async loadDashboardStats() {
@@ -1611,6 +1612,182 @@ class AdminUI {
     }
 
 
+  }
+
+  // --- INTERACTIONS ANALYTICS ---
+  async loadInteractions() {
+    try {
+      const res = await fetch(`${API_URL}/admin/analytics/interactions`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!res.ok) throw new Error("Falha ao carregar interações");
+      const data = await res.json();
+
+      // KPI Cards
+      const { totals, byType, byPage, topViewed, topCart, perDay } = data;
+      const totalEl = document.getElementById("int-total");
+      const loggedEl = document.getElementById("int-logged");
+      const anonEl = document.getElementById("int-anon");
+      if (totalEl) totalEl.textContent = totals?.total ?? 0;
+      if (loggedEl) loggedEl.textContent = totals?.logged_in ?? 0;
+      if (anonEl) anonEl.textContent = totals?.anonymous ?? 0;
+
+      // Pages Table
+      const pagesBody = document.getElementById("int-pages-body");
+      if (pagesBody) {
+        pagesBody.innerHTML = byPage.length === 0
+          ? `<tr><td colspan="2" class="text-center text-muted py-3">Sem dados ainda.</td></tr>`
+          : byPage.map(p => `
+              <tr>
+                <td><i class="fas fa-file-alt me-2 text-muted" style="font-size:0.8rem"></i>${p.pagina}</td>
+                <td class="text-end fw-bold">${p.count}</td>
+              </tr>`).join("");
+      }
+
+      const palette = ["#f4b400","#1c5236","#0284c7","#9333ea","#ef4444","#f97316","#ec4899","#64748b"];
+
+      // Chart: Events per Day
+      const perDayCtx = document.getElementById("intPerDayChart")?.getContext("2d");
+      if (perDayCtx) {
+        if (this.intPerDayChart) this.intPerDayChart.destroy();
+        const gradient = perDayCtx.createLinearGradient(0, 0, 0, 260);
+        gradient.addColorStop(0, "rgba(28,82,54,0.3)");
+        gradient.addColorStop(1, "rgba(28,82,54,0)");
+        this.intPerDayChart = new Chart(perDayCtx, {
+          type: "line",
+          data: {
+            labels: perDay.map(d => new Date(d.dia).toLocaleDateString("pt-PT", { day: "2-digit", month: "short" })),
+            datasets: [{
+              label: "Eventos",
+              data: perDay.map(d => d.total),
+              borderColor: "#1c5236",
+              backgroundColor: gradient,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.03)" }, ticks: { stepSize: 1 } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // Chart: Events by Type (Doughnut)
+      const byTypeCtx = document.getElementById("intByTypeChart")?.getContext("2d");
+      if (byTypeCtx) {
+        if (this.intByTypeChart) this.intByTypeChart.destroy();
+        const typeLabels = { page_view: "Visita Página", product_view: "Viu Produto", add_to_cart: "Add Carrinho", checkout_start: "Checkout", search: "Pesquisa" };
+        this.intByTypeChart = new Chart(byTypeCtx, {
+          type: "doughnut",
+          data: {
+            labels: byType.map(t => typeLabels[t.tipo] || t.tipo),
+            datasets: [{ data: byType.map(t => t.count), backgroundColor: palette, borderWidth: 0, hoverOffset: 12 }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: "72%",
+            plugins: { legend: { position: "bottom", labels: { usePointStyle: true, padding: 16, font: { size: 11 } } } }
+          }
+        });
+      }
+
+      // Chart: Top Viewed Products (horizontal bar)
+      const viewCtx = document.getElementById("intTopViewedChart")?.getContext("2d");
+      if (viewCtx) {
+        if (this.intTopViewedChart) this.intTopViewedChart.destroy();
+        this.intTopViewedChart = new Chart(viewCtx, {
+          type: "bar",
+          data: {
+            labels: topViewed.map(p => p.nome || `Produto ${p.id}`),
+            datasets: [{ label: "Visualizações", data: topViewed.map(p => p.views), backgroundColor: "#f4b400", borderRadius: 8 }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
+          }
+        });
+      }
+
+      // Chart: Top Add-to-Cart Products (horizontal bar)
+      const cartCtx = document.getElementById("intTopCartChart")?.getContext("2d");
+      if (cartCtx) {
+        if (this.intTopCartChart) this.intTopCartChart.destroy();
+        this.intTopCartChart = new Chart(cartCtx, {
+          type: "bar",
+          data: {
+            labels: topCart.map(p => p.nome || `Produto ${p.id}`),
+            datasets: [{ label: "Adds ao Carrinho", data: topCart.map(p => p.adds), backgroundColor: "#1c5236", borderRadius: 8 }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
+          }
+        });
+      }
+
+      // 1. NEW: Search Queries Table
+      const { topSearches, topClicks } = data;
+      const searchesBody = document.getElementById("int-searches-body");
+      if (searchesBody) {
+        searchesBody.innerHTML = !topSearches || topSearches.length === 0
+          ? `<tr><td colspan="2" class="text-center text-muted py-3">Sem pesquisas capturadas.</td></tr>`
+          : topSearches.map(s => `
+              <tr>
+                <td class="fw-bold"><i class="fas fa-search me-2 text-muted small"></i>${s.termo}</td>
+                <td class="text-end"><span class="badge bg-light text-dark border">${s.count}</span></td>
+              </tr>`).join("");
+      }
+
+      // 2. NEW: Top Clicks Chart (Horizontal Bar)
+      const clickCtx = document.getElementById("intTopClicksChart")?.getContext("2d");
+      if (clickCtx) {
+        if (this.intTopClicksChart) this.intTopClicksChart.destroy();
+        this.intTopClicksChart = new Chart(clickCtx, {
+          type: "bar",
+          data: {
+            labels: topClicks.map(c => c.label.length > 25 ? c.label.substring(0,25) + "..." : c.label),
+            datasets: [{ 
+              label: "Cliques", 
+              data: topClicks.map(c => c.clicks), 
+              backgroundColor: "rgba(244, 180, 0, 0.7)", 
+              borderColor: "#f4b400",
+              borderWidth: 1,
+              borderRadius: 4 
+            }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true, maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  afterLabel: (context) => {
+                    const item = topClicks[context.dataIndex];
+                    return `Elemento: <${item.element}>`;
+                  }
+                }
+              }
+            },
+            scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
+          }
+        });
+      }
+
+    } catch (err) {
+      console.error("Interactions load error", err);
+    }
   }
 }
 

@@ -40,7 +40,7 @@ O projeto segue uma estrutura de **Single Page Application (SPA) logic** no fron
 5. **`avaliacao`**: Sistema de feedback com notas de 1 a 5 estrelas.
 6. **`upgrade_requests`**: Registo e controlo de pedidos de privilégios de Apicultor, com suporte a armazenamento de provas documentais.
 7. **`origem`**: Metadados geográficos para rastreabilidade do mel.
-
+8. **`interacao`**: Registo analítico de eventos para monitorização comportamental de utilizadores.
 
 ---
 
@@ -68,8 +68,9 @@ O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Tabelas Modernas**: Com sistema de iniciais em avatares e ações flutuantes.
 - **Micro-interações**: Feedback visual imediato em formulários e dashboards.
 - **UX Unificada**: O portal do Apicultor utiliza a mesma linguagem visual de alta qualidade do Painel de Administração.
-- **Analytics Avançado**: Dashboard com integração total do `Chart.js`, processando dados reais de vendas, crescimento de utilizadores e produtividade de apicultores.
+- **Analytics Avançado**: Dashboard com integração total do `Chart.js`, processando dados reais de vendas, crescimento de utilizadores, produtividade de apicultores, e um painel avançado de **Interações Comportamentais** (eventos, cliques e funil).
 - **Robustez de Visualização**: Sistema de visualização de documentos (Upgrade System) com tratamento de erros avançado, gestão de classes dinâmicas para loaders e suporte cross-browser para PDF e Imagens.
+- **Área de Cliente Premium**: Painel de perfil interativo abrangente com histórico de encomendas detalhado e acompanhamento visual do estado de cada compra.
 
 
 ---

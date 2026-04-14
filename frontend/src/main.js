@@ -10,6 +10,7 @@ import {
 } from "./auth.js";
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
+import { trackPageView, setupAutoTracking } from "./analytics.js";
 
 // Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
@@ -134,6 +135,8 @@ window.addEventListener("scroll", () => {
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
+  trackPageView(); // Global analytics
+  setupAutoTracking(); // Automatic click tracking
   injectAuthModal();
   initializeAuthForms();
   updateNav(getLoggedUser());
