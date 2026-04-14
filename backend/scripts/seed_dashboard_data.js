@@ -1,19 +1,11 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-
-dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), "..", ".env") });
+import { getDbConfig } from "../config/env.js";
 
 const seedDashboardData = async () => {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "",
-      database: process.env.DB_NAME || "hexomel",
-      multipleStatements: true,
-    });
+    const connection = await mysql.createConnection(
+      getDbConfig({ multipleStatements: true }),
+    );
 
     console.log("Connected to MySQL for dashboard seeding.");
 

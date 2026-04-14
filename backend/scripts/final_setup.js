@@ -1,10 +1,8 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-
-dotenv.config();
+import { backendRoot, getServerDbConfig } from "../config/env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,12 +10,9 @@ const __dirname = path.dirname(__filename);
 const setupFinal = async () => {
   let connection;
   try {
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "",
-      multipleStatements: true,
-    });
+    connection = await mysql.createConnection(
+      getServerDbConfig({ multipleStatements: true }),
+    );
 
     console.log("Connected to MySQL server.");
 
@@ -27,7 +22,7 @@ const setupFinal = async () => {
     await connection.query("USE `hexomel`;");
     console.log("Clean 'hexomel' database created.");
 
-    const sqlPath = path.join(__dirname, "..", "hexomel_mysql.sql");
+    const sqlPath = path.join(backendRoot, "hexomel_mysql.sql");
     let sqlContent = fs.readFileSync(sqlPath, "utf8");
 
     // Robust splitting:

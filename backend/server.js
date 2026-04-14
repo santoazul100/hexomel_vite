@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "./config/env.js";
 import { initDB, db } from "./config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -14,8 +14,6 @@ import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,8 +83,18 @@ initDB()
     }
 
     // Start Server ONLY after DB is ready
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
+    });
+    server.on("error", (error) => {
+      if (error.code === "EADDRINUSE") {
+        console.error(
+          `Port ${PORT} is already in use. Stop the other backend instance or change PORT in backend/.env.`,
+        );
+      } else {
+        console.error("Server startup error:", error);
+      }
+      process.exit(1);
     });
   })
   .catch((err) => {
@@ -1481,19 +1489,35 @@ async function initMailer() {
       },
     });
     console.log("Mailer initialized with real SMTP credentials.");
-  } else {
-    // Fallback to ethereal.email if no credentials are provided
-    let testAccount = await nodemailer.createTestAccount();
+    return;
+  }
+
+  const allowEthereal =
+    (process.env.ENABLE_ETHEREAL_MAIL || "").toLowerCase() === "true";
+
+  if (!allowEthereal) {
+    transporter = null;
+    console.log(
+      "Mailer disabled. Define SMTP_USER/SMTP_PASS or set ENABLE_ETHEREAL_MAIL=true to use Ethereal.",
+    );
+    return;
+  }
+
+  try {
+    const testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
       port: 587,
-      secure: false, 
+      secure: false,
       auth: {
-        user: testAccount.user, 
-        pass: testAccount.pass, 
+        user: testAccount.user,
+        pass: testAccount.pass,
       },
     });
     console.log("Mailer initialized with Ethereal:", testAccount.user);
+  } catch (error) {
+    transporter = null;
+    console.warn("Mailer disabled because Ethereal setup failed:", error.message);
   }
 }
 initMailer().catch(console.error);
@@ -1822,15 +1846,34 @@ app.get(
 app.put("/api/user/profile", authenticateToken, async (req, res) => {
   const { name, email, phone, address } = req.body;
   try {
-    // Basic validation
-    if (!name || !email) {
+    const currentUser = await db.get(
+      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, UserType, Bio, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!currentUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const nextName =
+      typeof name === "string" && name.trim() ? name.trim() : currentUser.Nome;
+    const nextEmail =
+      typeof email === "string" && email.trim()
+        ? email.trim().toLowerCase()
+        : currentUser.Email;
+    const nextPhone =
+      phone !== undefined ? (phone || null) : currentUser.Telefone;
+    const nextAddress =
+      address !== undefined ? (address || null) : currentUser.Morada;
+
+    if (!nextName || !nextEmail) {
       return res.status(400).json({ error: "Name and Email are required" });
     }
 
     // Check if email is already taken by another user
     const existing = await db.all(
       "SELECT ID_Cliente FROM cliente WHERE Email = ? AND ID_Cliente != ?",
-      [email, req.user.id],
+      [nextEmail, req.user.id],
     );
     if (existing.length > 0) {
       return res.status(400).json({ error: "Email is already in use" });
@@ -1838,10 +1881,23 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
 
     await db.run(
       "UPDATE cliente SET Nome = ?, Email = ?, Telefone = ?, Morada = ? WHERE ID_Cliente = ?",
-      [name, email, phone || null, address || null, req.user.id],
+      [nextName, nextEmail, nextPhone, nextAddress, req.user.id],
     );
 
-    res.json({ message: "Profile updated successfully" });
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: currentUser.ID_Cliente,
+        name: nextName,
+        email: nextEmail,
+        phone: nextPhone,
+        address: nextAddress,
+        picture: currentUser.Picture,
+        role: currentUser.UserType,
+        bio: currentUser.Bio,
+        dateRegistered: currentUser.Data_Resgistro,
+      },
+    });
   } catch (error) {
     console.error("Profile update error:", error);
     res.status(500).json({ error: "Server error" });

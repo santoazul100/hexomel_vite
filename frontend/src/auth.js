@@ -1,5 +1,6 @@
 import Swal from "sweetalert2";
 const API_URL = "/api";
+let isHandlingSessionExpiry = false;
 
 // Register and Login Listeners (now initialized via main.js after injection)
 export const initializeAuthForms = () => {
@@ -129,12 +130,71 @@ export const initializeAuthForms = () => {
 // Check logged in state on other pages
 export const getLoggedUser = () => {
   const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
+  if (!user) return null;
+
+  try {
+    return JSON.parse(user);
+  } catch {
+    clearSession();
+    return null;
+  }
+};
+
+export const clearSession = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+};
+
+export const getAuthToken = () => {
+  const token = localStorage.getItem("token");
+  if (!token || token === "undefined" || token === "null") {
+    return null;
+  }
+  return token;
+};
+
+export const buildAuthHeaders = (headers = {}) => {
+  const token = getAuthToken();
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
+};
+
+export const isAuthFailure = (status, errorMessage = "") => {
+  if (![401, 403].includes(status)) {
+    return false;
+  }
+
+  const normalizedMessage = String(errorMessage).toLowerCase();
+  return (
+    normalizedMessage === "" ||
+    normalizedMessage.includes("token") ||
+    normalizedMessage.includes("session") ||
+    normalizedMessage.includes("access denied") ||
+    normalizedMessage.includes("jwt")
+  );
+};
+
+export const handleSessionExpired = async (
+  message = "A tua sessao expirou ou deixou de ser valida. Inicia sessao novamente.",
+) => {
+  if (isHandlingSessionExpiry) return;
+  isHandlingSessionExpiry = true;
+
+  clearSession();
+  updateNav(null);
+
+  await Swal.fire({
+    icon: "warning",
+    title: "Sessao expirada",
+    text: message,
+    confirmButtonColor: "#f4b400",
+  });
+
+  isHandlingSessionExpiry = false;
+  window.location.href = "/";
 };
 
 export const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  clearSession();
   window.location.href = "/";
 };
 

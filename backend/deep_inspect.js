@@ -1,16 +1,9 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-
-dotenv.config();
+import { getServerDbConfig } from "./config/env.js";
 
 const inspect = async () => {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "",
-      // Don't specify database yet
-    });
+    const connection = await mysql.createConnection(getServerDbConfig());
 
     const [dbInfo] = await connection.query("SELECT DATABASE(), VERSION(), @@port");
     console.log("--- Instance Info ---");

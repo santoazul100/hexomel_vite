@@ -26,9 +26,17 @@
 | Port     | 3306      |
 | Database | hexomel   |
 | User     | root      |
-| Password | (vazia)   |
+| Password | definida em `backend/.env`   |
 
 ---
+
+## Ambiente no PC Novo
+
+O backend passa agora a ler sempre o ficheiro `backend/.env`, mesmo quando arrancas o projeto a partir da raiz.
+
+Se precisares de recriar a configuração:
+
+`backend/.env.example` -> copiar para `backend/.env` e ajustar os valores locais.
 
 ## Servidor Backend
 

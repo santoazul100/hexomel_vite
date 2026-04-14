@@ -1,22 +1,25 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-
-dotenv.config();
+import { getDbConfig } from "./env.js";
 
 let pool;
 
+const ensurePool = () => {
+  if (!pool) {
+    throw new Error("Database pool not initialized. Call initDB() first.");
+  }
+  return pool;
+};
+
 export const initDB = async () => {
-  pool = mysql.createPool({
-    host: process.env.DB_HOST || "localhost",
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "hexomel",
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    charset: "utf8mb4",
-  });
+  if (!pool) {
+    pool = mysql.createPool({
+      ...getDbConfig(),
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      charset: "utf8mb4",
+    });
+  }
 
   // Test the connection
   try {
@@ -35,17 +38,17 @@ export const initDB = async () => {
 // Database wrapper around mysql2 pool
 export const db = {
   get: async (sql, params = []) => {
-    const [rows] = await pool.execute(sql, params);
+    const [rows] = await ensurePool().execute(sql, params);
     return rows[0] || null;
   },
 
   all: async (sql, params = []) => {
-    const [rows] = await pool.execute(sql, params);
+    const [rows] = await ensurePool().execute(sql, params);
     return rows;
   },
 
   run: async (sql, params = []) => {
-    const [result] = await pool.execute(sql, params);
+    const [result] = await ensurePool().execute(sql, params);
     return { lastID: result.insertId, changes: result.affectedRows };
   },
 
@@ -59,7 +62,7 @@ export const db = {
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
     for (const statement of statements) {
-      await pool.query(statement);
+      await ensurePool().query(statement);
     }
   },
 };

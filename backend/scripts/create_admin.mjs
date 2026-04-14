@@ -1,18 +1,13 @@
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
-dotenv.config();
+import { getDbConfig } from "../config/env.js";
 
 const pool = await mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "hexomel",
+  ...getDbConfig(),
 });
 
-const email = "admin@hexomel.pt";
-const password = "admin123";
+const email = "admin";
+const password = "admin";
 
 const hash = await bcrypt.hash(password, 10);
 

@@ -1,4 +1,12 @@
-import { getLoggedUser, updateNav, logout } from "./auth.js";
+import {
+  buildAuthHeaders,
+  getAuthToken,
+  getLoggedUser,
+  handleSessionExpired,
+  isAuthFailure,
+  logout,
+  updateNav,
+} from "./auth.js";
 import Swal from "sweetalert2";
 
 let currentUserData = null;
@@ -137,8 +145,42 @@ function populateEditInputs(section) {
   }
 }
 
+const parseJsonSafely = async (response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const handleProtectedResponse = async (
+  response,
+  fallbackMessage,
+  sessionMessage,
+) => {
+  const data = await parseJsonSafely(response);
+
+  if (isAuthFailure(response.status, data?.error)) {
+    await handleSessionExpired(sessionMessage);
+    return { handled: true, data };
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || fallbackMessage);
+  }
+
+  return { handled: false, data };
+};
+
 async function handleUserDataSave(section) {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired(
+      "Precisas de iniciar sessao novamente para editar o perfil.",
+    );
+    return;
+  }
+
   let payload = {};
 
   if (section === "personal") {
@@ -165,34 +207,48 @@ async function handleUserDataSave(section) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...buildAuthHeaders(),
       },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao guardar perfil.",
+      "A tua sessao expirou. Inicia sessao novamente para editar o perfil.",
+    );
+    if (result.handled) return;
 
     if (res.ok) {
       showInlineStatus("saved");
 
       // Update Local State
-      currentUserData = { ...currentUserData, ...payload };
+      currentUserData = result.data?.user
+        ? { ...currentUserData, ...result.data.user }
+        : { ...currentUserData, ...payload };
       const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = {
+        ...localUser,
+        name: currentUserData.name,
+        email: currentUserData.email,
+        picture: currentUserData.picture,
+        role: currentUserData.role,
+      };
       localStorage.setItem(
         "user",
-        JSON.stringify({ ...localUser, ...payload }),
+        JSON.stringify(updatedUser),
       );
 
       // Refresh UI Components
       renderProfile(currentUserData);
       toggleEditMode(section); // Return to view mode
-      updateNav(JSON.parse(localStorage.getItem("user")));
+      updateNav(updatedUser);
     } else {
-      showInlineStatus("error", data.error);
+      showInlineStatus("error", result.data?.error);
     }
   } catch (error) {
     console.error("Save error:", error);
-    showInlineStatus("error");
+    showInlineStatus("error", error.message);
   }
 }
 
@@ -216,7 +272,7 @@ function showInlineStatus(type, msg) {
 }
 
 async function fetchProfileData() {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   if (!token) {
     window.location.href = "index.html";
     return;
@@ -224,17 +280,17 @@ async function fetchProfileData() {
 
   try {
     const res = await fetch("/api/user/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: buildAuthHeaders(),
     });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Failed to fetch profile");
-    }
+    const result = await handleProtectedResponse(
+      res,
+      "Nao foi possivel carregar o perfil.",
+      "A tua sessao deixou de ser valida. Inicia sessao novamente para abrir o perfil.",
+    );
+    if (result.handled) return;
 
-    const data = await res.json();
+    const data = result.data;
     currentUserData = data;
     renderProfile(data);
   } catch (error) {
@@ -360,22 +416,24 @@ function renderOrders(orders) {
 }
 
 async function fetchFavorites() {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   const favGrid = document.getElementById("favorites-grid");
 
   if (!token || !favGrid) return;
 
   try {
     const res = await fetch("/api/favorites", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: buildAuthHeaders(),
     });
 
-    if (!res.ok) throw new Error("Failed to fetch favorites");
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao carregar favoritos.",
+      "A tua sessao expirou. Inicia sessao novamente para ver os favoritos.",
+    );
+    if (result.handled) return;
 
-    const favorites = await res.json();
-    renderFavorites(favorites);
+    renderFavorites(result.data);
   } catch (error) {
     console.error("Favorites fetch error:", error);
   }
@@ -416,15 +474,25 @@ function renderFavorites(favorites) {
 }
 
 window.removeFromFavorites = async function (productId) {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired(
+      "Precisas de iniciar sessao novamente para gerir os favoritos.",
+    );
+    return;
+  }
+
   try {
     const res = await fetch(`/api/favorites/remove/${productId}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: buildAuthHeaders(),
     });
-    if (res.ok) fetchFavorites();
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao remover favorito.",
+      "A tua sessao expirou. Inicia sessao novamente para gerir os favoritos.",
+    );
+    if (!result.handled && res.ok) fetchFavorites();
   } catch (error) {
     console.error("Remove favorite error:", error);
   }
@@ -432,7 +500,14 @@ window.removeFromFavorites = async function (productId) {
 
 async function handlePasswordUpdate(e) {
   e.preventDefault();
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired(
+      "Precisas de iniciar sessao novamente para alterar a password.",
+    );
+    return;
+  }
+
   const currentPassword = document.getElementById("current-password").value;
   const newPassword = document.getElementById("new-password").value;
   const confirmPassword = document.getElementById("confirm-new-password").value;
@@ -454,12 +529,17 @@ async function handlePasswordUpdate(e) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...buildAuthHeaders(),
       },
       body: JSON.stringify({ currentPassword, newPassword }),
     });
 
-    const data = await res.json();
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao atualizar password.",
+      "A tua sessao expirou. Inicia sessao novamente para alterar a password.",
+    );
+    if (result.handled) return;
 
     if (res.ok) {
       Swal.fire({
@@ -471,11 +551,19 @@ async function handlePasswordUpdate(e) {
         e.target.reset();
       });
     } else {
-      Swal.fire("Erro", data.error || "Falha ao atualizar password", "error");
+      Swal.fire(
+        "Erro",
+        result.data?.error || "Falha ao atualizar password",
+        "error",
+      );
     }
   } catch (error) {
     console.error("Password update error:", error);
-    Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
+    Swal.fire(
+      "Erro",
+      error.message || "Erro ao comunicar com o servidor.",
+      "error",
+    );
   }
 }
 
@@ -492,14 +580,26 @@ async function handleDeleteAccount() {
   });
 
   if (result.isConfirmed) {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
+    if (!token) {
+      await handleSessionExpired(
+        "Precisas de iniciar sessao novamente para eliminar a conta.",
+      );
+      return;
+    }
+
     try {
       const res = await fetch("/api/user/profile", {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: buildAuthHeaders(),
       });
+
+      const resultData = await handleProtectedResponse(
+        res,
+        "Falha ao eliminar conta.",
+        "A tua sessao expirou. Inicia sessao novamente para eliminar a conta.",
+      );
+      if (resultData.handled) return;
 
       if (res.ok) {
         Swal.fire({
@@ -511,12 +611,19 @@ async function handleDeleteAccount() {
           logout();
         });
       } else {
-        const data = await res.json();
-        Swal.fire("Erro", data.error || "Falha ao eliminar conta", "error");
+        Swal.fire(
+          "Erro",
+          resultData.data?.error || "Falha ao eliminar conta",
+          "error",
+        );
       }
     } catch (error) {
       console.error("Delete error:", error);
-      Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
+      Swal.fire(
+        "Erro",
+        error.message || "Erro ao comunicar com o servidor.",
+        "error",
+      );
     }
   }
 }
@@ -557,38 +664,31 @@ async function handleAvatarUpload(e) {
 
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const base64Image = event.target.result;
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/user/profile/picture", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ picture: base64Image }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Erro ao atualizar foto");
-      }
-
-      document.getElementById("profile-avatar-large").src = base64Image;
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
       try {
+        const base64Image = event.target.result;
+        const token = getAuthToken();
+        if (!token) {
+          await handleSessionExpired(
+            "Precisas de iniciar sessao novamente para atualizar a foto.",
+          );
+          return;
+        }
+
         const res = await fetch("/api/user/profile/picture", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...buildAuthHeaders(),
           },
           body: JSON.stringify({ picture: base64Image }),
         });
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Erro ao atualizar foto");
-        }
+        const result = await handleProtectedResponse(
+          res,
+          "Erro ao atualizar foto.",
+          "A tua sessao expirou. Inicia sessao novamente para atualizar a foto.",
+        );
+        if (result.handled) return;
 
         document.getElementById("profile-avatar-large").src = base64Image;
         const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -625,7 +725,13 @@ async function handleAvatarUpload(e) {
 }
 
 window.viewOrderDetails = async function (orderId) {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired(
+      "Precisas de iniciar sessao novamente para ver os detalhes da encomenda.",
+    );
+    return;
+  }
   const content = document.getElementById("order-details-content");
 
   // Use bootstrap from window if not imported (it's loaded via CDN in profile.html)
@@ -644,12 +750,20 @@ window.viewOrderDetails = async function (orderId) {
 
   try {
     const res = await fetch(`/api/user/orders/${orderId}/items`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: buildAuthHeaders(),
     });
 
-    if (!res.ok) throw new Error("Falha ao carregar detalhes");
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao carregar detalhes.",
+      "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
+    );
+    if (result.handled) {
+      modal.hide();
+      return;
+    }
 
-    const items = await res.json();
+    const items = result.data;
 
     let itemsHtml = `
       <div class="order-id-display mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
@@ -717,8 +831,13 @@ window.viewOrderDetails = async function (orderId) {
 // Upgrade Request Handling
 async function handleUpgradeRequest(e) {
   e.preventDefault();
-  const token = localStorage.getItem("token");
-  if (!token) return;
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired(
+      "Precisas de iniciar sessao novamente para enviar o pedido.",
+    );
+    return;
+  }
 
   const btn = document.getElementById("btn-submit-upgrade");
   const originalText = btn.innerHTML;
@@ -738,11 +857,16 @@ async function handleUpgradeRequest(e) {
 
     const res = await fetch("/api/upgrade-request", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: buildAuthHeaders(),
       body: formData,
     });
+
+    const result = await handleProtectedResponse(
+      res,
+      "Erro ao enviar pedido.",
+      "A tua sessao expirou. Inicia sessao novamente para enviar o pedido.",
+    );
+    if (result.handled) return;
 
     if (res.ok) {
       Swal.fire({
@@ -754,8 +878,7 @@ async function handleUpgradeRequest(e) {
       e.target.reset();
       checkUpgradeStatus();
     } else {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Erro ao enviar pedido.");
+      throw new Error(result.data?.error || "Erro ao enviar pedido.");
     }
   } catch (error) {
     console.error("Upgrade request error:", error);
@@ -772,19 +895,25 @@ async function handleUpgradeRequest(e) {
 }
 
 async function checkUpgradeStatus() {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   if (!token) return;
 
   try {
     const res = await fetch("/api/user/upgrade-request-status", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: buildAuthHeaders(),
     });
-    if (res.ok) {
-      const data = await res.json();
-      const banner = document.getElementById("upgrade-status-banner");
-      const form = document.getElementById("upgrade-request-form");
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao verificar o pedido.",
+      "A tua sessao expirou. Inicia sessao novamente para verificar o pedido.",
+    );
+    if (result.handled || !res.ok) return;
 
-      if (data.Status && data.Status !== "Nenhum") {
+    const data = result.data;
+    const banner = document.getElementById("upgrade-status-banner");
+    const form = document.getElementById("upgrade-request-form");
+
+    if (data.Status && data.Status !== "Nenhum") {
         banner.classList.remove("d-none");
         let statusClass = "bg-warning-subtle text-warning-emphasis";
         let statusIcon = "fa-clock";
@@ -815,7 +944,6 @@ async function checkUpgradeStatus() {
         banner.classList.add("d-none");
         form.classList.remove("d-none");
       }
-    }
   } catch (error) {
     console.error("Check upgrade status error:", error);
   }

@@ -1,24 +1,14 @@
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, ".env") });
+import { getDbConfig } from "./config/env.js";
 
 const ADMIN_EMAIL = "admin";
 const ADMIN_PASSWORD = "admin";
 
 const resetAdmin = async () => {
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    database: "hexomel",
-  });
+  const connection = await mysql.createConnection(
+    getDbConfig({ database: "hexomel" }),
+  );
 
   const hash = await bcrypt.hash("admin", 10);
 

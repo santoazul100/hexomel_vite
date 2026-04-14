@@ -1,22 +1,11 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-
-// Config dotenv since we are in scripts/
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+import { getDbConfig } from "../config/env.js";
 
 const update = async () => {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "",
-      database: "hexomel",
-      port: process.env.DB_PORT || 3306,
-    });
+    const connection = await mysql.createConnection(
+      getDbConfig({ database: "hexomel" }),
+    );
 
     console.log("Connected to hexomel database.");
     
