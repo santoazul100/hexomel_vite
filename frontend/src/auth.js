@@ -46,13 +46,20 @@ export const initializeAuthForms = () => {
             window.closeAuthModal();
           }
 
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          if (typeof updateNav === "function") {
+            updateNav(data.user);
+          }
+
           Swal.fire({
             icon: "success",
-            title: "Registo Concluído!",
-            text: "Por favor, verifique a sua caixa de correio (e a pasta SPAM) para confirmar o seu email e ativar a conta antes de iniciar sessão.",
-            showConfirmButton: true,
-            confirmButtonColor: "#1a4d2e",
-            confirmButtonText: "Entendido"
+            title: "Conta criada!",
+            text: "Bem-vindo(a) à Hexomel.",
+            showConfirmButton: false,
+            timer: 1500,
+          }).then(() => {
+            window.location.reload();
           });
         } else {
           window.closeAllPopups();
@@ -359,3 +366,4 @@ export function updateNav(user) {
     if (cartIconContainer) cartIconContainer.classList.add("loaded");
   }, 10);
 }
+

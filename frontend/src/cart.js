@@ -186,6 +186,26 @@ class CartManager {
       return;
     }
 
+    // 2FA Security Check
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user.checkoutVerified !== true) {
+      window.closeAllPopups();
+      Swal.fire({
+        title: "Verificação Necessária",
+        text: "Por segurança, antes de efetuar o checkout precisamos de confirmar a sua identidade na sessão atual.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Fazer Verificação",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#f4b400",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "profile.html?tab=security";
+        }
+      });
+      return;
+    }
+
     // Redirect to the new checkout page
     window.location.href = "checkout.html";
   }

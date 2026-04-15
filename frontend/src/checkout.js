@@ -22,6 +22,11 @@ class CheckoutManager {
     // Parallelize cart sync and user profile fetch
     await Promise.all([cart.syncWithBackend(), this.fetchUserProfile()]);
 
+    if (this.userData && this.userData.checkoutVerified !== true) {
+      window.location.href = "profile.html?tab=security";
+      return;
+    }
+
     if (cart.items.length === 0) {
       window.location.href = "shop.html";
       return;

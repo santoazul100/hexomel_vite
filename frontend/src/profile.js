@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (user) updateNav(user);
 
   initializeTabs();
+  initialize2FA();
 
   // Initialize Inline Edit Toggles
   document.addEventListener("click", (e) => {
@@ -319,11 +320,173 @@ async function fetchProfileData() {
     Swal.fire({
       icon: "error",
       title: "Erro ao carregar perfil",
-      text: error.message || "NÃ£o foi possÃ­vel carregar os teus dados.",
+      text: error.message || "Não foi possível carregar os teus dados.",
       confirmButtonColor: "#f4b400",
     });
   }
 }
+
+function initialize2FA() {
+  const btnRequest = document.getElementById("btn-request-2fa");
+  const btnVerify = document.getElementById("btn-verify-2fa");
+  let timerInterval = null;
+
+  function start2FATimer() {
+    clearInterval(timerInterval);
+    let remaining = 90; // 1:30
+    const timerEl = document.getElementById("2fa-timer");
+    if (!timerEl) return;
+
+    const updateDisplay = () => {
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      timerEl.innerHTML = `<i class="fas fa-clock me-1"></i>${m}:${String(s).padStart(2, '0')}`;
+      if (remaining <= 10) {
+        timerEl.classList.add("text-danger");
+        timerEl.classList.remove("text-muted");
+      } else {
+        timerEl.classList.remove("text-danger");
+        timerEl.classList.add("text-muted");
+      }
+    };
+
+    updateDisplay();
+    timerInterval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        timerEl.innerHTML = '<i class="fas fa-times-circle me-1"></i>Expirado';
+        timerEl.classList.add("text-danger");
+        const feedback = document.getElementById("2fa-feedback");
+        if (feedback) feedback.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Código expirado. Usa "Reenviar código" para gerar um novo.</span>';
+      } else {
+        updateDisplay();
+      }
+    }, 1000);
+  }
+
+  if (btnRequest) {
+    btnRequest.addEventListener("click", async () => {
+      const token = getAuthToken();
+      if (!token) return handleSessionExpired();
+
+      btnRequest.disabled = true;
+      btnRequest.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A solicitar...';
+
+      try {
+        const res = await fetch("/api/auth/checkout-2fa/generate", {
+          method: "POST",
+          headers: buildAuthHeaders()
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("2fa-request-section").classList.add("d-none");
+          document.getElementById("2fa-verify-section").classList.remove("d-none");
+          start2FATimer();
+          Swal.fire("Código Enviado", data.message || "Verifique a sua caixa de entrada.", "success");
+        } else {
+          Swal.fire("Erro", data.error || "Não foi possível enviar o código.", "error");
+          btnRequest.disabled = false;
+          btnRequest.innerText = "Tentar Novamente";
+        }
+      } catch (err) {
+        Swal.fire("Erro", "Falha na conexão ao servidor.", "error");
+        btnRequest.disabled = false;
+      }
+    });
+  }
+
+  if (btnVerify) {
+    btnVerify.addEventListener("click", async () => {
+      const rawOtp = document.getElementById("input-2fa-code").value.replace(/\s/g, "").trim();
+      const otp = rawOtp;
+      const feedback = document.getElementById("2fa-feedback");
+      if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+        feedback.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>O código deve ter exatamente 6 dígitos numéricos.</span>';
+        return;
+      }
+
+      btnVerify.disabled = true;
+      feedback.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>A validar...</span>';
+
+      try {
+        const res = await fetch("/api/auth/checkout-2fa/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...buildAuthHeaders()
+          },
+          body: JSON.stringify({ otp })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          // Update local token and user
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          
+          currentUserData.checkoutVerified = true;
+          clearInterval(timerInterval);
+          renderProfile(currentUserData);
+          
+          document.getElementById("2fa-verify-section").classList.add("d-none");
+          document.getElementById("2fa-request-section").classList.remove("d-none");
+          btnRequest.innerText = "Gerar Novo Código";
+          btnRequest.disabled = false;
+          
+          Swal.fire({
+            icon: "success",
+            title: "Sessão Verificada",
+            text: "Podes agora efetuar checkouts com segurança nesta sessão.",
+            confirmButtonColor: "#1a4d2e"
+          });
+        } else {
+          feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>${data.error || "Código inválido"}</span>`;
+          btnVerify.disabled = false;
+        }
+      } catch (err) {
+        feedback.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Falha de comunicação.</span>';
+        btnVerify.disabled = false;
+      }
+    });
+  }
+
+  // Resend button
+  const btnResend = document.getElementById("btn-resend-2fa");
+  if (btnResend) {
+    btnResend.addEventListener("click", async () => {
+      const token = getAuthToken();
+      if (!token) return handleSessionExpired();
+
+      btnResend.disabled = true;
+      btnResend.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>A reenviar...';
+      const feedback = document.getElementById("2fa-feedback");
+      feedback.innerHTML = '';
+
+      try {
+        const res = await fetch("/api/auth/checkout-2fa/generate", {
+          method: "POST",
+          headers: buildAuthHeaders()
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("input-2fa-code").value = "";
+          document.getElementById("btn-verify-2fa").disabled = false;
+          feedback.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>Novo código enviado!</span>';
+          start2FATimer();
+          Swal.fire("Novo Código Enviado", data.message || "Verifique a sua caixa de entrada.", "success");
+        } else {
+          feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>${data.error || "Erro ao reenviar"}</span>`;
+        }
+      } catch (err) {
+        feedback.innerHTML = '<span class="text-danger">Falha de comunicação.</span>';
+      }
+      btnResend.disabled = false;
+      btnResend.innerHTML = '<i class="fas fa-redo me-1"></i>Reenviar código';
+    });
+  }
+}
+
 
 
 function renderProfile(data) {
@@ -339,6 +502,21 @@ function renderProfile(data) {
   const bioInput = document.getElementById("apicultor-bio-input");
   if (bioInput) {
     bioInput.value = data.bio || "";
+  }
+
+  // 2FA Badge Update
+  const badge2FA = document.getElementById("2fa-status-badge");
+  const requestSec = document.getElementById("2fa-request-section");
+  if (badge2FA) {
+    if (data.checkoutVerified) {
+      badge2FA.className = "badge bg-success";
+      badge2FA.innerHTML = '<i class="fas fa-shield-check me-1"></i>Sessão Protegida';
+      if(requestSec) requestSec.classList.add("d-none"); // Hide request if already verified
+    } else {
+      badge2FA.className = "badge bg-danger";
+      badge2FA.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Não Verificada';
+      if(requestSec) requestSec.classList.remove("d-none");
+    }
   }
 
     // Show Upgrade tab if role is client

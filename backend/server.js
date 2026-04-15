@@ -301,6 +301,14 @@ const runDatabaseMigrations = async () => {
       .catch(() => console.log("Verification_Token col already exists"));
 
     await db
+      .run("ALTER TABLE cliente ADD COLUMN Checkout_OTP VARCHAR(10) DEFAULT NULL")
+      .catch(() => console.log("Checkout_OTP col already exists"));
+
+    await db
+      .run("ALTER TABLE cliente ADD COLUMN Checkout_OTP_Expires DATETIME DEFAULT NULL")
+      .catch(() => console.log("Checkout_OTP_Expires col already exists"));
+
+    await db
       .run(
         `
           CREATE TABLE IF NOT EXISTS workshop (
@@ -464,8 +472,8 @@ app.use((req, res, next) => {
 app.post("/api/auth/register", async (req, res) => {
   let { firstName, lastName, email, username, password } = req.body;
 
-  if (!email || !password || !firstName || !lastName || !username) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  if (!email || !password || !firstName || !username) {
+    return res.status(400).json({ error: "Nome, username, email e password são obrigatórios." });
   }
 
   email = email.toLowerCase().trim();
@@ -484,70 +492,47 @@ app.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     const fullName = `${firstName} ${lastName}`.trim();
 
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    // Insert user with Username (defaults to client)
+    // Insert user without verification
     const result = await db.run(
-      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified, Verification_Token) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified) VALUES (?, ?, ?, ?, ?, ?)",
       [
         fullName,
         email,
         username,
         hashedPassword,
         "client",
-        false,
-        verificationToken
+        true
       ],
     );
 
-    // Send verification email
-    const frontendBase = process.env.FRONTEND_URL || req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || `${req.protocol}://${req.get("host")}`;
-    const verificationUrl = `${frontendBase}/verify-email.html?token=${verificationToken}`;
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
-        <h2 style="color: #f4b400;">Bem-vindo à Hexomel! 🐝</h2>
-        <p>Olá ${firstName},</p>
-        <p>Obrigado por criar conta na nossa plataforma. Para concluir o registo e ativar a sua conta, por favor confirme o seu endereço de email clicando no botão abaixo:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${verificationUrl}" style="background: #1a4d2e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verificar Email</a>
-        </div>
-        <p>Ou copie e cole a seguinte hiperligação no seu navegador:</p>
-        <p style="word-break: break-all; color: #666; font-size: 14px;"><a href="${verificationUrl}">${verificationUrl}</a></p>
-        <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
-        <p style="font-size: 12px; color: #888;">Se não criou uma conta na Hexomel, pode ignorar este email.</p>
-      </div>
-    `;
-
-    if (mailTransporter) {
-      try {
-        await mailTransporter.sendMail({
-          from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
-          to: email,
-          subject: "🍯 Confirmação de Registo — Hexomel",
-          html: emailHtml,
-        });
-      } catch (e) {
-        console.error("Failed to send verification email:", e);
-      }
-    } else {
-      // No SMTP configured — auto-verify in dev mode so the user is not locked out
-      await db.run("UPDATE cliente SET Is_Verified = TRUE, Verification_Token = NULL WHERE ID_Cliente = ?", [result.lastID]);
-      console.log("⚠️ SMTP não configurado — utilizador auto-verificado (modo dev). Link seria:", verificationUrl);
-    }
+    // Auto-login after registration
+    const token = jwt.sign(
+      { id: result.lastID, role: "client" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
 
     res.status(201).json({
-      message: "User created successfully. Please verify your email.",
-      requiresVerification: true
+      message: "Conta criada com sucesso.",
+      token,
+      user: {
+        id: result.lastID,
+        name: fullName,
+        email,
+        picture: null,
+        UserType: "client",
+        role: "client"
+      }
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error creating user" });
+    res.status(500).json({ error: "Erro ao criar conta" });
   }
 });
 
+
 // Login
 app.post("/api/auth/login", async (req, res) => {
-  // Accept either `identifier` (new) or legacy `email` field
   let identifier = req.body.identifier || req.body.email;
   const { password } = req.body;
 
@@ -558,7 +543,6 @@ app.post("/api/auth/login", async (req, res) => {
   identifier = identifier.toLowerCase().trim();
 
   try {
-    // Try to find user by email OR username
     let user = await db.get("SELECT * FROM cliente WHERE Email = ? OR Username = ?", [identifier, identifier]);
     if (!user) {
       return res.status(400).json({ error: "Credenciais inválidas" });
@@ -569,17 +553,12 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ error: "Credenciais inválidas" });
     }
 
-    if (user.Is_Verified === 0 || user.Is_Verified === false || user.Is_Verified === '0') {
-      return res.status(403).json({ error: "Por favor, verifique o seu email (incluindo a pasta de spam) antes de iniciar sessão." });
-    }
-
     const token = jwt.sign(
       { id: user.ID_Cliente, role: user.UserType },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      },
+      { expiresIn: "1d" }
     );
+    
     res.json({
       token,
       user: {
@@ -588,7 +567,7 @@ app.post("/api/auth/login", async (req, res) => {
         email: user.Email,
         picture: user.Picture,
         UserType: user.UserType || "client",
-        role: user.UserType || "client", // Standardized
+        role: user.UserType || "client",
       },
     });
   } catch (error) {
@@ -596,6 +575,7 @@ app.post("/api/auth/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // Verify Email
 app.get("/api/auth/verify-email", async (req, res) => {
@@ -616,6 +596,111 @@ app.get("/api/auth/verify-email", async (req, res) => {
   } catch (error) {
     console.error("Verification error:", error);
     res.status(500).json({ error: "Erro interno no servidor." });
+  }
+});
+
+
+// Checkout 2FA - Generate
+app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) => {
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+    const expiresDate = new Date(Date.now() + 10 * 60 * 1000);
+    // Format as local YYYY-MM-DD HH:MM:SS (MySQL DATETIME is timezone-naive, must match server local time)
+    const pad = (n) => String(n).padStart(2, '0');
+    const expires = `${expiresDate.getFullYear()}-${pad(expiresDate.getMonth()+1)}-${pad(expiresDate.getDate())} ${pad(expiresDate.getHours())}:${pad(expiresDate.getMinutes())}:${pad(expiresDate.getSeconds())}`;
+
+    await db.run(
+      "UPDATE cliente SET Checkout_OTP = ?, Checkout_OTP_Expires = ? WHERE ID_Cliente = ?",
+      [otp, expires, req.user.id]
+    );
+
+    const user = await db.get("SELECT Email, Nome FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    
+    if (mailTransporter) {
+      try {
+        await mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || "Hexomel Segurança <noreply@hexomel.pt>",
+          to: user.Email,
+          subject: "O seu código de verificação para Checkout — Hexomel",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+              <h2 style="color: #1a4d2e;">Código de Segurança</h2>
+              <p>Olá ${user.Nome || 'Cliente'},</p>
+              <p>O seu código de verificação para prosseguir com a encomenda é:</p>
+              <h1 style="background: #f4f7f6; padding: 15px; text-align: center; font-size: 32px; letter-spacing: 5px; color: #f4b400; border-radius: 8px;">${otp}</h1>
+              <p>Este código é válido por 10 minutos. Se não pediu este código, por favor ignore este email.</p>
+              <p style="color: #718096; font-size: 0.85em;">A equipa Hexomel</p>
+            </div>
+          `
+        });
+      } catch (emailErr) {
+        console.error("2FA Email fail:", emailErr);
+      }
+    } else {
+      console.log(`⚠️ Dev Mode: OTP para ${user.Email} é ${otp}`);
+    }
+
+    res.json({ message: "Código enviado com sucesso para o seu email." });
+  } catch (error) {
+    console.error("Generate 2FA error:", error);
+    res.status(500).json({ error: "Erro interno ao gerar o código 2FA." });
+  }
+});
+
+// Checkout 2FA - Verify
+app.post("/api/auth/checkout-2fa/verify", authenticateToken, async (req, res) => {
+  const { otp } = req.body;
+  if (!otp) {
+    return res.status(400).json({ error: "O código é obrigatório." });
+  }
+
+  try {
+    const user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    
+    if (!user) {
+      return res.status(400).json({ error: "Utilizador não encontrado." });
+    }
+
+    console.log(`2FA Verify: stored=${user.Checkout_OTP}, received=${otp}, expires=${user.Checkout_OTP_Expires}`);
+
+    if (!user.Checkout_OTP || String(user.Checkout_OTP).trim() !== String(otp).trim()) {
+      return res.status(400).json({ error: "Código incorreto." });
+    }
+
+    // Compare dates - MySQL DATETIME is returned as a Date object by mysql2
+    const expiresAt = new Date(user.Checkout_OTP_Expires);
+    const now = new Date();
+    console.log(`2FA Expiry check: now=${now.toISOString()}, expires=${expiresAt.toISOString()}`);
+    if (now > expiresAt) {
+      return res.status(400).json({ error: "Código expirado. Peça um novo." });
+    }
+
+    // Success -> Clear OTP
+    await db.run("UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL WHERE ID_Cliente = ?", [req.user.id]);
+
+    // Issue updated token
+    const token = jwt.sign(
+      { id: user.ID_Cliente, role: user.UserType, checkoutVerified: true },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    
+    res.json({
+      message: "Verificação concluída com sucesso!",
+      token,
+      user: {
+        id: user.ID_Cliente,
+        name: user.Nome,
+        email: user.Email,
+        picture: user.Picture,
+        role: user.UserType || "client",
+        checkoutVerified: true
+      }
+    });
+
+  } catch (error) {
+    console.error("Verify 2FA error:", error);
+    res.status(500).json({ error: "Erro na verificação." });
   }
 });
 
@@ -1919,6 +2004,10 @@ app.post("/api/webhooks/stripe", express.raw({ type: 'application/json' }), asyn
 
 // Checkout Route (Legacy/Manual for MBWay or fallback)
 app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
+  if (!req.user.checkoutVerified) {
+    return res.status(401).json({ error: "2FA_REQUIRED" });
+  }
+
   const { address, phone, nome, apelido, shippingCost } = req.body;
   const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
@@ -2732,3 +2821,4 @@ startServer();
 initializeDatabase().catch((error) => {
   console.error("Unexpected database bootstrap error:", error);
 });
+

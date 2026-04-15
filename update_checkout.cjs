@@ -1,135 +1,117 @@
 const fs = require('fs');
+let content = fs.readFileSync('backend/server.js', 'utf8');
 
-try {
-  let html = fs.readFileSync('c:/escola/pap/code/hexomel_vite/frontend/checkout.html', 'utf8');
+const verifyEmailIndex = content.indexOf('app.get("/api/auth/verify-email"');
+const verifyEmailEndIndex = content.indexOf('// Google Auth', verifyEmailIndex);
 
-  const stepperRegex = /<div class="worten-step active" id="step-1">[\s\S]*?<div class="worten-step" id="step-5">[\s\S]*?<\/span>\s*<\/div>/;
-  html = html.replace(stepperRegex, `<div class="worten-step active" id="step-1">
-            <div class="worten-step-circle">1</div>
-            <span class="worten-step-label">Dados de Envio</span>
-          </div>
-          <div class="worten-step" id="step-2">
-            <div class="worten-step-circle">2</div>
-            <span class="worten-step-label">Pagamento e Revisão</span>
-          </div>`);
+const endpointsToAdd = `
+// Checkout 2FA - Generate
+app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) => {
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+    const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
 
-  const formContentRegex = /<!-- Step 1 Content: Faturação -->[\s\S]*?<!-- Step 5 Content: Revisão -->[\s\S]*?<\/button>\s*<\/div>\s*<\/div>/;
+    await db.run(
+      "UPDATE cliente SET Checkout_OTP = ?, Checkout_OTP_Expires = ? WHERE ID_Cliente = ?",
+      [otp, expires, req.user.id]
+    );
 
-  const newFormContent = `<!-- Step 1 Content: Dados e Entrega -->
-              <div id="step-content-1">
-                <h5 style="font-weight: 700; margin-bottom: 15px;">1. Identificação</h5>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  <div class="worten-form-group">
-                    <input type="text" id="nome" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Nome</label>
-                  </div>
-                  <div class="worten-form-group">
-                    <input type="text" id="apelido" class="worten-input" placeholder=" " />
-                    <label class="worten-label">Apelido</label>
-                  </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  <div class="worten-form-group">
-                    <input type="text" id="nif" class="worten-input" placeholder=" " />
-                    <label class="worten-label">NIF (opcional)</label>
-                  </div>
-                  <div class="worten-form-group">
-                    <input type="tel" id="telemovel" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Telemóvel</label>
-                  </div>
-                </div>
+    const user = await db.get("SELECT Email, Nome FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    
+    if (mailTransporter) {
+      try {
+        await mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || "Hexomel Segurança <noreply@hexomel.pt>",
+          to: user.Email,
+          subject: "O seu código de verificação para Checkout — Hexomel",
+          html: \`
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+              <h2 style="color: #1a4d2e;">Código de Segurança</h2>
+              <p>Olá \${user.Nome || 'Cliente'},</p>
+              <p>O seu código de verificação para prosseguir com a encomenda é:</p>
+              <h1 style="background: #f4f7f6; padding: 15px; text-align: center; font-size: 32px; letter-spacing: 5px; color: #f4b400; border-radius: 8px;">\${otp}</h1>
+              <p>Este código é válido por 10 minutos. Se não pediu este código, por favor ignore este email.</p>
+              <p style="color: #718096; font-size: 0.85em;">A equipa Hexomel</p>
+            </div>
+          \`
+        });
+      } catch (emailErr) {
+        console.error("2FA Email fail:", emailErr);
+      }
+    } else {
+      console.log(\`⚠️ Dev Mode: OTP para \${user.Email} é \${otp}\`);
+    }
 
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+    res.json({ message: "Código enviado com sucesso para o seu email." });
+  } catch (error) {
+    console.error("Generate 2FA error:", error);
+    res.status(500).json({ error: "Erro interno ao gerar o código 2FA." });
+  }
+});
 
-                <h5 style="font-weight: 700; margin-bottom: 15px;">2. Morada de Entrega</h5>
-                <div class="worten-form-group">
-                  <input type="text" id="morada" class="worten-input" placeholder=" " required />
-                  <label class="worten-label">Morada completa</label>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
-                  <div class="worten-form-group">
-                    <input type="text" id="cod-postal" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Código postal</label>
-                  </div>
-                  <div class="worten-form-group">
-                    <input type="text" id="cidade" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Cidade</label>
-                  </div>
-                </div>
+// Checkout 2FA - Verify
+app.post("/api/auth/checkout-2fa/verify", authenticateToken, async (req, res) => {
+  const { otp } = req.body;
+  if (!otp) {
+    return res.status(400).json({ error: "O código é obrigatório." });
+  }
 
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+  try {
+    const user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    
+    if (!user.Checkout_OTP || user.Checkout_OTP !== otp) {
+      return res.status(400).json({ error: "Código incorreto." });
+    }
 
-                <h5 style="font-weight: 700; margin-bottom: 15px;">3. Método de Envio</h5>
-                <div class="selection-card selected mb-3">
-                  <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
-                    <input type="radio" name="envio" value="ctt" checked style="accent-color: var(--primary-gold); width: 22px; height: 22px;" />
-                    <div style="flex: 1">
-                      <div style="font-weight: 700">CTT Expresso</div>
-                      <div style="font-size: 0.85rem; color: var(--text-medium)">Entrega em casa (2-3 dias úteis)</div>
-                    </div>
-                    <div style="font-weight: 700; color: var(--primary-gold-dark)">€4.90</div>
-                  </label>
-                </div>
-                <div class="selection-card">
-                  <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
-                    <input type="radio" name="envio" value="loja" style="accent-color: var(--primary-gold); width: 22px; height: 22px;" />
-                    <div style="flex: 1">
-                      <div style="font-weight: 700">Levantamento no Apiário</div>
-                      <div style="font-size: 0.85rem; color: var(--text-medium)">Disponível imediatamente (Grátis)</div>
-                    </div>
-                    <div style="font-weight: 700; color: var(--success-color)">Grátis</div>
-                  </label>
-                </div>
+    if (new Date() > new Date(user.Checkout_OTP_Expires)) {
+      return res.status(400).json({ error: "Código expirado. Peça um novo." });
+    }
 
-                <div class="d-flex justify-content-end mt-4">
-                  <button type="button" class="btn-worten-primary m-0" onclick="window.checkoutManager.nextStep()">
-                    Continuar para Pagamento
-                  </button>
-                </div>
-              </div>
+    // Success -> Clear OTP
+    await db.run("UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL WHERE ID_Cliente = ?", [req.user.id]);
 
-              <!-- Step 2 Content: Pagamento e Revisão -->
-              <div id="step-content-2" class="d-none">
-                <h5 style="font-weight: 700; margin-bottom: 15px;">Opções de Pagamento</h5>
-                <div class="selection-card selected mb-3">
-                  <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
-                    <input type="radio" name="pagamento" value="cartao" checked style="accent-color: var(--primary-gold); width: 22px; height: 22px;" />
-                    <i class="fas fa-credit-card" style="font-size: 1.2rem; color: var(--text-medium)"></i>
-                    <div style="flex: 1">
-                      <div style="font-weight: 700">Cartão de Crédito / Débito</div>
-                      <div style="font-size: 0.85rem; color: var(--text-medium)">Processamento seguro via STRIPE</div>
-                    </div>
-                  </label>
-                </div>
-                <div class="selection-card mb-4">
-                  <label style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
-                    <input type="radio" name="pagamento" value="mbway" style="accent-color: var(--primary-gold); width: 22px; height: 22px;" />
-                    <i class="fas fa-mobile-alt" style="font-size: 1.2rem; color: var(--text-medium)"></i>
-                    <div style="flex: 1">
-                      <div style="font-weight: 700">MB Way</div>
-                      <div style="font-size: 0.85rem; color: var(--text-medium)">Pagamento instantâneo no telemóvel</div>
-                    </div>
-                  </label>
-                </div>
+    const jwt = require('jsonwebtoken');
+    // Issue updated token
+    const token = jwt.sign(
+      { id: user.ID_Cliente, role: user.UserType, checkoutVerified: true },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    
+    res.json({
+      message: "Verificação concluída com sucesso!",
+      token,
+      user: {
+        id: user.ID_Cliente,
+        name: user.Nome,
+        email: user.Email,
+        picture: user.Picture,
+        role: user.UserType || "client",
+        checkoutVerified: true
+      }
+    });
 
-                <div class="checkout-card" style="padding: 20px; border: 1px dashed var(--border-color); background: var(--off-white); margin-bottom: 20px;">
-                  <h6 style="font-weight: 700; margin-bottom: 8px;">Confirmação de Envio</h6>
-                  <p id="review-morada" style="margin: 0; font-size: 0.95rem; color: var(--text-medium);"></p>
-                  <p id="review-contacto" style="margin: 0; font-size: 0.95rem; color: var(--text-medium);"></p>
-                </div>
+  } catch (error) {
+    console.error("Verify 2FA error:", error);
+    res.status(500).json({ error: "Erro na verificação." });
+  }
+});
 
-                <div class="d-flex gap-3 justify-content-end mt-4">
-                  <button type="button" class="btn-worten-secondary m-0" onclick="window.checkoutManager.prevStep()">
-                    Voltar
-                  </button>
-                  <button type="submit" class="btn-worten-primary m-0" id="final-submit-btn">
-                    Finalizar e Pagar
-                  </button>
-                </div>`;
+`;
 
-  html = html.replace(formContentRegex, newFormContent);
-  fs.writeFileSync('c:/escola/pap/code/hexomel_vite/frontend/checkout.html', html);
-  console.log("checkout.html updated successfully.");
-} catch(err){
-  console.error(err);
+if (content.indexOf('/api/auth/checkout-2fa/generate') === -1) {
+    content = content.slice(0, verifyEmailEndIndex) + endpointsToAdd + content.slice(verifyEmailEndIndex);
 }
+
+const checkCode = `  if (!req.user.checkoutVerified) {
+    return res.status(401).json({ error: "2FA_REQUIRED" });
+  }\n`;
+
+const cartCheckoutIdx = content.indexOf('app.post("/api/cart/checkout"');
+const cartCheckoutBodyIdx = content.indexOf('{', cartCheckoutIdx);
+if (content.slice(cartCheckoutBodyIdx, cartCheckoutBodyIdx + 200).indexOf('2FA_REQUIRED') === -1) {
+    content = content.slice(0, cartCheckoutBodyIdx + 2) + checkCode + content.slice(cartCheckoutBodyIdx + 2);
+}
+
+fs.writeFileSync('backend/server.js', content, 'utf8');
+console.log('Done modifying server.js');
