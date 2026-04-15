@@ -1,6 +1,7 @@
 import Swal from "sweetalert2";
-const API_URL = "/api";
+import { API_URL, getPublicConfig } from "./api.js";
 let isHandlingSessionExpiry = false;
+let googleInitialized = false;
 
 // Register and Login Listeners (now initialized via main.js after injection)
 export const initializeAuthForms = () => {
@@ -41,26 +42,17 @@ export const initializeAuthForms = () => {
 
         const data = await res.json();
         if (res.ok) {
-          // Auto-login on register
-          if (data.token && data.user) {
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
-            updateNav(data.user);
-          }
-
-          // Close modal immediately
           if (typeof window.closeAuthModal === "function") {
             window.closeAuthModal();
           }
 
           Swal.fire({
             icon: "success",
-            title: "Bem-vindo!",
-            text: "Conta criada com sucesso. A iniciar sessão...",
-            timer: 1500,
-            showConfirmButton: false,
-          }).then(() => {
-            window.location.reload();
+            title: "Registo Concluído!",
+            text: "Por favor, verifique a sua caixa de correio (e a pasta SPAM) para confirmar o seu email e ativar a conta antes de iniciar sessão.",
+            showConfirmButton: true,
+            confirmButtonColor: "#1a4d2e",
+            confirmButtonText: "Entendido"
           });
         } else {
           window.closeAllPopups();
@@ -199,20 +191,22 @@ export const logout = () => {
 };
 
 // Google Auth Integration
-export const initializeGoogleAuth = () => {
-  if (!window.google) return;
+export const initializeGoogleAuth = async () => {
+  if (!window.google || googleInitialized) return;
 
-  const clientId =
-    "566495487980-k2ten8upqs965tsjdvja8jvehv006tj7.apps.googleusercontent.com";
+  const { googleClientId } = await getPublicConfig();
+  if (!googleClientId) return;
 
   window.google.accounts.id.initialize({
-    client_id: clientId,
+    client_id: googleClientId,
     callback: handleGoogleCallback,
   });
 
-  // Render in Unified Modal
+  googleInitialized = true;
+
   const buttonDiv = document.getElementById("google-signin-button-v2");
   if (buttonDiv) {
+    buttonDiv.innerHTML = "";
     window.google.accounts.id.renderButton(buttonDiv, {
       theme: "outline",
       size: "large",
@@ -266,7 +260,11 @@ const handleGoogleCallback = async (response) => {
 };
 
 // Auto-init for Google Auth on window load
-window.addEventListener("load", initializeGoogleAuth);
+window.addEventListener("load", () => {
+  initializeGoogleAuth().catch((error) => {
+    console.error("Google init failed:", error);
+  });
+});
 
 // Navbar Logic
 // Update Navigation based on login status

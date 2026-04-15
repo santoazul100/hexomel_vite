@@ -12,7 +12,13 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import Stripe from "stripe";
+import crypto from "crypto";
 
+const configuredGoogleClientId =
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_ID !== "change-me"
+    ? process.env.GOOGLE_CLIENT_ID
+    : null;
 const stripe = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== "placeholder" 
   ? new Stripe(process.env.STRIPE_SECRET_KEY) 
   : null;
@@ -22,28 +28,120 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = configuredGoogleClientId
+  ? new OAuth2Client(configuredGoogleClientId)
+  : null;
+const isDevelopment = process.env.NODE_ENV !== "production";
+
+let databaseReady = false;
+let databaseStartupError = null;
+let serverStarted = false;
+
+const describeDatabaseStartupError = (error) => {
+  if (!error) {
+    return "Database unavailable.";
+  }
+
+  if (error.code === "ER_ACCESS_DENIED_ERROR") {
+    const host = process.env.DB_HOST || "localhost";
+    const port = process.env.DB_PORT || "3306";
+    const user = process.env.DB_USER || "root";
+    const passwordHint = process.env.DB_PASSWORD
+      ? "with a configured password"
+      : "without a configured password";
+
+    return `MySQL rejected ${user}@${host}:${port} ${passwordHint}. Update DB_USER/DB_PASSWORD in backend/.env and restart the backend.`;
+  }
+
+  if (error.code === "ER_BAD_DB_ERROR") {
+    const dbName = process.env.DB_NAME || "hexomel";
+    return `Database "${dbName}" does not exist. Run "npm run db:setup --prefix backend" after fixing the MySQL credentials, then restart the backend.`;
+  }
+
+  if (error.code === "ECONNREFUSED") {
+    const host = process.env.DB_HOST || "localhost";
+    const port = process.env.DB_PORT || "3306";
+    return `MySQL is not accepting connections on ${host}:${port}. Start MySQL and restart the backend.`;
+  }
+
+  return error.message || "Database unavailable.";
+};
+
+const startServer = () => {
+  if (serverStarted) {
+    return;
+  }
+
+  serverStarted = true;
+
+  const server = app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
+      console.error(
+        `Port ${PORT} is already in use. Stop the other backend instance or change PORT in backend/.env.`,
+      );
+    } else {
+      console.error("Server startup error:", error);
+    }
+    process.exit(1);
+  });
+};
 
 // ============================================================
 // EMAIL TRANSPORTER (Nodemailer)
 // ============================================================
 let mailTransporter = null;
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  mailTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "587"),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-  mailTransporter.verify()
-    .then(() => console.log("📧 Email transporter ready."))
-    .catch((err) => console.warn("⚠️ Email transporter failed:", err.message));
-} else {
-  console.log("⚠️ SMTP_USER/SMTP_PASS not set — emails disabled (dev mode).");
+async function initMailTransporter() {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    mailTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT || "587", 10),
+      secure: String(process.env.SMTP_PORT || "587") === "465",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    try {
+      await mailTransporter.verify();
+      console.log("📧 Email transporter ready.");
+    } catch (error) {
+      mailTransporter = null;
+      console.warn("⚠️ Email transporter failed:", error.message);
+    }
+    return;
+  }
+
+  const allowEthereal =
+    (process.env.ENABLE_ETHEREAL_MAIL || "").toLowerCase() === "true";
+
+  if (!allowEthereal) {
+    console.log("⚠️ SMTP_USER/SMTP_PASS not set — emails disabled (dev mode).");
+    return;
+  }
+
+  try {
+    const testAccount = await nodemailer.createTestAccount();
+    mailTransporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+    console.log("📧 Mailer initialized with Ethereal:", testAccount.user);
+  } catch (error) {
+    mailTransporter = null;
+    console.warn("⚠️ Mailer disabled because Ethereal setup failed:", error.message);
+  }
 }
+initMailTransporter().catch(console.error);
 
 // Generate Receipt HTML (used for email and download)
 function generateReceiptHTML(order, items, customerName, customerEmail) {
@@ -183,110 +281,118 @@ async function sendReceiptEmail(orderId) {
     console.error(`📧 Failed to send receipt email for order #${orderId}:`, err.message);
   }
 }
-// Initialize Database
-initDB()
-  .then(async () => {
+const runDatabaseMigrations = async () => {
+  try {
+    // Auto-migration for new features (ignores errors if exist)
+    await db
+      .run("ALTER TABLE cliente ADD COLUMN Bio TEXT DEFAULT NULL")
+      .catch(() => console.log("Bio col already exists"));
+
+    await db
+      .run("ALTER TABLE cliente ADD COLUMN Username VARCHAR(60) DEFAULT NULL")
+      .catch(() => console.log("Username col already exists"));
+
+    await db
+      .run("ALTER TABLE cliente ADD COLUMN Is_Verified BOOLEAN DEFAULT TRUE")
+      .catch(() => console.log("Is_Verified col already exists"));
+
+    await db
+      .run("ALTER TABLE cliente ADD COLUMN Verification_Token VARCHAR(255) DEFAULT NULL")
+      .catch(() => console.log("Verification_Token col already exists"));
+
+    await db
+      .run(
+        `
+          CREATE TABLE IF NOT EXISTS workshop (
+              ID_Workshop int(10) NOT NULL AUTO_INCREMENT,
+              Titulo varchar(150) NOT NULL,
+              Descricao text NOT NULL,
+              Data_Realizacao datetime NOT NULL,
+              Preco decimal(10,2) NOT NULL,
+              Vagas int(11) NOT NULL,
+              Imagem varchar(255) DEFAULT NULL,
+              Status varchar(20) DEFAULT 'Pendente',
+              ID_Apicultor int(10) NOT NULL,
+              Data_Criacao timestamp DEFAULT current_timestamp(),
+              PRIMARY KEY (ID_Workshop),
+              KEY ID_Apicultor (ID_Apicultor),
+              CONSTRAINT fk_workshop_apicultor FOREIGN KEY (ID_Apicultor) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `,
+      )
+      .catch(() => console.log("Workshop table creation handled"));
+
+    await db
+      .run("ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'")
+      .catch(() => console.log("Workshop Status col already exists"));
+
+    await db
+      .run(
+        `
+          CREATE TABLE IF NOT EXISTS upgrade_requests (
+              ID_Request int(10) NOT NULL AUTO_INCREMENT,
+              ID_Cliente int(10) NOT NULL,
+              Descricao TEXT NOT NULL,
+              Documento varchar(255) NOT NULL,
+              Status varchar(20) DEFAULT 'Pendente',
+              Data_Pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              Data_Processamento TIMESTAMP NULL DEFAULT NULL,
+              PRIMARY KEY (ID_Request),
+              KEY ID_Cliente (ID_Cliente),
+              CONSTRAINT fk_upgrade_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `,
+      )
+      .catch(() => console.log("Upgrade requests table creation handled"));
+
+    await db
+      .run(
+        `
+          CREATE TABLE IF NOT EXISTS interacao (
+              ID_Interacao bigint(20) NOT NULL AUTO_INCREMENT,
+              ID_Cliente int(10) DEFAULT NULL,
+              Tipo varchar(50) NOT NULL,
+              Pagina varchar(100) DEFAULT NULL,
+              Dados JSON DEFAULT NULL,
+              Data_Interacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (ID_Interacao),
+              KEY idx_cliente (ID_Cliente),
+              KEY idx_tipo (Tipo),
+              KEY idx_data (Data_Interacao),
+              CONSTRAINT fk_interacao_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE SET NULL
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+      )
+      .catch(() => console.log("interacao table already exists"));
+
+    console.log("Auto-migrations completed.");
+  } catch (err) {
+    console.log("Migration warning:", err);
+  }
+};
+
+const initializeDatabase = async () => {
+  try {
+    await initDB();
+    databaseReady = true;
+    databaseStartupError = null;
     console.log("MySQL Database connected and initialized.");
+    await runDatabaseMigrations();
+  } catch (err) {
+    databaseReady = false;
+    databaseStartupError = err;
+    console.error("Failed to initialize database:", err);
+    console.error(describeDatabaseStartupError(err));
 
-    try {
-      // Auto-migration for new features (ignores errors if exist)
-      await db
-        .run("ALTER TABLE cliente ADD COLUMN Bio TEXT DEFAULT NULL")
-        .catch(() => console.log("Bio col already exists"));
-
-      await db
-        .run("ALTER TABLE cliente ADD COLUMN Username VARCHAR(60) DEFAULT NULL")
-        .catch(() => console.log("Username col already exists"));
-
-      await db
-        .run(
-          `
-            CREATE TABLE IF NOT EXISTS workshop (
-                ID_Workshop int(10) NOT NULL AUTO_INCREMENT,
-                Titulo varchar(150) NOT NULL,
-                Descricao text NOT NULL,
-                Data_Realizacao datetime NOT NULL,
-                Preco decimal(10,2) NOT NULL,
-                Vagas int(11) NOT NULL,
-                Imagem varchar(255) DEFAULT NULL,
-                Status varchar(20) DEFAULT 'Pendente',
-                ID_Apicultor int(10) NOT NULL,
-                Data_Criacao timestamp DEFAULT current_timestamp(),
-                PRIMARY KEY (ID_Workshop),
-                KEY ID_Apicultor (ID_Apicultor),
-                CONSTRAINT fk_workshop_apicultor FOREIGN KEY (ID_Apicultor) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        `,
-        )
-        .catch(() => console.log("Workshop table creation handled"));
-
-      await db
-        .run("ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'")
-        .catch(() => console.log("Workshop Status col already exists"));
-
-      await db
-        .run(
-          `
-            CREATE TABLE IF NOT EXISTS upgrade_requests (
-                ID_Request int(10) NOT NULL AUTO_INCREMENT,
-                ID_Cliente int(10) NOT NULL,
-                Descricao TEXT NOT NULL,
-                Documento varchar(255) NOT NULL,
-                Status varchar(20) DEFAULT 'Pendente',
-                Data_Pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                Data_Processamento TIMESTAMP NULL DEFAULT NULL,
-                PRIMARY KEY (ID_Request),
-                KEY ID_Cliente (ID_Cliente),
-                CONSTRAINT fk_upgrade_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        `,
-        )
-        .catch(() => console.log("Upgrade requests table creation handled"));
-
-      await db
-        .run(
-          `
-            CREATE TABLE IF NOT EXISTS interacao (
-                ID_Interacao bigint(20) NOT NULL AUTO_INCREMENT,
-                ID_Cliente int(10) DEFAULT NULL,
-                Tipo varchar(50) NOT NULL,
-                Pagina varchar(100) DEFAULT NULL,
-                Dados JSON DEFAULT NULL,
-                Data_Interacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (ID_Interacao),
-                KEY idx_cliente (ID_Cliente),
-                KEY idx_tipo (Tipo),
-                KEY idx_data (Data_Interacao),
-                CONSTRAINT fk_interacao_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE SET NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-          `,
-        )
-        .catch(() => console.log("interacao table already exists"));
-
-      console.log("Auto-migrations completed.");
-    } catch (err) {
-      console.log("Migration warning:", err);
+    if (!isDevelopment) {
+      process.exit(1);
     }
 
-    // Start Server ONLY after DB is ready
-    const server = app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-    server.on("error", (error) => {
-      if (error.code === "EADDRINUSE") {
-        console.error(
-          `Port ${PORT} is already in use. Stop the other backend instance or change PORT in backend/.env.`,
-        );
-      } else {
-        console.error("Server startup error:", error);
-      }
-      process.exit(1);
-    });
-  })
-  .catch((err) => {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
-  });
+    console.warn(
+      "Backend is running in degraded mode. API routes that need MySQL will return 503 until the database configuration is fixed.",
+    );
+  }
+};
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
@@ -324,7 +430,33 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 
 // Basic health check route
 app.get("/health", (req, res) => {
-  res.json({ status: "OK", message: "Hexomel API is running" });
+  res.status(databaseReady ? 200 : 503).json({
+    status: databaseReady ? "OK" : "DEGRADED",
+    message: "Hexomel API is running",
+    database: {
+      ready: databaseReady,
+      message: databaseReady
+        ? "MySQL connected."
+        : describeDatabaseStartupError(databaseStartupError),
+    },
+  });
+});
+
+app.get("/api/config/public", (req, res) => {
+  res.json({
+    googleClientId: configuredGoogleClientId,
+  });
+});
+
+app.use((req, res, next) => {
+  if (databaseReady || !req.path.startsWith("/api/")) {
+    return next();
+  }
+
+  return res.status(503).json({
+    error: "Database unavailable",
+    message: describeDatabaseStartupError(databaseStartupError),
+  });
 });
 
 // AUTH ROUTES
@@ -352,43 +484,60 @@ app.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     const fullName = `${firstName} ${lastName}`.trim();
 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
     // Insert user with Username (defaults to client)
     const result = await db.run(
-      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified, Verification_Token) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         fullName,
         email,
         username,
         hashedPassword,
         "client",
+        false,
+        verificationToken
       ],
     );
 
-    // Auto-login: Get the new user
-    const user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [
-      result.lastID,
-    ]);
+    // Send verification email
+    const frontendBase = process.env.FRONTEND_URL || req.headers.origin || req.headers.referer?.replace(/\/[^/]*$/, '') || `${req.protocol}://${req.get("host")}`;
+    const verificationUrl = `${frontendBase}/verify-email.html?token=${verificationToken}`;
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+        <h2 style="color: #f4b400;">Bem-vindo à Hexomel! 🐝</h2>
+        <p>Olá ${firstName},</p>
+        <p>Obrigado por criar conta na nossa plataforma. Para concluir o registo e ativar a sua conta, por favor confirme o seu endereço de email clicando no botão abaixo:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" style="background: #1a4d2e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verificar Email</a>
+        </div>
+        <p>Ou copie e cole a seguinte hiperligação no seu navegador:</p>
+        <p style="word-break: break-all; color: #666; font-size: 14px;"><a href="${verificationUrl}">${verificationUrl}</a></p>
+        <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+        <p style="font-size: 12px; color: #888;">Se não criou uma conta na Hexomel, pode ignorar este email.</p>
+      </div>
+    `;
 
-    const token = jwt.sign(
-      { id: user.ID_Cliente, role: user.UserType },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      },
-    );
+    if (mailTransporter) {
+      try {
+        await mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
+          to: email,
+          subject: "🍯 Confirmação de Registo — Hexomel",
+          html: emailHtml,
+        });
+      } catch (e) {
+        console.error("Failed to send verification email:", e);
+      }
+    } else {
+      // No SMTP configured — auto-verify in dev mode so the user is not locked out
+      await db.run("UPDATE cliente SET Is_Verified = TRUE, Verification_Token = NULL WHERE ID_Cliente = ?", [result.lastID]);
+      console.log("⚠️ SMTP não configurado — utilizador auto-verificado (modo dev). Link seria:", verificationUrl);
+    }
 
     res.status(201).json({
-      message: "User created successfully",
-      token,
-      user: {
-        id: user.ID_Cliente,
-        name: user.Nome,
-        email: user.Email,
-        username: user.Username,
-        picture: user.Picture,
-        UserType: user.UserType,
-        role: user.UserType, // Standardized
-      },
+      message: "User created successfully. Please verify your email.",
+      requiresVerification: true
     });
   } catch (error) {
     console.error(error);
@@ -420,6 +569,10 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ error: "Credenciais inválidas" });
     }
 
+    if (user.Is_Verified === 0 || user.Is_Verified === false || user.Is_Verified === '0') {
+      return res.status(403).json({ error: "Por favor, verifique o seu email (incluindo a pasta de spam) antes de iniciar sessão." });
+    }
+
     const token = jwt.sign(
       { id: user.ID_Cliente, role: user.UserType },
       process.env.JWT_SECRET,
@@ -444,13 +597,39 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+// Verify Email
+app.get("/api/auth/verify-email", async (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.status(400).json({ error: "Token não fornecido." });
+  }
+
+  try {
+    const user = await db.get("SELECT * FROM cliente WHERE Verification_Token = ?", [token]);
+    if (!user) {
+      return res.status(400).json({ error: "Token de verificação inválido ou expirado." });
+    }
+
+    await db.run("UPDATE cliente SET Is_Verified = TRUE, Verification_Token = NULL WHERE ID_Cliente = ?", [user.ID_Cliente]);
+    
+    res.json({ message: "Email verificado com sucesso!" });
+  } catch (error) {
+    console.error("Verification error:", error);
+    res.status(500).json({ error: "Erro interno no servidor." });
+  }
+});
+
 // Google Auth
 app.post("/api/auth/google", async (req, res) => {
   const { idToken } = req.body;
   try {
+    if (!googleClient || !configuredGoogleClientId) {
+      return res.status(503).json({ error: "Google authentication is not configured" });
+    }
+
     const ticket = await googleClient.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: configuredGoogleClientId,
     });
     const payload = ticket.getPayload();
     const email = payload.email.toLowerCase().trim();
@@ -461,19 +640,24 @@ app.post("/api/auth/google", async (req, res) => {
     if (!user) {
       const randomPass = await bcrypt.hash(Math.random().toString(36), 10);
       const result = await db.run(
-        "INSERT INTO cliente (Nome, Email, Senha, Picture) VALUES (?, ?, ?, ?)",
-        [name, email, randomPass, picture],
+        "INSERT INTO cliente (Nome, Email, Senha, Picture, UserType, Is_Verified, Verification_Token) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [name, email, randomPass, picture, "client", true, null],
       );
       user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [
         result.lastID,
       ]);
-    } else if (!user.Picture && picture) {
-      // Sync picture if it was missing
-      await db.run("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
-        picture,
+    } else {
+      await db.run(
+        `UPDATE cliente
+         SET Picture = CASE WHEN (Picture IS NULL OR Picture = '') THEN ? ELSE Picture END,
+             Is_Verified = TRUE,
+             Verification_Token = NULL
+         WHERE ID_Cliente = ?`,
+        [picture || null, user.ID_Cliente],
+      );
+      user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [
         user.ID_Cliente,
       ]);
-      user.Picture = picture;
     }
 
     const token = jwt.sign(
@@ -1599,57 +1783,6 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
   }
 });
 
-// Email Configuration (Nodemailer)
-// Moved import to top
-
-// Email Configuration
-let transporter;
-
-async function initMailer() {
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_PORT == 465, 
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-    console.log("Mailer initialized with real SMTP credentials.");
-    return;
-  }
-
-  const allowEthereal =
-    (process.env.ENABLE_ETHEREAL_MAIL || "").toLowerCase() === "true";
-
-  if (!allowEthereal) {
-    transporter = null;
-    console.log(
-      "Mailer disabled. Define SMTP_USER/SMTP_PASS or set ENABLE_ETHEREAL_MAIL=true to use Ethereal.",
-    );
-    return;
-  }
-
-  try {
-    const testAccount = await nodemailer.createTestAccount();
-    transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-    console.log("Mailer initialized with Ethereal:", testAccount.user);
-  } catch (error) {
-    transporter = null;
-    console.warn("Mailer disabled because Ethereal setup failed:", error.message);
-  }
-}
-initMailer().catch(console.error);
-
 // Stripe Checkout Session Creation
 app.post("/api/checkout/create-session", authenticateToken, async (req, res) => {
   const { address, phone, nome, apelido, shippingCost } = req.body;
@@ -1672,7 +1805,7 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
 
     // 2. Calculate Total
     const subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-    const total = subtotal + (shippingCost || 0);
+    const total = subtotal + Number(shippingCost || 0);
 
     // 3. Create Order (Pendente)
     const result = await db.run(
@@ -1725,12 +1858,12 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       quantity: item.Quantidade,
     }));
 
-    if (shippingCost > 0) {
+    if (Number(shippingCost || 0) > 0) {
       lineItems.push({
         price_data: {
           currency: 'eur',
           product_data: { name: 'Envio (CTT Expresso)' },
-          unit_amount: Math.round(shippingCost * 100),
+          unit_amount: Math.round(Number(shippingCost || 0) * 100),
         },
         quantity: 1,
       });
@@ -1786,12 +1919,73 @@ app.post("/api/webhooks/stripe", express.raw({ type: 'application/json' }), asyn
 
 // Checkout Route (Legacy/Manual for MBWay or fallback)
 app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido } = req.body;
+  const { address, phone, nome, apelido, shippingCost } = req.body;
   const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   try {
-    // ... [existing logic for manual checkout] ...
-0).json({ error: "Checkout failed" });
+    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
+      req.user.id,
+    ]);
+    if (!cart) {
+      return res.status(400).json({ error: "Carrinho vazio" });
+    }
+
+    const items = await db.all(
+      `SELECT ic.*, p.Nome, p.Preco
+       FROM item_carrinho ic
+       JOIN produto p ON ic.ID_Produto = p.ID_Produto
+       WHERE ic.ID_Carrinho = ?`,
+      [cart.ID_Carrinho],
+    );
+
+    if (items.length === 0) {
+      return res.status(400).json({ error: "Carrinho vazio" });
+    }
+
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.Preco * item.Quantidade,
+      0,
+    );
+    const total = subtotal + Number(shippingCost || 0);
+
+    const result = await db.run(
+      "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, ?, ?, 'Pendente', ?, ?)",
+      [req.user.id, new Date().toISOString(), total, address, phone],
+    );
+    const orderId = result.lastID;
+
+    if (fullName || address || phone) {
+      await db.run(
+        "UPDATE cliente SET Nome = COALESCE(?, Nome), Morada = COALESCE(?, Morada), Telefone = COALESCE(?, Telefone) WHERE ID_Cliente = ?",
+        [fullName || null, address || null, phone || null, req.user.id],
+      );
+    }
+
+    for (const item of items) {
+      await db.run(
+        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+        [orderId, item.ID_Produto, item.Quantidade, item.Preco],
+      );
+      await db.run(
+        "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
+        [item.Quantidade, item.ID_Produto],
+      );
+    }
+
+    await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [
+      cart.ID_Carrinho,
+    ]);
+
+    sendReceiptEmail(orderId);
+
+    res.json({
+      message: "Checkout successful",
+      orderId,
+      total,
+    });
+  } catch (error) {
+    console.error("Manual checkout error:", error);
+    res.status(500).json({ error: "Checkout failed" });
   }
 });
 
@@ -2532,4 +2726,9 @@ app.get("/api/admin/analytics/interactions", authenticateToken, isAdmin, async (
     console.error("Interactions analytics error:", error);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+startServer();
+initializeDatabase().catch((error) => {
+  console.error("Unexpected database bootstrap error:", error);
 });

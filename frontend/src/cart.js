@@ -1,5 +1,5 @@
-const API_URL = "/api";
 import Swal from "sweetalert2";
+import { API_URL, ensureBackendReady } from "./api.js";
 
 class CartManager {
   constructor() {
@@ -10,7 +10,10 @@ class CartManager {
   async init() {
     this.createCartUI();
     this.renderBadgeOnly(); // Show badge as early as possible
-    await this.syncWithBackend();
+    const backendAvailable = await ensureBackendReady();
+    if (backendAvailable) {
+      await this.syncWithBackend();
+    }
     this.render();
   }
 

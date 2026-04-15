@@ -4,7 +4,7 @@
  * e envia para o backend de forma silenciosa e não-bloqueante.
  */
 
-const API_URL = "/api";
+import { API_URL, ensureBackendReady } from "./api.js";
 
 /**
  * Envia um evento de interação para o backend.
@@ -13,6 +13,11 @@ const API_URL = "/api";
  */
 export async function logInteraction(tipo, dados = {}) {
   try {
+    const backendAvailable = await ensureBackendReady();
+    if (!backendAvailable) {
+      return;
+    }
+
     const token = localStorage.getItem("token");
     const pagina = window.location.pathname.split("/").pop() || "index.html";
 

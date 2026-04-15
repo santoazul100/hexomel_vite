@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificar Email - Hexomel</title>
+    <link rel="stylesheet" href="/src/styles/index.css" />
+    <script src="/src/pre-load.js"></script>
+    <style>
+      .message-container { text-align: center; margin-top: 2rem; }
+      .message-container i { font-size: 4rem; margin-bottom: 1rem; display: block; }
+      .success-icon { color: #1a4d2e; }
+      .error-icon { color: #d32f2f; }
+      .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(26, 77, 46, 0.1); border-radius: 50%; border-top-color: #1a4d2e; animation: spin 1s ease-in-out infinite; margin-bottom: 1rem; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body class="auth-page position-relative">
+    <div class="bee-container z-0" style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
+      <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 8%; width: 55px" />
+      <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="bottom: 15%; right: 10%; width: 40px" />
+    </div>
+
+    <div class="auth-card position-relative z-1" style="text-align: center; max-width: 500px; padding: 3rem 2rem;">
+      <h1 class="auth-title mb-4">Verificação de Email</h1>
+      
+      <div id="verify-content" class="message-container">
+        <div class="spinner"></div>
+        <p class="auth-subtitle">A verificar a sua conta, aguarde um momento...</p>
+      </div>
+
+      <div style="margin-top: 3rem">
+        <a href="/" style="color: var(--text-light); text-decoration: none; font-size: var(--text-sm); font-weight: 500; transition: color 0.3s;" onmouseover="this.style.color='#1a4d2e'" onmouseout="this.style.color='var(--text-light)'">← Voltar ao início</a>
+      </div>
+    </div>
+
+    <script type="module" src="/src/beeAnimation.js"></script>
+    <script type="module" src="/src/verify-email.js"></script>
+  </body>
+</html>
