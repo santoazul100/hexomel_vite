@@ -329,7 +329,7 @@ export function updateNav(user) {
                       }</p>
                   </li>
                   <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
-                  <li><a class="dropdown-item dropdown-item-premium" href="profile.html?tab=orders"><i class="fas fa-shopping-basket me-2"></i> As minhas encomendas</a></li>
+
                   ${
                     user.role?.toLowerCase() === "admin"
                       ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>'

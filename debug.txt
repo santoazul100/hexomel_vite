@@ -144,7 +144,7 @@ async function initMailTransporter() {
 initMailTransporter().catch(console.error);
 
 // Generate Receipt HTML (used for email and download)
-function generateReceiptHTML(order, items, customerName, customerEmail, logoSrc = "cid:logo") {
+function generateReceiptHTML(order, items, customerName, customerEmail) {
   const orderDate = new Date(order.Data_Encomenda || order.date).toLocaleDateString("pt-PT", {
     year: "numeric", month: "long", day: "numeric",
   });
@@ -154,13 +154,13 @@ function generateReceiptHTML(order, items, customerName, customerEmail, logoSrc 
 
   const itemRows = items.map(i => `
     <tr>
-      <td style="padding:15px; border-bottom:1px solid #edf2f7; font-family: sans-serif;">
-        <div style="font-weight:bold; color:#1a4d2e; font-size:16px;">${i.Nome}</div>
-        <div style="font-size:12px; color:#718096; margin-top:4px;"><span style="color:#b45309; font-weight:bold;">Apicultor:</span> ${i.ApicultorNome || 'Hexomel'} &bull; Qtd: ${i.Quantidade} &bull; €${parseFloat(i.Preco_Unitario).toFixed(2)}/un</div>
+      <td style="padding:15px 10px; border-bottom:1px solid #edf2f7;">
+        <div style="font-weight:700; color:#1a4d2e; font-size:0.95rem;">${i.Nome}</div>
+        <div style="font-size:0.8rem; color:#718096; margin-top:2px;">Mel Premium Hexomel</div>
       </td>
-      <td style="padding:15px; border-bottom:1px solid #edf2f7; text-align:right; font-family: sans-serif; font-weight:bold; color:#1a4d2e; font-size:16px;">
-        €${(i.Preco_Unitario * i.Quantidade).toFixed(2)}
-      </td>
+      <td style="padding:15px 10px; border-bottom:1px solid #edf2f7; text-align:center; color:#2d3748;">${i.Quantidade}</td>
+      <td style="padding:15px 10px; border-bottom:1px solid #edf2f7; text-align:right; color:#2d3748;">€${parseFloat(i.Preco_Unitario).toFixed(2)}</td>
+      <td style="padding:15px 10px; border-bottom:1px solid #edf2f7; text-align:right; font-weight:700; color:#1a4d2e;">€${(i.Preco_Unitario * i.Quantidade).toFixed(2)}</td>
     </tr>
   `).join("");
 
@@ -168,97 +168,84 @@ function generateReceiptHTML(order, items, customerName, customerEmail, logoSrc 
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recibo Hexomel #${order.ID_Encomenda || order.id}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+    body { margin:0; padding:0; font-family:'Outfit',sans-serif; background:#f4f7f6; color:#2d3748; }
+    .container { max-width:700px; margin:40px auto; background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(26,77,46,0.12); position:relative; }
+    .header { background:linear-gradient(135deg,#1a4d2e 0%,#143d24 100%); padding:50px 40px; text-align:center; color:#fff; position:relative; }
+    .header::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:5px; background:linear-gradient(to right, #f4b400, #c9b037); }
+    .header h1 { font-size:2.2rem; font-weight:700; margin:0 0 10px; letter-spacing:-1px; }
+    .header p { opacity:0.8; font-size:1.1rem; margin:0; font-weight:300; }
+    .badge-status { display:inline-block; background:rgba(244,180,0,0.2); color:#f4b400; padding:6px 18px; border-radius:50px; font-weight:700; font-size:0.75rem; margin-top:20px; border:1px solid rgba(244,180,0,0.3); letter-spacing:1px; text-transform:uppercase; }
+    .content { padding:50px 40px; }
+    .info-section { display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-bottom:40px; }
+    .info-card { background:#fcfdfc; padding:20px; border-radius:18px; border:1px solid #eef2f0; }
+    .info-card .label { font-size:0.7rem; color:#a0aec0; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:8px; }
+    .info-card .value { font-size:1rem; font-weight:600; color:#1a4d2e; }
+    table { width:100%; border-collapse:collapse; margin-bottom:30px; }
+    thead th { text-align:left; padding:15px 10px; font-size:0.75rem; text-transform:uppercase; color:#718096; border-bottom:2px solid #edf2f7; }
+    .totals-box { background:#fcfdfc; border-radius:18px; padding:25px; border:1px solid #eef2f0; margin-left:auto; width:100%; max-width:300px; }
+    .total-row { display:flex; justify-content:space-between; padding:8px 0; font-size:0.95rem; }
+    .total-row.grand-total { border-top:1px solid #edf2f7; margin-top:15px; padding-top:15px; font-size:1.25rem; font-weight:700; color:#1a4d2e; }
+    .footer { padding:40px; background:#fcfdfc; border-top:1px solid #edf2f7; text-align:center; }
+    .footer p { font-size:0.85rem; color:#718096; margin:4px 0; }
+    .footer .thank-you { font-weight:700; color:#1a4d2e; font-size:1.1rem; margin-bottom:12px; }
+    @media print { body { background:#fff; } .container { box-shadow:none; margin:0; width:100%; } .footer { margin-top:30px; } }
+  </style>
 </head>
-<body style="margin:0; padding:0; background-color:#f4f7f6; font-family: Arial, sans-serif; color:#2d3748;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f4f7f6; padding: 40px 10px;">
-    <tr>
-      <td align="center">
-        <!-- Main Container -->
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff; max-width:600px; border-radius:16px; overflow:hidden; box-shadow:0 10px 25px rgba(26,77,46,0.05); border: 1px solid #eef2f0;">
-          
-          <!-- Header -->
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🐝 Hexomel</h1>
+      <p>Mel das Terras Portuguesas</p>
+      <div class="badge-status">Recibo Digital Confirmado</div>
+    </div>
+    <div class="content">
+      <div class="info-section">
+        <div class="info-card">
+          <div class="label">Encomenda</div>
+          <div class="value">#${order.ID_Encomenda || order.id}</div>
+        </div>
+        <div class="info-card">
+          <div class="label">Data de Emissão</div>
+          <div class="value">${orderDate}</div>
+        </div>
+      </div>
+      <div class="info-section">
+        <div class="info-card">
+          <div class="label">Cliente</div>
+          <div class="value">${customerName}</div>
+        </div>
+        <div class="info-card">
+          <div class="label">Método</div>
+          <div class="value">Pagamento Seguro (Stripe)</div>
+        </div>
+      </div>
+      <table>
+        <thead>
           <tr>
-            <td style="background-color:#1a4d2e; padding:40px 20px; text-align:center; color:#ffffff; border-bottom: 4px solid #f4b400;">
-              <div style="margin:0; font-size:28px; font-weight:bold; letter-spacing:-0.5px;">
-                <img src="${logoSrc}" alt="Hexomel" style="height:60px; vertical-align:middle; padding-bottom: 5px;">
-              </div>
-              <p style="margin:8px 0 0; font-size:16px; color:#e2e8f0;">Comprovativo da Encomenda #${order.ID_Encomenda || order.id}</p>
-            </td>
+            <th>Produto</th>
+            <th style="text-align:center">Qtd</th>
+            <th style="text-align:right">Preço</th>
+            <th style="text-align:right">Subtotal</th>
           </tr>
-
-          <!-- Order Info -->
-          <tr>
-            <td style="padding: 20px 40px;">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td width="48%" valign="top" style="padding:15px; background-color:#fcfdfc; border-radius:12px; border:1px solid #eef2f0;">
-                    <div style="font-size:11px; color:#a0aec0; text-transform:uppercase; letter-spacing:1px; font-weight:bold; margin-bottom:4px;">Nº da Encomenda</div>
-                    <div style="font-size:16px; font-weight:bold; color:#1a4d2e;">#${order.ID_Encomenda || order.id}</div>
-                    <div style="font-size:11px; color:#a0aec0; text-transform:uppercase; letter-spacing:1px; font-weight:bold; margin-top:15px; margin-bottom:4px;">Data de Emissão</div>
-                    <div style="font-size:14px; color:#4a5568;">${orderDate}</div>
-                  </td>
-                  <td width="4%"></td>
-                  <td width="48%" valign="top" style="padding:15px; background-color:#fcfdfc; border-radius:12px; border:1px solid #eef2f0;">
-                    <div style="font-size:11px; color:#a0aec0; text-transform:uppercase; letter-spacing:1px; font-weight:bold; margin-bottom:4px;">Cliente</div>
-                    <div style="font-size:16px; font-weight:bold; color:#1a4d2e;">${customerName}</div>
-                    <div style="font-size:11px; color:#a0aec0; text-transform:uppercase; letter-spacing:1px; font-weight:bold; margin-top:15px; margin-bottom:4px;">Método</div>
-                    <div style="font-size:14px; color:#4a5568;">Pagamento Seguro</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Items Table -->
-          <tr>
-            <td style="padding: 20px 40px;">
-              <h3 style="margin:0 0 15px; font-size:14px; color:#a0aec0; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #edf2f7; padding-bottom:10px;">Resumo da Encomenda</h3>
-              <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                ${itemRows}
-              </table>
-            </td>
-          </tr>
-
-          <!-- Totals -->
-          <tr>
-            <td style="padding: 10px 40px 40px;">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td width="40%"></td>
-                  <td width="60%">
-                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#fcfdfc; border-radius:12px; border:1px solid #eef2f0; padding:20px;">
-                      <tr>
-                        <td style="padding:5px 0; font-size:14px; color:#4a5568;">Subtotal</td>
-                        <td style="padding:5px 0; font-size:14px; color:#4a5568; text-align:right;">€${subtotal.toFixed(2)}</td>
-                      </tr>
-                      ${shipping > 0.05 ? `<tr>
-                        <td style="padding:5px 0; font-size:14px; color:#4a5568;">Portes</td>
-                        <td style="padding:5px 0; font-size:14px; color:#4a5568; text-align:right;">€${shipping.toFixed(2)}</td>
-                      </tr>` : ""}
-                      <tr>
-                        <td style="padding:15px 0 0; font-size:18px; font-weight:bold; color:#1a4d2e; border-top:1px solid #edf2f7; margin-top:10px;">Total</td>
-                        <td style="padding:15px 0 0; font-size:20px; font-weight:bold; color:#1a4d2e; text-align:right; border-top:1px solid #edf2f7; margin-top:10px;">€${total.toFixed(2)}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color:#fcfdfc; padding:30px 40px; text-align:center; border-top:1px solid #edf2f7;">
-              <p style="margin:0 0 10px; font-size:18px; font-weight:bold; color:#1a4d2e;">Muito obrigado pela preferência!</p>
-              <p style="margin:0 0 5px; font-size:13px; color:#718096;">Este documento serve como comprovativo de pagamento da sua encomenda.</p>
-              <p style="margin:0; font-size:13px; color:#718096;">Dúvidas? Contacte-nos em <a href="mailto:suporte@hexomel.pt" style="color:#f4b400; font-weight:bold; text-decoration:none;">suporte@hexomel.pt</a></p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      <div class="totals-box">
+        <div class="total-row"><span>Subtotal</span><span>€${subtotal.toFixed(2)}</span></div>
+        ${shipping > 0.05 ? `<div class="total-row"><span>Portes</span><span>€${shipping.toFixed(2)}</span></div>` : ""}
+        <div class="total-row grand-total"><span>Total</span><span>€${total.toFixed(2)}</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <p class="thank-you">Obrigado pela preferência!</p>
+      <p>Este documento serve como prova de compra digital.</p>
+      <p>Dúvidas? Contacte-nos em <a href="mailto:suporte@hexomel.pt" style="color:#f4b400;text-decoration:none;">suporte@hexomel.pt</a></p>
+    </div>
+  </div>
 </body>
 </html>`;
 }
@@ -288,11 +275,6 @@ async function sendReceiptEmail(orderId) {
       to: customer.Email,
       subject: `🍯 Recibo da Encomenda #${orderId} — Hexomel`,
       html,
-      attachments: [{
-        filename: 'logo_hexomel.webp',
-        path: '../frontend/public/images/logo_hexomel.webp',
-        cid: 'logo' // referenced in the HTML as src="cid:logo"
-      }]
     });
     console.log(`📧 Receipt email sent for order #${orderId} to ${customer.Email}`);
   } catch (err) {
@@ -598,9 +580,6 @@ app.post("/api/auth/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
-// Verify Email
 app.get("/api/auth/verify-email", async (req, res) => {
   const { token } = req.query;
   if (!token) {
@@ -698,7 +677,7 @@ app.post("/api/auth/checkout-2fa/verify", authenticateToken, async (req, res) =>
       return res.status(400).json({ error: "Código expirado. Peça um novo." });
     }
 
-    // Success -> Clear OTP and set as verified
+    // Success -> Clear OTP and set user as verified for checkout
     await db.run("UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL, Checkout_Verified = TRUE WHERE ID_Cliente = ?", [req.user.id]);
 
     // Issue updated token
@@ -769,7 +748,7 @@ app.post("/api/auth/google", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.ID_Cliente, role: user.UserType, checkoutVerified: Boolean(user.Checkout_Verified) },
+      { id: user.ID_Cliente, role: user.UserType },
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
@@ -784,7 +763,6 @@ app.post("/api/auth/google", async (req, res) => {
         picture: user.Picture,
         UserType: user.UserType || "client",
         role: user.UserType || "client", // Standardized
-        checkoutVerified: Boolean(user.Checkout_Verified),
       },
     });
   } catch (error) {
@@ -1892,65 +1870,10 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
   }
 });
 
-// 7. Initialize Checkout Order (Draft/Pending)
-app.post("/api/checkout/init", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, orderId } = req.body;
-
-  try {
-    // 1. Get Cart
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-    if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
-
-    const items = await db.all(
-      `SELECT ic.*, p.Preco 
-       FROM item_carrinho ic 
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
-
-    if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
-
-    const subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-    const total = subtotal + Number(shippingCost || 0);
-
-    let currentOrderId = orderId;
-
-    if (currentOrderId) {
-      // Update existing draft
-      await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-        [total, address, phone, currentOrderId, req.user.id]
-      );
-      // Refresh items
-      await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [currentOrderId]);
-    } else {
-      // Create new draft
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?)",
-        [req.user.id, total, address, phone],
-      );
-      currentOrderId = result.lastID;
-    }
-
-    // Save/Refresh items
-    for (const item of items) {
-      await db.run(
-        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-        [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-      );
-    }
-
-    res.json({ orderId: currentOrderId });
-  } catch (error) {
-    console.error("Checkout init error:", error);
-    res.status(500).json({ error: "Falha ao inicializar encomenda" });
-  }
-});
-
 // Stripe Checkout Session Creation
 app.post("/api/checkout/create-session", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, orderId } = req.body;
+  const { address, phone, nome, apelido, shippingCost } = req.body;
+  const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   try {
     // 1. Get Cart Items
@@ -1971,33 +1894,27 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
     const subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
     const total = subtotal + Number(shippingCost || 0);
 
-    let finalOrderId = orderId;
+    // 3. Create Order (Pendente)
+    const result = await db.run(
+      "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, ?, ?, 'Pendente', ?, ?)",
+      [req.user.id, new Date().toISOString(), total, address, phone],
+    );
+    const orderId = result.lastID;
 
-    if (finalOrderId) {
-      // Update existing
+    // 4. Save items to Order Items
+    for (const item of items) {
       await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ? WHERE ID_Encomenda = ?",
-        [total, address, phone, finalOrderId]
+        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+        [orderId, item.ID_Produto, item.Quantidade, item.Preco],
       );
-    } else {
-      // Create if it didn't exist
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?)",
-        [req.user.id, total, address, phone],
-      );
-      finalOrderId = result.lastID;
-
-      for (const item of items) {
-        await db.run(
-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-          [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-        );
-      }
     }
 
     // 5. MOCK MODE LOGIC
     if (!stripe) {
       console.log("⚠️ STRIPE_SECRET_KEY missing. Entering MOCK MODE.");
+      
+      // In mock mode, we assume immediate success for demonstration
+      await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [orderId]);
       
       // Update Stock (Simulated)
       for (const item of items) {
@@ -2007,8 +1924,11 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       // Clear Cart
       await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [cart.ID_Carrinho]);
 
+      // Send Receipt Email (async, non-blocking)
+      sendReceiptEmail(orderId);
+
       return res.json({ 
-        url: `/profile.html?tab=orders&orderId=${finalOrderId}&mock=pending`,
+        url: `/success.html?orderId=${orderId}&mock=true`,
         isMock: true 
       });
     }
@@ -2040,9 +1960,9 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${finalOrderId}`,
+      success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${orderId}`,
       cancel_url: `${req.headers.origin}/cancel.html`,
-      metadata: { orderId: finalOrderId.toString() },
+      metadata: { orderId: orderId.toString() },
       customer_email: (await db.get("SELECT Email FROM cliente WHERE ID_Cliente = ?", [req.user.id])).Email,
     });
 
@@ -2090,7 +2010,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
     return res.status(401).json({ error: "2FA_REQUIRED" });
   }
 
-  const { address, phone, nome, apelido, shippingCost, orderId } = req.body;
+  const { address, phone, nome, apelido, shippingCost } = req.body;
   const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   try {
@@ -2119,27 +2039,11 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
     );
     const total = subtotal + Number(shippingCost || 0);
 
-    let finalOrderId = orderId;
-
-    if (finalOrderId) {
-      await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ? WHERE ID_Encomenda = ?",
-        [total, address, phone, finalOrderId]
-      );
-    } else {
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?)",
-        [req.user.id, total, address, phone],
-      );
-      finalOrderId = result.lastID;
-
-      for (const item of items) {
-        await db.run(
-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-          [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-        );
-      }
-    }
+    const result = await db.run(
+      "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, ?, ?, 'Pendente', ?, ?)",
+      [req.user.id, new Date().toISOString(), total, address, phone],
+    );
+    const orderId = result.lastID;
 
     if (fullName || address || phone) {
       await db.run(
@@ -2150,6 +2054,10 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
 
     for (const item of items) {
       await db.run(
+        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+        [orderId, item.ID_Produto, item.Quantidade, item.Preco],
+      );
+      await db.run(
         "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
         [item.Quantidade, item.ID_Produto],
       );
@@ -2159,11 +2067,11 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       cart.ID_Carrinho,
     ]);
 
-    sendReceiptEmail(finalOrderId);
+    sendReceiptEmail(orderId);
 
     res.json({
       message: "Checkout successful",
-      orderId: finalOrderId,
+      orderId,
       total,
     });
   } catch (error) {
@@ -2259,750 +2167,11 @@ app.delete(
       res.json({ message: "Removed from favorites" });
     } catch (error) {
       console.error("Remove favorite error:", error);
-      res.status(500).json({ error: "Server error" });
-    }
-  },
-);
-
-// USER PROFILE ROUTES
-app.get("/api/user/profile", authenticateToken, async (req, res) => {
-  try {
-    const user = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, Data_Resgistro, UserType, Bio, Checkout_Verified FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id],
-    );
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const orders = await db.all(
-      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
-      [req.user.id],
-    );
-
-    res.json({
-      id: user.ID_Cliente,
-      name: user.Nome,
-      email: user.Email,
-      phone: user.Telefone,
-      address: user.Morada,
-      picture: user.Picture,
-      role: user.UserType,
-      bio: user.Bio,
-      dateRegistered: user.Data_Resgistro,
-      checkoutVerified: Boolean(user.Checkout_Verified),
       orders,
     });
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ error: "Server error" });
   }
-});
-
-// Get Order Items
-app.get(
-  "/api/user/orders/:orderId/items",
-  authenticateToken,
-  async (req, res) => {
-    const { orderId } = req.params;
-    try {
-      // Verify order belongs to user
-      const order = await db.get(
-        "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-        [orderId, req.user.id],
-      );
-
-      if (!order) {
-        return res.status(404).json({ error: "Encomenda não encontrada" });
-      }
-
-      const items = await db.all(
-        `SELECT ie.*, p.Nome, p.Imagem, p.ID_Produto, c.Nome as ApicultorNome 
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-       WHERE ie.ID_Encomenda = ?`,
-        [orderId],
-      );
-
-      res.json(items);
-    } catch (error) {
-      console.error("Fetch order items error:", error);
-      res.status(500).json({ error: "Server error" });
-    }
-  },
-);
-
-// GET /api/user/orders/:orderId/receipt — Download receipt as HTML
-app.get("/api/user/orders/:orderId/receipt", authenticateToken, async (req, res) => {
-  const { orderId } = req.params;
-  const numId = Number(orderId);
-  try {
-    const customer = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    
-    if (numId === 9001 || numId === 9002) {
-      const isUrze = numId === 9001;
-      const mockOrder = { ID_Encomenda: numId, Data_Encomenda: new Date().toISOString(), Status: "Pago", Total: isUrze ? 45.90 : 129.50 };
-      const mockItems = isUrze ? [{ Nome: "Mel de Urze (Teste)", Quantidade: 1, Preco_Unitario: 45.90, Preco: 45.90, ApicultorNome: "Quinta D'Amares" }] : [{ Nome: "Pack Premium Apicultor (Teste)", Quantidade: 1, Preco_Unitario: 129.50, Preco: 129.50, ApicultorNome: "Mel da Fazenda" }];
-      const html = generateReceiptHTML(mockOrder, mockItems, customer.Nome, customer.Email, "/images/logo_hexomel.webp");
-      res.setHeader("Content-Type", "text/html");
-      return res.send(html);
-    }
-
-    const order = await db.get(
-      "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [orderId, req.user.id],
-    );
-    if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-    const items = await db.all(
-      `SELECT ie.*, p.Nome, c.Nome as ApicultorNome 
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-       WHERE ie.ID_Encomenda = ?`,
-      [orderId],
-    );
-
-    const html = generateReceiptHTML(order, items, customer.Nome, customer.Email, "/images/logo_hexomel.webp");
-    res.setHeader("Content-Type", "text/html");
-    res.send(html);
-  } catch (error) {
-    console.error("Receipt generate error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// POST /api/user/orders/:orderId/resend-receipt — Resend receipt email
-app.post("/api/user/orders/:orderId/resend-receipt", authenticateToken, async (req, res) => {
-  const { orderId } = req.params;
-  try {
-    const order = await db.get(
-      "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [orderId, req.user.id],
-    );
-    if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-
-    if (!mailTransporter) {
-      return res.status(503).json({ error: "Serviço de email não configurado." });
-    }
-
-    await sendReceiptEmail(orderId);
-    res.json({ ok: true, message: "Recibo enviado para o teu email!" });
-  } catch (error) {
-    console.error("Resend receipt error:", error);
-    res.status(500).json({ error: "Falha ao reenviar recibo" });
-  }
-});
-
-// POST /api/user/mock-receipt — Generates and sends a real email for the test orders (9001/9002)
-app.post("/api/user/mock-receipt", authenticateToken, express.json(), async (req, res) => {
-  const { orderId } = req.body;
-  const numId = Number(orderId);
-  
-  if (!mailTransporter) return res.status(503).json({ error: "Serviço de email não configurado." });
-  
-  try {
-    const customer = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    if (!customer) return res.status(404).json({ error: "Cliente não encontrado" });
-
-    const isUrze = numId === 9001;
-    const mockOrder = {
-      ID_Encomenda: numId,
-      Data_Encomenda: new Date().toISOString(),
-      Status: "Pago",
-      Total: isUrze ? 45.90 : 129.50
-    };
-
-    const mockItems = isUrze ? [
-      { Nome: "Mel de Urze (Teste)", Quantidade: 1, Preco_Unitario: 45.90, Preco: 45.90, ApicultorNome: "Quinta D'Amares" }
-    ] : [
-      { Nome: "Pack Premium Apicultor (Teste)", Quantidade: 1, Preco_Unitario: 129.50, Preco: 129.50, ApicultorNome: "Mel da Fazenda" }
-    ];
-
-    const html = generateReceiptHTML(mockOrder, mockItems, customer.Nome, customer.Email);
-    
-    await mailTransporter.sendMail({
-      from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
-      to: customer.Email,
-      subject: `🍯 Recibo de Teste #${numId} — Hexomel`,
-      html,
-      attachments: [{
-        filename: 'logo_hexomel.webp',
-        path: '../frontend/public/images/logo_hexomel.webp',
-        cid: 'logo'
-      }]
-    });
-
-    res.json({ ok: true, message: "Email simulado enviado." });
-  } catch (error) {
-    console.error("Mock receipt error:", error);
-    res.status(500).json({ error: "Falha ao enviar mock email" });
-  }
-});
-
-app.put("/api/user/profile", authenticateToken, async (req, res) => {
-  const { name, email, phone, address } = req.body;
-  try {
-    const currentUser = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, UserType, Bio, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id],
-    );
-
-    if (!currentUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const nextName =
-      typeof name === "string" && name.trim() ? name.trim() : currentUser.Nome;
-    const nextEmail =
-      typeof email === "string" && email.trim()
-        ? email.trim().toLowerCase()
-        : currentUser.Email;
-    const nextPhone =
-      phone !== undefined ? (phone || null) : currentUser.Telefone;
-    const nextAddress =
-      address !== undefined ? (address || null) : currentUser.Morada;
-
-    if (!nextName || !nextEmail) {
-      return res.status(400).json({ error: "Name and Email are required" });
-    }
-
-    // Check if email is already taken by another user
-    const existing = await db.all(
-      "SELECT ID_Cliente FROM cliente WHERE Email = ? AND ID_Cliente != ?",
-      [nextEmail, req.user.id],
-    );
-    if (existing.length > 0) {
-      return res.status(400).json({ error: "Email is already in use" });
-    }
-
-    await db.run(
-      "UPDATE cliente SET Nome = ?, Email = ?, Telefone = ?, Morada = ? WHERE ID_Cliente = ?",
-      [nextName, nextEmail, nextPhone, nextAddress, req.user.id],
-    );
-
-    res.json({
-      message: "Profile updated successfully",
-      user: {
-        id: currentUser.ID_Cliente,
-        name: nextName,
-        email: nextEmail,
-        phone: nextPhone,
-        address: nextAddress,
-        picture: currentUser.Picture,
-        role: currentUser.UserType,
-        bio: currentUser.Bio,
-        dateRegistered: currentUser.Data_Resgistro,
-      },
-    });
-  } catch (error) {
-    console.error("Profile update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Update Profile Picture
-app.put("/api/user/profile/picture", authenticateToken, async (req, res) => {
-  try {
-    const { picture } = req.body;
-
-    if (!picture) {
-      return res.status(400).json({ error: "Picture data is required" });
-    }
-
-    // Validate base64 image format
-    if (!picture.startsWith("data:image/")) {
-      return res.status(400).json({ error: "Invalid image format" });
-    }
-
-    await db.run("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
-      picture,
-      req.user.id,
-    ]);
-
-    res.json({ message: "Profile picture updated successfully", picture });
-  } catch (error) {
-    console.error("Picture update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Update password
-app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  try {
-    const user = await db.get(
-      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id],
-    );
-
-    const isMatch = await bcrypt.compare(currentPassword, user.Senha);
-    if (!isMatch) {
-      return res.status(400).json({ error: "Incorrect current password" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
-      hashedPassword,
-      req.user.id,
-    ]);
-    res.json({ message: "Password updated successfully" });
-  } catch (error) {
-    console.error("Password update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Delete account
-app.delete("/api/user/profile", authenticateToken, async (req, res) => {
-  try {
-    // Prevent admin from deleting themselves
-    const userRole = req.user.role ? req.user.role.toLowerCase() : "";
-    if (userRole === "admin") {
-      return res.status(400).json({
-        error: "Cannot delete an admin account through clinical profile.",
-      });
-    }
-
-    // Note: ON DELETE CASCADE in schema handles related tables (cart, favorites, etc.)
-    await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    res.json({ message: "Account deleted successfully" });
-  } catch (error) {
-    console.error("Account deletion error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// ADMIN ANALYTICS
-app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    // 1. Sales last 30 days
-    const sales30d = await db.all(`
-      SELECT DATE(Data_Encomenda) as date, SUM(Total) as revenue, COUNT(ID_Encomenda) as count
-      FROM encomenda
-      WHERE Status IN ('Pago', 'Enviado', 'Entregue')
-      AND Data_Encomenda >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-      GROUP BY DATE(Data_Encomenda)
-      ORDER BY date ASC
-    `);
-
-    // 2. Product distribution by category
-    const distribution = await db.all(`
-      SELECT c.Nome as category, COUNT(p.ID_Produto) as count
-      FROM categoria c
-      LEFT JOIN produto p ON c.ID_Categoria = p.ID_Categoria
-      GROUP BY c.ID_Categoria
-    `);
-
-    // 3. Orders by Status
-    const ordersByStatus = await db.all(`
-      SELECT Status as status, COUNT(ID_Encomenda) as count
-      FROM encomenda
-      GROUP BY Status
-    `);
-
-    // 4. Top Selling Products (Top 10 by revenue)
-    const topProducts = await db.all(`
-      SELECT p.Nome as name, SUM(ie.Quantidade * ie.Preco_Unitario) as revenue
-      FROM item_encomenda ie
-      JOIN produto p ON ie.ID_Produto = p.ID_Produto
-      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
-      WHERE e.Status IN ('Pago', 'Enviado', 'Entregue')
-      GROUP BY p.ID_Produto
-      ORDER BY revenue DESC
-      LIMIT 10
-    `);
-
-    // 5. Sales by Beekeeper
-    const salesByBeekeeper = await db.all(`
-      SELECT c.Nome as name, SUM(ie.Quantidade * ie.Preco_Unitario) as revenue
-      FROM item_encomenda ie
-      JOIN produto p ON ie.ID_Produto = p.ID_Produto
-      JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
-      WHERE e.Status IN ('Pago', 'Enviado', 'Entregue')
-      AND c.UserType = 'apicultor'
-      GROUP BY c.ID_Cliente
-      ORDER BY revenue DESC
-    `);
-
-    // 6. Users Growth (Last 12 months)
-    const usersGrowth = await db.all(`
-      SELECT DATE_FORMAT(Data_Resgistro, '%Y-%m') as month, COUNT(ID_Cliente) as count
-      FROM cliente
-      WHERE Data_Resgistro >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-      GROUP BY month
-      ORDER BY month ASC
-    `);
-
-    // 7. Overall Stats
-    const stats = await db.get(`
-      SELECT 
-        SUM(CASE WHEN Status IN ('Pago', 'Enviado', 'Entregue') THEN Total ELSE 0 END) as totalRevenue,
-        COUNT(ID_Encomenda) as totalOrders,
-        (SELECT COUNT(*) FROM cliente) as totalUsers,
-        (SELECT COUNT(*) FROM produto) as totalProducts
-      FROM encomenda
-    `);
-
-    const totalRevenue = parseFloat(stats.totalRevenue || 0);
-    const totalOrders = stats.totalOrders || 0;
-    const aov = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0.00";
-
-    res.json({
-      sales30d,
-      distribution,
-      ordersByStatus,
-      topProducts,
-      salesByBeekeeper,
-      usersGrowth,
-      stats: {
-        ...stats,
-        totalRevenue: totalRevenue.toFixed(2),
-        avgOrderValue: aov
-      }
-    });
-  } catch (error) {
-    console.error("Analytics error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// UPGRADE REQUESTS
-// Submit upgrade request
-app.post(
-  "/api/upgrade-request",
-  authenticateToken,
-  upload.single("document"),
-  async (req, res) => {
-    try {
-      const { descricao } = req.body;
-      if (!req.file) {
-        return res.status(400).json({ error: "Document is required" });
-      }
-      if (!descricao) {
-        return res.status(400).json({ error: "Description is required" });
-      }
-
-      const relativePath = `/uploads/${req.file.filename}`;
-
-      await db.run(
-        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento) VALUES (?, ?, ?)",
-        [req.user.id, descricao, relativePath],
-      );
-
-      res.status(201).json({ message: "Upgrade request submitted successfully" });
-    } catch (error) {
-      console.error("Upgrade request submission error:", error);
-      res.status(500).json({ error: "Database error" });
-    }
-  },
-);
-
-// Get all upgrade requests (Admin view)
-app.get(
-  "/api/admin/upgrade-requests",
-  authenticateToken,
-  isAdmin,
-  async (req, res) => {
-    try {
-      const rows = await db.all(`
-      SELECT ur.*, c.Nome as ClienteNome, c.Email as ClienteEmail
-      FROM upgrade_requests ur
-      JOIN cliente c ON ur.ID_Cliente = c.ID_Cliente
-      ORDER BY ur.Data_Pedido DESC
-    `);
-      res.json(rows);
-    } catch (error) {
-      console.error("Admin upgrade requests fetch error:", error);
-      res.status(500).json({ error: "Database error" });
-    }
-  },
-);
-
-// Process upgrade request (Approve/Reject)
-app.put(
-  "/api/admin/upgrade-requests/:id",
-  authenticateToken,
-  isAdmin,
-  async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body; // 'Aprovado' or 'Rejeitado'
-
-    if (status !== "Aprovado" && status !== "Rejeitado") {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
-    try {
-      const request = await db.get(
-        "SELECT * FROM upgrade_requests WHERE ID_Request = ?",
-        [id],
-      );
-      if (!request) {
-        return res.status(404).json({ error: "Request not found" });
-      }
-
-      await db.run(
-        "UPDATE upgrade_requests SET Status = ?, Data_Processamento = CURRENT_TIMESTAMP WHERE ID_Request = ?",
-        [status, id],
-      );
-
-      if (status === "Aprovado") {
-        await db.run("UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?", [
-          request.ID_Cliente,
-        ]);
-      }
-
-      res.json({ message: `Request ${status.toLowerCase()} successfully` });
-    } catch (error) {
-      console.error("Process upgrade request error:", error);
-      res.status(500).json({ error: "Database error" });
-    }
-  },
-);
-
-// Check if current user has a pending request
-app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) => {
-  try {
-    const request = await db.get(
-      "SELECT Status FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
-      [req.user.id],
-    );
-    res.json(request || { Status: "Nenhum" });
-  } catch (error) {
-        res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Public list of beekeepers
-app.get("/api/apicultores", async (req, res) => {
-  try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
-    res.json(rows);
-  } catch (error) {
-    console.error("Fetch beekeepers error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Get reviews for a product
-app.get("/api/products/:id/reviews", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const reviews = await db.all(
-      `SELECT a.*, c.Nome as ClienteNome, c.Picture as ClienteFoto 
-       FROM avaliacao a
-       JOIN cliente c ON a.ID_Cliente = c.ID_Cliente
-       WHERE a.ID_Produto = ?
-       ORDER BY a.Data_Avaliacao DESC`,
-      [id],
-    );
-    res.json(reviews);
-  } catch (error) {
-    console.error("Reviews fetch error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Add a review
-app.post("/api/products/:id/reviews", authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  const { rating, comment } = req.body;
-
-  if (!rating || rating < 1 || rating > 5) {
-    return res.status(400).json({ error: "Invalid rating (1-5)" });
-  }
-
-  try {
-    // Check if user already reviewed this product
-    const existing = await db.get(
-      "SELECT * FROM avaliacao WHERE ID_Cliente = ? AND ID_Produto = ?",
-      [req.user.id, id],
-    );
-
-    if (existing) {
-      // Update existing review
-      await db.run(
-        "UPDATE avaliacao SET Nota = ?, Comentario = ?, Data_Avaliacao = CURRENT_TIMESTAMP WHERE ID_Avaliacao = ?",
-        [rating, comment, existing.ID_Avaliacao],
-      );
-      return res.json({ message: "Review updated" });
-    }
-
-    await db.run(
-      "INSERT INTO avaliacao (ID_Produto, ID_Cliente, Nota, Comentario) VALUES (?, ?, ?, ?)",
-      [id, req.user.id, rating, comment],
-    );
-    res.json({ message: "Review added successfully" });
-  } catch (error) {
-    console.error("Add review error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// ============================================================
-// INTERACTION LOGGING
-// ============================================================
-
-// POST /api/logs/interaction — Record a user interaction event
-app.post("/api/logs/interaction", async (req, res) => {
-  const { tipo, pagina, dados } = req.body;
-  if (!tipo) return res.status(400).json({ error: "Tipo é obrigatório" });
-
-  // Optionally extract user id from token (if logged in)
-  let clienteId = null;
-  const authHeader = req.headers["authorization"];
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    try {
-      const decoded = jwt.verify(authHeader.split(" ")[1], process.env.JWT_SECRET);
-      clienteId = decoded.id || null;
-    } catch {
-      // Anonymous interaction — that's fine
-    }
-  }
-
-  try {
-    await db.run(
-      "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados) VALUES (?, ?, ?, ?)",
-      [clienteId, tipo, pagina || null, dados ? JSON.stringify(dados) : null],
-    );
-    res.status(201).json({ ok: true });
-  } catch (error) {
-    console.error("Log interaction error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// GET /api/admin/analytics/interactions — Interaction overview for Admin
-app.get("/api/admin/analytics/interactions", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    // Events by type (last 30 days)
-    const byType = await db.all(`
-      SELECT Tipo as tipo, COUNT(*) as count
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY Tipo
-      ORDER BY count DESC
-    `);
-
-    // Events by page (last 30 days)
-    const byPage = await db.all(`
-      SELECT Pagina as pagina, COUNT(*) as count
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-        AND Pagina IS NOT NULL
-      GROUP BY Pagina
-      ORDER BY count DESC
-      LIMIT 10
-    `);
-
-    // Top viewed products (product_view events)
-    const topViewed = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productName')) as nome,
-             JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productId')) as id,
-             COUNT(*) as views
-      FROM interacao
-      WHERE Tipo = 'product_view'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY id, nome
-      ORDER BY views DESC
-      LIMIT 10
-    `);
-
-    // Top add-to-cart products
-    const topCart = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productName')) as nome,
-             JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productId')) as id,
-             COUNT(*) as adds
-      FROM interacao
-      WHERE Tipo = 'add_to_cart'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY id, nome
-      ORDER BY adds DESC
-      LIMIT 10
-    `);
-
-    // Events per day (last 14 days)
-    const perDay = await db.all(`
-      SELECT DATE(Data_Interacao) as dia, COUNT(*) as total
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-      GROUP BY dia
-      ORDER BY dia ASC
-    `);
-
-    // Total events
-    const totals = await db.get(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN ID_Cliente IS NOT NULL THEN 1 ELSE 0 END) as logged_in,
-             SUM(CASE WHEN ID_Cliente IS NULL THEN 1 ELSE 0 END) as anonymous
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    `);
-
-    // Top search queries
-    const topSearches = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.term')) as termo,
-             COUNT(*) as count
-      FROM interacao
-      WHERE Tipo = 'search'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-        AND Dados IS NOT NULL
-      GROUP BY termo
-      ORDER BY count DESC
-      LIMIT 10
-    `);
-
-    // Top clicked elements
-    const topClicks = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.label')) as label,
-             JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.element')) as element,
-             COUNT(*) as clicks
-      FROM interacao
-      WHERE Tipo = 'click'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY label, element
-      ORDER BY clicks DESC
-      LIMIT 15
-    `);
-
-    res.json({ byType, byPage, topViewed, topCart, perDay, totals, topSearches, topClicks });
-  } catch (error) {
-    console.error("Interactions analytics error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-startServer();
-
-// ============================================================
-// AUTOMATIC CLEANUP: Delete 'Pendente' orders older than 24h
-// ============================================================
-async function cleanupPendingOrders() {
-  try {
-    console.log("🧹 Running cleanup for expired pending orders...");
-    // Since Data_Encomenda is a TIMESTAMP, we can compare directly
-    const result = await db.run(`
-      DELETE FROM encomenda 
-      WHERE Status = 'Pendente' 
-      AND Data_Encomenda < DATE_SUB(NOW(), INTERVAL 1 DAY)
-    `);
-    if (result.changes > 0) {
-      console.log(`✅ Cleaned up ${result.changes} expired orders.`);
-    }
-  } catch (error) {
-    if (error.code !== "ECONNREFUSED" && error.message !== "Database pool not initialized. Call initDB() first.") {
-        console.error("Cleanup error:", error);
-    }
-  }
-}
-
-// Run cleanup every hour
-setInterval(cleanupPendingOrders, 60 * 60 * 1000);
-// Also run once on startup (with a small delay to ensure DB is ready)
-setTimeout(cleanupPendingOrders, 10000);
-
-initializeDatabase().catch((error) => {
-  console.error("Unexpected database bootstrap error:", error);
 });
 

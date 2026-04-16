@@ -582,6 +582,25 @@ function renderProfile(data) {
 
 function renderOrders(orders) {
   const ordersList = document.getElementById("orders-list");
+
+  // Injetar dados de teste se a lista estiver vazia (para demonstração)
+  if (!orders || orders.length === 0) {
+    orders = [
+      {
+        id: 9001,
+        date: new Date().toISOString(),
+        status: "Pendente",
+        total: 45.90
+      },
+      {
+        id: 9002,
+        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        status: "Entregue",
+        total: 129.50
+      }
+    ];
+  }
+
   if (orders.length > 0) {
     ordersList.innerHTML = orders
       .map((order) => {
@@ -596,16 +615,18 @@ function renderOrders(orders) {
               <div><div class="fw-bold">Encomenda #${order.id}</div><div class="text-muted small">${new Date(order.date).toLocaleDateString("pt-PT",{year:"numeric",month:"long",day:"numeric"})}</div></div>
             </div>
             <div class="text-end">
-              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">â‚¬${(parseFloat(order.total)||0).toFixed(2)}</div>
+              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">€${(parseFloat(order.total)||0).toFixed(2)}</div>
               <span class="order-status-pill" style="background:${sc.bg};color:${sc.color}"><i class="fas ${sc.icon} me-1"></i>${order.status}</span>
             </div>
           </div>
           <div class="order-timeline-container">${tl}</div>
-          <div class="order-card-actions">
-            <button class="btn btn-order-action primary" onclick="window.viewOrderDetails(${order.id})"><i class="fas fa-eye me-1"></i>Detalhes</button>
-            <button class="btn btn-order-action" onclick="window.downloadReceipt(${order.id})"><i class="fas fa-file-invoice me-1"></i>Recibo</button>
-            <button class="btn btn-order-action" onclick="window.resendReceipt(${order.id})"><i class="fas fa-envelope me-1"></i>Email</button>
-            <button class="btn btn-order-action success" onclick="window.reorderItems(${order.id})"><i class="fas fa-redo me-1"></i>Repetir</button>
+          <div class="d-flex flex-wrap gap-2 pt-3 mt-3" style="border-top: 1px dashed #eee;">
+            <button class="btn text-white flex-grow-1 py-2 shadow-sm" style="background: var(--primary-green); border-radius: 8px; font-weight: 600; min-width: 140px;" onclick="window.viewOrderDetails(${order.id})"><i class="fas fa-eye me-2"></i>Detalhes</button>
+            ${order.status === 'Pendente' 
+              ? `<button class="btn flex-grow-1 py-2 shadow-sm" style="background: var(--primary-gold, #f4b400); color: #000; border: none; border-radius: 8px; font-weight: 600; min-width: 120px;" onclick="window.payOrder(${order.id})"><i class="fas fa-credit-card me-2"></i>Pagar</button>` 
+              : `<button class="btn flex-grow-1 py-2 shadow-sm" style="background: white; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; min-width: 120px;" onclick="window.downloadReceipt(${order.id})"><i class="fas fa-file-invoice me-2"></i>Recibo</button>
+                 <button class="btn flex-grow-1 py-2 shadow-sm" style="background: white; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; min-width: 120px;" onclick="window.resendReceipt(${order.id})"><i class="fas fa-envelope me-2"></i>Email</button>`
+            }
           </div>
         </div>`;
       }).join("");
@@ -953,37 +974,51 @@ window.viewOrderDetails = async function (orderId) {
   modal.show();
 
   try {
-    const res = await fetch(`/api/user/orders/${orderId}/items`, {
-      headers: buildAuthHeaders(),
-    });
+    let items;
+    if (orderId === 9001 || orderId === 9002) {
+      items = [
+        { 
+          ID_Produto: 1, 
+          Nome: orderId === 9001 ? "Mel de Urze (Teste)" : "Pack Premium Apicultor (Teste)", 
+          Quantidade: 1, 
+          Preco_Unitario: orderId === 9001 ? 45.90 : 129.50, 
+          ApicultorNome: orderId === 9001 ? "Quinta D'Amares" : "Mel da Fazenda",
+          Imagem: "/images/logo_hexomel.webp" 
+        }
+      ];
+      await new Promise(r => setTimeout(r, 500));
+    } else {
+      const res = await fetch(`/api/user/orders/${orderId}/items`, {
+        headers: buildAuthHeaders(),
+      });
 
-    const result = await handleProtectedResponse(
-      res,
-      "Falha ao carregar detalhes.",
-      "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
-    );
-    if (result.handled) {
-      modal.hide();
-      return;
+      const result = await handleProtectedResponse(
+        res,
+        "Falha ao carregar detalhes.",
+        "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
+      );
+      if (result.handled) {
+        modal.hide();
+        return;
+      }
+      items = result.data;
     }
-
-    const items = result.data;
 
     let itemsHtml = `
       <div class="order-id-display mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
         <span class="text-muted small">ID da Encomenda</span>
         <span class="fw-bold">#${orderId}</span>
       </div>
-      <div class="table-responsive">
-        <table class="table table-borderless align-middle">
+      <div class="table-responsive bg-white rounded-3 p-2 shadow-sm border border-light">
+        <table class="table table-hover align-middle mb-0">
           <thead class="text-muted small fw-bold">
-            <tr>
-              <th colspan="2">Produto</th>
-              <th class="text-center">Qtd</th>
-              <th class="text-end">PreÃ§o</th>
+            <tr style="border-bottom: 2px solid #f1f5f9;">
+              <th colspan="2" class="pb-3 px-3 text-uppercase" style="letter-spacing: 0.5px;">Produto</th>
+              <th class="text-center pb-3 text-uppercase" style="letter-spacing: 0.5px;">Qtd</th>
+              <th class="text-end pb-3 px-3 text-uppercase" style="letter-spacing: 0.5px;">Preço</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody style="border-top: none;">
     `;
 
     let total = 0;
@@ -991,28 +1026,29 @@ window.viewOrderDetails = async function (orderId) {
       const itemTotal = item.Quantidade * item.Preco_Unitario;
       total += itemTotal;
       itemsHtml += `
-        <tr>
-          <td style="width: 60px;">
+        <tr style="border-bottom: 1px solid #f8fafc; transition: background-color 0.2s;">
+          <td style="width: 70px; padding: 12px 10px 12px 15px;">
             <img src="${item.Imagem || "/img/produtos/" + item.ID_Produto + ".webp"}" 
-                 class="rounded-3 shadow-sm" style="width: 50px; height: 50px; object-fit: cover;"
+                 class="rounded-3 shadow-sm border" style="width: 48px; height: 48px; object-fit: cover;"
                  onerror="this.src='/images/logo_hexomel.webp'">
           </td>
-          <td>
-            <div class="fw-bold small text-wrap">${item.Nome}</div>
-            <div class="text-muted small">â‚¬${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
+          <td style="padding: 12px 10px;">
+            <div class="fw-bold text-wrap" style="color: #1e293b;">${item.Nome}</div>
+            <div class="text-muted mt-1" style="font-size: 0.70rem; color: #94a3b8 !important;"><i class="fas fa-user-circle me-1"></i>${item.ApicultorNome || "Hexomel"}</div>
+            <div class="text-muted small mt-1">€${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
           </td>
-          <td class="text-center small">${item.Quantidade}</td>
-          <td class="text-end fw-bold small">â‚¬${itemTotal.toFixed(2)}</td>
+          <td class="text-center fw-medium" style="color: #475569;">${item.Quantidade}</td>
+          <td class="text-end fw-bold" style="padding-right: 15px; color: #1e293b;">€${itemTotal.toFixed(2)}</td>
         </tr>
       `;
     });
 
     itemsHtml += `
           </tbody>
-          <tfoot class="border-top">
+          <tfoot class="bg-light rounded-bottom-3">
             <tr>
-              <td colspan="3" class="pt-3 fw-bold">Total da Encomenda</td>
-              <td class="pt-3 text-end fw-bold fs-5 text-warning">â‚¬${total.toFixed(2)}</td>
+              <td colspan="3" class="p-3 fw-bold text-end" style="color: #64748b; border-bottom-left-radius: 8px;">Total da Encomenda</td>
+              <td class="p-3 text-end fw-bold fs-5" style="color: var(--primary-green); border-bottom-right-radius: 8px;">€${total.toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -1036,11 +1072,6 @@ window.downloadReceipt = async function (orderId) {
   if (!token) return handleSessionExpired();
 
   try {
-    Swal.fire({
-      title: "Gerando Recibo...",
-      didOpen: () => { Swal.showLoading(); }
-    });
-
     const res = await fetch(`/api/user/orders/${orderId}/receipt`, {
       headers: buildAuthHeaders(),
     });
@@ -1080,8 +1111,35 @@ window.resendReceipt = async function (orderId) {
     cancelButtonColor: "#718096",
   }).then(async (result) => {
     if (result.isConfirmed) {
+      if (orderId === 9001 || orderId === 9002) {
+        try {
+          Swal.fire({ title: "Enviando...", didOpen: () => { Swal.showLoading(); } });
+          const res = await fetch("/api/user/mock-receipt", {
+            method: "POST",
+            headers: {
+              ...buildAuthHeaders(),
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ orderId })
+          });
+          
+          if (!res.ok) throw new Error("Falha ao enviar email do teste");
+          
+          Swal.fire({
+            icon: "success",
+            title: "Email Enviado",
+            text: "O recibo foi gerado e enviado com sucesso para a tua caixa de entrada.",
+            confirmButtonColor: "#1a4d2e"
+          });
+        } catch (error) {
+          Swal.fire("Erro", "Não foi possível enviar o email de teste.", "error");
+        }
+        return;
+      }
+      
       try {
         Swal.fire({ title: "Enviando...", didOpen: () => { Swal.showLoading(); } });
+
         const res = await fetch(`/api/user/orders/${orderId}/resend-receipt`, {
           method: "POST",
           headers: buildAuthHeaders(),
@@ -1114,6 +1172,17 @@ window.reorderItems = async function (orderId) {
       text: "A validar produtos e stock disponível",
       didOpen: () => { Swal.showLoading(); }
     });
+
+    if (orderId === 9001 || orderId === 9002) {
+      Swal.fire({
+        icon: "success",
+        title: "🛒 Carrinho (Simulado)",
+        text: "Como esta é uma demonstração, os itens (fictícios) simulariam a adição ao teu carrinho.",
+        confirmButtonText: "Fechar",
+        confirmButtonColor: "#1a4d2e",
+      });
+      return;
+    }
 
     const res = await fetch(`/api/user/orders/${orderId}/items`, {
       headers: buildAuthHeaders(),
@@ -1173,7 +1242,25 @@ window.reorderItems = async function (orderId) {
   }
 };
 
+window.payOrder = async function (orderId) {
+  const token = getAuthToken();
+  if (!token) return handleSessionExpired();
 
+  Swal.fire({
+    title: "Efetuar Pagamento",
+    text: "Desejas prosseguir para o pagamento desta encomenda?",
+    icon: "info",
+    showCancelButton: true,
+    confirmButtonText: "Sim, Pagar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#f4b400",
+    cancelButtonColor: "#718096",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `checkout.html?orderId=${orderId}`;
+    }
+  });
+};
 
 // Upgrade Request Handling
 async function handleUpgradeRequest(e) {

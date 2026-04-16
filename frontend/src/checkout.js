@@ -10,6 +10,7 @@ class CheckoutManager {
     this.totalSteps = 2;
     this.token = localStorage.getItem("token");
     this.userData = null;
+    this.currentOrderId = null;
     this.init();
   }
 
@@ -142,7 +143,7 @@ class CheckoutManager {
     });
   }
 
-  nextStep() {
+  async nextStep() {
     if (this.currentStep < this.totalSteps) {
       // Validate current step
       const currentContent = document.getElementById(
@@ -153,7 +154,7 @@ class CheckoutManager {
 
       inputs.forEach((input) => {
         if (!input.value.trim()) {
-          input.style.borderColor = "var(--primary-green)"; // Use brand color for highlight
+          input.style.borderColor = "var(--primary-green)";
           valid = false;
         } else {
           input.style.borderColor = "var(--border-color)";
@@ -168,6 +169,56 @@ class CheckoutManager {
           confirmButtonColor: "#f4b400",
         });
         return;
+      }
+
+      // NOVO: Inicializar encomenda pendente no Passo 1
+      if (this.currentStep === 1) {
+        const btn = document.getElementById("init-checkout-btn");
+        const originalText = btn ? btn.textContent : "Continuar";
+        
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "A aguardar...";
+        }
+
+        try {
+          const address = `${document.getElementById("morada").value}, ${document.getElementById("cod-postal").value} ${document.getElementById("cidade").value}`;
+          const phone = document.getElementById("telemovel").value;
+          const nome = document.getElementById("nome").value;
+          const apelido = document.getElementById("apelido").value;
+          
+          const shippingType = document.querySelector('input[name="envio"]:checked').value;
+          const shippingCost = shippingType === "ctt" ? 4.9 : 0;
+
+          const res = await fetch(`${API_URL}/checkout/init`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ 
+              address, 
+              phone, 
+              nome, 
+              apelido,
+              shippingCost,
+              orderId: this.currentOrderId
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            this.currentOrderId = data.orderId;
+            console.log("Encomenda inicializada:", this.currentOrderId);
+          }
+        } catch (err) {
+          console.error("Erro ao inicializar checkout:", err);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+        }
       }
 
       this.currentStep++;
@@ -289,7 +340,7 @@ class CheckoutManager {
     try {
       // If it's MBWay, we use the manual checkout (Legacy)
       // If it's Card, we use Stripe Checkout Session
-      const endpoint = paymentType === "cartao" ? "/api/checkout/create-session" : "/api/cart/checkout";
+      const endpoint = paymentType === "cartao" ? "/checkout/create-session" : "/cart/checkout";
       
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
@@ -302,7 +353,8 @@ class CheckoutManager {
           phone, 
           nome, 
           apelido,
-          shippingCost
+          shippingCost,
+          orderId: this.currentOrderId
         }),
       });
 

@@ -1,0 +1,12 @@
+import fs from 'fs';
+let c = fs.readFileSync('frontend/shop.html', 'utf8');
+c = c.replace(/InÃ­cio/g, 'Início');
+c = c.replace(/PreÃ§o MÃ¡ximo/g, 'Preço Máximo');
+c = c.replace(/NavegaÃ§Ã£o/g, 'Navegação');
+c = c.replace(/produÃ§Ã£o/g, 'produção');
+c = c.replace(/tradiÃ§Ã£o/g, 'tradição');
+c = c.replace(/apÃ­cola/g, 'apícola');
+c = c.replace(/ExcelÃªncia/g, 'Excelência');
+c = c.replace(/â‚¬/g, '€');
+fs.writeFileSync('frontend/shop.html', c);
+console.log('shop.html fixed!');

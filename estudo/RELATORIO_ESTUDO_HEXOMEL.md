@@ -18,8 +18,9 @@ O **Hexomel** é uma plataforma premium de e-commerce para mel português, desen
 ## 2. Arquitetura do Sistema
 O projeto segue uma estrutura de **Single Page Application (SPA) logic** no frontend com uma **API RESTful** no backend.
 
-- **Comunicação**: O frontend comunica com o servidor via `Fetch API`, utilizando tokens **JWT** para autenticação segura e middleware de tratamento de erros para garantir robustez.
-- **Segurança**: As passwords são protegidas com `bcryptjs` (hashing) e os acessos são validados por middlewares no servidor para perfis Cliente, Apicultor e Admin.
+- **Comunicação e SPA Híbrida**: O frontend comunica com o servidor via `Fetch API`, utilizando tokens **JWT** para autenticação segura. Incorporamos suportes avançados de **Native View Transitions API** (`<meta name="view-transition" content="same-origin">`) misturados com caching ultrarrápido (`pre-load.js`) para simular uma navegação Single Page Application, garantindo fade-ins limpos e eliminando cintilações (flickering) sem depender de pesados frameworks extra.
+- **Integração de Email**: Backend configurado com **Nodemailer** para suporte a envio de emails reais via SMTP (ex: Gmail) ou Fallback para Ethereal em modo de desenvolvimento, essencial para recuperação e validação.
+- **Segurança e 2FA**: As passwords são protegidas com `bcryptjs` (hashing) e os acessos são validados por middlewares no servidor para perfis Cliente, Apicultor e Admin. Adicionalmente, foi implementado um **Módulo 2FA Obrigatório** verificado por email para assegurar as transações do Carrinho de Compras, elevando a segurança da plataforma contra roubo de sessões. O estado validado da conta é armazenado persistentemente usando flags em Base de Dados.
 - **Assets**: Imagens de produtos e perfis são geridas via `multer` no backend e armazenadas em `frontend/public/uploads/`.
 - **UI Consistency**: Implementação de um sistema de design centralizado em `modern.css`, garantindo que componentes premium (tabelas, badges, botões e modais) sejam idênticos em toda a plataforma.
 
@@ -72,6 +73,12 @@ O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Robustez de Visualização**: Sistema de visualização de documentos (Upgrade System) com tratamento de erros avançado, gestão de classes dinâmicas para loaders e suporte cross-browser para PDF e Imagens.
 - **Área de Cliente Premium**: Painel de perfil interativo abrangente com histórico de encomendas detalhado e acompanhamento visual do estado de cada compra.
 
+
+---
+## 8. Documentação Técnica Adicional
+Para detalhes profundos sobre implementações específicas, consulte os ficheiros de estudo:
+- [Implementação de Checkout e Emails](file:///c:/escola/PAP/codigo/hexomel/estudo/DETALHES_TECNICOS_COMPRAS_EMAIL.md): Detalha a lógica de encomendas, integração com SMTP do Google (App Passwords) e geração de recibos CID.
+- [Funcionalidades Globais](file:///c:/escola/PAP/codigo/hexomel/estudo/funcionalidades.md): Lista completa de capacidades do sistema.
 
 ---
 *Este relatório foi gerido e compactado para servir de base à documentação final da PAP.*

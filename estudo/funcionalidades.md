@@ -9,8 +9,10 @@ Este documento detalha todas as funcionalidades implementadas no projeto Hexomel
 - **✅ BeeAnimator (Premium UX)**: Sistema de animação procedimental de abelhas. Utiliza matemática trigonométrica para simular voo dinâmico com **Efeito Parallax Inverso** (interação com o rato).
 - **✅ Design System Premium**: Interface minimalista com a paleta "Golden & White". Focado em Vanilla CSS (moderno) com tipografia sofisticada e componentes reutilizáveis.
 - **✅ Premium Filter System**: Catálogo com filtros dinâmicos cruzados por categorias, origens geográficas, vendedores e preço.
+- **✅ Native SPA Experience (View Transitions API)**: Implementação de arquitetura nativa avançada para navegação sem "flickers" visuais. As páginas trocam entre si com um *smooth cross-fade* e injeção síncrona do estado de autenticação (Pre-load Cache), providenciando uma experiência Premium ao estilo App mobile em ambiente Vanilla JS.
 - **✅ Carrinho de Compras**: Gestão persistente de produtos através de `localStorage` com sincronização automática e lógica de stock em tempo real.
 - **✅ Autenticação Multi-fator**: Sistema de login/registo seguro com hashing (bcrypt), tokens JWT e integração Nativa com **Google OAuth**.
+- **✅ Segurança 2FA de Checkout**: Proteção obrigatória para concluir encomendas. Exige a verificação da sessão através de um código de uso único (OTP) temporizado enviado por Email (SMTP Real ou Ethereal Dev Mode). O estado de verificação é armazenado permanentemente após a validação.
 - **✅ Sistema de Analytics (Behavioral Logging)**: Monitorização silenciosa e não-bloqueante de interações:
     - Page Views (rastreio de navegação).
     - Product Views (análise de interesse).
