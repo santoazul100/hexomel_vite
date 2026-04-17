@@ -283,7 +283,7 @@ async function sendReceiptEmail(orderId) {
 
     const html = generateReceiptHTML(order, items, customer.Nome, customer.Email);
 
-    await mailTransporter.sendMail({
+    const info = await mailTransporter.sendMail({
       from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
       to: customer.Email,
       subject: `🍯 Recibo da Encomenda #${orderId} — Hexomel`,
@@ -295,6 +295,9 @@ async function sendReceiptEmail(orderId) {
       }]
     });
     console.log(`📧 Receipt email sent for order #${orderId} to ${customer.Email}`);
+    if (nodemailer.getTestMessageUrl(info)) {
+      console.log(`🔗 Email Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+    }
   } catch (err) {
     console.error(`📧 Failed to send receipt email for order #${orderId}:`, err.message);
   }
@@ -394,6 +397,12 @@ const runDatabaseMigrations = async () => {
         `,
       )
       .catch(() => console.log("interacao table already exists"));
+
+    // New columns for Encomenda
+    await db.run("ALTER TABLE encomenda ADD COLUMN Custo_Envio DECIMAL(10,2) DEFAULT 0").catch(() => {});
+    await db.run("ALTER TABLE encomenda ADD COLUMN Tipo_Envio VARCHAR(50) DEFAULT 'ctt'").catch(() => {});
+    await db.run("ALTER TABLE encomenda ADD COLUMN Nome VARCHAR(120) DEFAULT NULL").catch(() => {});
+    await db.run("ALTER TABLE encomenda ADD COLUMN Apelido VARCHAR(120) DEFAULT NULL").catch(() => {});
 
     console.log("Auto-migrations completed.");
   } catch (err) {
@@ -641,7 +650,7 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
     
     if (mailTransporter) {
       try {
-        await mailTransporter.sendMail({
+        const info = await mailTransporter.sendMail({
           from: process.env.SMTP_FROM || "Hexomel Segurança <noreply@hexomel.pt>",
           to: user.Email,
           subject: "O seu código de verificação para Checkout — Hexomel",
@@ -656,6 +665,9 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
             </div>
           `
         });
+        if (nodemailer.getTestMessageUrl(info)) {
+          console.log(`🔗 2FA Email Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+        }
       } catch (emailErr) {
         console.error("2FA Email fail:", emailErr);
       }
@@ -1788,6 +1800,21 @@ app.patch(
   },
 );
 
+// Get specific order details (Client view)
+app.get("/api/user/orders/:id", authenticateToken, async (req, res) => {
+  try {
+    const order = await db.get(
+      "SELECT ID_Encomenda, ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+      [req.params.id, req.user.id]
+    );
+    if (!order) return res.status(404).json({ error: "Order not found" });
+    res.json(order);
+  } catch (error) {
+    console.error("Fetch order details error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // Delete product (keeping existing)
 app.delete(
   "/api/admin/products/:id",
@@ -1894,51 +1921,75 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
 
 // 7. Initialize Checkout Order (Draft/Pending)
 app.post("/api/checkout/init", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, orderId } = req.body;
+  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
 
   try {
-    // 1. Get Cart
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-    if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
+    let items = [];
+    let subtotal = 0;
 
-    const items = await db.all(
-      `SELECT ic.*, p.Preco 
-       FROM item_carrinho ic 
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
+    if (orderId) {
+      // If we have an orderId, we are updating an existing order
+      const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [orderId, req.user.id]);
+      if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
+      
+      // Get items from that order
+      items = await db.all("SELECT * FROM item_encomenda WHERE ID_Encomenda = ?", [orderId]);
+      subtotal = items.reduce((sum, item) => sum + item.Preco_Unitario * item.Quantidade, 0);
+    } else {
+      // If no orderId, we must have a cart
+      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
+      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
 
-    if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
+      items = await db.all(
+        `SELECT ic.*, p.Preco 
+         FROM item_carrinho ic 
+         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+         WHERE ic.ID_Carrinho = ?`,
+        [cart.ID_Carrinho],
+      );
 
-    const subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
+      if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
+      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
+    }
+
     const total = subtotal + Number(shippingCost || 0);
-
     let currentOrderId = orderId;
 
     if (currentOrderId) {
       // Update existing draft
       await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-        [total, address, phone, currentOrderId, req.user.id]
+        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+        [total, address, phone, nome, apelido, shippingCost, shippingType, currentOrderId, req.user.id]
       );
-      // Refresh items
-      await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [currentOrderId]);
+      
+      // If it was a cart checkout that became an orderId, we might not need to refresh items 
+      // but usually we refresh them to match the cart if it's a "draft" being finalized.
+      // HOWEVER, if the cart is EMPTY, we MUST NOT refresh items from cart.
+      // Let's only refresh items if they came from the cart.
+      if (!orderId) {
+        await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [currentOrderId]);
+        for (const item of items) {
+          await db.run(
+            "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+            [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+          );
+        }
+      }
     } else {
       // Create new draft
       const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?)",
-        [req.user.id, total, address, phone],
+        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
+        [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
       );
       currentOrderId = result.lastID;
-    }
 
-    // Save/Refresh items
-    for (const item of items) {
-      await db.run(
-        "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-        [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-      );
+      // Save items
+      for (const item of items) {
+        await db.run(
+          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+          [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+        );
+      }
     }
 
     res.json({ orderId: currentOrderId });
@@ -1950,40 +2001,57 @@ app.post("/api/checkout/init", authenticateToken, async (req, res) => {
 
 // Stripe Checkout Session Creation
 app.post("/api/checkout/create-session", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, orderId } = req.body;
+  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
 
   try {
-    // 1. Get Cart Items
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-    if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
-
-    const items = await db.all(
-      `SELECT ic.*, p.Nome, p.Preco 
-       FROM item_carrinho ic 
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
-
-    if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
-
-    // 2. Calculate Total
-    const subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-    const total = subtotal + Number(shippingCost || 0);
-
+    let items = [];
+    let subtotal = 0;
     let finalOrderId = orderId;
 
     if (finalOrderId) {
-      // Update existing
+      // Validate existing order
+      const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [finalOrderId, req.user.id]);
+      if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
+
+      items = await db.all(
+        `SELECT ie.*, p.Nome 
+         FROM item_encomenda ie 
+         JOIN produto p ON ie.ID_Produto = p.ID_Produto 
+         WHERE ie.ID_Encomenda = ?`,
+        [finalOrderId]
+      );
+      // Map properties to match expected format below
+      items = items.map(it => ({ ...it, Preco: it.Preco_Unitario }));
+      
+      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
+      const total = subtotal + Number(shippingCost || 0);
+
+      // Update order details
       await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ? WHERE ID_Encomenda = ?",
-        [total, address, phone, finalOrderId]
+        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ? WHERE ID_Encomenda = ?",
+        [total, address, phone, nome, apelido, shippingCost, shippingType, finalOrderId]
       );
     } else {
-      // Create if it didn't exist
+      // Create from cart
+      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
+      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
+
+      items = await db.all(
+        `SELECT ic.*, p.Nome, p.Preco 
+         FROM item_carrinho ic 
+         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+         WHERE ic.ID_Carrinho = ?`,
+        [cart.ID_Carrinho],
+      );
+
+      if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
+
+      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
+      const total = subtotal + Number(shippingCost || 0);
+
       const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?)",
-        [req.user.id, total, address, phone],
+        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
+        [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
       );
       finalOrderId = result.lastID;
 
@@ -2004,8 +2072,8 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
         await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [item.Quantidade, item.ID_Produto]);
       }
 
-      // Clear Cart
-      await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [cart.ID_Carrinho]);
+      // Clear Cart (if applicable)
+      await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);
 
       return res.json({ 
         url: `/profile.html?tab=orders&orderId=${finalOrderId}&mock=pending`,
@@ -2090,46 +2158,50 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
     return res.status(401).json({ error: "2FA_REQUIRED" });
   }
 
-  const { address, phone, nome, apelido, shippingCost, orderId } = req.body;
+  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
   const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   try {
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
-    if (!cart) {
-      return res.status(400).json({ error: "Carrinho vazio" });
-    }
-
-    const items = await db.all(
-      `SELECT ic.*, p.Nome, p.Preco
-       FROM item_carrinho ic
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
-
-    if (items.length === 0) {
-      return res.status(400).json({ error: "Carrinho vazio" });
-    }
-
-    const subtotal = items.reduce(
-      (sum, item) => sum + item.Preco * item.Quantidade,
-      0,
-    );
-    const total = subtotal + Number(shippingCost || 0);
-
+    let items = [];
+    let subtotal = 0;
     let finalOrderId = orderId;
 
     if (finalOrderId) {
+      // Validate existing order
+      const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [finalOrderId, req.user.id]);
+      if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
+
+      items = await db.all("SELECT * FROM item_encomenda WHERE ID_Encomenda = ?", [finalOrderId]);
+      // Use price from item_encomenda
+      items = items.map(it => ({ ...it, Preco: it.Preco_Unitario }));
+      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
+
+      const total = subtotal + Number(shippingCost || 0);
+
       await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ? WHERE ID_Encomenda = ?",
-        [total, address, phone, finalOrderId]
+        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ? WHERE ID_Encomenda = ?",
+        [total, address, phone, nome, apelido, shippingCost, shippingType, finalOrderId]
       );
     } else {
+      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
+      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
+
+      items = await db.all(
+        `SELECT ic.*, p.Nome, p.Preco
+         FROM item_carrinho ic
+         JOIN produto p ON ic.ID_Produto = p.ID_Produto
+         WHERE ic.ID_Carrinho = ?`,
+        [cart.ID_Carrinho],
+      );
+
+      if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
+
+      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
+      const total = subtotal + Number(shippingCost || 0);
+
       const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?)",
-        [req.user.id, total, address, phone],
+        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
+        [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
       );
       finalOrderId = result.lastID;
 
@@ -2155,16 +2227,15 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       );
     }
 
-    await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = ?", [
-      cart.ID_Carrinho,
-    ]);
+    // Clear cart for the user
+    await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);
 
     sendReceiptEmail(finalOrderId);
 
     res.json({
       message: "Checkout successful",
       orderId: finalOrderId,
-      total,
+      total: subtotal + Number(shippingCost || 0),
     });
   } catch (error) {
     console.error("Manual checkout error:", error);

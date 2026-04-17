@@ -10,7 +10,7 @@ class CheckoutManager {
     this.totalSteps = 2;
     this.token = localStorage.getItem("token");
     this.userData = null;
-    this.currentOrderId = null;
+    this.currentOrderId = new URLSearchParams(window.location.search).get("orderId");
     this.init();
   }
 
@@ -28,9 +28,16 @@ class CheckoutManager {
       return;
     }
 
-    if (cart.items.length === 0) {
+    // Allow access if we have items in cart OR we are paying for an existing order
+    if (cart.items.length === 0 && !this.currentOrderId) {
       window.location.href = "shop.html";
       return;
+    }
+
+    // If we have an orderId, we need to load its items instead of the cart items for the summary
+    if (this.currentOrderId) {
+      await this.fetchOrderData();
+      this.currentStep = 2; // Skip to payment step for existing orders
     }
 
     this.renderSummary();
@@ -39,9 +46,93 @@ class CheckoutManager {
 
     // Track checkout start
     logInteraction("checkout_start", {
+      orderId: this.currentOrderId,
       itemCount: cart.items.length,
       totalValue: cart.items.reduce((acc, item) => acc + item.Preco * item.Quantidade, 0).toFixed(2)
     });
+  }
+
+  async fetchOrderData() {
+    try {
+      const [resItems, resDetails] = await Promise.all([
+        fetch(`${API_URL}/user/orders/${this.currentOrderId}/items`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        }),
+        fetch(`${API_URL}/user/orders/${this.currentOrderId}`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        })
+      ]);
+
+      if (resItems.ok) {
+        const items = await resItems.json();
+        // Override cart items for summary display
+        // We map them to match the cart item structure
+        this.orderItems = items.map(it => ({
+          ...it,
+          Preco: it.Preco_Unitario,
+          Nome: it.Nome,
+          ID_Produto: it.ID_Produto
+        }));
+      }
+
+      if (resDetails.ok) {
+        const order = await resDetails.json();
+        this.orderData = order;
+        this.autoFillOrderData();
+      }
+    } catch (error) {
+      console.error("Error fetching order data:", error);
+    }
+  }
+
+  autoFillOrderData() {
+    if (!this.orderData) return;
+    
+    // Fill identification
+    if (this.orderData.Nome) {
+        const el = document.getElementById("nome");
+        if (el) el.value = this.orderData.Nome;
+    }
+    if (this.orderData.Apelido) {
+        const el = document.getElementById("apelido");
+        if (el) el.value = this.orderData.Apelido;
+    }
+
+    // Fill address fields
+    if (this.orderData.Morada) {
+      const addrParts = this.orderData.Morada.split(", ");
+      if (addrParts.length >= 2) {
+        const mainAddress = addrParts[0];
+        const lastPart = addrParts[1];
+        const lastPartWords = lastPart.split(" ");
+        const zip = lastPartWords[0];
+        const city = lastPartWords.slice(1).join(" ");
+
+        const moradaEl = document.getElementById("morada");
+        const zipEl = document.getElementById("cod-postal");
+        const cityEl = document.getElementById("cidade");
+
+        if (moradaEl) moradaEl.value = mainAddress;
+        if (zipEl) zipEl.value = zip;
+        if (cityEl) cityEl.value = city;
+      } else {
+        const moradaEl = document.getElementById("morada");
+        if (moradaEl) moradaEl.value = this.orderData.Morada;
+      }
+    }
+    
+    if (this.orderData.Telefone) {
+      const telEl = document.getElementById("telemovel");
+      if (telEl) telEl.value = this.orderData.Telefone;
+    }
+
+    // Select shipping method
+    const shippingType = this.orderData.Tipo_Envio || (parseFloat(this.orderData.Custo_Envio || 0) > 0 ? "ctt" : "levantamento");
+    const radio = document.querySelector(`input[name="envio"][value="${shippingType}"]`);
+    if (radio) {
+      radio.checked = true;
+      this.updateSelectionCards("envio");
+    }
   }
 
   async fetchUserProfile() {
@@ -202,6 +293,7 @@ class CheckoutManager {
               nome, 
               apelido,
               shippingCost,
+              shippingType,
               orderId: this.currentOrderId
             }),
           });
@@ -291,7 +383,9 @@ class CheckoutManager {
     const list = document.getElementById("summary-items-list");
     let subtotal = 0;
 
-    list.innerHTML = cart.items
+    const itemsToRender = this.currentOrderId ? (this.orderItems || []) : cart.items;
+
+    list.innerHTML = itemsToRender
       .map((item) => {
         subtotal += item.Preco * item.Quantidade;
         return `
@@ -354,6 +448,7 @@ class CheckoutManager {
           nome, 
           apelido,
           shippingCost,
+          shippingType,
           orderId: this.currentOrderId
         }),
       });
