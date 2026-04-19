@@ -28,8 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       contentDiv.innerHTML = `
         <i class="success-icon" style="font-style: normal;">✅</i>
         <p class="auth-subtitle" style="color: #1a4d2e; font-weight: bold; font-size: 1.2rem;">${data.message}</p>
-        <p class="auth-subtitle" style="margin-top: 10px;">A sua conta foi ativada e está pronta a ser utilizada.</p>
-        <button onclick="window.closeAllPopups ? window.openAuthModal('login') : window.location.href='/login.html'" class="auth-submit btn" style="margin-top: 2rem; width: auto; padding: 12px 30px; cursor: pointer;">
+        <p class="auth-subtitle" style="margin-top: 10px;">A sua conta foi ativada! Vamos completar o seu perfil.</p>
+        <button onclick="window.location.href='/login.html'" class="auth-submit btn" style="margin-top: 2rem; width: auto; padding: 12px 30px; cursor: pointer;">
           Iniciar Sessão
         </button>
       `;

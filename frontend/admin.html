@@ -469,6 +469,9 @@
           <a class="admin-nav-link" data-section="upgrade-requests">
             <i class="fas fa-user-shield"></i> <span>Pedidos de Apicultor</span>
           </a>
+          <a class="admin-nav-link" data-section="workshops">
+            <i class="fas fa-chalkboard-teacher"></i> <span>Workshops</span>
+          </a>
           <a class="admin-nav-link" data-section="interactions">
             <i class="fas fa-mouse-pointer"></i> <span>Interações</span>
           </a>
@@ -820,6 +823,33 @@
                   </tr>
                 </thead>
                 <tbody id="upgrade-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- WORKSHOPS SECTION -->
+        <section id="workshops-section" class="admin-section">
+          <header class="mb-4">
+            <h2 class="fw-bold mb-1">Gestão de Workshops</h2>
+            <p class="text-muted small">
+              Reveja e aprove os workshops submetidos pelos apicultores.
+            </p>
+          </header>
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th style="width: 25%">Título</th>
+                    <th>Apicultor</th>
+                    <th>Detalhes</th>
+                    <th>Preço</th>
+                    <th>Estado</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="workshops-tbody"></tbody>
               </table>
             </div>
           </div>

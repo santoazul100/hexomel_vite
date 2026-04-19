@@ -41,6 +41,35 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeTabs();
   initialize2FA();
 
+  // Welcome onboarding flow for new accounts
+  const isWelcome = urlParams.get("welcome");
+  if (isWelcome === "1") {
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname + (tab ? `?tab=${tab}` : ''));
+    
+    setTimeout(() => {
+      Swal.fire({
+        icon: "info",
+        title: "👋 Bem-vindo à Hexomel!",
+        html: `<p style="font-size:0.95rem;color:#555;line-height:1.6">Para poderes fazer encomendas, precisamos que preenchas a tua <strong>morada de entrega</strong> e <strong>telemóvel</strong>.</p><p style="font-size:0.85rem;color:#999;margin-top:8px">Demora menos de 1 minuto!</p>`,
+        confirmButtonText: "Preencher Agora",
+        confirmButtonColor: "#1a4d2e",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      }).then(() => {
+        // Auto-open the delivery edit section
+        const deliverySection = document.getElementById("delivery-section");
+        if (deliverySection) {
+          deliverySection.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => {
+            const editBtn = deliverySection.querySelector(".edit-toggle-btn");
+            if (editBtn) editBtn.click();
+          }, 400);
+        }
+      });
+    }, 600);
+  }
+
   // Initialize Inline Edit Toggles
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".edit-toggle-btn");
@@ -85,6 +114,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     avatarFileInput.addEventListener("change", handleAvatarUpload);
   }
+
+  // Initialize Upgrade Request Form
+  const upgradeForm = document.getElementById("upgrade-request-form");
+  if (upgradeForm) {
+    upgradeForm.addEventListener("submit", handleUpgradeRequest);
+  }
+
+  // Check the upgrade status on page load to preserve UI state
+  checkUpgradeStatus();
 });
 
 function initializeTabs() {
@@ -149,12 +187,20 @@ function populateEditInputs(section) {
 
     // Parse address: "Rua X, 0000-000 Cidade"
     if (currentUserData.address) {
-      const parts = currentUserData.address.split(", ");
-      const street = parts[0] || "";
-      const rest = parts.slice(1).join(", ");
-      const restWords = rest.split(" ");
-      const zip = restWords[0] || "";
-      const city = restWords.slice(1).join(" ") || "";
+      const zipMatch = currentUserData.address.match(/\b\d{4}-\d{3}\b/);
+      let street = currentUserData.address;
+      let zip = "";
+      let city = "";
+
+      if (zipMatch) {
+        zip = zipMatch[0];
+        const zipIndex = currentUserData.address.indexOf(zip);
+        street = currentUserData.address.substring(0, zipIndex).trim();
+        if (street.endsWith(',')) {
+          street = street.slice(0, -1).trim();
+        }
+        city = currentUserData.address.substring(zipIndex + zip.length).trim();
+      }
 
       document.getElementById("input-address").value = street;
       document.getElementById("input-zip").value = zip;
@@ -279,9 +325,9 @@ function showInlineStatus(type, msg) {
   if (!el) return;
 
   if (type === "saving") {
-    el.innerHTML = `<span class="badge" style="background:var(--primary-gold,#f4b400);color:#000;font-size:.8rem;padding:.4em .8em"><i class="fas fa-spinner fa-spin me-1"></i>A guardar alteraÃ§Ãµes...</span>`;
+    el.innerHTML = `<span class="badge" style="background:var(--primary-gold,#f4b400);color:#000;font-size:.8rem;padding:.4em .8em"><i class="fas fa-spinner fa-spin me-1"></i>A guardar alterações...</span>`;
   } else if (type === "saved") {
-    el.innerHTML = `<span class="badge bg-success" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-check-circle me-1"></i>AlteraÃ§Ãµes provocadas com sucesso!</span>`;
+    el.innerHTML = `<span class="badge bg-success" style="font-size:.8rem;padding:.4em .8em"><i class="fas fa-check-circle me-1"></i>Alterações provocadas com sucesso!</span>`;
     setTimeout(() => {
       el.innerHTML = "";
     }, 3000);
@@ -533,7 +579,7 @@ function renderProfile(data) {
   if (addressEl) {
     addressEl.innerHTML = data.address
       ? `<i class="fas fa-map-marker-alt me-1"></i> ${data.address}`
-      : `<i class="fas fa-map-marker-alt me-1"></i> Morada nÃ£o definida`;
+      : `<i class="fas fa-map-marker-alt me-1"></i> Morada não definida`;
   }
 
   // Tab View Mode Elements
@@ -544,21 +590,25 @@ function renderProfile(data) {
   if (viewEmail) viewEmail.innerText = email;
 
   const viewPhone = document.getElementById("view-phone");
-  if (viewPhone) viewPhone.innerText = data.phone || "NÃ£o definido";
+  if (viewPhone) viewPhone.innerText = data.phone || "Não definido";
 
   const viewAddress = document.getElementById("view-address");
   if (viewAddress)
-    viewAddress.innerText = data.address || "Morada nÃ£o definida";
+    viewAddress.innerText = data.address || "Morada não definida";
 
   const viewCity = document.getElementById("view-city");
   if (viewCity) {
     if (data.address) {
-      const parts = data.address.split(", ");
-      const rest = parts.slice(1).join(", ");
-      const restWords = rest.split(" ");
-      viewCity.innerText = restWords.slice(1).join(" ") || "NÃ£o definida";
+      const zipMatch = data.address.match(/\b\d{4}-\d{3}\b/);
+      let city = "Não definida";
+      
+      if (zipMatch) {
+        const zipIndex = data.address.indexOf(zipMatch[0]);
+        city = data.address.substring(zipIndex + zipMatch[0].length).trim();
+      }
+      viewCity.innerText = city || "Não definida";
     } else {
-      viewCity.innerText = "NÃ£o definida";
+      viewCity.innerText = "Não definida";
     }
   }
 
@@ -583,23 +633,7 @@ function renderProfile(data) {
 function renderOrders(orders) {
   const ordersList = document.getElementById("orders-list");
 
-  // Injetar dados de teste se a lista estiver vazia (para demonstração)
-  if (!orders || orders.length === 0) {
-    orders = [
-      {
-        id: 9001,
-        date: new Date().toISOString(),
-        status: "Pendente",
-        total: 45.90
-      },
-      {
-        id: 9002,
-        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-        status: "Entregue",
-        total: 129.50
-      }
-    ];
-  }
+  if (!orders) orders = [];
 
   if (orders.length > 0) {
     ordersList.innerHTML = orders
@@ -634,7 +668,7 @@ function renderOrders(orders) {
     ordersList.innerHTML = `
       <div class="text-center py-5 opacity-50 bg-light rounded-4 border">
         <i class="fas fa-shopping-basket fs-1 mb-3"></i>
-        <p>Ainda nÃ£o fizeste nenhuma encomenda.</p>
+        <p>Ainda não fizeste nenhuma encomenda.</p>
         <a href="shop.html" class="btn btn-sm btn-auth-enhanced register">Ir para a Loja</a>
       </div>`;
   }
@@ -692,7 +726,7 @@ function renderFavorites(favorites) {
     favGrid.innerHTML = `
             <div class="col-12 text-center py-5 opacity-50 bg-light rounded-4 border">
                 <i class="fas fa-heart fs-1 mb-3"></i>
-                <p>Ainda nÃ£o tens favoritos.</p>
+                <p>Ainda não tens favoritos.</p>
             </div>
         `;
   }
@@ -738,7 +772,7 @@ async function handlePasswordUpdate(e) {
   const confirmPassword = document.getElementById("confirm-new-password").value;
 
   if (newPassword !== confirmPassword) {
-    return Swal.fire("Erro", "As novas passwords nÃ£o coincidem", "error");
+    return Swal.fire("Erro", "As novas passwords não coincidem", "error");
   }
 
   if (newPassword.length < 6) {
@@ -795,7 +829,7 @@ async function handlePasswordUpdate(e) {
 async function handleDeleteAccount() {
   const result = await Swal.fire({
     title: "Tem a certeza?",
-    text: "Esta aÃ§Ã£o Ã© irreversÃ­vel e todos os seus dados serÃ£o eliminados!",
+    text: "Esta ação é irreversível e todos os seus dados serão eliminados!",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#d33",
@@ -830,7 +864,7 @@ async function handleDeleteAccount() {
         Swal.fire({
           icon: "success",
           title: "Conta Eliminada",
-          text: "A sua conta foi removida com sucesso. Esperamos vÃª-lo de novo!",
+          text: "A sua conta foi removida com sucesso. Esperamos vê-lo de novo!",
           confirmButtonColor: "#f4b400",
         }).then(() => {
           logout();
@@ -860,8 +894,8 @@ async function handleAvatarUpload(e) {
   if (!file.type.startsWith("image/")) {
     Swal.fire({
       icon: "error",
-      title: "Ficheiro InvÃ¡lido",
-      text: "Por favor, seleciona uma imagem vÃ¡lida.",
+      title: "Ficheiro Inválido",
+      text: "Por favor, seleciona uma imagem válida.",
       confirmButtonColor: "#f4b400",
     });
     return;
@@ -871,7 +905,7 @@ async function handleAvatarUpload(e) {
     Swal.fire({
       icon: "error",
       title: "Ficheiro Muito Grande",
-      text: "A imagem deve ter no mÃ¡ximo 5MB.",
+      text: "A imagem deve ter no máximo 5MB.",
       confirmButtonColor: "#f4b400",
     });
     return;
@@ -941,7 +975,7 @@ async function handleAvatarUpload(e) {
     Swal.fire({
       icon: "error",
       title: "Erro",
-      text: error.message || "NÃ£o foi possÃ­vel atualizar a foto.",
+      text: error.message || "Não foi possível atualizar a foto.",
       confirmButtonColor: "#f4b400",
     });
   } finally {
@@ -975,34 +1009,20 @@ window.viewOrderDetails = async function (orderId) {
 
   try {
     let items;
-    if (orderId === 9001 || orderId === 9002) {
-      items = [
-        { 
-          ID_Produto: 1, 
-          Nome: orderId === 9001 ? "Mel de Urze (Teste)" : "Pack Premium Apicultor (Teste)", 
-          Quantidade: 1, 
-          Preco_Unitario: orderId === 9001 ? 45.90 : 129.50, 
-          ApicultorNome: orderId === 9001 ? "Quinta D'Amares" : "Mel da Fazenda",
-          Imagem: "/images/logo_hexomel.webp" 
-        }
-      ];
-      await new Promise(r => setTimeout(r, 500));
-    } else {
-      const res = await fetch(`/api/user/orders/${orderId}/items`, {
-        headers: buildAuthHeaders(),
-      });
+    const res = await fetch(`/api/user/orders/${orderId}/items`, {
+      headers: buildAuthHeaders(),
+    });
 
-      const result = await handleProtectedResponse(
-        res,
-        "Falha ao carregar detalhes.",
-        "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
-      );
-      if (result.handled) {
-        modal.hide();
-        return;
-      }
-      items = result.data;
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao carregar detalhes.",
+      "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
+    );
+    if (result.handled) {
+      modal.hide();
+      return;
     }
+    items = result.data;
 
     let itemsHtml = `
       <div class="order-id-display mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
@@ -1111,32 +1131,6 @@ window.resendReceipt = async function (orderId) {
     cancelButtonColor: "#718096",
   }).then(async (result) => {
     if (result.isConfirmed) {
-      if (orderId === 9001 || orderId === 9002) {
-        try {
-          Swal.fire({ title: "Enviando...", didOpen: () => { Swal.showLoading(); } });
-          const res = await fetch("/api/user/mock-receipt", {
-            method: "POST",
-            headers: {
-              ...buildAuthHeaders(),
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ orderId })
-          });
-          
-          if (!res.ok) throw new Error("Falha ao enviar email do teste");
-          
-          Swal.fire({
-            icon: "success",
-            title: "Email Enviado",
-            text: "O recibo foi gerado e enviado com sucesso para a tua caixa de entrada.",
-            confirmButtonColor: "#1a4d2e"
-          });
-        } catch (error) {
-          Swal.fire("Erro", "Não foi possível enviar o email de teste.", "error");
-        }
-        return;
-      }
-      
       try {
         Swal.fire({ title: "Enviando...", didOpen: () => { Swal.showLoading(); } });
 
@@ -1172,17 +1166,6 @@ window.reorderItems = async function (orderId) {
       text: "A validar produtos e stock disponível",
       didOpen: () => { Swal.showLoading(); }
     });
-
-    if (orderId === 9001 || orderId === 9002) {
-      Swal.fire({
-        icon: "success",
-        title: "🛒 Carrinho (Simulado)",
-        text: "Como esta é uma demonstração, os itens (fictícios) simulariam a adição ao teu carrinho.",
-        confirmButtonText: "Fechar",
-        confirmButtonColor: "#1a4d2e",
-      });
-      return;
-    }
 
     const res = await fetch(`/api/user/orders/${orderId}/items`, {
       headers: buildAuthHeaders(),
@@ -1283,7 +1266,7 @@ async function handleUpgradeRequest(e) {
     const docFile = document.getElementById("upgrade-doc").files[0];
 
     if (!docFile)
-      throw new Error("Por favor, seleciona um documento de verificaÃ§Ã£o.");
+      throw new Error("Por favor, seleciona um documento de verificação.");
 
     const formData = new FormData();
     formData.append("descricao", descricao);
@@ -1306,7 +1289,7 @@ async function handleUpgradeRequest(e) {
       Swal.fire({
         icon: "success",
         title: "Pedido Enviado",
-        text: "O teu pedido de Apicultor foi enviado e serÃ¡ analisado pela administraÃ§Ã£o.",
+        text: "O teu pedido de Apicultor foi enviado e será analisado pela administração.",
         confirmButtonColor: "#f4b400",
       });
       e.target.reset();
@@ -1322,7 +1305,7 @@ async function handleUpgradeRequest(e) {
       text: error.message,
       confirmButtonColor: "#f4b400",
     });
-  } finally {
+    // Restore button only if there was an error
     btn.innerHTML = originalText;
     btn.disabled = false;
   }
@@ -1351,21 +1334,49 @@ async function checkUpgradeStatus() {
         banner.classList.remove("d-none");
         let statusClass = "bg-warning-subtle text-warning-emphasis";
         let statusIcon = "fa-clock";
-        let statusText = "O teu pedido para ser Apicultor estÃ¡ pendente de anÃ¡lise.";
+        let statusText = "O teu pedido para ser Apicultor está pendente de análise.";
 
         if (data.Status === "Aprovado") {
           statusClass = "bg-success-subtle text-success-emphasis";
           statusIcon = "fa-check-circle";
           statusText =
-            "O teu pedido de Apicultor foi aprovado! Re-inicia a sessÃ£o para ativar as tuas ferramentas de venda.";
+            "O teu pedido de Apicultor foi aprovado! Re-inicia a sessão para ativar as tuas ferramentas de venda.";
           form.classList.add("d-none");
         } else if (data.Status === "Rejeitado") {
           statusClass = "bg-danger-subtle text-danger-emphasis";
           statusIcon = "fa-times-circle";
           statusText =
-            "O teu pedido de Apicultor foi rejeitado. Podes tentar novamente mais tarde.";
+            "O teu pedido de Apicultor foi rejeitado. Podes submeter um novo pedido e tentar novamente.";
+          
+          // Re-enable form
+          document.getElementById("upgrade-desc").disabled = false;
+          document.getElementById("upgrade-doc").disabled = false;
+          const btnSubmit = document.getElementById("btn-submit-upgrade");
+          if(btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = "Enviar Pedido de Apicultor";
+          }
         } else {
-          form.classList.add("d-none");
+          // Pendente
+          statusClass = "bg-warning-subtle text-warning-emphasis";
+          statusIcon = "fa-clock";
+          statusText =
+            "O teu pedido já foi submetido. Agora aguarde até o seu pedido estar aceite pela administração.";
+            
+          form.classList.remove("d-none");
+          
+          // Disable form elements
+          document.getElementById("upgrade-desc").disabled = true;
+          document.getElementById("upgrade-doc").disabled = true;
+          const btnSubmit = document.getElementById("btn-submit-upgrade");
+          if(btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-lock me-2"></i>Aguarde até estar aceite...';
+            btnSubmit.classList.replace("btn-primary", "btn-secondary");
+            btnSubmit.style.background = "#e2e8f0";
+            btnSubmit.style.color = "#64748b";
+            btnSubmit.style.border = "none";
+          }
         }
 
         banner.innerHTML = `

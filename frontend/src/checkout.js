@@ -51,7 +51,37 @@ class CheckoutManager {
       });
       if (res.ok) {
         this.userData = await res.json();
-        this.autoFillData();
+        const btn = document.getElementById("btn-autofill");
+        if (btn && this.userData && (this.userData.name || this.userData.address || this.userData.phone)) {
+          btn.classList.remove("d-none");
+          btn.addEventListener("click", () => {
+            this.autoFillData();
+            
+            // Subtle toast if some data is missing
+            if (!this.userData.address || !this.userData.phone) {
+              Swal.fire({
+                toast: true,
+                position: 'bottom-end',
+                icon: 'info',
+                title: 'Aviso: Alguns dados não estão preenchidos no teu perfil.',
+                showConfirmButton: false,
+                timer: 4000,
+                background: '#f8f9fa',
+                color: '#6c757d'
+              });
+            }
+
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Preenchido';
+            btn.classList.add("btn-success", "text-white");
+            btn.classList.remove("btn-outline-success");
+            setTimeout(() => {
+              btn.innerHTML = originalHtml;
+              btn.classList.remove("btn-success", "text-white");
+              btn.classList.add("btn-outline-success");
+            }, 2000);
+          });
+        }
       }
     } catch (error) {
       console.error("Error fetching profile for checkout:", error);
@@ -78,28 +108,32 @@ class CheckoutManager {
       if (el && value) el.value = value;
     }
 
-    // Fill address info (Step 2)
+    // Fill address info
     if (this.userData.address) {
-      const addrParts = this.userData.address.split(", ");
-      if (addrParts.length >= 2) {
-        const mainAddress = addrParts[0];
-        const lastPart = addrParts[1]; // Expected "XXXX-XXX City"
-        const lastPartWords = lastPart.split(" ");
-        const zip = lastPartWords[0];
-        const city = lastPartWords.slice(1).join(" ");
+      const zipMatch = this.userData.address.match(/\b\d{4}-\d{3}\b/);
+      let mainAddress = this.userData.address;
+      let zip = "";
+      let city = "";
 
-        const moradaEl = document.getElementById("morada");
-        const zipEl = document.getElementById("cod-postal");
-        const cityEl = document.getElementById("cidade");
-
-        if (moradaEl) moradaEl.value = mainAddress;
-        if (zipEl) zipEl.value = zip;
-        if (cityEl) cityEl.value = city;
-      } else {
-        // Fallback: just put everything in morada
-        const moradaEl = document.getElementById("morada");
-        if (moradaEl) moradaEl.value = this.userData.address;
+      if (zipMatch) {
+        zip = zipMatch[0];
+        const zipIndex = this.userData.address.indexOf(zip);
+        
+        mainAddress = this.userData.address.substring(0, zipIndex).trim();
+        if (mainAddress.endsWith(',')) {
+          mainAddress = mainAddress.slice(0, -1).trim();
+        }
+        
+        city = this.userData.address.substring(zipIndex + zip.length).trim();
       }
+
+      const moradaEl = document.getElementById("morada");
+      const zipEl = document.getElementById("cod-postal");
+      const cityEl = document.getElementById("cidade");
+
+      if (moradaEl) moradaEl.value = mainAddress;
+      if (zipEl) zipEl.value = zip;
+      if (cityEl) cityEl.value = city;
     }
   }
 

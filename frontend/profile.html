@@ -164,7 +164,7 @@
         <div class="row g-4">
           <!-- Left Sidebar: Tabs -->
           <div class="col-lg-3">
-            <div class="premium-card p-3 d-flex flex-column gap-2">
+            <div class="premium-card p-3 d-flex flex-column gap-2" style="position: sticky; top: 120px; transition: top 0.3s ease; z-index: 10;">
               <button class="btn btn-profile-tab active" data-tab="orders">
                 <i class="fas fa-shopping-basket me-2"></i>Encomendas
               </button>
@@ -228,75 +228,50 @@
               <div class="d-flex flex-column gap-4" style="max-width: 800px">
                 <!-- Inline Save Status -->
                 <div id="inline-save-status" style="min-height: 20px"></div>
-
                 <!-- Personal Info Card -->
-                <div class="premium-card p-0 overflow-hidden border">
-                  <div
-                    class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center"
-                  >
-                    <h6 class="mb-0 fw-bold">
-                      <i class="fas fa-user me-2 text-warning"></i>Identificação
-                    </h6>
-                    <button
-                      class="btn btn-sm btn-link text-decoration-none p-0 edit-toggle-btn"
-                      data-section="personal"
-                    >
-                      <span class="view-mode"
-                        ><i class="fas fa-pen me-1"></i>Editar</span
-                      >
-                      <span class="edit-mode d-none"
-                        ><i class="fas fa-times me-1"></i>Cancelar</span
-                      >
+                <div class="premium-card p-4 mb-4 border-0 position-relative shadow-sm align-items-start" style="max-width: 800px;">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-3">
+                      <div style="width: 48px; height: 48px; background: rgba(26, 77, 46, 0.08); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user fs-5" style="color: var(--primary-green);"></i>
+                      </div>
+                      Identificação
+                    </h5>
+                    <button class="btn btn-sm fw-bold border edit-toggle-btn shadow-sm rounded-pill px-3 py-1" data-section="personal" style="color: var(--primary-green); background-color: #fff">
+                      <span class="view-mode"><i class="fas fa-pen me-2"></i>Editar</span>
+                      <span class="edit-mode d-none text-danger"><i class="fas fa-times me-2"></i>Cancelar</span>
                     </button>
                   </div>
-                  <div class="p-4">
+                  <div>
                     <!-- View Mode -->
-                    <div id="personal-view" class="row g-3">
+                    <div id="personal-view" class="row g-4 px-2">
                       <div class="col-md-6">
-                        <div class="text-muted small mb-1">Nome Completo</div>
-                        <div class="fw-medium" id="view-name">
+                        <div class="text-muted small mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Nome Completo</div>
+                        <div class="fw-medium text-dark fs-6" id="view-name">
                           Carregando...
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <div class="text-muted small mb-1">Email</div>
-                        <div class="fw-medium" id="view-email">
+                        <div class="text-muted small mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Email</div>
+                        <div class="fw-medium text-dark fs-6" id="view-email">
                           email@exemplo.com
                         </div>
                       </div>
                     </div>
                     <!-- Edit Mode -->
-                    <form
-                      id="personal-edit-form"
-                      class="d-none animate-fade-in"
-                    >
-                      <div class="row g-3">
+                    <form id="personal-edit-form" class="d-none animate-fade-in mt-2">
+                      <div class="row g-4 px-2">
                         <div class="col-md-6">
-                          <label class="form-label small fw-bold"
-                            >Nome Completo</label
-                          >
-                          <input
-                            type="text"
-                            id="input-name"
-                            class="auth-input mb-0"
-                            required
-                          />
+                          <label class="form-label small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Nome Completo</label>
+                          <input type="text" id="input-name" class="auth-input mb-0 bg-light" required />
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label small fw-bold">Email</label>
-                          <input
-                            type="email"
-                            id="input-email"
-                            class="auth-input mb-0"
-                            required
-                          />
+                          <label class="form-label small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Email</label>
+                          <input type="email" id="input-email" class="auth-input mb-0 bg-light" required />
                         </div>
-                        <div class="col-12 mt-4 text-end">
-                          <button
-                            type="submit"
-                            class="btn btn-auth-enhanced register btn-sm px-4"
-                          >
-                            Guardar
+                        <div class="col-12 text-end mt-4 pt-4 border-top">
+                          <button type="submit" class="btn btn-auth-enhanced register px-4">
+                            Guardar Identificação
                           </button>
                         </div>
                       </div>
@@ -305,100 +280,60 @@
                 </div>
 
                 <!-- Delivery Info Card -->
-                <div class="premium-card p-0 overflow-hidden border">
-                  <div
-                    class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center"
-                  >
-                    <h6 class="mb-0 fw-bold">
-                      <i class="fas fa-truck me-2 text-warning"></i>Morada de
-                      Entrega
-                    </h6>
-                    <button
-                      class="btn btn-sm btn-link text-decoration-none p-0 edit-toggle-btn"
-                      data-section="delivery"
-                    >
-                      <span class="view-mode"
-                        ><i class="fas fa-pen me-1"></i>Editar</span
-                      >
-                      <span class="edit-mode d-none"
-                        ><i class="fas fa-times me-1"></i>Cancelar</span
-                      >
+                <div id="delivery-section" class="premium-card p-4 border-0 position-relative shadow-sm" style="max-width: 800px;">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-3">
+                      <div style="width: 48px; height: 48px; background: rgba(26, 77, 46, 0.08); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-truck fs-5" style="color: var(--primary-green) !important;"></i>
+                      </div>
+                      Morada de Entrega
+                    </h5>
+                    <button class="btn btn-sm fw-bold border edit-toggle-btn shadow-sm rounded-pill px-3 py-1" data-section="delivery" style="color: var(--primary-green); background-color: #fff">
+                      <span class="view-mode"><i class="fas fa-pen me-2"></i>Editar</span>
+                      <span class="edit-mode d-none text-danger"><i class="fas fa-times me-2"></i>Cancelar</span>
                     </button>
                   </div>
-                  <div class="p-4">
+                  <div>
                     <!-- View Mode -->
-                    <div id="delivery-view" class="row g-3">
+                    <div id="delivery-view" class="row g-4 px-2">
                       <div class="col-md-6">
-                        <div class="text-muted small mb-1">Telemóvel</div>
-                        <div class="fw-medium" id="view-phone">
+                        <div class="text-muted small mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Telemóvel</div>
+                        <div class="fw-medium text-dark fs-6" id="view-phone">
                           Não definido
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <div class="text-muted small mb-1">Cidade</div>
-                        <div class="fw-medium" id="view-city">Não definida</div>
+                        <div class="text-muted small mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Cidade</div>
+                        <div class="fw-medium text-dark fs-6" id="view-city">Não definida</div>
                       </div>
                       <div class="col-12">
-                        <div class="text-muted small mb-1">Morada Completa</div>
-                        <div class="fw-medium" id="view-address">
+                        <div class="text-muted small mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Morada Completa</div>
+                        <div class="fw-medium text-dark fs-6" id="view-address">
                           Morada não definida
                         </div>
                       </div>
                     </div>
                     <!-- Edit Mode -->
-                    <form
-                      id="delivery-edit-form"
-                      class="d-none animate-fade-in"
-                    >
-                      <div class="row g-3">
+                    <form id="delivery-edit-form" class="d-none animate-fade-in mt-2">
+                      <div class="row g-4 px-2">
                         <div class="col-md-6">
-                          <label class="form-label small fw-bold"
-                            >Telemóvel</label
-                          >
-                          <input
-                            type="tel"
-                            id="input-phone"
-                            class="auth-input mb-0"
-                            placeholder="9XXXXXXXX"
-                          />
+                          <label class="form-label small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Telemóvel</label>
+                          <input type="tel" id="input-phone" class="auth-input mb-0 bg-light" placeholder="9XXXXXXXX" />
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label small fw-bold">Cidade</label>
-                          <input
-                            type="text"
-                            id="input-city"
-                            class="auth-input mb-0"
-                            placeholder="Cidade"
-                          />
+                          <label class="form-label small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Cidade</label>
+                          <input type="text" id="input-city" class="auth-input mb-0 bg-light" placeholder="Cidade" />
                         </div>
                         <div class="col-md-8">
-                          <label class="form-label small fw-bold"
-                            >Morada (Rua e Nº)</label
-                          >
-                          <input
-                            type="text"
-                            id="input-address"
-                            class="auth-input mb-0"
-                            placeholder="Rua..."
-                          />
+                          <label class="form-label small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Morada (Rua e Nº)</label>
+                          <input type="text" id="input-address" class="auth-input mb-0 bg-light" placeholder="Rua..." />
                         </div>
                         <div class="col-md-4">
-                          <label class="form-label small fw-bold"
-                            >Cód-Postal</label
-                          >
-                          <input
-                            type="text"
-                            id="input-zip"
-                            class="auth-input mb-0"
-                            placeholder="0000-000"
-                            maxlength="8"
-                          />
+                          <label class="form-label small fw-bold text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Cód-Postal</label>
+                          <input type="text" id="input-zip" class="auth-input mb-0 bg-light" placeholder="0000-000" maxlength="8" />
                         </div>
-                        <div class="col-12 mt-4 text-end">
-                          <button
-                            type="submit"
-                            class="btn btn-auth-enhanced register btn-sm px-4"
-                          >
+                        <div class="col-12 text-end mt-4 pt-4 border-top">
+                          <button type="submit" class="btn btn-auth-enhanced register px-4">
                             Guardar Morada
                           </button>
                         </div>
@@ -409,14 +344,10 @@
               </div>
 
               <!-- Hint -->
-              <div
-                class="mt-4 p-3 bg-light rounded-3 d-flex align-items-center gap-3"
-                style="max-width: 800px"
-              >
-                <i class="fas fa-info-circle text-warning fs-5"></i>
-                <div class="small text-muted">
-                  A tua morada de entrega será usada automaticamente no checkout
-                  para tua conveniência.
+              <div class="mt-3 p-3 bg-light rounded-3 d-flex align-items-center gap-3 text-muted" style="max-width: 800px; border: 1px dashed rgba(0,0,0,0.1);">
+                <i class="fas fa-info-circle fs-5 opacity-75"></i>
+                <div class="small">
+                  A tua morada de entrega será usada automaticamente no checkout para tua conveniência.
                 </div>
               </div>
             </div>
@@ -521,83 +452,6 @@
                     </button>
                   </div>
                 </div>
-              </div>
-
-              <!-- Novo Bloco: Tipo de Conta -->
-              <div class="premium-card p-4 mt-4" style="max-width: 600px">
-                <h5 class="fw-bold mb-1">Tipo de Conta</h5>
-                <p class="text-muted small mb-4">
-                  Escolhe como queres interagir com a nossa plataforma. Podes alternar entre os perfis a qualquer momento.
-                </p>
-
-                <div class="row g-3 mb-4">
-                  <div class="col-6">
-                    <div
-                      class="role-choice-card p-3 rounded-4 text-center h-100 position-relative border-2 border"
-                      data-role="client"
-                      id="role-card-client"
-                      style="cursor: pointer; transition: all 0.3s ease"
-                    >
-                      <div
-                        class="icon-circle mx-auto mb-2"
-                        style="
-                          width: 45px;
-                          height: 45px;
-                          background: #f8f9fa;
-                          border-radius: 50%;
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                        "
-                      >
-                        <i class="fas fa-user text-muted"></i>
-                      </div>
-                      <div class="fw-bold small">Cliente</div>
-                      <i
-                        class="fas fa-check-circle check-icon position-absolute top-0 end-0 m-2 d-none"
-                        style="color: var(--logo-yellow, #f4b400)"
-                      ></i>
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <div
-                      class="role-choice-card p-3 rounded-4 text-center h-100 position-relative border-2 border"
-                      data-role="apicultor"
-                      id="role-card-apicultor"
-                      style="cursor: pointer; transition: all 0.3s ease"
-                    >
-                      <div
-                        class="icon-circle mx-auto mb-2"
-                        style="
-                          width: 45px;
-                          height: 45px;
-                          background: #f8f9fa;
-                          border-radius: 50%;
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                        "
-                      >
-                        <i class="fas fa-apple-whole text-muted"></i>
-                        <!-- Fallback icon instead of fa-bee if not available -->
-                      </div>
-                      <div class="fw-bold small">Apicultor</div>
-                      <i
-                        class="fas fa-check-circle check-icon position-absolute top-0 end-0 m-2 d-none"
-                        style="color: var(--logo-yellow, #f4b400)"
-                      ></i>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  class="btn btn-auth-enhanced login w-100 opacity-50"
-                  id="save-role-btn-new"
-                  disabled
-                >
-                  Confirmar Alteração
-                </button>
               </div>
             </div>
 
