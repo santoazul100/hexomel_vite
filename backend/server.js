@@ -2755,6 +2755,12 @@ app.post(
         return res.status(400).json({ error: "Description is required" });
       }
 
+      // Ensure the account is verified before allowing an upgrade request
+      const currentUser = await db.get("SELECT Is_Verified FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+      if (!currentUser || !currentUser.Is_Verified) {
+        return res.status(403).json({ error: "A sua conta tem de estar verificada para se candidatar a Apicultor." });
+      }
+
       const relativePath = `/uploads/${req.file.filename}`;
 
       await db.run(
@@ -2822,6 +2828,37 @@ app.put(
         await db.run("UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?", [
           request.ID_Cliente,
         ]);
+
+        const user = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [request.ID_Cliente]);
+        
+        if (user && mailTransporter) {
+          try {
+            await mailTransporter.sendMail({
+              from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
+              to: user.Email,
+              subject: "O seu pedido de Apicultor foi Aprovado! 🎉 — Hexomel",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; color: #333;">
+                  <h2 style="color: #1a4d2e;">Parabéns, ${user.Nome || 'Apicultor'}!</h2>
+                  <p>Temos boas notícias: o seu pedido para se tornar um <strong>Apicultor parceiro</strong> na escala Hexomel foi formalmente <strong>Aprovado</strong>.</p>
+                  <div style="background: #f8f9fa; border-left: 4px solid #f4b400; padding: 15px; margin: 20px 0;">
+                    <h3 style="margin-top:0; color: #b45309;">O que fazer agora?</h3>
+                    <ul style="padding-left: 20px; text-align: left;">
+                      <li>Termine e inicie sessão novamente para atualizar as suas permissões.</li>
+                      <li>Aceda ao seu novo <strong>Painel de Apicultor</strong> no menu.</li>
+                      <li>Adicione os seus produtos e workshops.</li>
+                      <li>Preencha a sua biografia pública para os clientes o conhecerem.</li>
+                    </ul>
+                  </div>
+                  <p>Estamos ansiosos para partilhar o seu trabalho com a nossa comunidade!</p>
+                  <p style="color: #718096; font-size: 0.85em; margin-top: 30px;">A equipa Hexomel</p>
+                </div>
+              `
+            });
+          } catch (emailErr) {
+            console.error("Upgrade approval email failed:", emailErr);
+          }
+        }
       }
 
       res.json({ message: `Request ${status.toLowerCase()} successfully` });

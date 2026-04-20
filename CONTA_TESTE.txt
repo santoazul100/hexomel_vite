@@ -1,9 +1,0 @@
-DADOS DA CONTA DE TESTE (PRÉ-VERIFICADA)
-========================================
-
-Esta conta já tem a verificação de segurança (2FA) ativa na base de dados, pelo que podes saltar esse passo no checkout.
-
-Email: demo@hexomel.pt
-Password: password123
-
-Utiliza estes dados para testar o fluxo de encomendas pendentes sem interrupções.
