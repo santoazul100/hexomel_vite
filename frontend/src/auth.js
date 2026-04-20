@@ -367,27 +367,15 @@ export function updateNav(user) {
        const existingBanner = document.getElementById("profile-incomplete-banner");
        
        if (!phone || !address) {
-         if (!existingBanner && !sessionStorage.getItem("hideProfileBanner") && window.location.pathname.indexOf('profile.html') === -1 && window.location.pathname.indexOf('checkout.html') === -1) {
-           const banner = document.createElement("div");
-           banner.id = "profile-incomplete-banner";
-           banner.style.cssText = "position:fixed;top:80px;right:20px;z-index:9999;animation:slideInRight 0.4s ease-out;";
+         if (!sessionStorage.getItem("hideProfileBanner") && window.location.pathname.indexOf('profile.html') === -1 && window.location.pathname.indexOf('checkout.html') === -1) {
+           sessionStorage.setItem("hideProfileBanner", "true"); // mark as shown so it doesn't spam on every un-related navigation
            
-           // Add animation keyframe
-           if (!document.getElementById('banner-anim-style')) {
-             const style = document.createElement('style');
-             style.id = 'banner-anim-style';
-             style.textContent = '@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}';
-             document.head.appendChild(style);
+           if (window.toast) {
+             window.toast.warning(
+               '<a href="profile.html?tab=dados" style="color:var(--primary-green);text-decoration:none;font-weight:600;">completar perfil</a>', 
+               "Perfil incompleto"
+             );
            }
-
-           banner.innerHTML = `
-             <div style="background:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);border:1px solid #eee;display:flex;align-items:center;gap:10px;max-width:280px;font-family:inherit;">
-               <i class="fas fa-user-edit" style="color:var(--primary-gold-dark);font-size:0.9rem;"></i>
-               <a href="profile.html?tab=dados" style="font-size:0.78rem;color:var(--text-dark);text-decoration:none;font-weight:600;white-space:nowrap;">Perfil incompleto — <span style="color:var(--primary-green)">completar</span></a>
-               <button onclick="this.closest('#profile-incomplete-banner').remove();sessionStorage.setItem('hideProfileBanner','true')" style="background:none;border:none;color:#aaa;cursor:pointer;padding:0;margin-left:auto;font-size:0.75rem;"><i class="fas fa-times"></i></button>
-             </div>
-           `;
-           document.body.appendChild(banner);
          }
        } else if (existingBanner) {
          existingBanner.remove();

@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import Stripe from "stripe";
 import crypto from "crypto";
+import compression from "compression";
 
 const configuredGoogleClientId =
   process.env.GOOGLE_CLIENT_ID &&
@@ -252,7 +253,7 @@ function generateReceiptHTML(order, items, customerName, customerEmail, logoSrc 
             <td style="background-color:#fcfdfc; padding:30px 40px; text-align:center; border-top:1px solid #edf2f7;">
               <p style="margin:0 0 10px; font-size:18px; font-weight:bold; color:#1a4d2e;">Muito obrigado pela preferência!</p>
               <p style="margin:0 0 5px; font-size:13px; color:#718096;">Este documento serve como comprovativo de pagamento da sua encomenda.</p>
-              <p style="margin:0; font-size:13px; color:#718096;">Dúvidas? Contacte-nos em <a href="mailto:suporte@hexomel.pt" style="color:#f4b400; font-weight:bold; text-decoration:none;">suporte@hexomel.pt</a></p>
+              <p style="margin:0; font-size:13px; color:#718096;">Dúvidas? Contacte-nos em <a href="mailto:hexomelpap@gmail.com" style="color:#f4b400; font-weight:bold; text-decoration:none;">hexomelpap@gmail.com</a></p>
             </td>
           </tr>
         </table>
@@ -284,7 +285,7 @@ async function sendReceiptEmail(orderId) {
     const html = generateReceiptHTML(order, items, customer.Nome, customer.Email);
 
     const info = await mailTransporter.sendMail({
-      from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
+      from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
       to: customer.Email,
       subject: `🍯 Recibo da Encomenda #${orderId} — Hexomel`,
       html,
@@ -404,6 +405,25 @@ const runDatabaseMigrations = async () => {
     await db.run("ALTER TABLE encomenda ADD COLUMN Nome VARCHAR(120) DEFAULT NULL").catch(() => {});
     await db.run("ALTER TABLE encomenda ADD COLUMN Apelido VARCHAR(120) DEFAULT NULL").catch(() => {});
 
+    // Reserva Workshop table
+    await db
+      .run(
+        `
+          CREATE TABLE IF NOT EXISTS reserva_workshop (
+              ID_Reserva int(10) NOT NULL AUTO_INCREMENT,
+              ID_Workshop int(10) NOT NULL,
+              ID_Cliente int(10) NOT NULL,
+              Data_Reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (ID_Reserva),
+              KEY ID_Workshop (ID_Workshop),
+              KEY ID_Cliente (ID_Cliente),
+              CONSTRAINT fk_reserva_workshop FOREIGN KEY (ID_Workshop) REFERENCES workshop (ID_Workshop) ON DELETE CASCADE,
+              CONSTRAINT fk_reserva_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+      )
+      .catch(() => console.log("reserva_workshop table creation handled"));
+
     console.log("Auto-migrations completed.");
   } catch (err) {
     console.log("Migration warning:", err);
@@ -433,6 +453,7 @@ const initializeDatabase = async () => {
   }
 };
 
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -805,6 +826,51 @@ app.post("/api/auth/google", async (req, res) => {
   }
 });
 
+// Contact Form Route
+app.post("/api/contact", async (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: "Nome, email e mensagem são obrigatórios." });
+  }
+
+  if (!mailTransporter) {
+    console.warn("⚠️ Contact form submitted but mailer is disabled.");
+    return res.status(503).json({ error: "O serviço de email está temporariamente indisponível. Por favor, tente mais tarde." });
+  }
+
+  try {
+    await mailTransporter.sendMail({
+      from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
+      to: process.env.SMTP_USER ? process.env.SMTP_USER.replace("@", "+contacto@") : "hexomelpap+contacto@gmail.com", // Force to Inbox using alias
+      replyTo: email, // Reply to the sender
+      subject: `📧 Contacto: ${subject || "Nova Mensagem"} — Hexomel`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eef2f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+          <div style="background-color: #1a4d2e; padding: 30px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 24px; color: #f4b400;">Nova Mensagem de Contacto</h2>
+          </div>
+          <div style="padding: 30px; background-color: #ffffff;">
+            <p style="margin-bottom: 20px;"><strong style="color: #1a4d2e;">De:</strong> ${name} &lt;${email}&gt;</p>
+            <p style="margin-bottom: 20px;"><strong style="color: #1a4d2e;">Assunto:</strong> ${subject || "Sem assunto"}</p>
+            <div style="background-color: #fcfdfc; padding: 20px; border-radius: 8px; border-left: 4px solid #f4b400; margin-top: 20px;">
+              <p style="margin: 0; white-space: pre-wrap; line-height: 1.6; color: #2d3748;">${message}</p>
+            </div>
+          </div>
+          <div style="background-color: #fcfdfc; padding: 20px; text-align: center; font-size: 13px; color: #718096; border-top: 1px solid #edf2f7;">
+            Este email foi gerado automaticamente pelo formulário de contacto da Hexomel.
+          </div>
+        </div>
+      `,
+    });
+
+    res.json({ message: "Mensagem enviada com sucesso! Entraremos em contacto brevemente." });
+  } catch (error) {
+    console.error("Contact form email error:", error);
+    res.status(500).json({ error: "Erro ao enviar a mensagem. Por favor, tente novamente mais tarde." });
+  }
+});
+
 // Get all categories (Public view)
 app.get("/api/categories", async (req, res) => {
   try {
@@ -1169,10 +1235,12 @@ app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
   if (req.user.role !== "apicultor" && req.user.role !== "admin")
     return res.status(403).json({ error: "Access denied." });
   const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
+  const defaultWorkshopImage = "/images/workshop_default.webp";
+  const finalImage = imagem && imagem.trim() !== "" ? imagem : defaultWorkshopImage;
   try {
     const result = await db.run(
       "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, Status, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, 'Pendente', ?)",
-      [titulo, descricao, data_realizacao, preco, vagas, imagem, req.user.id],
+      [titulo, descricao, data_realizacao, preco, vagas, finalImage, req.user.id],
     );
     res.status(201).json({ id: result.lastID });
   } catch (err) {
@@ -1538,11 +1606,63 @@ app.get("/api/apicultores", async (req, res) => {
 app.get("/api/workshops", async (req, res) => {
   try {
     const workshops = await db.all(
-      "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.Status = 'Aprovado' ORDER BY w.Data_Realizacao ASC",
+      "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.Status = 'Aprovado' ORDER BY w.Data_Realizacao ASC",
     );
     res.json(workshops);
   } catch (err) {
         res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Single workshop detail
+app.get("/api/workshops/:id", async (req, res) => {
+  try {
+    const workshop = await db.get(
+      "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.ID_Workshop = ? AND w.Status = 'Aprovado'",
+      [req.params.id],
+    );
+    if (!workshop) return res.status(404).json({ error: "Workshop não encontrado." });
+    res.json(workshop);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Client's own workshop reservations
+app.get("/api/user/workshops", authenticateToken, async (req, res) => {
+  try {
+    const reservations = await db.all(
+      `SELECT rw.*, w.Titulo, w.Descricao, w.Data_Realizacao, w.Preco, w.Vagas, w.Imagem, w.Status as WorkshopStatus,
+              c.Nome as ApicultorNome
+       FROM reserva_workshop rw
+       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+       JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente
+       WHERE rw.ID_Cliente = ?
+       ORDER BY w.Data_Realizacao ASC`,
+      [req.user.id],
+    );
+    res.json(reservations);
+  } catch (err) {
+    console.error("User workshops fetch error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Cancel workshop reservation
+app.delete("/api/user/workshops/:id", authenticateToken, async (req, res) => {
+  try {
+    const reservation = await db.get(
+      "SELECT * FROM reserva_workshop WHERE ID_Reserva = ? AND ID_Cliente = ?",
+      [req.params.id, req.user.id],
+    );
+    if (!reservation) return res.status(404).json({ error: "Reserva não encontrada." });
+
+    await db.run("DELETE FROM reserva_workshop WHERE ID_Reserva = ?", [req.params.id]);
+    await db.run("UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?", [reservation.ID_Workshop]);
+    res.json({ message: "Reserva cancelada com sucesso." });
+  } catch (err) {
+    console.error("Cancel reservation error:", err);
+    res.status(500).json({ error: "Database error" });
   }
 });
 

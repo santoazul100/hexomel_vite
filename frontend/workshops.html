@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hexomel</title>
+    <title>Workshops — Hexomel</title>
+    <meta name="description" content="Descubra os nossos workshops de apicultura. Aprenda com apicultores experientes e mergulhe no mundo do mel artesanal." />
     <!-- Bootstrap 5 CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -29,7 +30,6 @@
       <meta name="view-transition" content="same-origin" />
   </head>
   <body>
-    <!-- Navbar (Premium Overhaul) -->
     <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
       <div class="container">
         <a class="navbar-brand" href="index.html">
@@ -56,13 +56,13 @@
               <a class="nav-link" href="shop.html">Produtos</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="workshops.html">Workshops</a>
+              <a class="nav-link active" href="workshops.html">Workshops</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="about.html">Sobre</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="contact.html">Contactos</a>
+              <a class="nav-link" href="contact.html">Contactos</a>
             </li>
           </ul>
 
@@ -89,7 +89,7 @@
       </div>
     </nav>
 
-    <main class="py-5 mt-5 position-relative overflow-hidden">
+    <main class="py-5 mt-5 position-relative">
       <!-- Floating Bees -->
       <div
         class="bee-container z-0"
@@ -106,153 +106,71 @@
           src="/images/bee/abelha.webp"
           class="bee-decoration"
           alt="Bees"
-          style="top: 10%; left: 8%; width: 55px"
+          style="top: 12%; left: 4%; width: 50px"
         />
         <img
           src="/images/bee/abelha_inverso.webp"
           class="bee-decoration"
           alt="Bees"
-          style="top: 35%; right: 10%; width: 40px"
+          style="top: 30%; right: 6%; width: 45px"
         />
       </div>
-      <div class="container py-5 mt-4 position-relative z-1">
-        <div class="row g-5">
-          <div class="col-lg-6 animate-fade-up">
-            <h1
-              class="display-4 fw-bold mb-4"
-              style="color: var(--primary-green)"
-            >
-              Fale Connosco
-            </h1>
-            <p class="text-muted mb-5 fs-5">
-              Tem alguma dúvida sobre os nossos produtos ou quer saber mais
-              sobre o nosso processo? Estamos aqui para ajudar.
-            </p>
 
-            <div class="d-flex gap-4 mb-4">
-              <div
-                class="premium-card p-3 rounded-circle d-flex align-items-center justify-content-center"
-                style="width: 60px; height: 60px"
-              >
-                <i
-                  class="fas fa-phone fs-4"
-                  style="color: var(--primary-green)"
-                ></i>
-              </div>
-              <div>
-                <h5 class="fw-bold mb-1">Telefone</h5>
-                <p class="text-muted">+351 912 345 678</p>
-              </div>
-            </div>
+      <div class="container mt-4 position-relative z-1">
+        <!-- Hero Header -->
+        <div class="text-center mb-5 animate-fade-up">
+          <span class="product-badge-premium mb-3 d-inline-block">EXPERIÊNCIAS APÍCOLAS</span>
+          <h1 class="display-4 fw-bold" style="color: var(--primary-green)">Workshops</h1>
+          <p class="text-muted mx-auto" style="max-width: 600px">
+            Aprenda com apicultores experientes. Descubra os segredos do mel artesanal, 
+            participe em experiências únicas e leve para casa conhecimento valioso.
+          </p>
+          <div
+            class="mx-auto"
+            style="
+              width: 60px;
+              height: 3px;
+              background: var(--secondary-gold);
+              margin-top: 20px;
+            "
+          ></div>
+        </div>
 
-            <div class="d-flex gap-4 mb-4">
-              <div
-                class="premium-card p-3 rounded-circle d-flex align-items-center justify-content-center"
-                style="width: 60px; height: 60px"
-              >
-                <i
-                  class="fas fa-envelope fs-4"
-                  style="color: var(--primary-green)"
-                ></i>
-              </div>
-              <div>
-                <h5 class="fw-bold mb-1">Email</h5>
-                <p class="text-muted">hexomelpap@gmail.com</p>
-              </div>
-            </div>
-
-            <div class="d-flex gap-4">
-              <div
-                class="premium-card p-3 rounded-circle d-flex align-items-center justify-content-center"
-                style="width: 60px; height: 60px"
-              >
-                <i
-                  class="fas fa-location-dot fs-4"
-                  style="color: var(--primary-green)"
-                ></i>
-              </div>
-              <div>
-                <h5 class="fw-bold mb-1">Morada</h5>
-                <p class="text-muted">
-                  Parque Industrial do Alentejo, Lote 42<br />7000 Évora,
-                  Portugal
-                </p>
-              </div>
-            </div>
+        <!-- Loading State -->
+        <div id="workshops-loading" class="text-center py-5">
+          <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">A carregar...</span>
           </div>
+          <p class="text-muted mt-3">A carregar workshops...</p>
+        </div>
 
-          <div class="col-lg-6">
-            <div
-              class="premium-card p-4 p-md-5 border-0 shadow-lg animate-fade-up"
-            >
-              <h3 class="fw-bold mb-4" style="color: var(--primary-green)">
-                Envie uma Mensagem
-              </h3>
-              <form id="contactForm">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label small fw-bold opacity-75"
-                      >NOME COMPLETO</label
-                    >
-                    <input
-                      type="text"
-                      id="contactName"
-                      class="auth-input mb-0"
-                      placeholder="Seu nome"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label small fw-bold opacity-75"
-                      >EMAIL</label
-                    >
-                    <input
-                      type="email"
-                      id="contactEmail"
-                      class="auth-input mb-0"
-                      placeholder="Seu email"
-                      required
-                    />
-                  </div>
-                  <div class="col-12 mt-3">
-                    <label class="form-label small fw-bold opacity-75"
-                      >ASSUNTO</label
-                    >
-                    <input
-                      type="text"
-                      id="contactSubject"
-                      class="auth-input mb-0"
-                      placeholder="Como podemos ajudar?"
-                    />
-                  </div>
-                  <div class="col-12 mt-3">
-                    <label class="form-label small fw-bold opacity-75"
-                      >MENSAGEM</label
-                    >
-                    <textarea
-                      id="contactMessage"
-                      class="auth-input mb-0"
-                      rows="4"
-                      placeholder="Escreva a sua mensagem aqui..."
-                      required
-                      style="resize: none"
-                    ></textarea>
-                  </div>
-                  <div class="col-12 mt-4">
-                    <button
-                      type="submit"
-                      class="btn btn-auth-enhanced register w-100 py-3"
-                    >
-                      Enviar Mensagem
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
+        <!-- Empty State -->
+        <div id="workshops-empty" class="text-center py-5 d-none">
+          <div class="mb-4">
+            <i class="fas fa-seedling" style="font-size: 4rem; color: var(--primary-green); opacity: 0.3;"></i>
           </div>
+          <h3 class="fw-bold text-muted">Sem Workshops Disponíveis</h3>
+          <p class="text-muted">De momento não existem workshops agendados. Volta em breve!</p>
+          <a href="shop.html" class="btn btn-auth-enhanced login mt-3">Ver Produtos</a>
+        </div>
+
+        <!-- Workshops Grid -->
+        <div class="row g-4" id="workshops-grid">
+          <!-- Dynamically populated by workshops.js -->
         </div>
       </div>
     </main>
+
+    <!-- Workshop Details Modal -->
+    <div class="modal fade" id="workshopDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="modal-body p-0" id="workshop-detail-content">
+            <!-- Injected by workshops.js -->
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Footer Premium -->
     <footer class="footer-premium">
@@ -337,7 +255,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/workshops.js"></script>
     <script type="module" src="src/main.js"></script>
-    <script type="module" src="src/contact.js"></script>
   </body>
 </html>

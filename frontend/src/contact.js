@@ -1,132 +1,77 @@
-// Contact page JavaScript - handles form submissions
+// Contact page JavaScript - handles functional form submissions
 import "./styles/index.css";
+import { toast } from "./toast.js";
+
+// API Config
+const API_URL = "http://localhost:3000/api";
 
 // Contact form handler
-const contactForm = document.getElementById("contact-form");
-const formMessage = document.getElementById("form-message");
+const contactForm = document.getElementById("contactForm");
 
 if (contactForm) {
-  contactForm.addEventListener("submit", function (e) {
+  contactForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    // Get form data
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    
+    // Get form data using the IDs defined in contact.html
     const formData = {
-      name: document.getElementById("name").value,
-      email: document.getElementById("email").value,
-      subject: document.getElementById("subject").value,
-      message: document.getElementById("message").value,
-      subscribe: document.getElementById("subscribe").checked,
+      name: document.getElementById("contactName").value,
+      email: document.getElementById("contactEmail").value,
+      subject: document.getElementById("contactSubject").value,
+      message: document.getElementById("contactMessage").value,
     };
 
-    // Validate
+    // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
-      showMessage(formMessage, "Please fill in all required fields.", "error");
+      toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
-    // Simulate sending (in real app, this would send to backend)
-    console.log("Contact form submission:", formData);
+    try {
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Enviando...';
 
-    // Store in localStorage for demonstration
-    const submissions = JSON.parse(
-      localStorage.getItem("hexomel_contacts") || "[]"
-    );
-    submissions.push({
-      ...formData,
-      timestamp: new Date().toISOString(),
-    });
-    localStorage.setItem("hexomel_contacts", JSON.stringify(submissions));
+      const response = await fetch(`${API_URL}/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // If subscribe is checked, also add to newsletter
-    if (formData.subscribe) {
-      addToNewsletter(formData.email);
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success(result.message || "Mensagem enviada com sucesso!", "Mensagem Enviada");
+        contactForm.reset();
+      } else {
+        toast.error(result.error || "Ocorreu um erro ao enviar a mensagem.", "Erro no Envio");
+      }
+    } catch (error) {
+      console.error("Contact form error:", error);
+      toast.error("Não foi possível ligar ao servidor. Verifique a sua ligação.", "Erro de Rede");
+    } finally {
+      // Restore button state
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
     }
-
-    // Show success message
-    showMessage(
-      formMessage,
-      "✅ Thank you for your message! We'll get back to you soon.",
-      "success"
-    );
-
-    // Reset form
-    contactForm.reset();
   });
 }
 
-// Newsletter form handler
+// Helper function for newsletter (re-implemented from legacy if needed)
 const newsletterForm = document.getElementById("newsletter-form");
-const newsletterMessage = document.getElementById("newsletter-message");
-
 if (newsletterForm) {
-  newsletterForm.addEventListener("submit", function (e) {
+  newsletterForm.addEventListener("submit", (e) => {
     e.preventDefault();
-
-    const email = document.getElementById("newsletter-email").value;
-
-    if (!email || !isValidEmail(email)) {
-      showMessage(
-        newsletterMessage,
-        "Please enter a valid email address.",
-        "error"
-      );
-      return;
+    const email = document.getElementById("newsletter-email")?.value;
+    if (email) {
+      toast.success("Obrigado por subscrever a nossa newsletter!", "Subscrição Ativa");
+      newsletterForm.reset();
     }
-
-    addToNewsletter(email);
-    showMessage(
-      newsletterMessage,
-      "✅ Successfully subscribed! Welcome to the Hexomel family.",
-      "success"
-    );
-
-    newsletterForm.reset();
   });
 }
 
-// Helper functions
-function addToNewsletter(email) {
-  const subscribers = JSON.parse(
-    localStorage.getItem("hexomel_newsletter") || "[]"
-  );
-
-  // Check if already subscribed
-  if (subscribers.includes(email)) {
-    console.log("Already subscribed:", email);
-    return;
-  }
-
-  subscribers.push(email);
-  localStorage.setItem("hexomel_newsletter", JSON.stringify(subscribers));
-  console.log("Added to newsletter:", email);
-}
-
-function isValidEmail(email) {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-}
-
-function showMessage(element, message, type) {
-  element.textContent = message;
-  element.style.display = "block";
-  element.style.padding = "1rem";
-  element.style.borderRadius = "0.5rem";
-  element.style.fontWeight = "500";
-
-  if (type === "success") {
-    element.style.background = "#d4edda";
-    element.style.color = "#155724";
-    element.style.border = "1px solid #c3e6cb";
-  } else {
-    element.style.background = "#f8d7da";
-    element.style.color = "#721c24";
-    element.style.border = "1px solid #f5c6cb";
-  }
-
-  // Hide after 5 seconds
-  setTimeout(() => {
-    element.style.display = "none";
-  }, 5000);
-}
-
-console.log("Contact page loaded! 📧");
+console.log("Contact page module initialized! 📧");

@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS `produto` (
   PRIMARY KEY (`ID_Produto`),
   KEY `ID_Apicultor` (`ID_Apicultor`),
   KEY `ID_Origem` (`ID_Origem`),
+  KEY `idx_status` (`Status`),
   CONSTRAINT `fk_produto_apicultor` FOREIGN KEY (`ID_Apicultor`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE SET NULL,
   CONSTRAINT `fk_produto_origem` FOREIGN KEY (`ID_Origem`) REFERENCES `origem` (`ID_Origem`) ON DELETE SET NULL,
   CONSTRAINT `fk_produto_categoria` FOREIGN KEY (`ID_Categoria`) REFERENCES `categoria` (`ID_Categoria`) ON DELETE SET NULL

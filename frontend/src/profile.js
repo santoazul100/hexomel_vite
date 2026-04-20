@@ -145,6 +145,11 @@ function initializeTabs() {
       if (content) {
         content.style.display = "block";
         content.classList.add("active");
+        
+        // Trigger data refreshes for specific tabs
+        if (target === "workshops") fetchUserWorkshops();
+        if (target === "favorites") fetchFavorites();
+        if (target === "orders") fetchProfileData(); // Refresh full profile for orders
       }
     });
   });
@@ -628,6 +633,7 @@ function renderProfile(data) {
   // Orders
   renderOrders(data.orders || []);
   fetchFavorites();
+  fetchUserWorkshops();
 }
 
 function renderOrders(orders) {
@@ -1393,3 +1399,144 @@ async function checkUpgradeStatus() {
     console.error("Check upgrade status error:", error);
   }
 }
+
+// WORKSHOPS (USER RESERVATIONS)
+async function fetchUserWorkshops() {
+  const token = getAuthToken();
+  const listEl = document.getElementById("my-workshops-list");
+
+  if (!token || !listEl) return;
+
+  try {
+    const res = await fetch("/api/user/workshops", {
+      headers: buildAuthHeaders(),
+    });
+
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao carregar reservas de workshops.",
+      "A tua sessão expirou. Inicia sessão novamente para ver os workshops.",
+    );
+    if (result.handled) return;
+
+    renderUserWorkshops(result.data);
+  } catch (error) {
+    console.error("User workshops fetch error:", error);
+    if (listEl) {
+      listEl.innerHTML = `<div class="col-12 text-center py-5 text-danger">Erro ao carregar reservas.</div>`;
+    }
+  }
+}
+
+function renderUserWorkshops(reservations) {
+  const listEl = document.getElementById("my-workshops-list");
+  if (!listEl) return;
+
+  if (reservations && reservations.length > 0) {
+    listEl.innerHTML = reservations
+      .map((reserva) => {
+        const dataRes = new Date(reserva.Data_Realizacao);
+        const agora = new Date();
+        const isPast = dataRes < agora;
+        const dateStr = dataRes.toLocaleDateString("pt-PT", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        const statusClass = isPast ? "past" : "upcoming";
+        const statusText = isPast ? "Realizado" : "Agendado";
+        const fallbackImg = "https://placehold.co/600x340/f6f6f6/e0e0e0?text=Workshop";
+
+        return `
+          <div class="col-md-6 col-lg-6">
+            <div class="reservation-card d-flex flex-column h-100 p-0">
+              <img src="${reserva.Imagem || fallbackImg}" alt="${reserva.Titulo}" class="reservation-card-img" onerror="this.src='${fallbackImg}'">
+              <div class="p-4 d-flex flex-column flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="reservation-status ${statusClass}">${statusText}</span>
+                  <span class="fw-bold text-dark fs-5">#${reserva.ID_Reserva}</span>
+                </div>
+                <h5 class="fw-bold mb-2 text-truncate" title="${reserva.Titulo}">${reserva.Titulo}</h5>
+                <div class="text-muted small mb-3">
+                  <i class="far fa-calendar-alt me-1 text-warning"></i> ${dateStr} <br/>
+                  <i class="fas fa-user-tie me-1 text-warning mt-1"></i> ${reserva.ApicultorNome}
+                </div>
+                <div class="mt-auto d-flex justify-content-end border-top pt-3">
+                  ${
+                    !isPast
+                      ? `<button class="btn-cancel-reservation" onclick="window.cancelWorkshop(${reserva.ID_Reserva})">
+                           <i class="fas fa-times me-1"></i> Cancelar Reserva
+                         </button>`
+                      : `<button class="btn btn-sm btn-outline-secondary disabled">Terminado</button>`
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  } else {
+    listEl.innerHTML = `
+      <div class="col-12 text-center py-5 bg-light rounded-4 border shadow-sm animate-fade-in" style="border-style: dashed !important; border-width: 2px !important;">
+          <div class="mb-3">
+            <i class="fas fa-calendar-times fs-1 text-muted opacity-25"></i>
+          </div>
+          <h4 class="fw-bold text-dark">Não tens nenhum workshop reservado</h4>
+          <p class="text-muted">Parece que ainda não tens nenhuma reserva ativa para os próximos workshops.</p>
+          <a href="workshops.html" class="btn btn-auth-enhanced login mt-2 px-4">
+            <i class="fas fa-search me-2"></i>Descobrir Workshops
+          </a>
+      </div>
+    `;
+  }
+}
+
+window.cancelWorkshop = async function (reservationId) {
+  const result = await Swal.fire({
+    title: "Cancelar Reserva?",
+    text: "Tens a certeza que queres cancelar esta reserva? A vaga voltará a ficar disponível.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#dc3545",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Sim, Cancelar",
+    cancelButtonText: "Não",
+  });
+
+  if (!result.isConfirmed) return;
+
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired("Sessão expirada. Volta a fazer login.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/user/workshops/${reservationId}`, {
+      method: "DELETE",
+      headers: buildAuthHeaders(),
+    });
+
+    const data = await handleProtectedResponse(
+      res,
+      "Falha ao cancelar reserva.",
+    );
+    if (data.handled) return;
+
+    Swal.fire({
+      title: "Cancelada",
+      text: "A reserva foi cancelada com sucesso.",
+      icon: "success",
+      confirmButtonColor: "#1a4d2e",
+    });
+
+    fetchUserWorkshops();
+  } catch (err) {
+    console.error("Cancel workshop error:", err);
+    Swal.fire("Erro", err.message || "Erro de ligação ao servidor.", "error");
+  }
+};

@@ -2628,3 +2628,201 @@ aside {
 ::view-transition-new(root) {
   animation-duration: 0.3s;
 }
+
+/* ===================== */
+/* WORKSHOPS PAGE STYLES */
+/* ===================== */
+
+/* Workshop Card Premium */
+.workshop-card-premium {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: white;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-sm);
+}
+
+.workshop-card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(26, 77, 46, 0.12);
+}
+
+.workshop-img-wrapper {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/10;
+  background: #f0f0f0;
+}
+
+.workshop-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.workshop-card-premium:hover .workshop-img-wrapper img {
+  transform: scale(1.06);
+}
+
+.workshop-date-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.workshop-past-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(108, 117, 125, 0.9);
+  color: white;
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.workshop-sold-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.workshop-card-body {
+  padding: 1.5rem;
+}
+
+/* Workshop Reserve Button */
+.btn-workshop-reserve {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-workshop-reserve:hover:not(:disabled) {
+  background: var(--primary-green-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(26, 77, 46, 0.25);
+  color: white;
+}
+
+.btn-workshop-reserve:disabled {
+  background: #ccc;
+  color: #888;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Workshop Detail Modal */
+.workshop-detail-modal {
+  display: flex;
+  flex-direction: column;
+}
+
+.workshop-detail-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.workshop-detail-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Profile — My Workshops Reservation Cards */
+.reservation-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-sm);
+}
+
+.reservation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(26, 77, 46, 0.1);
+}
+
+.reservation-card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.reservation-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reservation-status.upcoming {
+  background: rgba(26, 77, 46, 0.1);
+  color: var(--primary-green);
+}
+
+.reservation-status.past {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
+
+.btn-cancel-reservation {
+  background: transparent;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel-reservation:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .workshop-detail-img {
+    aspect-ratio: 16/10;
+  }
+  
+  .workshop-card-premium .workshop-card-body {
+    padding: 1rem;
+  }
+}

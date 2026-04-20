@@ -50,7 +50,7 @@ class AdminUI {
       adminLayout.classList.add("sidebar-collapsed");
     }
 
-    const toggleMain = document.getElementById("sidebar-toggle-main");
+    const toggleMain = document.getElementById("navbar-sidebar-toggle");
     const toggleHide = document.getElementById("sidebar-hide");
 
     const toggleLogic = () => {
