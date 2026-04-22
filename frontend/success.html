@@ -117,6 +117,8 @@
             A carregar pedido...
         </div>
 
+        <p id="payment-status" style="font-size: 0.95rem; color: #4b5563; margin: 12px auto 0; max-width: 430px;"></p>
+
         <div id="mock-info" class="d-none">
             <div class="mock-badge">MODO SIMULAÇÃO ATIVO</div>
         </div>
@@ -132,15 +134,53 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const orderId = params.get('orderId');
+            const sessionId = params.get('session_id');
             const isMock = params.get('mock');
+            const orderInfoEl = document.getElementById('order-info');
+            const paymentStatusEl = document.getElementById('payment-status');
 
-            if (orderId) {
-                document.getElementById('order-info').innerHTML = `ID Encomenda: #${orderId}`;
-            }
+            const renderFallback = () => {
+                if (orderId) {
+                    orderInfoEl.innerHTML = `ID Encomenda: #${orderId}`;
+                }
+            };
+
+            const validateStripeSession = async () => {
+                if (!sessionId) {
+                    renderFallback();
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/checkout/session-status?session_id=${encodeURIComponent(sessionId)}`);
+                    if (!res.ok) {
+                        throw new Error('session_validation_failed');
+                    }
+
+                    const data = await res.json();
+                    if (data.orderId) {
+                        orderInfoEl.innerHTML = `ID Encomenda: #${data.orderId}`;
+                    } else {
+                        renderFallback();
+                    }
+
+                    paymentStatusEl.textContent =
+                        data.paymentStatus === 'paid'
+                            ? 'Pagamento confirmado pela Stripe.'
+                            : `Estado do pagamento: ${data.paymentStatus || 'em processamento'}.`;
+                } catch (error) {
+                    renderFallback();
+                    paymentStatusEl.textContent =
+                        'Não foi possível validar automaticamente o pagamento nesta página.';
+                }
+            };
 
             if (isMock) {
                 document.getElementById('mock-info').classList.remove('d-none');
+                paymentStatusEl.textContent = 'Modo simulação ativo para testes locais.';
             }
+
+            validateStripeSession();
 
             // Clear the local cart
             localStorage.removeItem('cart');

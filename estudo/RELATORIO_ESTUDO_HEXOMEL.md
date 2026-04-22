@@ -73,6 +73,8 @@ O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Robustez de Visualização**: Sistema de visualização de documentos (Upgrade System) com tratamento de erros avançado, gestão de classes dinâmicas para loaders e suporte cross-browser para PDF e Imagens.
 - **Área de Cliente Premium**: Painel de perfil interativo abrangente com histórico de encomendas detalhado e acompanhamento visual do estado de cada compra.
 
+- **Integração Backend/Frontend Stripe Premium**: Para a componente de pagamentos online (Checkout Stripe), foi desenvolvido um backend inteligente que reconhece se o ambiente é local (localhost/desenvolvimento) ou de produção, gerando placeholders automáticos de imagens (com cores da marca) se o Stripe não conseguir descarregar a imagem localmente (Dynamic Stripe Asset Mocking).
+- **Checkout Flow**: O processo de finalização de encomenda no Hexomel abandona esquemas tradicionais confusos por um formato de 2 Passos guiados. O sumário de encomenda adapta-se ao ecrã com uma transição suave que centraliza e expande o contexto da compra (cliente, envio, pagamento) num formato de visualização sequencial antes do commit final ao Stripe.
 
 ---
 ## 8. Documentação Técnica Adicional

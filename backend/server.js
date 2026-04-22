@@ -21,7 +21,9 @@ const configuredGoogleClientId =
     ? process.env.GOOGLE_CLIENT_ID
     : null;
 const stripe = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== "placeholder" 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY) 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-02-25.clover",
+    }) 
   : null;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -303,6 +305,89 @@ async function sendReceiptEmail(orderId) {
     console.error(`📧 Failed to send receipt email for order #${orderId}:`, err.message);
   }
 }
+async function syncCustomerCheckoutDetails(customerId, { nome, apelido, address, phone }) {
+  const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
+
+  if (!fullName && !address && !phone) {
+    return;
+  }
+
+  await db.run(
+    "UPDATE cliente SET Nome = COALESCE(?, Nome), Morada = COALESCE(?, Morada), Telefone = COALESCE(?, Telefone) WHERE ID_Cliente = ?",
+    [fullName || null, address || null, phone || null, customerId],
+  );
+}
+
+async function fulfillPaidOrder(orderId) {
+  const order = await db.get(
+    "SELECT ID_Encomenda, ID_Cliente, Status FROM encomenda WHERE ID_Encomenda = ?",
+    [orderId],
+  );
+
+  if (!order) {
+    return { ok: false, reason: "ORDER_NOT_FOUND" };
+  }
+
+  if (order.Status === "Pago") {
+    return { ok: true, alreadyPaid: true };
+  }
+
+  const items = await db.all(
+    "SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?",
+    [orderId],
+  );
+
+  for (const item of items) {
+    await db.run(
+      "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
+      [item.Quantidade, item.ID_Produto],
+    );
+  }
+
+  await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
+    orderId,
+  ]);
+
+  await db.run(
+    "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+    [order.ID_Cliente],
+  );
+
+  await sendReceiptEmail(orderId);
+
+  return { ok: true, alreadyPaid: false };
+}
+
+function buildAbsoluteAppUrl(origin, assetPath) {
+  if (!origin || !assetPath) {
+    return null;
+  }
+
+  const publicBaseUrl =
+    process.env.CHECKOUT_PUBLIC_BASE_URL ||
+    process.env.PUBLIC_APP_URL ||
+    origin;
+
+  if (/^https?:\/\//i.test(assetPath)) {
+    return assetPath;
+  }
+
+  const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
+  return new URL(normalizedPath, `${publicBaseUrl}/`).toString();
+}
+
+function getCheckoutProductImages(origin, imagePath, productName) {
+  // If origin is localhost, Stripe won't be able to fetch the image.
+  // Use a placeholder instead for a better developer experience.
+  if (origin && (origin.includes("localhost") || origin.includes("127.0.0.1"))) {
+    const encodedName = encodeURIComponent(productName || "Honey").replace(/%20/g, "+");
+    return [`https://placehold.co/600x600/1a4d2e/white?text=${encodedName}`];
+  }
+  
+  const absoluteUrl = buildAbsoluteAppUrl(origin, imagePath);
+  return absoluteUrl ? [absoluteUrl] : [];
+}
+
 const runDatabaseMigrations = async () => {
   try {
     // Auto-migration for new features (ignores errors if exist)
@@ -453,10 +538,25 @@ const initializeDatabase = async () => {
   }
 };
 
+const jsonBodyParser = express.json({ limit: "10mb" });
+const urlencodedBodyParser = express.urlencoded({ limit: "10mb", extended: true });
+
 app.use(compression());
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ limit: "10mb", extended: true }));
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith("/api/webhooks/stripe")) {
+    return next();
+  }
+
+  return jsonBodyParser(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith("/api/webhooks/stripe")) {
+    return next();
+  }
+
+  return urlencodedBodyParser(req, res, next);
+});
 
 // Configure Multer for local storage
 const storage = multer.diskStorage({
@@ -2121,12 +2221,22 @@ app.post("/api/checkout/init", authenticateToken, async (req, res) => {
 
 // Stripe Checkout Session Creation
 app.post("/api/checkout/create-session", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
+  const {
+    address,
+    phone,
+    nome,
+    apelido,
+    shippingCost,
+    shippingType,
+    orderId,
+    paymentType,
+  } = req.body;
 
   try {
     let items = [];
     let subtotal = 0;
     let finalOrderId = orderId;
+    const requestedPaymentType = paymentType === "mbway" ? "mb_way" : "card";
 
     if (finalOrderId) {
       // Validate existing order
@@ -2134,7 +2244,7 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
 
       items = await db.all(
-        `SELECT ie.*, p.Nome 
+        `SELECT ie.*, p.Nome, p.Imagem 
          FROM item_encomenda ie 
          JOIN produto p ON ie.ID_Produto = p.ID_Produto 
          WHERE ie.ID_Encomenda = ?`,
@@ -2157,7 +2267,7 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
 
       items = await db.all(
-        `SELECT ic.*, p.Nome, p.Preco 
+        `SELECT ic.*, p.Nome, p.Preco, p.Imagem 
          FROM item_carrinho ic 
          JOIN produto p ON ic.ID_Produto = p.ID_Produto 
          WHERE ic.ID_Carrinho = ?`,
@@ -2195,23 +2305,36 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       // Clear Cart (if applicable)
       await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);
 
+      await fulfillPaidOrder(finalOrderId);
       return res.json({ 
-        url: `/profile.html?tab=orders&orderId=${finalOrderId}&mock=pending`,
+        url: `/success.html?orderId=${finalOrderId}&mock=true`,
         isMock: true 
       });
     }
 
+    await syncCustomerCheckoutDetails(req.user.id, {
+      nome,
+      apelido,
+      address,
+      phone,
+    });
+
     // 6. REAL STRIPE SESSION
-    const lineItems = items.map(item => ({
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: item.Nome,
+    const lineItems = items.map(item => {
+      const productImages = getCheckoutProductImages(req.headers.origin, item.Imagem, item.Nome);
+
+      return {
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: item.Nome,
+            ...(productImages.length > 0 ? { images: productImages } : {}),
+          },
+          unit_amount: Math.round(item.Preco * 100), // Stripe uses cents
         },
-        unit_amount: Math.round(item.Preco * 100), // Stripe uses cents
-      },
-      quantity: item.Quantidade,
-    }));
+        quantity: item.Quantidade,
+      };
+    });
 
     if (Number(shippingCost || 0) > 0) {
       lineItems.push({
@@ -2224,14 +2347,26 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       });
     }
 
+    const customer = await db.get(
+      "SELECT Email FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types:
+        requestedPaymentType === "mb_way"
+          ? ["mb_way", "card"]
+          : ["card", "mb_way"],
       line_items: lineItems,
       mode: 'payment',
+      locale: 'pt',
       success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${finalOrderId}`,
-      cancel_url: `${req.headers.origin}/cancel.html`,
-      metadata: { orderId: finalOrderId.toString() },
-      customer_email: (await db.get("SELECT Email FROM cliente WHERE ID_Cliente = ?", [req.user.id])).Email,
+      cancel_url: `${req.headers.origin}/cancel.html?orderId=${finalOrderId}`,
+      metadata: {
+        orderId: finalOrderId.toString(),
+        paymentPreference: requestedPaymentType,
+      },
+      customer_email: customer?.Email || undefined,
     });
 
     res.json({ url: session.url });
@@ -2239,6 +2374,40 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
   } catch (error) {
     console.error("Stripe session error:", error);
     res.status(500).json({ error: "Falha ao criar sessão de pagamento" });
+  }
+});
+
+app.get("/api/checkout/session-status", async (req, res) => {
+  const sessionId = req.query.session_id;
+
+  if (!stripe) {
+    return res.status(400).json({ error: "Stripe nao configurado" });
+  }
+
+  if (!sessionId) {
+    return res.status(400).json({ error: "session_id em falta" });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const orderId = Number(session.metadata?.orderId);
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Sessao sem orderId valido" });
+    }
+
+    if (session.payment_status === "paid") {
+      await fulfillPaidOrder(orderId);
+    }
+
+    res.json({
+      orderId,
+      paymentStatus: session.payment_status,
+      status: session.status,
+    });
+  } catch (error) {
+    console.error("Stripe session status error:", error);
+    res.status(500).json({ error: "Falha ao validar sessao Stripe" });
   }
 });
 
@@ -2251,19 +2420,26 @@ app.post("/api/webhooks/stripe", express.raw({ type: 'application/json' }), asyn
     if (stripe && process.env.STRIPE_WEBHOOK_SECRET) {
       event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } else {
-      // Manual trigger if no secret (not recommended for production)
-      event = req.body;
+      const payload = Buffer.isBuffer(req.body)
+        ? req.body.toString("utf8")
+        : JSON.stringify(req.body);
+
+      event = JSON.parse(payload);
     }
 
-    if (event.type === 'checkout.session.completed') {
+    if (
+      event.type === 'checkout.session.completed' ||
+      event.type === 'checkout.session.async_payment_succeeded'
+    ) {
       const session = event.data.object;
-      const orderId = session.metadata.orderId;
+      const orderId = session.metadata?.orderId;
 
-      await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [orderId]);
-      console.log(`✅ Order #${orderId} marked as PAID via Webhook.`);
-
-      // Send Receipt Email after real payment
-      sendReceiptEmail(orderId);
+      if (orderId && session.payment_status === 'paid') {
+        const result = await fulfillPaidOrder(orderId);
+        console.log(
+          `Order #${orderId} fulfilled via webhook (${result.alreadyPaid ? "already paid" : "new payment"}).`,
+        );
+      }
     }
 
     res.json({ received: true });
@@ -2279,7 +2455,6 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
   }
 
   const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
-  const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   try {
     let items = [];
@@ -2333,12 +2508,12 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       }
     }
 
-    if (fullName || address || phone) {
-      await db.run(
-        "UPDATE cliente SET Nome = COALESCE(?, Nome), Morada = COALESCE(?, Morada), Telefone = COALESCE(?, Telefone) WHERE ID_Cliente = ?",
-        [fullName || null, address || null, phone || null, req.user.id],
-      );
-    }
+    await syncCustomerCheckoutDetails(req.user.id, {
+      nome,
+      apelido,
+      address,
+      phone,
+    });
 
     for (const item of items) {
       await db.run(
@@ -2346,6 +2521,10 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
         [item.Quantidade, item.ID_Produto],
       );
     }
+
+    await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
+      finalOrderId,
+    ]);
 
     // Clear cart for the user
     await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);

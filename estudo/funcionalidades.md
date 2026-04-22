@@ -19,6 +19,8 @@ Este documento detalha todas as funcionalidades implementadas no projeto Hexomel
     - Add to Cart events (intenção de compra).
     - Checkout Funnel steps (deteção de abandono).
 - **✅ Sistema de Notificações Toast**: Feedback visual premium para interações (Sucesso, Erro, Aviso) com animações dinâmicas.
+- **✅ Premium Animated Checkout**: Interface de pagamentos final com layout de duas fases, escondendo detalhes redundantes e unificando a experiência no Focus Panel lateral. O sumário de encomenda possui uma animação avançada de centrar e expandir com revelação sequencial de informação e redirecionamento final seguro.
+- **✅ Dynamic Local Image Mocking**: Sistema de fallback backend nativo de deteção do `localhost`, que previne falhas no Stripe Dashboard usando placeholders visuais dinâmicos da "Placehold.co" adaptados à cor da marca e ao nome do produto para os desenvolvedores, enviando os caminhos originais em Produção.
 
 
 ---

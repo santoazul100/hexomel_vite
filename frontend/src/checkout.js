@@ -244,15 +244,18 @@ class CheckoutManager {
       input.addEventListener("change", (e) => {
         this.updateSelectionCards("envio");
         this.renderSummary();
+        this.updateConfirmationDetails();
       });
     });
 
-    // Payment radio buttons
-    document.querySelectorAll('input[name="pagamento"]').forEach((input) => {
-      input.addEventListener("change", (e) => {
-        this.updateSelectionCards("pagamento");
-      });
-    });
+    ["nome", "apelido", "morada", "cod-postal", "cidade", "telemovel"].forEach(
+      (id) => {
+        const element = document.getElementById(id);
+        element?.addEventListener("input", () => {
+          this.updateConfirmationDetails();
+        });
+      },
+    );
   }
 
   updateSelectionCards(name) {
@@ -266,6 +269,48 @@ class CheckoutManager {
         }
       }
     });
+  }
+
+  getShippingType() {
+    return document.querySelector('input[name="envio"]:checked')?.value || "ctt";
+  }
+
+  getShippingLabel(shippingType) {
+    return shippingType === "ctt"
+      ? "CTT Expresso - entrega em casa"
+      : "Levantamento no Apiario";
+  }
+
+  getCheckoutCustomerName() {
+    const nome = document.getElementById("nome")?.value?.trim() || "";
+    const apelido = document.getElementById("apelido")?.value?.trim() || "";
+    return [nome, apelido].filter(Boolean).join(" ").trim() || "Por confirmar";
+  }
+
+  updateConfirmationDetails() {
+    const morada = document.getElementById("morada")?.value?.trim() || "";
+    const cp = document.getElementById("cod-postal")?.value?.trim() || "";
+    const cidade = document.getElementById("cidade")?.value?.trim() || "";
+    const telemovel = document.getElementById("telemovel")?.value?.trim() || "";
+    const shippingType = this.getShippingType();
+    const shippingLabel = this.getShippingLabel(shippingType);
+    const paymentLabel = "Stripe Checkout - cartao";
+    const customerName = this.getCheckoutCustomerName();
+    const fullAddress = [morada, `${cp} ${cidade}`.trim()]
+      .filter(Boolean)
+      .join(", ");
+
+    const confirmName = document.getElementById("confirm-name");
+    const confirmPhone = document.getElementById("confirm-phone");
+    const confirmAddress = document.getElementById("confirm-address");
+    const confirmShipping = document.getElementById("confirm-shipping");
+    const confirmPayment = document.getElementById("confirm-payment");
+
+    if (confirmName) confirmName.textContent = customerName;
+    if (confirmPhone) confirmPhone.textContent = telemovel || "Por confirmar";
+    if (confirmAddress) confirmAddress.textContent = fullAddress || "Por confirmar";
+    if (confirmShipping) confirmShipping.textContent = shippingLabel;
+    if (confirmPayment) confirmPayment.textContent = paymentLabel;
   }
 
   async nextStep() {
@@ -362,7 +407,7 @@ class CheckoutManager {
   updateUI() {
     const stepLabels = [
       "Dados de Envio",
-      "Pagamento e Revisão",
+      "Confirmacao e Pagamento",
     ];
 
     const titleEl = document.getElementById("page-title");
@@ -391,23 +436,17 @@ class CheckoutManager {
       }
     }
 
-    // Prepare Review Step (Step 2)
-    if (this.currentStep === 2) {
-      const morada = document.getElementById("morada").value;
-      const cp = document.getElementById("cod-postal").value;
-      const cidade = document.getElementById("cidade").value;
-      const telemovel = document.getElementById("telemovel").value;
+    this.updateConfirmationDetails();
 
-      document.getElementById("review-morada").textContent =
-        `${morada}, ${cp} ${cidade}`;
-      document.getElementById("review-contacto").textContent =
-        `Telemóvel: ${telemovel}`;
+    // Toggle confirmation expansion on sidebar
+    const summaryConfirmCard = document.getElementById("summary-confirm-card");
+    const mainGrid = document.querySelector(".checkout-main-grid");
 
-      const pagamento = document.querySelector(
-        'input[name="pagamento"]:checked',
-      ).value;
-      document.getElementById("review-pagamento").textContent =
-        pagamento === "cartao" ? "Cartão de Crédito / Débito" : "MB Way";
+    if (summaryConfirmCard) {
+      summaryConfirmCard.classList.toggle("is-open", this.currentStep === 2);
+    }
+    if (mainGrid) {
+      mainGrid.classList.toggle("is-confirming", this.currentStep === 2);
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -437,9 +476,7 @@ class CheckoutManager {
       })
       .join("");
 
-    const shippingType = document.querySelector(
-      'input[name="envio"]:checked',
-    ).value;
+    const shippingType = this.getShippingType();
     const shippingCost = shippingType === "ctt" ? 4.9 : 0;
     const total = subtotal + shippingCost;
 
@@ -452,9 +489,9 @@ class CheckoutManager {
 
   async handleFinalSubmit() {
     const btn = document.getElementById("final-submit-btn");
-    const originalText = btn.textContent;
+    const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.textContent = "A redirecionar...";
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>A redirecionar...';
 
     const address = `${document.getElementById("morada").value}, ${document.getElementById("cod-postal").value} ${document.getElementById("cidade").value}`;
     const phone = document.getElementById("telemovel").value;
@@ -463,14 +500,11 @@ class CheckoutManager {
 
     const shippingType = document.querySelector('input[name="envio"]:checked').value;
     const shippingCost = shippingType === "ctt" ? 4.9 : 0;
-    const paymentType = document.querySelector('input[name="pagamento"]:checked').value;
+    // Always card for Stripe
+    const paymentType = "card";
 
     try {
-      // If it's MBWay, we use the manual checkout (Legacy)
-      // If it's Card, we use Stripe Checkout Session
-      const endpoint = paymentType === "cartao" ? "/checkout/create-session" : "/cart/checkout";
-      
-      const res = await fetch(`${API_URL}${endpoint}`, {
+      const res = await fetch(`${API_URL}/checkout/create-session`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -483,7 +517,8 @@ class CheckoutManager {
           apelido,
           shippingCost,
           shippingType,
-          orderId: this.currentOrderId
+          orderId: this.currentOrderId,
+          paymentType,
         }),
       });
 
@@ -494,7 +529,7 @@ class CheckoutManager {
           // Stripe Session (Real or Mock)
           window.location.href = data.url;
         } else {
-          // Manual Checkout Success (Legacy/MBWay)
+          // Manual Checkout Success (Legacy)
           logInteraction("order_placed", {
             orderId: data.orderId,
             total: data.total || 0,
@@ -529,7 +564,7 @@ class CheckoutManager {
       });
     } finally {
       btn.disabled = false;
-      btn.textContent = originalText;
+      btn.innerHTML = originalText;
     }
   }
 }
