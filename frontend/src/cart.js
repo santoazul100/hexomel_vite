@@ -37,17 +37,17 @@ class CartManager {
     sidebar.className = "cart-sidebar";
     sidebar.id = "cart-sidebar";
     sidebar.innerHTML = `
-            <div class="cart-header">
-                <h3>Your Honey Cart</h3>
-                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+            <div class="cart-header" style="padding: 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-weight: 800; color: #1e293b; font-size: 1.5rem; letter-spacing: -0.5px;">O Seu Carrinho</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #64748b; padding: 0;">&times;</button>
             </div>
-            <div class="cart-items" id="cart-items-container"></div>
-            <div class="cart-footer">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700;">
+            <div class="cart-items" id="cart-items-container" style="flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;"></div>
+            <div class="cart-footer" style="padding: 1.5rem; border-top: 1px solid #f1f5f9; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-family: 'Outfit', sans-serif; font-size: 1.25rem; color: #1e293b;">
                     <span>Total:</span>
                     <span id="cart-total">€0.00</span>
                 </div>
-                <button id="checkout-btn" class="btn btn-primary" style="width: 100%;">Checkout</button>
+                <button id="checkout-btn" class="btn btn-primary" style="width: 100%; border-radius: 50px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: var(--primary-gold, #f4b400); border: none; color: #000; padding: 12px; font-family: 'Outfit', sans-serif;">Finalizar Compra</button>
             </div>
         `;
     document.body.appendChild(sidebar);
@@ -265,25 +265,26 @@ class CartManager {
       .map((item) => {
         total += item.Preco * item.Quantidade;
         return `
-            <div class="cart-item">
-                <div class="d-flex justify-content-between">
-                    <div class="cart-item-title">${item.Nome}</div>
-                    <div style="font-weight: 600;">€${(
-                      item.Preco * item.Quantidade
-                    ).toFixed(2)}</div>
-                </div>
+            <div class="cart-item" style="display: flex; gap: 15px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); align-items: stretch;">
+                <img src="${item.Imagem || '/img/produtos/' + item.ID_Produto + '.webp'}" onerror="this.src='/images/logo_hexomel.webp'" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 5px;" alt="${item.Nome}">
                 
-                <div class="cart-item-controls" style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
-                    <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
-                        <button class="cart-qty-btn" style="border: none; background: white; padding: 4px 10px; cursor: pointer; color: #64748b;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
-                        <span class="cart-qty-val" style="padding: 4px 12px; font-weight: 600; font-size: 0.95rem;">${item.Quantidade}</span>
-                        <button class="cart-qty-btn" style="border: none; background: white; padding: 4px 10px; cursor: pointer; color: #64748b;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #1e293b; font-size: 1rem; line-height: 1.2; margin-bottom: 4px;">${item.Nome}</div>
+                        <div style="font-weight: 700; color: var(--primary-green, #1a4d2e); font-size: 1.1rem; font-family: 'Outfit', sans-serif;">€${(item.Preco * item.Quantidade).toFixed(2)}</div>
                     </div>
                     
-                    <button class="cart-remove-btn" onclick="cart.removeItem(${item.ID_itemCarrinho})" style="background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ff8a8a; font-size: 0.85rem; cursor: pointer; padding: 0; margin-left: auto; transition: color 0.2s;">
-                        <i class="fas fa-trash-alt" style="font-size: 1.1rem; margin-bottom: 2px;"></i>
-                        <span style="font-weight: 500;">Remover</span>
-                    </button>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+                        <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 50px; overflow: hidden; background: #fff;">
+                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: pointer; color: #64748b; font-weight: bold; font-size: 1.1rem;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
+                            <span style="padding: 4px 12px; font-weight: 700; font-size: 0.95rem; font-family: 'Outfit', sans-serif; color: #1e293b;">${item.Quantidade}</span>
+                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: pointer; color: #64748b; font-weight: bold; font-size: 1.1rem;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                        </div>
+                        
+                        <button onclick="cart.removeItem(${item.ID_itemCarrinho})" style="background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;" title="Remover item">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -298,6 +299,11 @@ class CartManager {
     if (totalEl) totalEl.textContent = `€${total.toFixed(2)}`;
     const totalQty = this.items.reduce((sum, item) => sum + item.Quantidade, 0);
     if (badge) badge.textContent = totalQty;
+  clear() {
+    this.items = [];
+    localStorage.removeItem("cart");
+    this.render();
+    this.renderBadgeOnly();
   }
 }
 

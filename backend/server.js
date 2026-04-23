@@ -377,11 +377,30 @@ function buildAbsoluteAppUrl(origin, assetPath) {
 }
 
 function getCheckoutProductImages(origin, imagePath, productName) {
-  // If origin is localhost, Stripe won't be able to fetch the image.
-  // Use a placeholder instead for a better developer experience.
-  if (origin && (origin.includes("localhost") || origin.includes("127.0.0.1"))) {
-    const encodedName = encodeURIComponent(productName || "Honey").replace(/%20/g, "+");
-    return [`https://placehold.co/600x600/1a4d2e/white?text=${encodedName}`];
+  const publicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
+  
+  // If we have an explicit public URL configured (e.g. Ngrok), use it even if we are developing on localhost
+  if (publicBaseUrl && !publicBaseUrl.includes("localhost") && !publicBaseUrl.includes("127.0.0.1")) {
+    const absoluteUrl = buildAbsoluteAppUrl(publicBaseUrl, imagePath);
+    if (absoluteUrl) return [absoluteUrl];
+  }
+
+  const isLocalhost = !origin || origin.includes("localhost") || origin.includes("127.0.0.1");
+
+  if (isLocalhost) {
+    const nameLower = (productName || "").toLowerCase();
+    
+    // Use high-quality themed images for common honey products on localhost
+    if (nameLower.includes("mel")) {
+      return ["https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=600"];
+    } else if (nameLower.includes("polen") || nameLower.includes("pólen")) {
+      return ["https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=600"];
+    } else if (nameLower.includes("prop") || nameLower.includes("próp") || nameLower.includes("cera")) {
+      return ["https://images.unsplash.com/photo-1610424564335-9774d008d56c?auto=format&fit=crop&q=80&w=600"];
+    }
+
+    const encodedName = encodeURIComponent(productName || "Hexomel").replace(/%20/g, "+");
+    return [`https://placehold.co/600x600/1a4d2e/ffffff/png?text=${encodedName}`];
   }
   
   const absoluteUrl = buildAbsoluteAppUrl(origin, imagePath);
@@ -2292,6 +2311,13 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
         );
       }
     }
+    
+    // CLEAR CART: Clear the database cart when the order is created/finalized
+    await db.run(
+      "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+      [req.user.id]
+    );
+
 
     // 5. MOCK MODE LOGIC
     if (!stripe) {

@@ -19,8 +19,9 @@ Este documento detalha todas as funcionalidades implementadas no projeto Hexomel
     - Add to Cart events (intenção de compra).
     - Checkout Funnel steps (deteção de abandono).
 - **✅ Sistema de Notificações Toast**: Feedback visual premium para interações (Sucesso, Erro, Aviso) com animações dinâmicas.
-- **✅ Premium Animated Checkout**: Interface de pagamentos final com layout de duas fases, escondendo detalhes redundantes e unificando a experiência no Focus Panel lateral. O sumário de encomenda possui uma animação avançada de centrar e expandir com revelação sequencial de informação e redirecionamento final seguro.
-- **✅ Dynamic Local Image Mocking**: Sistema de fallback backend nativo de deteção do `localhost`, que previne falhas no Stripe Dashboard usando placeholders visuais dinâmicos da "Placehold.co" adaptados à cor da marca e ao nome do produto para os desenvolvedores, enviando os caminhos originais em Produção.
+- **✅ Checkout Funnel & Sync**: A encomenda "Pendente" só é inicializada no clique final para evitar rascunhos abandonados. Implementa o **Esvaziamento Atómico do Carrinho** (DB e Local) na transição.
+- **✅ Ngrok Tunneling Support**: Sistema que permite usar o **Ngrok** (via `CHECKOUT_PUBLIC_BASE_URL`) para que o Stripe Checkout consiga carregar imagens reais diretamente do seu `localhost` durante o desenvolvimento.
+- **✅ Dynamic Image Mocking**: Fallback automático para placeholders temáticos do Unsplash (Mel, Pólen) caso não seja detetado um túnel público no ambiente local.
 
 
 ---

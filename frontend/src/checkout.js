@@ -341,57 +341,7 @@ class CheckoutManager {
         return;
       }
 
-      // NOVO: Inicializar encomenda pendente no Passo 1
-      if (this.currentStep === 1) {
-        const btn = document.getElementById("init-checkout-btn");
-        const originalText = btn ? btn.textContent : "Continuar";
-        
-        if (btn) {
-          btn.disabled = true;
-          btn.textContent = "A aguardar...";
-        }
-
-        try {
-          const address = `${document.getElementById("morada").value}, ${document.getElementById("cod-postal").value} ${document.getElementById("cidade").value}`;
-          const phone = document.getElementById("telemovel").value;
-          const nome = document.getElementById("nome").value;
-          const apelido = document.getElementById("apelido").value;
-          
-          const shippingType = document.querySelector('input[name="envio"]:checked').value;
-          const shippingCost = shippingType === "ctt" ? 4.9 : 0;
-
-          const res = await fetch(`${API_URL}/checkout/init`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.token}`,
-            },
-            body: JSON.stringify({ 
-              address, 
-              phone, 
-              nome, 
-              apelido,
-              shippingCost,
-              shippingType,
-              orderId: this.currentOrderId
-            }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            this.currentOrderId = data.orderId;
-            console.log("Encomenda inicializada:", this.currentOrderId);
-          }
-        } catch (err) {
-          console.error("Erro ao inicializar checkout:", err);
-        } finally {
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = originalText;
-          }
-        }
-      }
-
+      // Removed Step 1 initialization to only create order on final submit
       this.currentStep++;
       this.updateUI();
     }
@@ -447,6 +397,21 @@ class CheckoutManager {
     }
     if (mainGrid) {
       mainGrid.classList.toggle("is-confirming", this.currentStep === 2);
+    }
+
+    // Header Back Button Logic
+    const headerBackButton = document.querySelector(".back-to-shop");
+    if (headerBackButton) {
+      if (this.currentStep === 2) {
+        headerBackButton.onclick = (e) => {
+          e.preventDefault();
+          this.prevStep();
+        };
+        headerBackButton.title = "Voltar aos Dados de Envio";
+      } else {
+        headerBackButton.onclick = null;
+        headerBackButton.title = "Voltar à Loja";
+      }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -527,6 +492,7 @@ class CheckoutManager {
       if (res.ok) {
         if (data.url) {
           // Stripe Session (Real or Mock)
+          cart.clear(); // Clear cart immediately on redirect
           window.location.href = data.url;
         } else {
           // Manual Checkout Success (Legacy)

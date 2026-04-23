@@ -73,8 +73,10 @@ O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Robustez de Visualização**: Sistema de visualização de documentos (Upgrade System) com tratamento de erros avançado, gestão de classes dinâmicas para loaders e suporte cross-browser para PDF e Imagens.
 - **Área de Cliente Premium**: Painel de perfil interativo abrangente com histórico de encomendas detalhado e acompanhamento visual do estado de cada compra.
 
-- **Integração Backend/Frontend Stripe Premium**: Para a componente de pagamentos online (Checkout Stripe), foi desenvolvido um backend inteligente que reconhece se o ambiente é local (localhost/desenvolvimento) ou de produção, gerando placeholders automáticos de imagens (com cores da marca) se o Stripe não conseguir descarregar a imagem localmente (Dynamic Stripe Asset Mocking).
-- **Checkout Flow**: O processo de finalização de encomenda no Hexomel abandona esquemas tradicionais confusos por um formato de 2 Passos guiados. O sumário de encomenda adapta-se ao ecrã com uma transição suave que centraliza e expande o contexto da compra (cliente, envio, pagamento) num formato de visualização sequencial antes do commit final ao Stripe.
+- **Integração Backend/Frontend Stripe Premium**: Para a componente de pagamentos online (Checkout Stripe), foi desenvolvido um backend inteligente que reconhece se o ambiente é local (localhost/desenvolvimento) ou de produção. 
+    - **Suporte Ngrok**: Introduzimos suporte nativo para **Túneis Ngrok** através da variável `CHECKOUT_PUBLIC_BASE_URL`. Esta solução permite expor o servidor local à internet de forma segura, possibilitando que o Stripe Checkout aceda às imagens reais dos produtos armazenadas no teu computador durante a fase de testes.
+    - **Fallback Inteligente**: Em caso de ausência de um túnel público, o sistema utiliza um algoritmo de **Dynamic Stripe Asset Mocking** com placeholders temáticos de alta qualidade (Unsplash) personalizados com a paleta Hexomel.
+- **Checkout Flow & Cart Sync**: O processo de finalização de encomenda no Hexomel abandona esquemas tradicionais confusos por um formato de 2 Passos guiados. A encomenda "Pendente" só é gerada no momento da finalização para manter a base de dados limpa. O sistema implementa **Esvaziamento Atómico do Carrinho** (Local e DB) no momento do clique, garantindo uma transição fluída e profissional para o portal de pagamentos.
 
 ---
 ## 8. Documentação Técnica Adicional
