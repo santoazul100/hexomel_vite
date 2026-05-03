@@ -180,17 +180,21 @@ export const isAuthFailure = (status, errorMessage = "") => {
 };
 
 export const handleSessionExpired = async (
-  message = "A tua sessao expirou ou deixou de ser valida. Inicia sessao novamente.",
+  message = "A tua sessão expirou ou deixou de ser válida. Inicia sessão novamente.",
 ) => {
   if (isHandlingSessionExpiry) return;
   isHandlingSessionExpiry = true;
+
+  // Hide the main content to avoid showing protected data behind the alert
+  const mainEl = document.querySelector("main");
+  if (mainEl) mainEl.style.display = "none";
 
   clearSession();
   updateNav(null);
 
   await Swal.fire({
     icon: "warning",
-    title: "Sessao expirada",
+    title: "Sessão expirada",
     text: message,
     confirmButtonColor: "#f4b400",
   });

@@ -347,6 +347,8 @@ function showInlineStatus(type, msg) {
 async function fetchProfileData() {
   const token = getAuthToken();
   if (!token) {
+    const mainEl = document.querySelector("main");
+    if (mainEl) mainEl.style.display = "none";
     window.location.href = "index.html";
     return;
   }

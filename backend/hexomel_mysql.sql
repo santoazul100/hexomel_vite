@@ -210,3 +210,36 @@ CREATE TABLE IF NOT EXISTS `interacao` (
   KEY `ID_Cliente` (`ID_Cliente`),
   CONSTRAINT `fk_interacao_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: pergunta_comunidade
+CREATE TABLE IF NOT EXISTS `pergunta_comunidade` (
+  `ID_Pergunta` int(10) NOT NULL AUTO_INCREMENT,
+  `ID_Cliente` int(10) NOT NULL,
+  `Texto` text NOT NULL,
+  `Votos` int(11) DEFAULT 0,
+  `Data_Criacao` timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (`ID_Pergunta`),
+  KEY `ID_Cliente` (`ID_Cliente`),
+  CONSTRAINT `fk_pergunta_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: resposta_comunidade
+CREATE TABLE IF NOT EXISTS `resposta_comunidade` (
+  `ID_Resposta` int(10) NOT NULL AUTO_INCREMENT,
+  `ID_Pergunta` int(10) NOT NULL,
+  `ID_Cliente` int(10) NOT NULL,
+  `Texto` text NOT NULL,
+  `Votos` int(11) DEFAULT 0,
+  `Melhor_Resposta` tinyint(1) DEFAULT 0,
+  `Data_Criacao` timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (`ID_Resposta`),
+  KEY `ID_Pergunta` (`ID_Pergunta`),
+  KEY `ID_Cliente` (`ID_Cliente`),
+  CONSTRAINT `fk_resposta_pergunta` FOREIGN KEY (`ID_Pergunta`) REFERENCES `pergunta_comunidade` (`ID_Pergunta`) ON DELETE CASCADE,
+  CONSTRAINT `fk_resposta_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -20,6 +20,8 @@ class ApicultorUI {
     // Security Check
     const role = this.userData?.role || this.userData?.userType || this.userData?.UserType;
     if (!this.token || !this.userData || (role?.toLowerCase() !== "apicultor" && role?.toLowerCase() !== "admin")) {
+      const layoutEl = document.getElementById("admin-layout");
+      if (layoutEl) layoutEl.style.display = "none";
       window.location.href = "index.html";
       return;
     }

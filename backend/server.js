@@ -15,6 +15,7 @@ import Stripe from "stripe";
 import crypto from "crypto";
 import compression from "compression";
 
+
 const configuredGoogleClientId =
   process.env.GOOGLE_CLIENT_ID &&
   process.env.GOOGLE_CLIENT_ID !== "change-me"
@@ -527,6 +528,45 @@ const runDatabaseMigrations = async () => {
         `,
       )
       .catch(() => console.log("reserva_workshop table creation handled"));
+
+    // Community Q&A tables
+    await db
+      .run(
+        `
+          CREATE TABLE IF NOT EXISTS pergunta_comunidade (
+              ID_Pergunta int(10) NOT NULL AUTO_INCREMENT,
+              ID_Cliente int(10) NOT NULL,
+              Texto TEXT NOT NULL,
+              Votos int(10) DEFAULT 0,
+              Data_Criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (ID_Pergunta),
+              KEY ID_Cliente (ID_Cliente),
+              CONSTRAINT fk_pergunta_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+      )
+      .catch(() => console.log("pergunta_comunidade table creation handled"));
+
+    await db
+      .run(
+        `
+          CREATE TABLE IF NOT EXISTS resposta_comunidade (
+              ID_Resposta int(10) NOT NULL AUTO_INCREMENT,
+              ID_Pergunta int(10) NOT NULL,
+              ID_Cliente int(10) NOT NULL,
+              Texto TEXT NOT NULL,
+              Votos int(10) DEFAULT 0,
+              Melhor_Resposta BOOLEAN DEFAULT FALSE,
+              Data_Criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (ID_Resposta),
+              KEY ID_Pergunta (ID_Pergunta),
+              KEY ID_Cliente (ID_Cliente),
+              CONSTRAINT fk_resposta_pergunta FOREIGN KEY (ID_Pergunta) REFERENCES pergunta_comunidade (ID_Pergunta) ON DELETE CASCADE,
+              CONSTRAINT fk_resposta_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+      )
+      .catch(() => console.log("resposta_comunidade table creation handled"));
 
     console.log("Auto-migrations completed.");
   } catch (err) {
@@ -2555,855 +2595,159 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
     // Clear cart for the user
     await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);
 
-    sendReceiptEmail(finalOrderId);
-
-    res.json({
-      message: "Checkout successful",
-      orderId: finalOrderId,
-      total: subtotal + Number(shippingCost || 0),
-    });
+    res.json({ success: true, orderId: finalOrderId });
   } catch (error) {
-    console.error("Manual checkout error:", error);
-    res.status(500).json({ error: "Checkout failed" });
-  }
-});
-
-// Remove item from cart
-app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
-  const { itemId } = req.params;
-  try {
-    await db.run("DELETE FROM item_carrinho WHERE ID_itemCarrinho = ?", [
-      itemId,
-    ]);
-    res.json({ message: "Item removed" });
-  } catch (error) {
-    console.error("Cart remove error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Example route: Get all clients
-app.get("/api/clients", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const rows = await db.all("SELECT * FROM cliente");
-    res.json(rows);
-  } catch (error) {
-    console.error("Error fetching clients:", error);
-        res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Public list of beekeepers
-app.get("/api/apicultores", async (req, res) => {
-  try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
-    res.json(rows);
-  } catch (error) {
-    console.error("Fetch beekeepers error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// FAVORITES ROUTES
-app.get("/api/favorites", authenticateToken, async (req, res) => {
-  try {
-    const favorites = await db.all(
-      `SELECT p.* FROM favoritos f
-       JOIN produto p ON f.ID_Produto = p.ID_Produto
-       WHERE f.ID_Cliente = ?`,
-      [req.user.id],
-    );
-    res.json(favorites);
-  } catch (error) {
-    console.error("Favorites fetch error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-app.post("/api/favorites/add", authenticateToken, async (req, res) => {
-  const { productId } = req.body;
-  try {
-    const existing = await db.get(
-      "SELECT * FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
-      [req.user.id, productId],
-    );
-    if (existing) {
-      return res.status(400).json({ error: "Product already in favorites" });
-    }
-
-    await db.run(
-      "INSERT INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
-      [req.user.id, productId],
-    );
-    res.json({ message: "Added to favorites" });
-  } catch (error) {
-    console.error("Add favorite error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-app.delete(
-  "/api/favorites/remove/:productId",
-  authenticateToken,
-  async (req, res) => {
-    const { productId } = req.params;
-    try {
-      await db.run(
-        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
-        [req.user.id, productId],
-      );
-      res.json({ message: "Removed from favorites" });
-    } catch (error) {
-      console.error("Remove favorite error:", error);
-      res.status(500).json({ error: "Server error" });
-    }
-  },
-);
-
-// USER PROFILE ROUTES
-app.get("/api/user/profile", authenticateToken, async (req, res) => {
-  try {
-    const user = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, Data_Resgistro, UserType, Bio, Checkout_Verified FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id],
-    );
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const orders = await db.all(
-      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
-      [req.user.id],
-    );
-
-    res.json({
-      id: user.ID_Cliente,
-      name: user.Nome,
-      email: user.Email,
-      phone: user.Telefone,
-      address: user.Morada,
-      picture: user.Picture,
-      role: user.UserType,
-      bio: user.Bio,
-      dateRegistered: user.Data_Resgistro,
-      checkoutVerified: Boolean(user.Checkout_Verified),
-      orders,
-    });
-  } catch (error) {
-    console.error("Profile fetch error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Get Order Items
-app.get(
-  "/api/user/orders/:orderId/items",
-  authenticateToken,
-  async (req, res) => {
-    const { orderId } = req.params;
-    try {
-      // Verify order belongs to user
-      const order = await db.get(
-        "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-        [orderId, req.user.id],
-      );
-
-      if (!order) {
-        return res.status(404).json({ error: "Encomenda não encontrada" });
-      }
-
-      const items = await db.all(
-        `SELECT ie.*, p.Nome, p.Imagem, p.ID_Produto, c.Nome as ApicultorNome 
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-       WHERE ie.ID_Encomenda = ?`,
-        [orderId],
-      );
-
-      res.json(items);
-    } catch (error) {
-      console.error("Fetch order items error:", error);
-      res.status(500).json({ error: "Server error" });
-    }
-  },
-);
-
-// GET /api/user/orders/:orderId/receipt — Download receipt as HTML
-app.get("/api/user/orders/:orderId/receipt", authenticateToken, async (req, res) => {
-  const { orderId } = req.params;
-  const numId = Number(orderId);
-  try {
-    const customer = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    
-    if (numId === 9001 || numId === 9002) {
-      const isUrze = numId === 9001;
-      const mockOrder = { ID_Encomenda: numId, Data_Encomenda: new Date().toISOString(), Status: "Pago", Total: isUrze ? 45.90 : 129.50 };
-      const mockItems = isUrze ? [{ Nome: "Mel de Urze (Teste)", Quantidade: 1, Preco_Unitario: 45.90, Preco: 45.90, ApicultorNome: "Quinta D'Amares" }] : [{ Nome: "Pack Premium Apicultor (Teste)", Quantidade: 1, Preco_Unitario: 129.50, Preco: 129.50, ApicultorNome: "Mel da Fazenda" }];
-      const html = generateReceiptHTML(mockOrder, mockItems, customer.Nome, customer.Email, "/images/logo_hexomel.webp");
-      res.setHeader("Content-Type", "text/html");
-      return res.send(html);
-    }
-
-    const order = await db.get(
-      "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [orderId, req.user.id],
-    );
-    if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-    const items = await db.all(
-      `SELECT ie.*, p.Nome, c.Nome as ApicultorNome 
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-       WHERE ie.ID_Encomenda = ?`,
-      [orderId],
-    );
-
-    const html = generateReceiptHTML(order, items, customer.Nome, customer.Email, "/images/logo_hexomel.webp");
-    res.setHeader("Content-Type", "text/html");
-    res.send(html);
-  } catch (error) {
-    console.error("Receipt generate error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// POST /api/user/orders/:orderId/resend-receipt — Resend receipt email
-app.post("/api/user/orders/:orderId/resend-receipt", authenticateToken, async (req, res) => {
-  const { orderId } = req.params;
-  try {
-    const order = await db.get(
-      "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [orderId, req.user.id],
-    );
-    if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-
-    if (!mailTransporter) {
-      return res.status(503).json({ error: "Serviço de email não configurado." });
-    }
-
-    await sendReceiptEmail(orderId);
-    res.json({ ok: true, message: "Recibo enviado para o teu email!" });
-  } catch (error) {
-    console.error("Resend receipt error:", error);
-    res.status(500).json({ error: "Falha ao reenviar recibo" });
-  }
-});
-
-// POST /api/user/mock-receipt — Generates and sends a real email for the test orders (9001/9002)
-app.post("/api/user/mock-receipt", authenticateToken, express.json(), async (req, res) => {
-  const { orderId } = req.body;
-  const numId = Number(orderId);
-  
-  if (!mailTransporter) return res.status(503).json({ error: "Serviço de email não configurado." });
-  
-  try {
-    const customer = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    if (!customer) return res.status(404).json({ error: "Cliente não encontrado" });
-
-    const isUrze = numId === 9001;
-    const mockOrder = {
-      ID_Encomenda: numId,
-      Data_Encomenda: new Date().toISOString(),
-      Status: "Pago",
-      Total: isUrze ? 45.90 : 129.50
-    };
-
-    const mockItems = isUrze ? [
-      { Nome: "Mel de Urze (Teste)", Quantidade: 1, Preco_Unitario: 45.90, Preco: 45.90, ApicultorNome: "Quinta D'Amares" }
-    ] : [
-      { Nome: "Pack Premium Apicultor (Teste)", Quantidade: 1, Preco_Unitario: 129.50, Preco: 129.50, ApicultorNome: "Mel da Fazenda" }
-    ];
-
-    const html = generateReceiptHTML(mockOrder, mockItems, customer.Nome, customer.Email);
-    
-    await mailTransporter.sendMail({
-      from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
-      to: customer.Email,
-      subject: `🍯 Recibo de Teste #${numId} — Hexomel`,
-      html,
-      attachments: [{
-        filename: 'logo_hexomel.webp',
-        path: '../frontend/public/images/logo_hexomel.webp',
-        cid: 'logo'
-      }]
-    });
-
-    res.json({ ok: true, message: "Email simulado enviado." });
-  } catch (error) {
-    console.error("Mock receipt error:", error);
-    res.status(500).json({ error: "Falha ao enviar mock email" });
-  }
-});
-
-app.put("/api/user/profile", authenticateToken, async (req, res) => {
-  const { name, email, phone, address } = req.body;
-  try {
-    const currentUser = await db.get(
-      "SELECT ID_Cliente, Nome, Email, Telefone, Morada, Picture, UserType, Bio, Data_Resgistro FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id],
-    );
-
-    if (!currentUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const nextName =
-      typeof name === "string" && name.trim() ? name.trim() : currentUser.Nome;
-    const nextEmail =
-      typeof email === "string" && email.trim()
-        ? email.trim().toLowerCase()
-        : currentUser.Email;
-    const nextPhone =
-      phone !== undefined ? (phone || null) : currentUser.Telefone;
-    const nextAddress =
-      address !== undefined ? (address || null) : currentUser.Morada;
-
-    if (!nextName || !nextEmail) {
-      return res.status(400).json({ error: "Name and Email are required" });
-    }
-
-    // Check if email is already taken by another user
-    const existing = await db.all(
-      "SELECT ID_Cliente FROM cliente WHERE Email = ? AND ID_Cliente != ?",
-      [nextEmail, req.user.id],
-    );
-    if (existing.length > 0) {
-      return res.status(400).json({ error: "Email is already in use" });
-    }
-
-    await db.run(
-      "UPDATE cliente SET Nome = ?, Email = ?, Telefone = ?, Morada = ? WHERE ID_Cliente = ?",
-      [nextName, nextEmail, nextPhone, nextAddress, req.user.id],
-    );
-
-    res.json({
-      message: "Profile updated successfully",
-      user: {
-        id: currentUser.ID_Cliente,
-        name: nextName,
-        email: nextEmail,
-        phone: nextPhone,
-        address: nextAddress,
-        picture: currentUser.Picture,
-        role: currentUser.UserType,
-        bio: currentUser.Bio,
-        dateRegistered: currentUser.Data_Resgistro,
-      },
-    });
-  } catch (error) {
-    console.error("Profile update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Update Profile Picture
-app.put("/api/user/profile/picture", authenticateToken, async (req, res) => {
-  try {
-    const { picture } = req.body;
-
-    if (!picture) {
-      return res.status(400).json({ error: "Picture data is required" });
-    }
-
-    // Validate base64 image format
-    if (!picture.startsWith("data:image/")) {
-      return res.status(400).json({ error: "Invalid image format" });
-    }
-
-    await db.run("UPDATE cliente SET Picture = ? WHERE ID_Cliente = ?", [
-      picture,
-      req.user.id,
-    ]);
-
-    res.json({ message: "Profile picture updated successfully", picture });
-  } catch (error) {
-    console.error("Picture update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Update password
-app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  try {
-    const user = await db.get(
-      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id],
-    );
-
-    const isMatch = await bcrypt.compare(currentPassword, user.Senha);
-    if (!isMatch) {
-      return res.status(400).json({ error: "Incorrect current password" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
-      hashedPassword,
-      req.user.id,
-    ]);
-    res.json({ message: "Password updated successfully" });
-  } catch (error) {
-    console.error("Password update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Delete account
-app.delete("/api/user/profile", authenticateToken, async (req, res) => {
-  try {
-    // Prevent admin from deleting themselves
-    const userRole = req.user.role ? req.user.role.toLowerCase() : "";
-    if (userRole === "admin") {
-      return res.status(400).json({
-        error: "Cannot delete an admin account through clinical profile.",
-      });
-    }
-
-    // Note: ON DELETE CASCADE in schema handles related tables (cart, favorites, etc.)
-    await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    res.json({ message: "Account deleted successfully" });
-  } catch (error) {
-    console.error("Account deletion error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// ADMIN ANALYTICS
-app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    // 1. Sales last 30 days
-    const sales30d = await db.all(`
-      SELECT DATE(Data_Encomenda) as date, SUM(Total) as revenue, COUNT(ID_Encomenda) as count
-      FROM encomenda
-      WHERE Status IN ('Pago', 'Enviado', 'Entregue')
-      AND Data_Encomenda >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-      GROUP BY DATE(Data_Encomenda)
-      ORDER BY date ASC
-    `);
-
-    // 2. Product distribution by category
-    const distribution = await db.all(`
-      SELECT c.Nome as category, COUNT(p.ID_Produto) as count
-      FROM categoria c
-      LEFT JOIN produto p ON c.ID_Categoria = p.ID_Categoria
-      GROUP BY c.ID_Categoria
-    `);
-
-    // 3. Orders by Status
-    const ordersByStatus = await db.all(`
-      SELECT Status as status, COUNT(ID_Encomenda) as count
-      FROM encomenda
-      GROUP BY Status
-    `);
-
-    // 4. Top Selling Products (Top 10 by revenue)
-    const topProducts = await db.all(`
-      SELECT p.Nome as name, SUM(ie.Quantidade * ie.Preco_Unitario) as revenue
-      FROM item_encomenda ie
-      JOIN produto p ON ie.ID_Produto = p.ID_Produto
-      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
-      WHERE e.Status IN ('Pago', 'Enviado', 'Entregue')
-      GROUP BY p.ID_Produto
-      ORDER BY revenue DESC
-      LIMIT 10
-    `);
-
-    // 5. Sales by Beekeeper
-    const salesByBeekeeper = await db.all(`
-      SELECT c.Nome as name, SUM(ie.Quantidade * ie.Preco_Unitario) as revenue
-      FROM item_encomenda ie
-      JOIN produto p ON ie.ID_Produto = p.ID_Produto
-      JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
-      WHERE e.Status IN ('Pago', 'Enviado', 'Entregue')
-      AND c.UserType = 'apicultor'
-      GROUP BY c.ID_Cliente
-      ORDER BY revenue DESC
-    `);
-
-    // 6. Users Growth (Last 12 months)
-    const usersGrowth = await db.all(`
-      SELECT DATE_FORMAT(Data_Resgistro, '%Y-%m') as month, COUNT(ID_Cliente) as count
-      FROM cliente
-      WHERE Data_Resgistro >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-      GROUP BY month
-      ORDER BY month ASC
-    `);
-
-    // 7. Overall Stats
-    const stats = await db.get(`
-      SELECT 
-        SUM(CASE WHEN Status IN ('Pago', 'Enviado', 'Entregue') THEN Total ELSE 0 END) as totalRevenue,
-        COUNT(ID_Encomenda) as totalOrders,
-        (SELECT COUNT(*) FROM cliente) as totalUsers,
-        (SELECT COUNT(*) FROM produto) as totalProducts
-      FROM encomenda
-    `);
-
-    const totalRevenue = parseFloat(stats.totalRevenue || 0);
-    const totalOrders = stats.totalOrders || 0;
-    const aov = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0.00";
-
-    res.json({
-      sales30d,
-      distribution,
-      ordersByStatus,
-      topProducts,
-      salesByBeekeeper,
-      usersGrowth,
-      stats: {
-        ...stats,
-        totalRevenue: totalRevenue.toFixed(2),
-        avgOrderValue: aov
-      }
-    });
-  } catch (error) {
-    console.error("Analytics error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// UPGRADE REQUESTS
-// Submit upgrade request
-app.post(
-  "/api/upgrade-request",
-  authenticateToken,
-  upload.single("document"),
-  async (req, res) => {
-    try {
-      const { descricao } = req.body;
-      if (!req.file) {
-        return res.status(400).json({ error: "Document is required" });
-      }
-      if (!descricao) {
-        return res.status(400).json({ error: "Description is required" });
-      }
-
-      // Ensure the account is verified before allowing an upgrade request
-      const currentUser = await db.get("SELECT Is_Verified FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-      if (!currentUser || !currentUser.Is_Verified) {
-        return res.status(403).json({ error: "A sua conta tem de estar verificada para se candidatar a Apicultor." });
-      }
-
-      const relativePath = `/uploads/${req.file.filename}`;
-
-      await db.run(
-        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento) VALUES (?, ?, ?)",
-        [req.user.id, descricao, relativePath],
-      );
-
-      res.status(201).json({ message: "Upgrade request submitted successfully" });
-    } catch (error) {
-      console.error("Upgrade request submission error:", error);
-      res.status(500).json({ error: "Database error" });
-    }
-  },
-);
-
-// Get all upgrade requests (Admin view)
-app.get(
-  "/api/admin/upgrade-requests",
-  authenticateToken,
-  isAdmin,
-  async (req, res) => {
-    try {
-      const rows = await db.all(`
-      SELECT ur.*, c.Nome as ClienteNome, c.Email as ClienteEmail
-      FROM upgrade_requests ur
-      JOIN cliente c ON ur.ID_Cliente = c.ID_Cliente
-      ORDER BY ur.Data_Pedido DESC
-    `);
-      res.json(rows);
-    } catch (error) {
-      console.error("Admin upgrade requests fetch error:", error);
-      res.status(500).json({ error: "Database error" });
-    }
-  },
-);
-
-// Process upgrade request (Approve/Reject)
-app.put(
-  "/api/admin/upgrade-requests/:id",
-  authenticateToken,
-  isAdmin,
-  async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body; // 'Aprovado' or 'Rejeitado'
-
-    if (status !== "Aprovado" && status !== "Rejeitado") {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
-    try {
-      const request = await db.get(
-        "SELECT * FROM upgrade_requests WHERE ID_Request = ?",
-        [id],
-      );
-      if (!request) {
-        return res.status(404).json({ error: "Request not found" });
-      }
-
-      await db.run(
-        "UPDATE upgrade_requests SET Status = ?, Data_Processamento = CURRENT_TIMESTAMP WHERE ID_Request = ?",
-        [status, id],
-      );
-
-      if (status === "Aprovado") {
-        await db.run("UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?", [
-          request.ID_Cliente,
-        ]);
-
-        const user = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [request.ID_Cliente]);
-        
-        if (user && mailTransporter) {
-          try {
-            await mailTransporter.sendMail({
-              from: process.env.SMTP_FROM || "Hexomel <noreply@hexomel.pt>",
-              to: user.Email,
-              subject: "O seu pedido de Apicultor foi Aprovado! 🎉 — Hexomel",
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; color: #333;">
-                  <h2 style="color: #1a4d2e;">Parabéns, ${user.Nome || 'Apicultor'}!</h2>
-                  <p>Temos boas notícias: o seu pedido para se tornar um <strong>Apicultor parceiro</strong> na escala Hexomel foi formalmente <strong>Aprovado</strong>.</p>
-                  <div style="background: #f8f9fa; border-left: 4px solid #f4b400; padding: 15px; margin: 20px 0;">
-                    <h3 style="margin-top:0; color: #b45309;">O que fazer agora?</h3>
-                    <ul style="padding-left: 20px; text-align: left;">
-                      <li>Termine e inicie sessão novamente para atualizar as suas permissões.</li>
-                      <li>Aceda ao seu novo <strong>Painel de Apicultor</strong> no menu.</li>
-                      <li>Adicione os seus produtos e workshops.</li>
-                      <li>Preencha a sua biografia pública para os clientes o conhecerem.</li>
-                    </ul>
-                  </div>
-                  <p>Estamos ansiosos para partilhar o seu trabalho com a nossa comunidade!</p>
-                  <p style="color: #718096; font-size: 0.85em; margin-top: 30px;">A equipa Hexomel</p>
-                </div>
-              `
-            });
-          } catch (emailErr) {
-            console.error("Upgrade approval email failed:", emailErr);
-          }
-        }
-      }
-
-      res.json({ message: `Request ${status.toLowerCase()} successfully` });
-    } catch (error) {
-      console.error("Process upgrade request error:", error);
-      res.status(500).json({ error: "Database error" });
-    }
-  },
-);
-
-// Check if current user has a pending request
-app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) => {
-  try {
-    const request = await db.get(
-      "SELECT Status FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
-      [req.user.id],
-    );
-    res.json(request || { Status: "Nenhum" });
-  } catch (error) {
-        res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Public list of beekeepers
-app.get("/api/apicultores", async (req, res) => {
-  try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
-    res.json(rows);
-  } catch (error) {
-    console.error("Fetch beekeepers error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Get reviews for a product
-app.get("/api/products/:id/reviews", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const reviews = await db.all(
-      `SELECT a.*, c.Nome as ClienteNome, c.Picture as ClienteFoto 
-       FROM avaliacao a
-       JOIN cliente c ON a.ID_Cliente = c.ID_Cliente
-       WHERE a.ID_Produto = ?
-       ORDER BY a.Data_Avaliacao DESC`,
-      [id],
-    );
-    res.json(reviews);
-  } catch (error) {
-    console.error("Reviews fetch error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Add a review
-app.post("/api/products/:id/reviews", authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  const { rating, comment } = req.body;
-
-  if (!rating || rating < 1 || rating > 5) {
-    return res.status(400).json({ error: "Invalid rating (1-5)" });
-  }
-
-  try {
-    // Check if user already reviewed this product
-    const existing = await db.get(
-      "SELECT * FROM avaliacao WHERE ID_Cliente = ? AND ID_Produto = ?",
-      [req.user.id, id],
-    );
-
-    if (existing) {
-      // Update existing review
-      await db.run(
-        "UPDATE avaliacao SET Nota = ?, Comentario = ?, Data_Avaliacao = CURRENT_TIMESTAMP WHERE ID_Avaliacao = ?",
-        [rating, comment, existing.ID_Avaliacao],
-      );
-      return res.json({ message: "Review updated" });
-    }
-
-    await db.run(
-      "INSERT INTO avaliacao (ID_Produto, ID_Cliente, Nota, Comentario) VALUES (?, ?, ?, ?)",
-      [id, req.user.id, rating, comment],
-    );
-    res.json({ message: "Review added successfully" });
-  } catch (error) {
-    console.error("Add review error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error("Checkout error:", error);
+    res.status(500).json({ error: "Erro ao processar encomenda" });
   }
 });
 
 // ============================================================
-// INTERACTION LOGGING
+// COMMUNITY Q&A ROUTES
 // ============================================================
 
-// POST /api/logs/interaction — Record a user interaction event
-app.post("/api/logs/interaction", async (req, res) => {
-  const { tipo, pagina, dados } = req.body;
-  if (!tipo) return res.status(400).json({ error: "Tipo é obrigatório" });
-
-  // Optionally extract user id from token (if logged in)
-  let clienteId = null;
-  const authHeader = req.headers["authorization"];
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    try {
-      const decoded = jwt.verify(authHeader.split(" ")[1], process.env.JWT_SECRET);
-      clienteId = decoded.id || null;
-    } catch {
-      // Anonymous interaction — that's fine
-    }
+// ============================================================
+// MODERATION - Inline profanity filter
+// ============================================================
+const BAD_WORDS_LIST = [
+  "nigger","nigga","faggot","fag","chink","spic","kike","retard","cunt",
+  "fuck","shit","bitch","asshole","bastard","dick","cock","pussy","whore",
+  "slut","motherfucker","crap","prick","twat",
+  "merda","caralho","puta","foda","cona","fdp","porra","paneleiro",
+  "cabrao","corno","carago","pila","picha","cuzinho","foder"
+];
+function censorText(text) {
+  let result = text;
+  for (const word of BAD_WORDS_LIST) {
+    const escaped = word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp('\\b' + escaped + '\\b', 'gi');
+    result = result.replace(regex, function(m) { return '*'.repeat(m.length); });
   }
-
+  return result;
+}
+// Get all questions (with answers and author info), sorted by votes desc
+app.get("/api/comunidade/perguntas", async (req, res) => {
   try {
-    await db.run(
-      "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados) VALUES (?, ?, ?, ?)",
-      [clienteId, tipo, pagina || null, dados ? JSON.stringify(dados) : null],
-    );
-    res.status(201).json({ ok: true });
+    const perguntas = await db.all(`
+      SELECT p.*, c.Nome AS AutorNome, c.Picture AS AutorPicture, c.UserType AS AutorTipo
+      FROM pergunta_comunidade p
+      JOIN cliente c ON p.ID_Cliente = c.ID_Cliente
+      ORDER BY p.Votos DESC, p.Data_Criacao DESC
+    `);
+
+    for (const pergunta of perguntas) {
+      pergunta.respostas = await db.all(`
+        SELECT r.*, c.Nome AS AutorNome, c.Picture AS AutorPicture, c.UserType AS AutorTipo
+        FROM resposta_comunidade r
+        JOIN cliente c ON r.ID_Cliente = c.ID_Cliente
+        WHERE r.ID_Pergunta = ?
+        ORDER BY r.Melhor_Resposta DESC, r.Votos DESC, r.Data_Criacao ASC
+      `, [pergunta.ID_Pergunta]);
+    }
+
+    res.json(perguntas);
   } catch (error) {
-    console.error("Log interaction error:", error);
+    console.error("Q&A fetch error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// GET /api/admin/analytics/interactions — Interaction overview for Admin
-app.get("/api/admin/analytics/interactions", authenticateToken, isAdmin, async (req, res) => {
+// Post a new question (authenticated)
+app.post("/api/comunidade/perguntas", authenticateToken, async (req, res) => {
+  const { texto } = req.body;
+  if (!texto || texto.trim().length < 10) {
+    return res.status(400).json({ error: "A pergunta deve ter pelo menos 10 caracteres." });
+  }
+
   try {
-    // Events by type (last 30 days)
-    const byType = await db.all(`
-      SELECT Tipo as tipo, COUNT(*) as count
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY Tipo
-      ORDER BY count DESC
-    `);
-
-    // Events by page (last 30 days)
-    const byPage = await db.all(`
-      SELECT Pagina as pagina, COUNT(*) as count
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-        AND Pagina IS NOT NULL
-      GROUP BY Pagina
-      ORDER BY count DESC
-      LIMIT 10
-    `);
-
-    // Top viewed products (product_view events)
-    const topViewed = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productName')) as nome,
-             JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productId')) as id,
-             COUNT(*) as views
-      FROM interacao
-      WHERE Tipo = 'product_view'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY id, nome
-      ORDER BY views DESC
-      LIMIT 10
-    `);
-
-    // Top add-to-cart products
-    const topCart = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productName')) as nome,
-             JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.productId')) as id,
-             COUNT(*) as adds
-      FROM interacao
-      WHERE Tipo = 'add_to_cart'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY id, nome
-      ORDER BY adds DESC
-      LIMIT 10
-    `);
-
-    // Events per day (last 14 days)
-    const perDay = await db.all(`
-      SELECT DATE(Data_Interacao) as dia, COUNT(*) as total
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-      GROUP BY dia
-      ORDER BY dia ASC
-    `);
-
-    // Total events
-    const totals = await db.get(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN ID_Cliente IS NOT NULL THEN 1 ELSE 0 END) as logged_in,
-             SUM(CASE WHEN ID_Cliente IS NULL THEN 1 ELSE 0 END) as anonymous
-      FROM interacao
-      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    `);
-
-    // Top search queries
-    const topSearches = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.term')) as termo,
-             COUNT(*) as count
-      FROM interacao
-      WHERE Tipo = 'search'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-        AND Dados IS NOT NULL
-      GROUP BY termo
-      ORDER BY count DESC
-      LIMIT 10
-    `);
-
-    // Top clicked elements
-    const topClicks = await db.all(`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.label')) as label,
-             JSON_UNQUOTE(JSON_EXTRACT(Dados, '$.element')) as element,
-             COUNT(*) as clicks
-      FROM interacao
-      WHERE Tipo = 'click'
-        AND Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      GROUP BY label, element
-      ORDER BY clicks DESC
-      LIMIT 15
-    `);
-
-    res.json({ byType, byPage, topViewed, topCart, perDay, totals, topSearches, topClicks });
+    const safeText = censorText(texto.trim());
+    const result = await db.run(
+      "INSERT INTO pergunta_comunidade (ID_Cliente, Texto) VALUES (?, ?)",
+      [req.user.id, safeText]
+    );
+    res.status(201).json({ id: result.lastID, message: "Pergunta publicada!" });
   } catch (error) {
-    console.error("Interactions analytics error:", error);
+    console.error("Q&A question create error:", error);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+// Delete a question (admin or author)
+app.delete("/api/comunidade/perguntas/:id", authenticateToken, async (req, res) => {
+  try {
+    const pergunta = await db.get("SELECT * FROM pergunta_comunidade WHERE ID_Pergunta = ?", [req.params.id]);
+    if (!pergunta) return res.status(404).json({ error: "Pergunta não encontrada." });
+    if (pergunta.ID_Cliente !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: "Sem permissão." });
+    
+    await db.run("DELETE FROM pergunta_comunidade WHERE ID_Pergunta = ?", [req.params.id]);
+    res.json({ message: "Pergunta removida." });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Post an answer to a question (authenticated)
+app.post("/api/comunidade/perguntas/:id/respostas", authenticateToken, async (req, res) => {
+  const { texto } = req.body;
+  const perguntaId = req.params.id;
+
+  if (!texto || texto.trim().length < 2) {
+    return res.status(400).json({ error: "A resposta deve ter pelo menos 2 caracteres." });
+  }
+
+  try {
+    const pergunta = await db.get("SELECT * FROM pergunta_comunidade WHERE ID_Pergunta = ?", [perguntaId]);
+    if (!pergunta) {
+      return res.status(404).json({ error: "Pergunta não encontrada." });
+    }
+
+    const safeText = censorText(texto.trim());
+    const result = await db.run(
+      "INSERT INTO resposta_comunidade (ID_Pergunta, ID_Cliente, Texto) VALUES (?, ?, ?)",
+      [perguntaId, req.user.id, safeText]
+    );
+    res.status(201).json({ id: result.lastID, message: "Resposta publicada!" });
+  } catch (error) {
+    console.error("Q&A answer create error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Vote on a question
+app.post("/api/comunidade/perguntas/:id/votar", authenticateToken, async (req, res) => {
+  try {
+    if (req.body && req.body.action === 'remove') {
+      await db.run("UPDATE pergunta_comunidade SET Votos = GREATEST(0, Votos - 1) WHERE ID_Pergunta = ?", [req.params.id]);
+      res.json({ message: "Voto removido!" });
+    } else {
+      await db.run("UPDATE pergunta_comunidade SET Votos = Votos + 1 WHERE ID_Pergunta = ?", [req.params.id]);
+      res.json({ message: "Voto registado!" });
+    }
+  } catch (error) {
+    console.error("Vote error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Vote on an answer
+app.post("/api/comunidade/respostas/:id/votar", authenticateToken, async (req, res) => {
+  try {
+    if (req.body && req.body.action === 'remove') {
+      await db.run("UPDATE resposta_comunidade SET Votos = GREATEST(0, Votos - 1) WHERE ID_Resposta = ?", [req.params.id]);
+      res.json({ message: "Voto removido!" });
+    } else {
+      await db.run("UPDATE resposta_comunidade SET Votos = Votos + 1 WHERE ID_Resposta = ?", [req.params.id]);
+      res.json({ message: "Voto registado!" });
+    }
+  } catch (error) {
+    console.error("Vote error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Analytics mock route to prevent 404s in the console
+app.post("/api/logs/interaction", (req, res) => {
+  res.status(204).send();
 });
 
 startServer();
@@ -3414,7 +2758,6 @@ startServer();
 async function cleanupPendingOrders() {
   try {
     console.log("🧹 Running cleanup for expired pending orders...");
-    // Since Data_Encomenda is a TIMESTAMP, we can compare directly
     const result = await db.run(`
       DELETE FROM encomenda 
       WHERE Status = 'Pendente' 
@@ -3438,4 +2781,3 @@ setTimeout(cleanupPendingOrders, 10000);
 initializeDatabase().catch((error) => {
   console.error("Unexpected database bootstrap error:", error);
 });
-

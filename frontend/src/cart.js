@@ -299,6 +299,8 @@ class CartManager {
     if (totalEl) totalEl.textContent = `€${total.toFixed(2)}`;
     const totalQty = this.items.reduce((sum, item) => sum + item.Quantidade, 0);
     if (badge) badge.textContent = totalQty;
+  }
+
   clear() {
     this.items = [];
     localStorage.removeItem("cart");

@@ -64,6 +64,7 @@ Para gerir o projeto de forma profissional, utilizamos exclusivamente o **MySQL 
 *(Utilizador de teste com acesso total ao Dashboard corporativo. Nota: O sistema suporta login por email ou identificador simplificado).*
 
 ---
+
 ## 7. Filosofia de Design e UX
 O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Tabelas Modernas**: Com sistema de iniciais em avatares e ações flutuantes.
@@ -79,7 +80,16 @@ O Hexomel diferencia-se pela sua **Interface Premium**, que utiliza:
 - **Checkout Flow & Cart Sync**: O processo de finalização de encomenda no Hexomel abandona esquemas tradicionais confusos por um formato de 2 Passos guiados. A encomenda "Pendente" só é gerada no momento da finalização para manter a base de dados limpa. O sistema implementa **Esvaziamento Atómico do Carrinho** (Local e DB) no momento do clique, garantindo uma transição fluída e profissional para o portal de pagamentos.
 
 ---
-## 8. Documentação Técnica Adicional
+
+## 8. Experiência 3D Interativa e Origem do Mel
+A página de Curiosidades eleva a interatividade através de um sistema de **Visualização de Mel Dinâmico**.
+- **Motor 3D**: Utiliza `Three.js` para renderizar um frasco fotorrealista com materiais físicos (`MeshPhysicalMaterial`).
+- **Simulador de Origem Botânica**: Implementação de um slider que permite ao utilizador alternar entre 5 tipos de mel (Alfazema, Laranjeira, Multiflora, Eucalipto e Urze).
+- **Física de Materiais**: O sistema não muda apenas a cor; ele recalcula a **Transmissão**, **Distância de Atenuação** e **Cor de Absorção** em tempo real. Méis mais escuros (como Urze) tornam-se quase opacos e densos, enquanto méis claros (Alfazema) apresentam transparência cristalina, educando o utilizador sobre como a origem floral impacta a densidade e cor do produto.
+
+---
+
+## 9. Documentação Técnica Adicional
 Para detalhes profundos sobre implementações específicas, consulte os ficheiros de estudo:
 - [Implementação de Checkout e Emails](file:///c:/escola/PAP/codigo/hexomel/estudo/DETALHES_TECNICOS_COMPRAS_EMAIL.md): Detalha a lógica de encomendas, integração com SMTP do Google (App Passwords) e geração de recibos CID.
 - [Funcionalidades Globais](file:///c:/escola/PAP/codigo/hexomel/estudo/funcionalidades.md): Lista completa de capacidades do sistema.

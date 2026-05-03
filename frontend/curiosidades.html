@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hexomel — Curiosidades do Mel</title>
+  <meta name="description"
+    content="Descubra curiosidades fascinantes sobre o mel e aprenda com os nossos apicultores. Factos surpreendentes sobre abelhas, mel e apicultura." />
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="src/styles/index.css" />
+  <link rel="stylesheet" href="src/styles/modern.css" />
+  <link rel="stylesheet" href="src/styles/curiosidades.css" />
+  <!-- Google Auth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+  <!-- Pre-load state detection -->
+  <script src="src/pre-load.js"></script>
+  <meta name="view-transition" content="same-origin" />
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" />
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto gap-4">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Início</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="shop.html">Produtos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="workshops.html">Workshops</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="curiosidades.html">Curiosidades</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="about.html">Sobre</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html">Contactos</a>
+          </li>
+        </ul>
+
+        <div class="d-flex align-items-center navbar-right-fixed">
+          <div class="cart-navbar-separate me-3">
+            <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+              <i class="fas fa-shopping-cart fs-5"></i>
+              <span id="cart-badge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+            </button>
+          </div>
+
+          <div class="d-flex align-items-center gap-3" id="authSection">
+            <!-- Injected by main.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="curiosidades-hero position-relative">
+      <!-- Animated Bees Scattered Across Page -->
+      <div class="bee-container" style="
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+          ">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 15%; left: 5%; width: 55px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
+          style="top: 25%; right: 8%; width: 45px" />
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 60%; right: 3%; width: 40px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 85%; right: 20%; width: 60px" />
+      </div>
+
+      <div class="container position-relative z-1">
+        <div class="row align-items-center g-5 curiosidades-hero-grid">
+          <div class="col-lg-5 animate-fade-up">
+            <span class="product-badge-premium mb-3 d-inline-block"><i class="fas fa-lightbulb me-2"></i>SABIA QUE...</span>
+            <h1 class="curiosidades-hero-title">Curiosidades<br />do Mundo<br />do Mel</h1>
+            <p class="curiosidades-hero-subtitle mt-4">
+              Descubra factos fascinantes sobre o mel, as abelhas e a arte da apicultura. Interaja com o frasco 3D para explorar cada detalhe do nosso produto premium.
+            </p>
+            <div class="curiosidades-hero-actions mt-5">
+              <a href="#qa-section" class="btn btn-primary px-4 py-3"
+                style="border-radius: 50px; font-weight: 600; font-size: 1rem; background: var(--primary-green); border: none; box-shadow: 0 8px 24px rgba(26, 77, 46, 0.2); transition: all 0.3s ease;">
+                <i class="fas fa-comments me-2"></i>Perguntas e Respostas
+              </a>
+              <p class="curiosidades-hero-note mb-0">
+                <i class="fas fa-hand-pointer"></i>
+                Arraste para explorar
+              </p>
+            </div>
+          </div>
+          <div class="col-lg-7">
+        <div class="honey-showcase animate-fade-up" style="animation-delay: 0.15s" data-honey-hero>
+          <div class="honey-showcase__badge"><img src="/images/logo_hexomel.webp" alt="Hexomel" class="honey-showcase__badge-logo" /> 3D</div>
+
+          <!-- Metrics on top -->
+          <div class="honey-showcase__metrics">
+            <div class="honey-showcase__metric">
+              <span>marca</span>
+              <strong>Hexomel</strong>
+            </div>
+            <div class="honey-showcase__metric">
+              <span>vidro</span>
+              <strong>favos em relevo</strong>
+            </div>
+            <div class="honey-showcase__metric">
+              <span>tampa</span>
+              <strong>metal dourado</strong>
+            </div>
+          </div>
+
+          <!-- Part controls below metrics -->
+          <div class="honey-showcase__part-controls" aria-label="Partes do frasco">
+            <button type="button" class="honey-showcase__part-btn is-active" data-focus-part="all">Tudo</button>
+            <button type="button" class="honey-showcase__part-btn" data-focus-part="lid">Tampa</button>
+            <button type="button" class="honey-showcase__part-btn" data-focus-part="glass">Vidro</button>
+            <button type="button" class="honey-showcase__part-btn" data-focus-part="honey">Mel</button>
+          </div>
+
+          <!-- 3D Canvas -->
+          <div class="honey-showcase__canvas-shell">
+            <div
+              class="honey-showcase__canvas"
+              data-honey-canvas
+              data-fallback-image="/images/honey_jar_reference_hexomel.jpg"
+              aria-label="Modelo 3D de um frasco de mel realista"
+            ></div>
+          </div>
+
+          <!-- Color slider directly after 3D model -->
+          <div class="honey-showcase__color-control">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="honey-showcase__part-label mb-0">Origem e Cor do Mel</span>
+              <strong id="honey-type-name" data-honey-type-name class="text-warning">Mel Multiflora</strong>
+            </div>
+            <input type="range" class="honey-color-slider" id="honey-color-slider" data-honey-color-slider min="0" max="4" step="1" value="2">
+            <div class="d-flex justify-content-between small text-muted mt-1 px-1">
+              <span>Claro</span>
+              <span>Médio</span>
+              <span>Escuro</span>
+            </div>
+            <p id="honey-type-desc" data-honey-type-desc class="small mt-3 text-white-50 lh-sm">
+              O clássico mel de mil flores, com um tom âmbar médio e sabor equilibrado.
+            </p>
+          </div>
+
+          <!-- Part description at the bottom -->
+          <div class="honey-showcase__part-copy">
+            <span class="honey-showcase__part-label">Parte em foco</span>
+            <strong data-part-title>Modelo completo</strong>
+            <p data-part-text>
+              Frasco Hexomel inspirado numa fotografia real, com tampa dourada, vidro em favos e mel ambar denso.
+            </p>
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Stats Bar -->
+    <section class="curiosidades-stats-bar">
+      <div class="container">
+        <div class="row g-4 text-center">
+          <div class="col-6 col-md-3 animate-fade-up" style="animation-delay: 0.1s">
+            <div class="stat-bubble">
+              <i class="fas fa-globe-americas"></i>
+              <span class="stat-number">4x</span>
+              <span class="stat-label">A volta ao mundo para 1kg de mel</span>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 animate-fade-up" style="animation-delay: 0.2s">
+            <div class="stat-bubble">
+              <i class="fas fa-infinity"></i>
+              <span class="stat-number">∞</span>
+              <span class="stat-label">O mel puro nunca expira</span>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 animate-fade-up" style="animation-delay: 0.3s">
+            <div class="stat-bubble">
+              <i class="fas fa-seedling"></i>
+              <span class="stat-number">80%</span>
+              <span class="stat-label">Das plantas dependem das abelhas</span>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 animate-fade-up" style="animation-delay: 0.4s">
+            <div class="stat-bubble">
+              <i class="fas fa-heart"></i>
+              <span class="stat-number">200+</span>
+              <span class="stat-label">Substâncias benéficas no mel</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Curiosidades Grid -->
+    <section class="py-5 position-relative" style="background-color: var(--bg-clean)">
+      <!-- Extra bees floating in the cards section -->
+      <div class="bee-container z-0"
+        style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 8%; right: 6%; width: 48px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
+          style="top: 45%; left: 3%; width: 42px" />
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 78%; right: 4%; width: 38px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
+          style="top: 92%; left: 7%; width: 44px" />
+      </div>
+      <div class="container py-5">
+        <div class="text-center mb-5 animate-fade-up">
+          <h2 class="display-5 fw-bold" style="color: var(--primary-green)">
+            Factos Fascinantes
+          </h2>
+          <p class="text-muted mt-3">Clique nos cartões para descobrir mais detalhes</p>
+          <div class="mx-auto" style="
+                width: 60px;
+                height: 3px;
+                background: var(--secondary-gold);
+                margin-top: 20px;
+              "></div>
+        </div>
+
+        <div class="row g-4" id="curiosidades-grid">
+          <!-- Card 1 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.1s">
+            <div class="curiosidade-card" data-category="producao">
+              <div class="curiosidade-icon">
+                <i class="fas fa-route"></i>
+              </div>
+              <h4 class="curiosidade-title">Uma Viagem Épica</h4>
+              <p class="curiosidade-text">
+                Para produzir apenas <strong>1 kg de mel</strong>, uma colónia de abelhas
+                precisa de visitar entre <strong>2 a 4 milhões de flores</strong> e percorrer
+                uma distância equivalente a <strong>4 vezes a circunferência da Terra</strong>.
+              </p>
+              <span class="curiosidade-tag">Produção</span>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.15s">
+            <div class="curiosidade-card" data-category="ciencia">
+              <div class="curiosidade-icon">
+                <i class="fas fa-hourglass-end"></i>
+              </div>
+              <h4 class="curiosidade-title">Alimento Eterno</h4>
+              <p class="curiosidade-text">
+                O mel puro <strong>não tem prazo de validade</strong>. Graças à sua alta
+                concentração de açúcares, baixo teor de humidade e pH ácido, os
+                microrganismos não conseguem sobreviver. Já foram encontrados potes de
+                mel em <strong>tumbas egípcias com 3.000 anos</strong> perfeitamente conservados.
+              </p>
+              <span class="curiosidade-tag">Ciência</span>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.2s">
+            <div class="curiosidade-card" data-category="abelhas">
+              <div class="curiosidade-icon">
+                <i class="fas fa-crown"></i>
+              </div>
+              <h4 class="curiosidade-title">A Rainha Prolífica</h4>
+              <p class="curiosidade-text">
+                A abelha rainha pode pôr até <strong>3.000 ovos num único dia</strong>.
+                Ela é a única fêmea fértil da colmeia e pode viver até
+                <strong>5 anos</strong>, enquanto uma operária vive apenas cerca de 45 dias no verão.
+              </p>
+              <span class="curiosidade-tag">Abelhas</span>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.25s">
+            <div class="curiosidade-card" data-category="producao">
+              <div class="curiosidade-icon">
+                <i class="fas fa-eye-dropper"></i>
+              </div>
+              <h4 class="curiosidade-title">Meio Grama por Vida</h4>
+              <p class="curiosidade-text">
+                Ao longo de toda a sua vida (cerca de 45 dias), uma abelha operária
+                produz apenas <strong>meio grama de mel</strong> — o equivalente a
+                aproximadamente <strong>1/12 de uma colher de chá</strong>. Cada gota
+                é verdadeiramente preciosa.
+              </p>
+              <span class="curiosidade-tag">Produção</span>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.3s">
+            <div class="curiosidade-card" data-category="ciencia">
+              <div class="curiosidade-icon">
+                <i class="fas fa-gem"></i>
+              </div>
+              <h4 class="curiosidade-title">Cristalização ≠ Impureza</h4>
+              <p class="curiosidade-text">
+                Muitas pessoas confundem mel cristalizado com mel estragado. Na verdade,
+                a <strong>cristalização é um processo natural</strong> e um forte indício
+                de que o mel é <strong>puro e de qualidade</strong>, sem processos de
+                aquecimento excessivo.
+              </p>
+              <span class="curiosidade-tag">Ciência</span>
+            </div>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.35s">
+            <div class="curiosidade-card" data-category="abelhas">
+              <div class="curiosidade-icon">
+                <i class="fas fa-comments"></i>
+              </div>
+              <h4 class="curiosidade-title">A Dança das Abelhas</h4>
+              <p class="curiosidade-text">
+                As abelhas comunicam-se através da famosa <strong>"dança das abelhas"</strong>,
+                movimentos precisos que indicam a <strong>direção e distância</strong>
+                das fontes de alimento. Esta descoberta valeu um
+                <strong>Prémio Nobel</strong> a Karl von Frisch em 1973.
+              </p>
+              <span class="curiosidade-tag">Abelhas</span>
+            </div>
+          </div>
+
+          <!-- Card 7 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.4s">
+            <div class="curiosidade-card" data-category="saude">
+              <div class="curiosidade-icon">
+                <i class="fas fa-heartbeat"></i>
+              </div>
+              <h4 class="curiosidade-title">Propriedades Medicinais</h4>
+              <p class="curiosidade-text">
+                O mel possui propriedades <strong>antibacterianas e anti-inflamatórias</strong>
+                naturais. Contém uma enzima que produz peróxido de hidrogénio, tornando-o
+                eficaz no <strong>tratamento de feridas e queimaduras</strong> desde a Antiguidade.
+              </p>
+              <span class="curiosidade-tag">Saúde</span>
+            </div>
+          </div>
+
+          <!-- Card 8 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.45s">
+            <div class="curiosidade-card" data-category="apicultura">
+              <div class="curiosidade-icon">
+                <i class="fas fa-box-open"></i>
+              </div>
+              <h4 class="curiosidade-title">Muito Mais que Mel</h4>
+              <p class="curiosidade-text">
+                As colmeias fornecem outros produtos valiosos além do mel:
+                <strong>própolis</strong> (antibiótico natural), <strong>geleia real</strong>,
+                <strong>pólen</strong> (superalimento) e <strong>cera de abelha</strong>,
+                todos com propriedades únicas.
+              </p>
+              <span class="curiosidade-tag">Apicultura</span>
+            </div>
+          </div>
+
+          <!-- Card 9 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.5s">
+            <div class="curiosidade-card" data-category="abelhas">
+              <div class="curiosidade-icon">
+                <i class="fas fa-leaf"></i>
+              </div>
+              <h4 class="curiosidade-title">Guardiãs do Ecossistema</h4>
+              <p class="curiosidade-text">
+                As abelhas são responsáveis pela <strong>polinização de cerca de 80%
+                  das plantas com flor</strong> e de <strong>1/3 dos alimentos</strong>
+                que consumimos. Sem elas, a segurança alimentar global estaria em risco.
+              </p>
+              <span class="curiosidade-tag">Abelhas</span>
+            </div>
+          </div>
+
+          <!-- Card 10 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.55s">
+            <div class="curiosidade-card" data-category="ciencia">
+              <div class="curiosidade-icon">
+                <i class="fas fa-utensils"></i>
+              </div>
+              <h4 class="curiosidade-title">Único no Mundo</h4>
+              <p class="curiosidade-text">
+                O mel é o <strong>único alimento produzido por um inseto</strong> que é
+                consumido diretamente pelos seres humanos. É também o único alimento que
+                contém todos os nutrientes necessários para sustentar a vida, incluindo
+                <strong>água, minerais, vitaminas e enzimas</strong>.
+              </p>
+              <span class="curiosidade-tag">Ciência</span>
+            </div>
+          </div>
+
+          <!-- Card 11 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.6s">
+            <div class="curiosidade-card" data-category="apicultura">
+              <div class="curiosidade-icon">
+                <i class="fas fa-wind"></i>
+              </div>
+              <h4 class="curiosidade-title">Absorve Odores</h4>
+              <p class="curiosidade-text">
+                O mel <strong>absorve facilmente odores</strong> do ambiente. Por isso,
+                nunca deve ser armazenado perto de produtos com cheiros fortes, sob risco
+                de alterar o seu <strong>aroma e sabor naturais</strong>. Um apicultor
+                experiente sabe guardá-lo em recipientes herméticos.
+              </p>
+              <span class="curiosidade-tag">Apicultura</span>
+            </div>
+          </div>
+
+          <!-- Card 12 -->
+          <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: 0.65s">
+            <div class="curiosidade-card" data-category="producao">
+              <div class="curiosidade-icon">
+                <i class="fas fa-fire"></i>
+              </div>
+              <h4 class="curiosidade-title">Cera: Um Luxo Caro</h4>
+              <p class="curiosidade-text">
+                Para produzir <strong>1 kg de cera</strong>, as abelhas precisam de consumir
+                cerca de <strong>7,5 kg de mel</strong>. Isto demonstra o incrível custo
+                energético da construção dos favos hexagonais — a forma geométrica mais
+                eficiente da natureza.
+              </p>
+              <span class="curiosidade-tag">Produção</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Beekeeper Wisdom Section -->
+    <section class="py-5 position-relative overflow-hidden" style="background: var(--primary-green)">
+      <div class="container py-5 text-center animate-fade-up position-relative z-1">
+        <span class="product-badge-premium mb-3 d-inline-block"
+          style="background: var(--secondary-gold) !important; color: var(--primary-green-dark) !important;">
+          <i class="fas fa-hat-cowboy me-2"></i>SABEDORIA DO APICULTOR
+        </span>
+        <h2 class="display-5 fw-bold text-white mb-5 mt-4">
+          Dicas dos Nossos Apicultores
+        </h2>
+        <div class="row g-4 text-start">
+          <div class="col-md-6 col-lg-4">
+            <div class="wisdom-card">
+              <div class="wisdom-number">01</div>
+              <h5 class="fw-bold mb-3">Conservação Ideal</h5>
+              <p class="mb-0 text-white-50">
+                Guarde o mel num local fresco e seco, longe da luz solar direta. Nunca
+                use colheres molhadas — a humidade pode acelerar a fermentação.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="wisdom-card">
+              <div class="wisdom-number">02</div>
+              <h5 class="fw-bold mb-3">Mel Cristalizado</h5>
+              <p class="mb-0 text-white-50">
+                Se o mel cristalizar, coloque o frasco em banho-maria a no máximo 40°C.
+                Temperaturas superiores destroem as enzimas e nutrientes benéficos.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="wisdom-card">
+              <div class="wisdom-number">03</div>
+              <h5 class="fw-bold mb-3">Identificar Mel Puro</h5>
+              <p class="mb-0 text-white-50">
+                O mel puro não se dissolve rapidamente em água fria e tende a cristalizar
+                com o tempo. Se nunca cristaliza, pode ter sido processado industrialmente.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="wisdom-card">
+              <div class="wisdom-number">04</div>
+              <h5 class="fw-bold mb-3">Melhor Hora de Consumir</h5>
+              <p class="mb-0 text-white-50">
+                Uma colher de mel de manhã em jejum, diluída em água morna (nunca quente),
+                é uma tradição apícola que ajuda a fortalecer o sistema imunitário.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="wisdom-card">
+              <div class="wisdom-number">05</div>
+              <h5 class="fw-bold mb-3">Cada Flor, Um Sabor</h5>
+              <p class="mb-0 text-white-50">
+                A cor e o sabor do mel variam conforme as flores visitadas pelas abelhas.
+                Mel de rosmaninho é claro e suave; mel de castanheiro é escuro e intenso.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="wisdom-card">
+              <div class="wisdom-number">06</div>
+              <h5 class="fw-bold mb-3">Respeitar as Abelhas</h5>
+              <p class="mb-0 text-white-50">
+                Um bom apicultor nunca retira todo o mel da colmeia. Deixa sempre reservas
+                para as abelhas sobreviverem ao inverno — a sustentabilidade começa na colmeia.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(
+              circle,
+              rgba(255, 255, 255, 0.05) 0%,
+              transparent 70%
+            );
+            border-radius: 50%;
+          "></div>
+    </section>
+
+    <!-- Q&A Community Section (Reddit-style) -->
+    <section id="qa-section" class="py-5 position-relative" style="background: var(--bg-clean)">
+      <div class="bee-container z-0"
+        style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 3%; width: 45px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
+          style="top: 60%; right: 5%; width: 40px" />
+      </div>
+      <div class="container py-5 position-relative z-1">
+        <div class="text-center mb-5 animate-fade-up">
+          <span class="product-badge-premium mb-3 d-inline-block">
+            <i class="fas fa-users me-2"></i>COMUNIDADE
+          </span>
+          <h2 class="display-5 fw-bold mt-3" style="color: var(--primary-green)">
+            Perguntas & Respostas
+          </h2>
+          <p class="text-muted mx-auto" style="max-width: 600px">
+            Os nossos apicultores respondem às dúvidas mais frequentes dos clientes.
+            Aprenda diretamente com quem vive a apicultura todos os dias.
+          </p>
+          <div class="mx-auto" style="width: 60px; height: 3px; background: var(--secondary-gold); margin-top: 20px;">
+          </div>
+        </div>
+
+        <!-- Form to post new question -->
+        <div class="qa-form-container mx-auto mb-5 p-4 rounded-4 animate-fade-up"
+          style="max-width: 800px; background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+          <form id="qa-form">
+            <div class="mb-3">
+              <label for="qa-input" class="form-label fw-bold" style="color: var(--primary-green)">Tem alguma
+                dúvida?</label>
+              <textarea class="form-control bg-light" id="qa-input" rows="3"
+                placeholder="Ex: Qual é a melhor forma de conservar o mel?"
+                style="resize: none; border-radius: 12px;"></textarea>
+              <div class="invalid-feedback">A pergunta deve ter pelo menos 10 caracteres.</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div id="qa-login-msg" class="text-danger small d-none"><i
+                  class="fas fa-exclamation-circle me-1"></i>Inicie sessão para participar.</div>
+              <button type="submit" class="btn btn-primary" id="qa-submit-btn"
+                style="background: var(--primary-green); border: none; border-radius: 50px; padding: 0.6rem 1.5rem;">
+                <i class="fas fa-paper-plane me-2"></i>Publicar Pergunta
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- QA Threads Container (populated by JS) -->
+        <div class="qa-thread" id="qa-thread">
+          <div class="text-center py-5 opacity-50">
+            <i class="fas fa-spinner fa-spin fa-2x mb-3 text-success"></i>
+            <p>A carregar comunidade...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-5 bg-white">
+      <div class="container py-5">
+        <div class="newsletter-premium text-center animate-fade-up">
+          <h2 class="display-6 fw-bold mb-3" style="color: var(--primary-green)">
+            Quer Aprender Mais?
+          </h2>
+          <p class="text-muted mb-4 mx-auto" style="max-width: 500px">
+            Participe nos nossos workshops com apicultores experientes e descubra
+            em primeira mão os segredos da apicultura artesanal.
+          </p>
+          <a href="workshops.html" class="btn btn-auth-enhanced register px-5 py-3">Ver Workshops <i
+              class="fa-solid fa-arrow-right ms-2"></i></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Premium -->
+  <footer class="footer-premium">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <a href="index.html" class="footer-brand">
+            <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" />
+          </a>
+          <p class="mb-4 text-white-50" style="max-width: 300px; font-size: 0.95rem; line-height: 1.6">
+            Dedicados à produção de mel 100% natural, preservando a pureza e a
+            tradição apícola em cada gota.
+          </p>
+          <div class="social-links">
+            <a href="https://instagram.com" target="_blank" class="social-icon"><i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://facebook.com" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://wa.me/351912345678" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i>
+            </a>
+          </div>
+        </div>
+        <div class="col-lg-2 ms-lg-auto">
+          <h5 class="footer-heading">Navegação</h5>
+          <ul class="list-unstyled">
+            <li><a href="index.html" class="footer-link">Início</a></li>
+            <li><a href="shop.html" class="footer-link">Produtos</a></li>
+            <li><a href="workshops.html" class="footer-link">Workshops</a></li>
+            <li>
+              <a href="curiosidades.html" class="footer-link" style="color: #f4b400 !important">Curiosidades</a>
+            </li>
+            <li><a href="about.html" class="footer-link">Sobre</a></li>
+            <li><a href="contact.html" class="footer-link">Contactos</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-2">
+          <h5 class="footer-heading">Pedido</h5>
+          <ul class="list-unstyled">
+            <li><a href="#" class="footer-link">Carrinho</a></li>
+            <li><a href="#" class="footer-link">A minha conta</a></li>
+            <li><a href="#" class="footer-link">FAQ</a></li>
+            <li><a href="#" class="footer-link">Termos</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h5 class="footer-heading">Contactos</h5>
+          <p class="small mb-2 text-white">
+            <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+            Estrela, Portugal
+          </p>
+          <p class="small mb-2 text-white">
+            <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+          </p>
+          <p class="small mb-4 text-white">
+            <i class="fas fa-envelope me-2 text-warning"></i> hexomelpap@gmail.com
+          </p>
+        </div>
+      </div>
+      <hr class="my-5 opacity-10" />
+      <div class="text-center small opacity-50">
+        <p class="mb-0">
+          &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+          reservados.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script type="module" src="src/curiosidadesHero3d.js"></script>
+  <script type="module" src="src/beeAnimation.js"></script>
+  <script type="module" src="src/comunidade.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+
+</html>
