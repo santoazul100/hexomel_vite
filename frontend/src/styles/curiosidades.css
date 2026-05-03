@@ -38,11 +38,12 @@
   width: 44rem;
   height: 44rem;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(244, 180, 0, 0.2) 0%, rgba(244, 180, 0, 0) 65%);
-  filter: blur(24px);
-  opacity: 0.9;
+  background: radial-gradient(circle, rgba(244, 180, 0, 0.15) 0%, rgba(244, 180, 0, 0) 65%);
+  filter: blur(40px);
+  opacity: 0.5;
   pointer-events: none;
 }
+.curiosidades-hero-subtitle {
   line-height: 1.75;
   max-width: 440px;
   margin: 0;
@@ -128,45 +129,25 @@
   margin-left: auto;
   padding: 1.1rem;
   border-radius: 32px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(248, 244, 232, 0.6)),
-    rgba(255, 255, 255, 0.26);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 34px 90px rgba(26, 77, 46, 0.13),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(22px);
-  overflow: hidden;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .honey-showcase::before {
-  content: "";
-  position: absolute;
-  inset: 0.9rem;
-  border-radius: 28px;
-  border: 1px solid rgba(201, 176, 55, 0.16);
-  pointer-events: none;
+  content: none;
 }
 
 .honey-showcase::after {
-  content: "";
-  position: absolute;
-  right: -10%;
-  top: -18%;
-  width: 18rem;
-  height: 18rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(244, 180, 0, 0.18) 0%, rgba(244, 180, 0, 0) 72%);
-  filter: blur(20px);
-  opacity: 0.9;
-  pointer-events: none;
+  content: none;
 }
 
 .honey-showcase__badge {
   position: absolute;
-  top: 1.35rem;
-  right: 1.35rem;
-  z-index: 3;
+  top: -1rem;
+  right: 1.5rem;
+  z-index: 10;
   padding: 0.4rem 0.85rem 0.4rem 0.55rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);

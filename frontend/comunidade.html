@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hexomel — Comunidade</title>
+  <meta name="description"
+    content="Participe na comunidade Hexomel. Faça perguntas sobre mel, abelhas e apicultura e receba respostas dos nossos apicultores." />
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="src/styles/index.css" />
+  <link rel="stylesheet" href="src/styles/modern.css" />
+  <link rel="stylesheet" href="src/styles/curiosidades.css" />
+  <!-- Google Auth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+  <!-- Pre-load state detection -->
+  <script src="src/pre-load.js"></script>
+  <meta name="view-transition" content="same-origin" />
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" />
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto gap-4">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Início</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="shop.html">Produtos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="workshops.html">Workshops</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+            <ul class="dropdown-menu dropdown-menu-hexomel">
+              <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
+              <li><a class="dropdown-item active" href="comunidade.html">Comunidade</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="about.html">Sobre</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html">Contactos</a>
+          </li>
+        </ul>
+
+        <div class="d-flex align-items-center navbar-right-fixed">
+          <div class="cart-navbar-separate me-3">
+            <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+              <i class="fas fa-shopping-cart fs-5"></i>
+              <span id="cart-badge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+            </button>
+          </div>
+
+          <div class="d-flex align-items-center gap-3" id="authSection">
+            <!-- Injected by main.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Community Hero -->
+    <section class="comunidade-hero position-relative">
+      <div class="bee-container" style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 20%; left: 4%; width: 50px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 40%; right: 6%; width: 42px" />
+      </div>
+      <div class="container position-relative z-1">
+        <div class="text-center animate-fade-up">
+          <span class="product-badge-premium mb-3 d-inline-block"><i class="fas fa-users me-2"></i>COMUNIDADE</span>
+          <h1 class="display-4 fw-bold mt-3" style="color: var(--primary-green)">
+            Perguntas & Respostas
+          </h1>
+          <p class="text-muted mx-auto mt-3" style="max-width: 600px">
+            Os nossos apicultores respondem às dúvidas mais frequentes dos clientes.
+            Aprenda diretamente com quem vive a apicultura todos os dias.
+          </p>
+          <div class="mx-auto" style="width: 60px; height: 3px; background: var(--secondary-gold); margin-top: 20px;">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Q&A Community Section -->
+    <section id="qa-section" class="py-5 position-relative" style="background: var(--bg-clean)">
+      <div class="bee-container z-0"
+        style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 3%; width: 45px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
+          style="top: 60%; right: 5%; width: 40px" />
+      </div>
+      <div class="container py-5 position-relative z-1">
+        <!-- Form to post new question -->
+        <div class="qa-form-container mx-auto mb-5 p-4 rounded-4 animate-fade-up"
+          style="max-width: 800px; background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+          <form id="qa-form">
+            <div class="mb-3">
+              <label for="qa-input" class="form-label fw-bold" style="color: var(--primary-green)">Tem alguma
+                dúvida?</label>
+              <textarea class="form-control bg-light" id="qa-input" rows="3"
+                placeholder="Ex: Qual é a melhor forma de conservar o mel?"
+                style="resize: none; border-radius: 12px;"></textarea>
+              <div class="invalid-feedback">A pergunta deve ter pelo menos 10 caracteres.</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div id="qa-login-msg" class="text-danger small d-none"><i
+                  class="fas fa-exclamation-circle me-1"></i>Inicie sessão para participar.</div>
+              <button type="submit" class="btn btn-primary" id="qa-submit-btn"
+                style="background: var(--primary-green); border: none; border-radius: 50px; padding: 0.6rem 1.5rem;">
+                <i class="fas fa-paper-plane me-2"></i>Publicar Pergunta
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- QA Threads Container (populated by JS) -->
+        <div class="qa-thread" id="qa-thread">
+          <div class="text-center py-5 opacity-50">
+            <i class="fas fa-spinner fa-spin fa-2x mb-3 text-success"></i>
+            <p>A carregar comunidade...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-5 bg-white">
+      <div class="container py-5">
+        <div class="newsletter-premium text-center animate-fade-up">
+          <h2 class="display-6 fw-bold mb-3" style="color: var(--primary-green)">
+            Descubra Mais Sobre o Mel
+          </h2>
+          <p class="text-muted mb-4 mx-auto" style="max-width: 500px">
+            Explore factos fascinantes sobre o mel, as abelhas e a arte da apicultura na nossa página de curiosidades.
+          </p>
+          <a href="curiosidades.html" class="btn btn-auth-enhanced register px-5 py-3">Ver Curiosidades <i
+              class="fa-solid fa-arrow-right ms-2"></i></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Premium -->
+  <footer class="footer-premium">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <a href="index.html" class="footer-brand">
+            <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" />
+          </a>
+          <p class="mb-4 text-white-50" style="max-width: 300px; font-size: 0.95rem; line-height: 1.6">
+            Dedicados à produção de mel 100% natural, preservando a pureza e a
+            tradição apícola em cada gota.
+          </p>
+          <div class="social-links">
+            <a href="https://instagram.com" target="_blank" class="social-icon"><i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://facebook.com" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://wa.me/351912345678" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i>
+            </a>
+          </div>
+        </div>
+        <div class="col-lg-2 ms-lg-auto">
+          <h5 class="footer-heading">Navegação</h5>
+          <ul class="list-unstyled">
+            <li><a href="index.html" class="footer-link">Início</a></li>
+            <li><a href="shop.html" class="footer-link">Produtos</a></li>
+            <li><a href="workshops.html" class="footer-link">Workshops</a></li>
+            <li><a href="curiosidades.html" class="footer-link">Curiosidades</a></li>
+            <li><a href="comunidade.html" class="footer-link" style="color: #f4b400 !important">Comunidade</a></li>
+            <li><a href="about.html" class="footer-link">Sobre</a></li>
+            <li><a href="contact.html" class="footer-link">Contactos</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-2">
+          <h5 class="footer-heading">Pedido</h5>
+          <ul class="list-unstyled">
+            <li><a href="#" class="footer-link">Carrinho</a></li>
+            <li><a href="#" class="footer-link">A minha conta</a></li>
+            <li><a href="#" class="footer-link">FAQ</a></li>
+            <li><a href="#" class="footer-link">Termos</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h5 class="footer-heading">Contactos</h5>
+          <p class="small mb-2 text-white">
+            <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+            Estrela, Portugal
+          </p>
+          <p class="small mb-2 text-white">
+            <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+          </p>
+          <p class="small mb-4 text-white">
+            <i class="fas fa-envelope me-2 text-warning"></i> hexomelpap@gmail.com
+          </p>
+        </div>
+      </div>
+      <hr class="my-5 opacity-10" />
+      <div class="text-center small opacity-50">
+        <p class="mb-0">
+          &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+          reservados.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script type="module" src="src/beeAnimation.js"></script>
+  <script type="module" src="src/comunidade.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+
+</html>

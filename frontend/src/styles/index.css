@@ -230,7 +230,7 @@ p {
   position: relative;
 }
 
-.nav-link::after {
+.nav-link:not(.dropdown-toggle)::after {
   content: "";
   position: absolute;
   bottom: -4px;
@@ -245,7 +245,7 @@ p {
   color: var(--primary-gold);
 }
 
-.nav-link:hover::after {
+.nav-link:not(.dropdown-toggle):hover::after {
   width: 100%;
 }
 

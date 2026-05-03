@@ -12,6 +12,22 @@ import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { trackPageView, setupAutoTracking } from "./analytics.js";
 
+// Global fetch interceptor for automatic logout on 401 Unauthorized
+const originalFetch = window.fetch;
+window.fetch = async function (...args) {
+  const response = await originalFetch.apply(this, args);
+  if (response.status === 401) {
+    const url = typeof args[0] === "string" ? args[0] : args[0]?.url || "";
+    // Avoid triggering on login/register endpoints to prevent loops
+    if (!url.includes("/auth/login") && !url.includes("/auth/register")) {
+      import("./auth.js").then(({ handleSessionExpired }) => {
+        handleSessionExpired("A sua sessão expirou. Por favor, inicie sessão novamente.");
+      });
+    }
+  }
+  return response;
+};
+
 // Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener("click", function (e) {

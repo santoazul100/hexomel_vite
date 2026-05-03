@@ -1966,6 +1966,113 @@ app.patch(
   },
 );
 
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id]
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id]
+    );
+
+    // Provide default checkoutVerified = false since it's session based
+    res.json({ ...user, checkoutVerified: false, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) { updates.push("Nome = ?"); params.push(name); }
+    if (email !== undefined) { updates.push("Email = ?"); params.push(email); }
+    if (phone !== undefined) { updates.push("Telefone = ?"); params.push(phone); }
+    if (address !== undefined) { updates.push("Morada = ?"); params.push(address); }
+    if (bio !== undefined) { updates.push("Bio = ?"); params.push(bio); }
+
+    if (updates.length === 0) return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(`UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`, params);
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id]
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get("SELECT Senha FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid) return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [hashed, req.user.id]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) => {
+  try {
+    const reqInfo = await db.get(
+      "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+      [req.user.id]
+    );
+    if (!reqInfo) {
+      return res.json({ status: "none" });
+    }
+    res.json(reqInfo);
+  } catch (error) {
+    console.error("Upgrade status error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.post("/api/user/upgrade-request", authenticateToken, async (req, res) => {
+  try {
+    const { experience, motivation } = req.body;
+    const description = `Experiência: ${experience}\nMotivação: ${motivation}`;
+    
+    const existing = await db.get("SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'", [req.user.id]);
+    if (existing) return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+    await db.run("INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)", [
+      req.user.id, description, "N/A", "Pendente"
+    ]);
+
+    res.json({ message: "Pedido enviado com sucesso" });
+  } catch (error) {
+    console.error("Upgrade request error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // Update own user role (Profile view)
 app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
   const { userType } = req.body;
