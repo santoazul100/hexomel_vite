@@ -1,0 +1,39 @@
+LISTA DE SCREENSHOTS DO PROJETO HEXOMEL (PAP)
+===========================================
+
+Este ficheiro documenta as capturas de ecrã (prints) realizadas para o projeto Hexomel.
+
+1. Homepage (Página Inicial)
+   - Ficheiro: homepage_hexomel.png
+   - Descrição: Mostra o design premium "Golden & White", o logo minimalista e a secção hero com animação de abelhas.
+
+2. Loja (Shop)
+   - Ficheiro: shop_hexomel.png
+   - Descrição: Catálogo de produtos com sistema de cartões, preços e botão de adicionar ao carrinho.
+
+3. Curiosidades (3D)
+   - Ficheiro: curiosidades_hexomel.png
+   - Descrição: Demonstra o motor 3D interactivo (Three.js) com o frasco de mel e o simulador de cores.
+
+4. Dashboard Admin
+   - Ficheiro: admin_hexomel.png
+   - Descrição: Painel de administração com tabelas de gestão de utilizadores e estatísticas.
+
+5. Perfil de Utilizador
+   - Ficheiro: profile_hexomel.png
+   - Descrição: Área pessoal do cliente com histórico de encomendas e dados de conta.
+
+6. Workshops
+   - Ficheiro: workshops_hexomel.png
+   - Descrição: Listagem de eventos e sistema de reserva de vagas.
+
+7. Sobre Nós (About)
+   - Ficheiro: about_hexomel.png
+   - Descrição: Página institucional detalhando a origem do mel e a missão da marca.
+
+8. Contactos
+   - Ficheiro: contact_hexomel.png
+   - Descrição: Formulário de contacto integrado com o design system do projeto.
+
+---
+Nota: As imagens foram guardadas na pasta 'estudo/prints_projeto/' para inclusão no relatório final da PAP.
