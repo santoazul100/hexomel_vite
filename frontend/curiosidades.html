@@ -45,7 +45,8 @@
             <a class="nav-link" href="workshops.html">Workshops</a>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+            <a class="nav-link active" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">Descobrir</a>
             <ul class="dropdown-menu dropdown-menu-hexomel">
               <li><a class="dropdown-item active" href="curiosidades.html">Curiosidades</a></li>
               <li><a class="dropdown-item" href="comunidade.html">Comunidade</a></li>
@@ -93,93 +94,123 @@
         <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
           style="top: 35%; right: 8%; width: 45px" />
         <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 70%; right: 3%; width: 40px" />
-        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 85%; right: 20%; width: 60px" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees"
+          style="top: 85%; right: 20%; width: 60px" />
       </div>
 
       <div class="container position-relative z-1">
-        <div class="row align-items-center g-5 curiosidades-hero-grid">
-          <div class="col-lg-6 animate-fade-up">
-            <span class="product-badge-premium mb-3 d-inline-block"><i class="fas fa-lightbulb me-2"></i>SABIA QUE...</span>
-            <h1 class="curiosidades-hero-title">Curiosidades<br />do Mundo<br />do Mel</h1>
-            <p class="curiosidades-hero-subtitle mt-4">
-              Descubra factos fascinantes sobre o mel, as abelhas e a arte da apicultura. Interaja com o frasco 3D para explorar cada detalhe do nosso produto premium.
+        <!-- Elegant 2-Column Layout -->
+        <div class="row align-items-center h-100 curiosidades-hero-grid">
+          
+          <!-- Left Content -->
+          <div class="col-lg-6 text-start animate-fade-up d-flex flex-column justify-content-center pe-lg-4">
+            
+            <div>
+              <span class="product-badge-premium mb-4 d-inline-block px-4 py-2" style="font-size: 0.9rem; background: rgba(255,255,255,0.6); backdrop-filter: blur(8px);"><i class="fas fa-lightbulb me-2"></i>SABIA QUE...</span>
+            </div>
+            
+            <h1 class="curiosidades-hero-title mb-4" style="font-size: 4.5rem; line-height: 1.1; letter-spacing: -0.02em;">Curiosidades do Mundo do Mel</h1>
+            
+            <p class="curiosidades-hero-subtitle text-muted mb-4" style="font-size: 1.2rem; line-height: 1.8; max-width: 600px !important;">
+              Descubra factos fascinantes sobre o mel, as abelhas e a arte da apicultura. Interaja com o frasco 3D ao lado para explorar cada detalhe da nossa produção premium.
             </p>
-            <div class="curiosidades-hero-actions mt-5">
-              <a href="comunidade.html" class="btn btn-primary px-4 py-3"
-                style="border-radius: 50px; font-weight: 600; font-size: 1rem; background: var(--primary-green); border: none; box-shadow: 0 8px 24px rgba(26, 77, 46, 0.2); transition: all 0.3s ease;">
-                <i class="fas fa-comments me-2"></i>Perguntas e Respostas
+
+            <!-- Decorative Image Stack (Fills Space beautifully) -->
+            <div class="d-flex align-items-center gap-4 mb-5 p-3 rounded-4" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.7); backdrop-filter: blur(12px); max-width: 420px; box-shadow: 0 15px 35px rgba(0,0,0,0.02);">
+              <div class="position-relative" style="width: 150px; height: 80px;">
+                 <img src="/images/lavender.png" alt="Mel" class="position-absolute rounded-circle shadow-sm" style="width: 80px; height: 80px; object-fit: cover; border: 4px solid white; top: 0; left: 0; z-index: 3; background: white;" />
+                 <img src="/images/acacia.png" alt="Mel" class="position-absolute rounded-circle shadow-sm" style="width: 70px; height: 70px; object-fit: cover; border: 4px solid white; top: 5px; left: 45px; z-index: 2; background: white;" />
+                 <img src="/images/wildflower.png" alt="Mel" class="position-absolute rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover; border: 4px solid white; top: 10px; left: 85px; z-index: 1; background: white;" />
+              </div>
+              <div>
+                <span class="d-block fw-bold text-dark" style="font-size: 1.15rem; color: var(--primary-green-dark);">Explore Mais</span>
+                <span class="small text-muted" style="font-weight: 500;">Várias origens florais</span>
+              </div>
+            </div>
+
+            <!-- Site UI Component: Double Buttons -->
+            <div class="d-flex flex-wrap gap-3">
+              <a href="comunidade.html" class="btn btn-auth-enhanced register px-5 py-3" style="font-size: 1.1rem; box-shadow: 0 12px 24px rgba(26,77,46,0.15);">
+                <i class="fas fa-comments me-2"></i> Fórum e Q&A
+              </a>
+              <a href="shop.html" class="btn btn-auth-enhanced login px-5 py-3" style="font-size: 1.1rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px);">
+                Loja Online
               </a>
             </div>
           </div>
+
+          <!-- Right Content (3D Showcase with Box) -->
           <div class="col-lg-6">
-        <div class="honey-showcase animate-fade-up" style="animation-delay: 0.15s" data-honey-hero>
-          <div class="honey-showcase__badge"><img src="/images/logo_hexomel.webp" alt="Hexomel" class="honey-showcase__badge-logo" /> 3D</div>
+            <div class="honey-showcase animate-fade-up mx-auto" style="animation-delay: 0.15s; max-width: 650px; padding: 2rem; border-radius: 32px; background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 24px 48px rgba(26, 77, 46, 0.08); backdrop-filter: blur(16px);" data-honey-hero>
+              
+              <!-- Header Top Row: Controls & Badge -->
+              <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div class="honey-showcase__part-controls m-0 d-flex gap-2" aria-label="Partes do frasco">
+                  <button type="button" class="honey-showcase__part-btn is-active" data-focus-part="all">Tudo</button>
+                  <button type="button" class="honey-showcase__part-btn" data-focus-part="lid">Tampa</button>
+                  <button type="button" class="honey-showcase__part-btn" data-focus-part="glass">Vidro</button>
+                  <button type="button" class="honey-showcase__part-btn" data-focus-part="honey">Mel</button>
+                </div>
+                <div class="honey-showcase__badge position-static m-0 shadow-sm" style="padding: 0.4rem 0.85rem; border-radius: 999px; background: rgba(255, 255, 255, 0.92); color: var(--primary-green); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; display: inline-flex; align-items: center; gap: 0.4rem; text-transform: uppercase;">
+                  <img src="/images/logo_hexomel.webp" alt="Hexomel" class="honey-showcase__badge-logo" style="height: 20px;" /> 3D
+                </div>
+              </div>
 
-          <!-- Metrics on top -->
-          <div class="honey-showcase__metrics">
-            <div class="honey-showcase__metric">
-              <span>marca</span>
-              <strong>Hexomel</strong>
-            </div>
-            <div class="honey-showcase__metric">
-              <span>vidro</span>
-              <strong>favos em relevo</strong>
-            </div>
-            <div class="honey-showcase__metric">
-              <span>tampa</span>
-              <strong>metal dourado</strong>
+              <!-- Metrics Row -->
+              <div class="honey-showcase__metrics mb-3" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                <div class="honey-showcase__metric" style="padding: 0.6rem 0.75rem; border-radius: 14px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 8px 16px rgba(26, 77, 46, 0.05); text-align: center;">
+                  <span style="display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.15rem;">marca</span>
+                  <strong style="color: var(--primary-green); font-size: 0.85rem; font-weight: 800;">Hexomel</strong>
+                </div>
+                <div class="honey-showcase__metric" style="padding: 0.6rem 0.75rem; border-radius: 14px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 8px 16px rgba(26, 77, 46, 0.05); text-align: center;">
+                  <span style="display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.15rem;">vidro</span>
+                  <strong style="color: var(--primary-green); font-size: 0.85rem; font-weight: 800;">favos em relevo</strong>
+                </div>
+                <div class="honey-showcase__metric" style="padding: 0.6rem 0.75rem; border-radius: 14px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 8px 16px rgba(26, 77, 46, 0.05); text-align: center;">
+                  <span style="display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.15rem;">tampa</span>
+                  <strong style="color: var(--primary-green); font-size: 0.85rem; font-weight: 800;">metal dourado</strong>
+                </div>
+              </div>
+
+              <!-- 3D Canvas -->
+              <div class="honey-showcase__canvas-shell position-relative" style="min-height: 400px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.82); overflow: hidden;">
+                <div class="honey-showcase__canvas" data-honey-canvas
+                  data-fallback-image="/images/honey_jar_reference_hexomel.jpg"
+                  aria-label="Modelo 3D de um frasco de mel realista" style="height: 400px; width: 100%;"></div>
+                <p class="curiosidades-hero-note text-center w-100 position-absolute"
+                  style="bottom: 15px; color: rgba(255,255,255,0.8); font-size: 0.9rem; pointer-events: none;">
+                  <i class="fas fa-hand-pointer"></i> Arraste o frasco para explorar
+                </p>
+              </div>
+
+              <!-- Color slider directly after 3D model -->
+              <div class="honey-showcase__color-control mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="honey-showcase__part-label mb-0">Origem e Cor do Mel</span>
+                  <strong id="honey-type-name" data-honey-type-name class="text-warning">Mel Multiflora</strong>
+                </div>
+                <input type="range" class="honey-color-slider" id="honey-color-slider" data-honey-color-slider min="0"
+                  max="4" step="1" value="2">
+                <div class="d-flex justify-content-between small text-muted mt-1 px-1">
+                  <span>Claro</span>
+                  <span>Médio</span>
+                  <span>Escuro</span>
+                </div>
+                <p id="honey-type-desc" data-honey-type-desc class="small mt-3 text-white-50 lh-sm">
+                  O clássico mel de mil flores, com um tom âmbar médio e sabor equilibrado.
+                </p>
+              </div>
+
+              <!-- Part description at the bottom -->
+              <div class="honey-showcase__part-copy mt-3">
+                <span class="honey-showcase__part-label">Parte em foco</span>
+                <strong data-part-title>Modelo completo</strong>
+                <p data-part-text>
+                  Frasco Hexomel inspirado numa fotografia real, com tampa dourada, vidro em favos e mel ambar denso.
+                </p>
+              </div>
             </div>
           </div>
-
-          <!-- Part controls below metrics -->
-          <div class="honey-showcase__part-controls" aria-label="Partes do frasco">
-            <button type="button" class="honey-showcase__part-btn is-active" data-focus-part="all">Tudo</button>
-            <button type="button" class="honey-showcase__part-btn" data-focus-part="lid">Tampa</button>
-            <button type="button" class="honey-showcase__part-btn" data-focus-part="glass">Vidro</button>
-            <button type="button" class="honey-showcase__part-btn" data-focus-part="honey">Mel</button>
-          </div>
-
-          <!-- 3D Canvas -->
-          <div class="honey-showcase__canvas-shell position-relative">
-            <div
-              class="honey-showcase__canvas"
-              data-honey-canvas
-              data-fallback-image="/images/honey_jar_reference_hexomel.jpg"
-              aria-label="Modelo 3D de um frasco de mel realista"
-            ></div>
-            <p class="curiosidades-hero-note text-center w-100 position-absolute" style="bottom: 10px; color: rgba(255,255,255,0.7); font-size: 0.85rem; pointer-events: none;">
-              <i class="fas fa-hand-pointer"></i> Arraste o frasco para explorar
-            </p>
-          </div>
-
-          <!-- Color slider directly after 3D model -->
-          <div class="honey-showcase__color-control mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="honey-showcase__part-label mb-0">Origem e Cor do Mel</span>
-              <strong id="honey-type-name" data-honey-type-name class="text-warning">Mel Multiflora</strong>
-            </div>
-            <input type="range" class="honey-color-slider" id="honey-color-slider" data-honey-color-slider min="0" max="4" step="1" value="2">
-            <div class="d-flex justify-content-between small text-muted mt-1 px-1">
-              <span>Claro</span>
-              <span>Médio</span>
-              <span>Escuro</span>
-            </div>
-            <p id="honey-type-desc" data-honey-type-desc class="small mt-3 text-white-50 lh-sm">
-              O clássico mel de mil flores, com um tom âmbar médio e sabor equilibrado.
-            </p>
-          </div>
-
-
-          <!-- Part description at the bottom -->
-          <div class="honey-showcase__part-copy">
-            <span class="honey-showcase__part-label">Parte em foco</span>
-            <strong data-part-title>Modelo completo</strong>
-            <p data-part-text>
-              Frasco Hexomel inspirado numa fotografia real, com tampa dourada, vidro em favos e mel ambar denso.
-            </p>
-          </div>
-        </div>
-      </div>
         </div>
       </div>
     </section>
@@ -450,9 +481,6 @@
       </div>
     </section>
 
-
-
-
     <!-- CTA -->
     <section class="py-5 bg-white">
       <div class="container py-5">
@@ -463,8 +491,8 @@
           <p class="text-muted mb-4 mx-auto" style="max-width: 500px">
             Participe na nossa comunidade e coloque as suas perguntas diretamente aos nossos apicultores.
           </p>
-          <a href="comunidade.html" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-users me-2"></i>Ir para a Comunidade <i
-              class="fa-solid fa-arrow-right ms-2"></i></a>
+          <a href="comunidade.html" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-users me-2"></i>Ir
+            para a Comunidade <i class="fa-solid fa-arrow-right ms-2"></i></a>
         </div>
       </div>
     </section>
