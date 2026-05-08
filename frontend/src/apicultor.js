@@ -1,5 +1,6 @@
 import { updateNav, getLoggedUser } from "./auth.js";
 import { toast } from "./toast.js";
+import { Skeleton } from "./skeleton.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const user = getLoggedUser();
@@ -69,15 +70,18 @@ async function fetchProfile(id) {
 }
 
 async function fetchProducts(id) {
+  const grid = document.getElementById("api-products-grid");
+
+  // Mostrar skeleton placeholders enquanto carrega
+  if (grid) grid.innerHTML = Skeleton.productGrid(4);
+
   const res = await fetch(`/api/apicultores/${id}/products`);
   if (!res.ok) throw new Error(`Falha ao carregar produtos do apicultor: ${res.status}`);
   const products = await res.json();
-  const grid = document.getElementById("api-products-grid");
   grid.innerHTML = "";
 
   if (products.length === 0) {
-    grid.innerHTML =
-      '<div class="col-12 text-center py-4 text-muted">Ainda não há produtos listados por este apicultor.</div>';
+    grid.innerHTML = Skeleton.stateEmpty('Ainda não há produtos listados por este apicultor.', 'fa-box-open');
     return;
   }
 
@@ -105,15 +109,18 @@ async function fetchProducts(id) {
 }
 
 async function fetchWorkshops(id) {
+  const grid = document.getElementById("api-workshops-grid");
+
+  // Mostrar skeleton placeholders enquanto carrega
+  if (grid) grid.innerHTML = Skeleton.genericGrid(3, 'col-lg-4 col-md-6 mb-4');
+
   const res = await fetch(`/api/apicultores/${id}/workshops`);
   if (!res.ok) throw new Error(`Falha ao carregar workshops do apicultor: ${res.status}`);
   const workshops = await res.json();
-  const grid = document.getElementById("api-workshops-grid");
   grid.innerHTML = "";
 
   if (workshops.length === 0) {
-    grid.innerHTML =
-      '<div class="col-12 text-center py-4 text-muted">Não há workshops ou experiências agendadas de momento.</div>';
+    grid.innerHTML = Skeleton.stateEmpty('Não há workshops ou experiências agendadas de momento.', 'fa-chalkboard-teacher');
     return;
   }
 

@@ -5,6 +5,7 @@ const API_URL = "/api";
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { logInteraction, trackPageView } from "./analytics.js";
+import { Skeleton } from "./skeleton.js";
 
 // Fallback images if files don't exist
 const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
@@ -18,11 +19,19 @@ let userFavorites = [];
 
 // Fetch products from API and categories
 async function fetchProducts() {
+  const grid = document.getElementById("products-grid");
+
+  // Mostrar skeleton placeholders enquanto carrega
+  if (grid) {
+    grid.innerHTML = Skeleton.productGrid(6);
+  }
+
   try {
-    // 1. Fetch Categories and Origins first to make naming dynamic
-    const [catRes, oriRes] = await Promise.all([
+    // 1. Fetch Categories, Origins and Products
+    const [catRes, oriRes, res] = await Promise.all([
       fetch(`${API_URL}/categories`),
       fetch(`${API_URL}/origins`),
+      fetch(`${API_URL}/products`),
     ]);
 
     if (!catRes.ok) throw new Error(`Falha ao carregar categorias: ${catRes.status}`);
@@ -35,8 +44,7 @@ async function fetchProducts() {
     renderCategoryFilters();
     renderOriginFilters();
 
-    // 2. Fetch Products
-    const res = await fetch(`${API_URL}/products`);
+    // 2. Parse Products
     if (!res.ok) throw new Error(`Falha ao carregar produtos: ${res.status}`);
     const data = await res.json();
 
@@ -76,6 +84,11 @@ async function fetchProducts() {
     renderProducts();
   } catch (error) {
     console.error("Error fetching data:", error);
+    // Mostrar estado de erro com botão de retry
+    if (grid) {
+      grid.innerHTML = Skeleton.stateError('Não foi possível carregar os produtos. Verifica a tua ligação e tenta novamente.', 'retry-products-btn');
+      Skeleton.onRetry('retry-products-btn', () => fetchProducts());
+    }
   }
 }
 
@@ -151,7 +164,7 @@ function renderProducts() {
   if (!grid) return;
 
   if (filteredProducts.length === 0) {
-    grid.innerHTML = `<div class="col-12 text-center py-5"><h3 class="text-muted">No products found matching your filters.</h3></div>`;
+    grid.innerHTML = Skeleton.stateEmpty('Nenhum produto encontrado com os filtros selecionados.', 'fa-search');
     return;
   }
 

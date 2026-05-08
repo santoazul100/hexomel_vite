@@ -1,0 +1,201 @@
+/* ============================================
+   Hexomel — Skeleton Loader System
+   Premium loading placeholders with shimmer
+   ============================================ */
+
+/* --- Base Skeleton Element --- */
+.skeleton {
+  background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 50%, #f0f0f0 100%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  animation: skeleton-pulse 2s ease-in-out infinite;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: 0% 0; }
+}
+
+
+
+/* --- Shape Variants --- */
+.skeleton-text { height: 14px; margin-bottom: 10px; border-radius: 6px; }
+.skeleton-text.short { width: 40%; }
+.skeleton-text.medium { width: 65%; }
+.skeleton-text.long { width: 90%; }
+.skeleton-text.full { width: 100%; }
+.skeleton-title { height: 22px; width: 70%; margin-bottom: 14px; border-radius: 8px; }
+.skeleton-circle { border-radius: 50%; }
+.skeleton-image { width: 100%; aspect-ratio: 1/1; border-radius: 0; }
+.skeleton-button { height: 40px; width: 120px; border-radius: 20px; }
+.skeleton-badge { height: 24px; width: 60px; border-radius: 12px; }
+
+/* --- Product Card Skeleton --- */
+.skeleton-product-card {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.04);
+  background: white;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+  height: 100%;
+
+}
+
+.skeleton-product-card .skeleton-product-image {
+  width: 100%; aspect-ratio: 1/1;
+  background: linear-gradient(135deg, #f3f3f3 0%, #ebebeb 100%);
+  position: relative; overflow: hidden;
+}
+
+.skeleton-product-card .skeleton-product-image::after {
+  content: "";
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-product-card .skeleton-product-body { padding: 1.5rem; }
+
+.skeleton-product-card .skeleton-product-tags {
+  position: absolute; top: 15px; right: 15px;
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+}
+
+.skeleton-product-card .skeleton-product-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 1rem; margin-top: 0.8rem;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.skeleton-product-card .skeleton-product-actions { display: flex; gap: 8px; }
+.skeleton-product-card .skeleton-btn-circle { width: 30px; height: 30px; border-radius: 50%; }
+.skeleton-product-card .skeleton-price { height: 28px; width: 70px; border-radius: 6px; }
+
+/* --- Community Post Skeleton --- */
+.skeleton-community-post {
+  background: white; border-radius: 16px; padding: 1.5rem;
+  margin-bottom: 1rem; border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.skeleton-community-post .skeleton-post-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;
+}
+
+.skeleton-community-post .skeleton-avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+}
+
+.skeleton-community-post .skeleton-post-meta { flex: 1; }
+.skeleton-community-post .skeleton-post-body { margin-bottom: 1rem; padding-left: 56px; }
+.skeleton-community-post .skeleton-post-actions { display: flex; gap: 16px; padding-left: 56px; }
+
+/* --- Generic Card Skeleton --- */
+.skeleton-generic-card {
+  background: white; border-radius: 20px; overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+}
+
+.skeleton-generic-card .skeleton-generic-image {
+  width: 100%; aspect-ratio: 16/9;
+  background: linear-gradient(135deg, #f3f3f3 0%, #ebebeb 100%);
+  position: relative; overflow: hidden;
+}
+
+.skeleton-generic-card .skeleton-generic-image::after {
+  content: "";
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-generic-card .skeleton-generic-body { padding: 1.5rem; }
+
+/* --- State: Error --- */
+.skeleton-state-error { text-align: center; padding: 3rem 2rem; }
+
+.skeleton-state-error .state-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(220,53,69,0.08);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem; font-size: 2rem; color: #dc3545;
+}
+
+.skeleton-state-error .state-title {
+  font-family: "Outfit", sans-serif; font-size: 1.3rem; font-weight: 700;
+  color: var(--text-dark, #2c3e50); margin-bottom: 0.5rem;
+}
+
+.skeleton-state-error .state-message {
+  color: var(--text-medium, #576574); font-size: 0.95rem;
+  margin-bottom: 1.5rem; max-width: 400px; margin-left: auto; margin-right: auto;
+}
+
+.skeleton-state-error .state-retry-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0.7rem 1.8rem; border-radius: 50px;
+  border: 2px solid var(--primary-green, #1a4d2e);
+  background: transparent; color: var(--primary-green, #1a4d2e);
+  font-weight: 600; font-family: "Outfit", sans-serif;
+  font-size: 0.9rem; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.165,0.84,0.44,1);
+}
+
+.skeleton-state-error .state-retry-btn:hover {
+  background: var(--primary-green, #1a4d2e); color: white;
+  transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26,77,46,0.2);
+}
+
+/* --- State: Empty --- */
+.skeleton-state-empty { text-align: center; padding: 3rem 2rem; }
+
+.skeleton-state-empty .state-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(244,180,0,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem; font-size: 2rem; color: var(--secondary-gold, #c9b037);
+}
+
+.skeleton-state-empty .state-title {
+  font-family: "Outfit", sans-serif; font-size: 1.3rem; font-weight: 700;
+  color: var(--text-dark, #2c3e50); margin-bottom: 0.5rem;
+}
+
+.skeleton-state-empty .state-message {
+  color: var(--text-medium, #576574); font-size: 0.95rem;
+  max-width: 400px; margin-left: auto; margin-right: auto;
+}
+
+
+
+
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .skeleton-product-card .skeleton-product-body { padding: 1rem; }
+  .skeleton-community-post { padding: 1.2rem; }
+  .skeleton-community-post .skeleton-post-body,
+  .skeleton-community-post .skeleton-post-actions { padding-left: 0; }
+  .skeleton-state-error, .skeleton-state-empty { padding: 2rem 1.5rem; }
+  .skeleton-state-error .state-icon, .skeleton-state-empty .state-icon { width: 64px; height: 64px; font-size: 1.6rem; }
+}

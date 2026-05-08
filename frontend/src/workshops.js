@@ -5,6 +5,7 @@ import { getLoggedUser } from "./auth.js";
 import { toast } from "./toast.js";
 import Swal from "sweetalert2";
 import { trackPageView } from "./analytics.js";
+import { Skeleton } from "./skeleton.js";
 
 const API_URL = "/api";
 const fallbackImage = "/images/workshop_default.webp";
@@ -17,28 +18,28 @@ async function fetchWorkshops() {
   const emptyEl = document.getElementById("workshops-empty");
   const gridEl = document.getElementById("workshops-grid");
 
+  // Mostrar skeleton placeholders enquanto carrega
+  if (gridEl) {
+    gridEl.innerHTML = Skeleton.genericGrid(6, 'col-md-6 col-lg-4 mb-4');
+  }
+  if (loadingEl) loadingEl.classList.add("d-none");
+
   try {
     const res = await fetch(`${API_URL}/workshops`);
     if (!res.ok) throw new Error("Falha ao carregar workshops");
     workshops = await res.json();
 
-    loadingEl?.classList.add("d-none");
-
     if (workshops.length === 0) {
-      emptyEl?.classList.remove("d-none");
+      if (gridEl) gridEl.innerHTML = Skeleton.stateEmpty('Ainda não há workshops disponíveis de momento.', 'fa-chalkboard-teacher');
       return;
     }
 
     renderWorkshops();
   } catch (err) {
     console.error("Error fetching workshops:", err);
-    if (loadingEl) {
-      loadingEl.innerHTML = `
-        <div class="text-center py-5">
-          <i class="fas fa-exclamation-triangle fs-1 text-warning mb-3"></i>
-          <p class="text-muted">Erro ao carregar workshops. Tenta novamente.</p>
-          <button class="btn btn-auth-enhanced login" onclick="location.reload()">Recarregar</button>
-        </div>`;
+    if (gridEl) {
+      gridEl.innerHTML = Skeleton.stateError('Erro ao carregar workshops. Tenta novamente.', 'retry-workshops-btn');
+      Skeleton.onRetry('retry-workshops-btn', () => fetchWorkshops());
     }
   }
 }

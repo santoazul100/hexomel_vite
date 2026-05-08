@@ -2,6 +2,7 @@
  * Comunidade Q&A Module
  * Handles the community questions & answers on the curiosidades page
  */
+import { Skeleton } from './skeleton.js';
 
 class ComunidadeQA {
   constructor() {
@@ -90,6 +91,11 @@ class ComunidadeQA {
   }
 
   async loadPerguntas() {
+    // Mostrar skeleton placeholders enquanto carrega
+    if (this.container && this.container.children.length === 0) {
+      this.container.innerHTML = Skeleton.communityList(4);
+    }
+
     try {
       const res = await fetch("/api/comunidade/perguntas");
       if (!res.ok) throw new Error("Fetch failed");
@@ -97,13 +103,13 @@ class ComunidadeQA {
       this.renderPerguntas(perguntas);
     } catch (err) {
       console.error("Error loading Q&A:", err);
-      // Show the static fallback content if API fails
-      if (this.container && this.container.children.length === 0) {
-        this.container.innerHTML = `
-          <div class="text-center py-4 text-muted">
-            <i class="fas fa-comments fa-2x mb-3 opacity-50"></i>
-            <p>Ainda não há perguntas. Sê o primeiro a perguntar!</p>
-          </div>`;
+      // Mostrar estado de erro com botão de retry
+      if (this.container) {
+        this.container.innerHTML = Skeleton.stateError(
+          'Não foi possível carregar as perguntas da comunidade.',
+          'retry-comunidade-btn'
+        );
+        Skeleton.onRetry('retry-comunidade-btn', () => this.loadPerguntas());
       }
     }
   }
@@ -135,11 +141,10 @@ class ComunidadeQA {
     if (!this.container) return;
 
     if (perguntas.length === 0) {
-      this.container.innerHTML = `
-        <div class="text-center py-4 text-muted">
-          <i class="fas fa-comments fa-2x mb-3 opacity-50"></i>
-          <p>Ainda não há perguntas. Sê o primeiro a perguntar!</p>
-        </div>`;
+      this.container.innerHTML = Skeleton.stateEmpty(
+        'Ainda não há perguntas. Sê o primeiro a perguntar!',
+        'fa-comments'
+      );
       return;
     }
 

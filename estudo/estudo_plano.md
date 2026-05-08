@@ -26,6 +26,33 @@ Tabelas principais:
 - **Imagens/Ficheiros**: `frontend/public/uploads/` (o caminho é guardado no MySQL)
 - **Estilos Premium**: `frontend/src/styles/modern.css` (centraliza a identidade visual)
 
-## 5. Notas Importantes
+## 5. Skeleton Loaders (Placeholders de Carregamento)
+O projeto implementa um sistema de **skeleton loaders** — placeholders animados que aparecem enquanto os dados carregam da API, melhorando a experiência do utilizador.
+
+### O que são?
+São "silhuetas" do conteúdo final (blocos cinzentos com animação shimmer) que indicam ao utilizador que a página está a carregar, em vez de mostrar uma página em branco.
+
+### Ficheiros criados:
+- `frontend/src/styles/skeleton.css` — Estilos e animações (shimmer, pulse, fade-in)
+- `frontend/src/skeleton.js` — Módulo JS com componentes reutilizáveis
+
+### Componentes disponíveis:
+| Componente | Uso |
+|---|---|
+| `Skeleton.productGrid(n)` | Grelha de n cards de produto |
+| `Skeleton.communityList(n)` | Lista de n posts da comunidade |
+| `Skeleton.genericGrid(n)` | Grelha genérica (workshops, etc.) |
+| `Skeleton.stateError(msg, id)` | Estado de erro com botão retry |
+| `Skeleton.stateEmpty(msg, icon)` | Estado sem resultados |
+
+### Páginas integradas:
+- **Loja** (`shop.js`) — produtos
+- **Comunidade** (`comunidade.js`) — perguntas Q&A
+- **Workshops** (`workshops.js`) — cards de workshops
+- **Apicultor** (`apicultor.js`) — produtos e workshops do apicultor
+
+> 📖 Documentação completa: ver `estudo/SKELETON_LOADERS_ESTUDO.md`
+
+## 6. Notas Importantes
 - O código do backend utiliza um adaptador no ficheiro `db.js` para facilitar a manipulação do MySQL, mantendo uma sintaxe simples e eficiente.
 - Todas as passwords são encriptadas antes de serem guardadas.
