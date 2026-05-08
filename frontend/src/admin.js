@@ -167,6 +167,7 @@ class AdminUI {
     if (sectionId === "upgrade-requests") this.loadUpgradeRequests();
     if (sectionId === "workshops") this.loadWorkshops();
     if (sectionId === "interactions") this.loadInteractions();
+    if (sectionId === "seo") this.loadSEO();
   }
 
   async loadDashboardStats() {
@@ -907,6 +908,8 @@ class AdminUI {
     this.populateOriginSelect();
     document.getElementById("productForm").reset();
     document.getElementById("product-id").value = "";
+    const slugInput = document.getElementById("prod-slug");
+    if (slugInput) slugInput.value = "";
     document.getElementById("prod-imagem").value = ""; // Clear hidden path
     document.getElementById("prod-image-preview").style.display = "none";
     document.getElementById("prod-image-placeholder").style.display = "block";
@@ -931,6 +934,9 @@ class AdminUI {
     document.getElementById("prod-origem").value =
       p.ID_Origin || p.idOrigem || p.ID_Origem || "";
     document.getElementById("prod-descricao").value = p.Descricao || "";
+
+    const slugInput = document.getElementById("prod-slug");
+    if (slugInput) slugInput.value = p.Slug || "";
 
     // Handle Image
     document.getElementById("prod-imagem").value = p.Imagem || "";
@@ -1021,6 +1027,26 @@ class AdminUI {
         }),
       });
       if (!response.ok) throw new Error("Erro ao guardar produto");
+      
+      const responseData = await response.json();
+      const productId = id || responseData.ID_Produto || responseData.id;
+
+      const slugInput = document.getElementById("prod-slug");
+      if (slugInput && slugInput.value.trim() && productId) {
+        try {
+          await fetch(`${API_URL}/admin/products/${productId}/slug`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ slug: slugInput.value.trim() }),
+          });
+        } catch (slugErr) {
+          console.warn("Slug update failed:", slugErr);
+        }
+      }
+
       Swal.fire({
         icon: "success",
         title: id ? "Atualizado" : "Criado",
@@ -1789,6 +1815,180 @@ class AdminUI {
 
     } catch (err) {
       console.error("Interactions load error", err);
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     SEO & URLs MANAGEMENT
+  ────────────────────────────────────────── */
+  async loadSEO() {
+    await Promise.all([this.loadSiteSlugs(), this.loadProductSlugs()]);
+  }
+
+  async loadSiteSlugs() {
+    try {
+      const res = await fetch(`${API_URL}/site-slugs`);
+      if (!res.ok) throw new Error("Failed");
+      const slugs = await res.json();
+      const container = document.getElementById("site-slugs-body");
+      if (!container) return;
+
+      const pageLabels = {
+        inicio: "🏠 Página Inicial",
+        loja: "🛒 Loja",
+        sobre: "ℹ️ Sobre Nós",
+        contactos: "📧 Contactos",
+        workshops: "🎓 Workshops",
+        curiosidades: "🍯 Curiosidades",
+        comunidade: "💬 Comunidade",
+        apicultores: "🐝 Apicultores",
+      };
+
+      container.innerHTML = slugs.map(s => `
+        <tr>
+          <td class="fw-bold">${pageLabels[s.Pagina] || s.Pagina}</td>
+          <td>
+            <input type="text" class="form-control form-control-sm" 
+                   value="${s.Slug || ''}" 
+                   data-pagina="${s.Pagina}" 
+                   data-field="slug"
+                   style="border-radius:8px; font-family:monospace; font-size:0.85rem;">
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" 
+                   value="${s.Titulo_SEO || ''}" 
+                   data-pagina="${s.Pagina}" 
+                   data-field="titulo"
+                   style="border-radius:8px; font-size:0.85rem;" 
+                   placeholder="Título da página">
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" 
+                   value="${s.Descricao_SEO || ''}" 
+                   data-pagina="${s.Pagina}" 
+                   data-field="descricao"
+                   style="border-radius:8px; font-size:0.85rem;" 
+                   placeholder="Meta descrição">
+          </td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      console.error("Load site slugs error", err);
+    }
+  }
+
+  async saveSiteSlugs() {
+    const rows = document.querySelectorAll("#site-slugs-body tr");
+    const slugs = [];
+    rows.forEach(row => {
+      const pagina = row.querySelector('[data-field="slug"]')?.getAttribute('data-pagina');
+      const slug = row.querySelector('[data-field="slug"]')?.value;
+      const titulo_seo = row.querySelector('[data-field="titulo"]')?.value;
+      const descricao_seo = row.querySelector('[data-field="descricao"]')?.value;
+      if (pagina) slugs.push({ pagina, slug, titulo_seo, descricao_seo });
+    });
+
+    try {
+      const res = await fetch(`${API_URL}/admin/site-slugs`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.token}` },
+        body: JSON.stringify({ slugs }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Falha ao guardar");
+      }
+      Swal.fire({ icon: "success", title: "Guardado!", text: "Slugs do site atualizados.", timer: 1500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire("Erro", err.message, "error");
+    }
+  }
+
+  async loadProductSlugs() {
+    try {
+      // Reuse products if already loaded, otherwise fetch
+      if (!this.products || this.products.length === 0) {
+        const res = await fetch(`${API_URL}/admin/products`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (res.ok) this.products = await res.json();
+      }
+
+      const container = document.getElementById("product-slugs-body");
+      if (!container) return;
+
+      if (!this.products || this.products.length === 0) {
+        container.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Nenhum produto encontrado.</td></tr>';
+        return;
+      }
+
+      container.innerHTML = this.products.map(p => `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <img src="${p.Imagem || '/images/wildflower.png'}" class="product-img-rounded" alt="${p.Nome}" style="width:32px;height:32px;object-fit:cover;border-radius:8px;">
+              <span class="fw-bold small">${p.Nome}</span>
+            </div>
+          </td>
+          <td>
+            <code style="background:#f1f5f9; padding:4px 10px; border-radius:6px; font-size:0.82rem; color:#475569;">${p.Slug || '—'}</code>
+          </td>
+          <td>
+            ${p.Slug ? `<a href="produto.html?slug=${p.Slug}" target="_blank" class="small text-decoration-none" style="color:var(--primary-green);">
+              <i class="fas fa-external-link-alt me-1"></i>/produto.html?slug=${p.Slug}
+            </a>` : '<span class="text-muted small">—</span>'}
+          </td>
+          <td class="text-end">
+            <button class="btn-action-premium" onclick="adminUI.editProductSlug('${p.ID_Produto}', '${(p.Slug || '').replace(/'/g, "\\'")}')"
+                    title="Editar Slug">
+              <i class="fas fa-pen" style="font-size: 0.75rem;"></i>
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      console.error("Load product slugs error", err);
+    }
+  }
+
+  async editProductSlug(productId, currentSlug) {
+    const { value: newSlug } = await Swal.fire({
+      title: "Editar Slug do Produto",
+      input: "text",
+      inputLabel: "URL amigável (slug)",
+      inputValue: currentSlug,
+      inputPlaceholder: "ex: mel-de-rosmaninho",
+      showCancelButton: true,
+      confirmButtonText: "Guardar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "var(--primary-green)",
+      inputValidator: (value) => {
+        if (!value || !value.trim()) return "O slug é obrigatório!";
+      },
+    });
+
+    if (!newSlug) return;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/products/${productId}/slug`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.token}` },
+        body: JSON.stringify({ slug: newSlug }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erro ao atualizar slug");
+      }
+
+      const data = await res.json();
+      Swal.fire({ icon: "success", title: "Slug Atualizado!", text: `Novo slug: ${data.slug}`, timer: 2000, showConfirmButton: false });
+      
+      // Refresh the product list to show updated slug
+      this.products = []; // Force re-fetch
+      this.loadProductSlugs();
+    } catch (err) {
+      Swal.fire("Erro", err.message, "error");
     }
   }
 }

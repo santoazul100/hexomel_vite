@@ -416,7 +416,10 @@ class ApicultorUI {
             <td>
               <div class="d-flex align-items-center gap-3">
                 <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-small" alt="${p.Nome}">
-                <div class="fw-bold">${p.Nome}</div>
+                <div>
+                  <div class="fw-bold">${p.Nome}</div>
+                  ${p.Slug ? `<div class="text-muted" style="font-size:0.7rem; font-family:monospace;"><i class="fas fa-link me-1"></i>${p.Slug}</div>` : ''}
+                </div>
               </div>
             </td>
             <td><span class="text-muted small">${category}</span></td>
@@ -426,6 +429,9 @@ class ApicultorUI {
             <td><span class="badge-premium ${statusClass}">${p.Status || "Aprovado"}</span></td>
             <td class="text-end">
               <div class="d-flex gap-1 justify-content-end">
+                ${p.Slug ? `<a href="produto.html?slug=${p.Slug}" target="_blank" class="btn-action-premium" title="Ver Página" style="text-decoration:none;">
+                  <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+                </a>` : ''}
                 <button class="btn-action-premium" onclick="apicultorUI.editProduct('${p.ID_Produto}')" title="Editar">
                   <i class="fas fa-pencil-alt" style="font-size: 0.8rem;"></i>
                 </button>
@@ -450,6 +456,10 @@ class ApicultorUI {
     document.getElementById("prod-preco").value = p.Preco || "";
     document.getElementById("prod-stock").value = p.Stock || 0;
     document.getElementById("prod-descricao").value = p.Descricao || "";
+    
+    // Set Slug field
+    const slugInput = document.getElementById("prod-slug");
+    if (slugInput) slugInput.value = p.Slug || "";
     
     // Initialize Tags
     this.currentTags = new Set(p.Tags ? p.Tags.split(",").map(t => t.trim()) : []);
@@ -640,6 +650,8 @@ class ApicultorUI {
     document.getElementById("modalTitle").innerText = "Novo Produto";
     document.getElementById("productForm").reset();
     document.getElementById("product-id").value = "";
+    const slugInput = document.getElementById("prod-slug");
+    if (slugInput) slugInput.value = "";
     const placeholder = document.getElementById("prod-image-placeholder");
     if (preview) { preview.src = ""; preview.style.display = "none"; }
     if (placeholder) placeholder.style.display = "block";
@@ -710,6 +722,26 @@ class ApicultorUI {
       });
 
       if (!response.ok) throw new Error("Erro ao guardar produto.");
+
+      const result = await response.json();
+      const productId = isEditing ? this._editingProductId : (result.ID_Produto || result.id);
+
+      // Save slug if provided (separate API call)
+      const slugInput = document.getElementById("prod-slug");
+      if (slugInput && slugInput.value.trim() && productId) {
+        try {
+          await fetch(`${API_URL}/apicultor/products/${productId}/slug`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ slug: slugInput.value.trim() }),
+          });
+        } catch (slugErr) {
+          console.warn("Slug update failed:", slugErr);
+        }
+      }
 
       const msg = isEditing
         ? "Produto atualizado com sucesso."

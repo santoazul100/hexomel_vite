@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produto — Hexomel</title>
+    <meta name="description" content="Produto artesanal Hexomel — mel 100% natural da Serra da Estrela." />
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+    <!-- Google Auth -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <!-- Pre-load state detection -->
+    <script src="src/pre-load.js"></script>
+    <meta name="view-transition" content="same-origin" />
+    <style>
+      .produto-hero {
+        padding: 120px 0 60px;
+        background: linear-gradient(135deg, #fefce8 0%, #fff 60%, #f0fdf4 100%);
+        min-height: 60vh;
+      }
+      .produto-image-wrapper {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 20px 60px rgba(26, 77, 46, 0.08);
+        aspect-ratio: 1;
+      }
+      .produto-image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+      .produto-image-wrapper:hover img {
+        transform: scale(1.05);
+      }
+      .produto-tags-top .badge-tag {
+        background: rgba(244, 180, 0, 0.12);
+        color: #b45309;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 5px 12px;
+        border-radius: 50px;
+        border: 1px solid rgba(244, 180, 0, 0.2);
+      }
+      .produto-price {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--primary-green, #1a4d2e);
+      }
+      .produto-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        font-size: 0.95rem;
+        color: #475569;
+      }
+      .produto-meta-item i {
+        width: 20px;
+        text-align: center;
+        color: var(--primary-gold, #f4b400);
+      }
+      .produto-meta-item strong {
+        color: #1e293b;
+      }
+      .produto-description {
+        line-height: 1.8;
+        color: #475569;
+        font-size: 1.05rem;
+      }
+      .btn-add-cart-lg {
+        background: var(--primary-green, #1a4d2e);
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(26, 77, 46, 0.25);
+      }
+      .btn-add-cart-lg:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(26, 77, 46, 0.35);
+        background: #163f26;
+        color: white;
+      }
+      .qty-selector {
+        display: inline-flex;
+        align-items: center;
+        gap: 0;
+        background: #f1f5f9;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.06);
+      }
+      .qty-selector button {
+        background: transparent;
+        border: none;
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #475569;
+        transition: background 0.2s;
+      }
+      .qty-selector button:hover {
+        background: rgba(26, 77, 46, 0.08);
+        color: var(--primary-green, #1a4d2e);
+      }
+      .qty-selector input {
+        width: 50px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1e293b;
+      }
+      .breadcrumb-produto {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font-size: 0.85rem;
+      }
+      .breadcrumb-produto a {
+        color: #94a3b8;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .breadcrumb-produto a:hover {
+        color: var(--primary-green, #1a4d2e);
+      }
+      .breadcrumb-produto .separator {
+        color: #cbd5e1;
+        margin: 0 8px;
+      }
+      .breadcrumb-produto .current {
+        color: #1e293b;
+        font-weight: 600;
+      }
+      .apicultor-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 18px;
+        background: rgba(244, 180, 0, 0.08);
+        border: 1px solid rgba(244, 180, 0, 0.15);
+        border-radius: 14px;
+        text-decoration: none;
+        color: #92400e;
+        transition: all 0.3s ease;
+      }
+      .apicultor-badge:hover {
+        background: rgba(244, 180, 0, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(244, 180, 0, 0.1);
+        color: #78350f;
+      }
+      .apicultor-badge img {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(244, 180, 0, 0.3);
+      }
+      .star-rating-lg i {
+        font-size: 1.1rem;
+      }
+      .produto-reviews {
+        padding: 60px 0;
+        background: #fafbfc;
+      }
+      .review-card-product {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.04);
+        transition: all 0.3s ease;
+      }
+      .review-card-product:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        transform: translateY(-3px);
+      }
+      .slug-url-display {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 4px;
+      }
+      .slug-url-display code {
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 6px;
+        color: #64748b;
+        font-size: 0.78rem;
+      }
+      .loading-skeleton {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 12px;
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img
+            src="/images/logo_hexomel.webp"
+            alt="Hexomel Logo"
+            class="navbar-logo"
+          />
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav mx-auto gap-4">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="shop.html">Produtos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="workshops.html">Workshops</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+              <ul class="dropdown-menu dropdown-menu-hexomel">
+                <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
+                <li><a class="dropdown-item" href="comunidade.html">Comunidade</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contactos</a>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+              <button
+                id="cart-btn"
+                class="btn btn-link text-decoration-none text-dark position-relative p-0"
+              >
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span
+                  id="cart-badge"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
+                  >0</span
+                >
+              </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-3" id="authSection">
+              <!-- Injected by main.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- Product Hero -->
+      <section class="produto-hero" id="produto-hero">
+        <div class="container">
+          <!-- Breadcrumb -->
+          <nav class="breadcrumb-produto mb-4" id="produto-breadcrumb">
+            <a href="index.html">Início</a>
+            <span class="separator">/</span>
+            <a href="shop.html">Loja</a>
+            <span class="separator">/</span>
+            <span class="current" id="breadcrumb-name">Produto</span>
+          </nav>
+
+          <div class="row g-5 align-items-start" id="produto-content">
+            <!-- Loading skeleton -->
+            <div class="col-lg-6">
+              <div class="loading-skeleton" style="aspect-ratio: 1; width: 100%;"></div>
+            </div>
+            <div class="col-lg-6">
+              <div class="loading-skeleton mb-3" style="height: 20px; width: 40%;"></div>
+              <div class="loading-skeleton mb-3" style="height: 40px; width: 80%;"></div>
+              <div class="loading-skeleton mb-3" style="height: 50px; width: 30%;"></div>
+              <div class="loading-skeleton mb-3" style="height: 100px; width: 100%;"></div>
+              <div class="loading-skeleton" style="height: 50px; width: 60%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reviews Section -->
+      <section class="produto-reviews" id="produto-reviews" style="display:none;">
+        <div class="container">
+          <h2 class="fw-bold mb-4">Avaliações</h2>
+          <div class="row g-4" id="reviews-container">
+            <!-- Reviews injected by JS -->
+          </div>
+          <!-- Review Form -->
+          <div class="mt-5" id="review-form-area">
+            <h4 class="fw-bold mb-3">Deixe a sua avaliação</h4>
+            <div class="review-card-product p-4">
+              <div class="rating-input d-flex gap-2 mb-3" id="rating-input-stars">
+                <i class="far fa-star" data-value="1" style="cursor:pointer; font-size:1.5rem; color:#ddd;"></i>
+                <i class="far fa-star" data-value="2" style="cursor:pointer; font-size:1.5rem; color:#ddd;"></i>
+                <i class="far fa-star" data-value="3" style="cursor:pointer; font-size:1.5rem; color:#ddd;"></i>
+                <i class="far fa-star" data-value="4" style="cursor:pointer; font-size:1.5rem; color:#ddd;"></i>
+                <i class="far fa-star" data-value="5" style="cursor:pointer; font-size:1.5rem; color:#ddd;"></i>
+              </div>
+              <input type="hidden" id="review-rating-value" value="0">
+              <textarea id="review-comment" class="form-control mb-3" rows="3" placeholder="Partilhe a sua experiência com este produto..."></textarea>
+              <button class="btn btn-add-cart-lg px-4 py-2" style="font-size:0.95rem;" id="submit-review-btn">Enviar Avaliação</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Premium -->
+    <footer class="footer-premium">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <a href="index.html" class="footer-brand">
+              <img
+                src="/images/logo_hexomel.webp"
+                alt="Hexomel Logo"
+                class="footer-logo"
+              />
+            </a>
+            <p
+              class="mb-4 text-white-50"
+              style="max-width: 300px; font-size: 0.95rem; line-height: 1.6"
+            >
+              Dedicados à produção de mel 100% natural, preservando a pureza e a
+              tradição apícola em cada gota.
+            </p>
+          </div>
+          <div class="col-lg-2 ms-lg-auto">
+            <h5 class="footer-heading">Navegação</h5>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="footer-link">Início</a></li>
+              <li><a href="shop.html" class="footer-link">Produtos</a></li>
+              <li><a href="workshops.html" class="footer-link">Workshops</a></li>
+              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3">
+            <h5 class="footer-heading">Contactos</h5>
+            <p class="small mb-2 text-white">
+              <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+              Estrela, Portugal
+            </p>
+            <p class="small mb-2 text-white">
+              <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+            </p>
+            <p class="small mb-4 text-white">
+              <i class="fas fa-envelope me-2 text-warning"></i> hexomelpap@gmail.com
+            </p>
+          </div>
+        </div>
+        <hr class="my-5 opacity-10" />
+        <div class="text-center small opacity-50">
+          <p class="mb-0">
+            &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+            reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/produto.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

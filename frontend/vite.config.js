@@ -17,6 +17,24 @@ export default defineConfig({
     outDir: "dist",
     assetsDir: "assets",
     minify: "esbuild",
-    cssMinify: true
+    cssMinify: true,
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        shop: "shop.html",
+        about: "about.html",
+        contact: "contact.html",
+        workshops: "workshops.html",
+        curiosidades: "curiosidades.html",
+        comunidade: "comunidade.html",
+        apicultor: "apicultor.html",
+        apicultores: "apicultores.html",
+        profile: "profile.html",
+        checkout: "checkout.html",
+        admin: "admin.html",
+        dashboardApicultor: "dashboard-apicultor.html",
+        produto: "produto.html",
+      },
+    },
   },
 });

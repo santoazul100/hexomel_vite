@@ -63,6 +63,7 @@ async function fetchProducts() {
         tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
         rating: p.Rating || 0,
         reviewCount: p.ReviewCount || 0,
+        slug: p.Slug || null,
       };
     });
 
@@ -195,6 +196,12 @@ function renderProducts() {
             <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
             
             <div class="d-flex gap-2">
+              ${product.slug ? `<a href="produto.html?slug=${product.slug}" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                      style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0; text-decoration: none;" 
+                      onclick="event.stopPropagation()"
+                      title="Ver Produto">
+                  <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
+              </a>` : ''}
               <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
                       style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
                       onclick="event.stopPropagation(); window.addToCart(${product.id})"
@@ -492,7 +499,7 @@ async function fetchFavorites() {
   }
 
   try {
-    const res = await fetch("/api/favorites", {
+    const res = await fetch("/api/user/favorites", {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -530,7 +537,7 @@ window.toggleFavorite = async function (productId) {
 
   try {
     const res = await fetch(
-      `/api/favorites/${isCurrentlyFav ? "remove/" + productId : "add"}`,
+      `/api/user/favorites/${isCurrentlyFav ? "remove/" + productId : "add"}`,
       {
         method: isCurrentlyFav ? "DELETE" : "POST",
         headers: {

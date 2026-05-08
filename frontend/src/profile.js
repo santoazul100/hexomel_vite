@@ -689,7 +689,7 @@ async function fetchFavorites() {
   if (!token || !favGrid) return;
 
   try {
-    const res = await fetch("/api/favorites", {
+    const res = await fetch("/api/user/favorites", {
       headers: buildAuthHeaders(),
     });
 
@@ -750,7 +750,7 @@ window.removeFromFavorites = async function (productId) {
   }
 
   try {
-    const res = await fetch(`/api/favorites/remove/${productId}`, {
+    const res = await fetch(`/api/user/favorites/remove/${productId}`, {
       method: "DELETE",
       headers: buildAuthHeaders(),
     });
@@ -1280,7 +1280,7 @@ async function handleUpgradeRequest(e) {
     formData.append("descricao", descricao);
     formData.append("document", docFile);
 
-    const res = await fetch("/api/upgrade-request", {
+    const res = await fetch("/api/user/upgrade-request", {
       method: "POST",
       headers: buildAuthHeaders(),
       body: formData,

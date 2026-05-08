@@ -15,6 +15,38 @@ import Stripe from "stripe";
 import crypto from "crypto";
 import compression from "compression";
 
+// ============================================================
+// SLUG UTILITIES
+// ============================================================
+function slugify(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .normalize('NFD')                   // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, '')     // Remove diacritics
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')       // Remove non-alphanumeric
+    .replace(/[\s_]+/g, '-')            // Spaces/underscores to hyphens
+    .replace(/-+/g, '-')                // Collapse multiple hyphens
+    .replace(/^-+|-+$/g, '');           // Trim leading/trailing hyphens
+}
+
+async function generateUniqueSlug(baseSlug, existingId = null) {
+  let slug = baseSlug;
+  let counter = 1;
+  while (true) {
+    const query = existingId
+      ? "SELECT ID_Produto FROM produto WHERE Slug = ? AND ID_Produto != ?"
+      : "SELECT ID_Produto FROM produto WHERE Slug = ?";
+    const params = existingId ? [slug, existingId] : [slug];
+    const existing = await db.get(query, params);
+    if (!existing) return slug;
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+}
+
 
 const configuredGoogleClientId =
   process.env.GOOGLE_CLIENT_ID &&
@@ -567,6 +599,61 @@ const runDatabaseMigrations = async () => {
         `,
       )
       .catch(() => console.log("resposta_comunidade table creation handled"));
+
+    // SEO Slugs: Add Slug column to produto
+    await db
+      .run("ALTER TABLE produto ADD COLUMN Slug VARCHAR(200) DEFAULT NULL")
+      .catch(() => console.log("Slug col already exists"));
+    await db
+      .run("ALTER TABLE produto ADD UNIQUE INDEX uk_slug (Slug)")
+      .catch(() => console.log("Slug unique index already exists"));
+
+    // SEO Slugs: Create site_slugs table
+    await db
+      .run(`
+        CREATE TABLE IF NOT EXISTS site_slugs (
+          ID_Slug int(10) NOT NULL AUTO_INCREMENT,
+          Pagina VARCHAR(60) NOT NULL,
+          Slug VARCHAR(200) NOT NULL,
+          Titulo_SEO VARCHAR(200) DEFAULT NULL,
+          Descricao_SEO TEXT DEFAULT NULL,
+          PRIMARY KEY (ID_Slug),
+          UNIQUE KEY uk_pagina (Pagina),
+          UNIQUE KEY uk_page_slug (Slug)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `)
+      .catch(() => console.log("site_slugs table creation handled"));
+
+    // Seed default site slugs if empty
+    const slugCount = await db.get("SELECT COUNT(*) as c FROM site_slugs").catch(() => ({ c: 1 }));
+    if (slugCount && slugCount.c === 0) {
+      const defaults = [
+        ['inicio', 'inicio', 'Hexomel — Mel Artesanal Premium', 'Mel 100% natural da Serra da Estrela. Produção artesanal com tradição desde 1984.'],
+        ['loja', 'loja', 'Loja — Hexomel', 'Descubra a nossa seleção de méis artesanais, pólen, própolis e outros produtos da colmeia.'],
+        ['sobre', 'sobre-nos', 'Sobre Nós — Hexomel', 'Conheça a história da Hexomel e a nossa paixão pela apicultura tradicional.'],
+        ['contactos', 'contactos', 'Contactos — Hexomel', 'Entre em contacto connosco. Estamos na Serra da Estrela, Portugal.'],
+        ['workshops', 'workshops', 'Workshops — Hexomel', 'Participe nas nossas experiências de apicultura e workshops.'],
+        ['curiosidades', 'curiosidades', 'Curiosidades — Hexomel', 'Descubra factos curiosos sobre mel, abelhas e apicultura.'],
+        ['comunidade', 'comunidade', 'Comunidade — Hexomel', 'Junte-se à comunidade Hexomel. Perguntas, respostas e partilha.'],
+        ['apicultores', 'apicultores', 'Apicultores — Hexomel', 'Conheça os nossos apicultores parceiros e os seus produtos.'],
+      ];
+      for (const [pagina, slug, titulo, desc] of defaults) {
+        await db.run(
+          "INSERT IGNORE INTO site_slugs (Pagina, Slug, Titulo_SEO, Descricao_SEO) VALUES (?, ?, ?, ?)",
+          [pagina, slug, titulo, desc]
+        ).catch(() => {});
+      }
+    }
+
+    // Backfill slugs for existing products that don't have one
+    const productsWithoutSlug = await db.all("SELECT ID_Produto, Nome FROM produto WHERE Slug IS NULL OR Slug = ''").catch(() => []);
+    for (const p of productsWithoutSlug) {
+      const baseSlug = slugify(p.Nome);
+      if (baseSlug) {
+        const uniqueSlug = await generateUniqueSlug(baseSlug, p.ID_Produto);
+        await db.run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [uniqueSlug, p.ID_Produto]).catch(() => {});
+      }
+    }
 
     console.log("Auto-migrations completed.");
   } catch (err) {
@@ -1191,6 +1278,7 @@ app.get("/api/products", async (req, res) => {
   try {
     const rows = await db.all(`
       SELECT p.*, 
+      p.Slug,
       COALESCE(AVG(a.Nota), 0) as Rating, 
       COUNT(a.ID_Avaliacao) as ReviewCount,
       c.Nome as ApicultorNome
@@ -1237,9 +1325,10 @@ app.post(
       tags,
     } = req.body;
     try {
+      const slug = await generateUniqueSlug(slugify(nome));
       const result = await db.run(
-        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags],
+        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, Slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags, slug],
       );
       const newProduct = await db.get(
         "SELECT * FROM produto WHERE ID_Produto = ?",
@@ -1337,8 +1426,9 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
 
   try {
     const initialStatus = req.user.role === "admin" ? "Aprovado" : "Pendente";
+    const slug = await generateUniqueSlug(slugify(nome));
     const result = await db.run(
-      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor, Status, Slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         nome,
         preco,
@@ -1350,6 +1440,7 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
         tags || null,
         req.user.id,
         initialStatus,
+        slug,
       ],
     );
     const newProduct = await db.get(
@@ -1895,7 +1986,145 @@ app.get("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin users fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// ADMIN ANALYTICS & DASHBOARD
+// -----------------------------------------------------------------------------
+app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    // Basic Stats
+    const totalRev = await db.get("SELECT SUM(Total) as val FROM encomenda WHERE Status != 'Cancelada'");
+    const avgOrder = await db.get("SELECT AVG(Total) as val FROM encomenda WHERE Status != 'Cancelada'");
+    
+    // Distribution (Categories)
+    const distribution = await db.all(`
+      SELECT c.Nome as category, COUNT(p.ID_Produto) as count 
+      FROM produto p 
+      JOIN categoria c ON p.ID_Categoria = c.ID_Categoria 
+      GROUP BY c.ID_Categoria
+    `);
+
+    // Orders By Status
+    const ordersByStatus = await db.all("SELECT Status as status, COUNT(*) as count FROM encomenda GROUP BY Status");
+
+    // Top Products
+    const topProducts = await db.all(`
+      SELECT p.Nome as name, SUM(i.Quantidade) as quantity, SUM(i.Quantidade * i.Preco_Unitario) as revenue 
+      FROM item_encomenda i 
+      JOIN produto p ON i.ID_Produto = p.ID_Produto 
+      GROUP BY p.ID_Produto 
+      ORDER BY quantity DESC LIMIT 5
+    `);
+
+    // Sales by Beekeeper
+    const salesByBeekeeper = await db.all(`
+      SELECT c.Nome as name, SUM(i.Quantidade * i.Preco_Unitario) as revenue 
+      FROM item_encomenda i 
+      JOIN produto p ON i.ID_Produto = p.ID_Produto 
+      JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente 
+      GROUP BY c.ID_Cliente 
+      ORDER BY revenue DESC LIMIT 5
+    `);
+
+    // Users Growth (Dummy/Simple grouping)
+    const usersGrowth = await db.all(`
+      SELECT strftime('%Y-%m', Data_Resgistro) as month, COUNT(*) as count 
+      FROM cliente 
+      GROUP BY month 
+      ORDER BY month DESC LIMIT 6
+    `);
+
+    // Sales 30d (Simplified)
+    const sales30d = await db.all(`
+      SELECT date(Data_Encomenda) as date, SUM(Total) as revenue 
+      FROM encomenda 
+      WHERE Status != 'Cancelada' AND Data_Encomenda >= date('now','-30 day')
+      GROUP BY date 
+      ORDER BY date ASC
+    `);
+
+    res.json({
+      stats: { 
+        totalRevenue: totalRev.val ? parseFloat(totalRev.val).toFixed(2) : 0, 
+        avgOrderValue: avgOrder.val ? parseFloat(avgOrder.val).toFixed(2) : 0 
+      },
+      sales30d: sales30d || [],
+      distribution: distribution || [],
+      ordersByStatus: ordersByStatus || [],
+      topProducts: topProducts || [],
+      salesByBeekeeper: salesByBeekeeper || [],
+      usersGrowth: usersGrowth.reverse() || []
+    });
+  } catch (error) {
+    console.error("Admin analytics error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/admin/analytics/interactions", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const interactions = await db.all(`
+      SELECT i.ID_Interacao as id, i.Tipo as type, i.Pagina as page, i.Data_Interacao as date, c.Nome as user
+      FROM interacao i
+      LEFT JOIN cliente c ON i.ID_Cliente = c.ID_Cliente
+      ORDER BY i.Data_Interacao DESC LIMIT 100
+    `);
+    res.json(interactions || []);
+  } catch (error) {
+    console.error("Interactions fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// ADMIN UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get("/api/admin/upgrade-requests", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const rows = await db.all(`
+      SELECT u.ID_Request, u.Descricao, u.Documento, u.Status, u.Data_Pedido, u.Data_Processamento, 
+             c.Nome as ClienteNome, c.Email as ClienteEmail
+      FROM upgrade_requests u
+      JOIN cliente c ON u.ID_Cliente = c.ID_Cliente
+      ORDER BY u.Data_Pedido DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error("Upgrade requests fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/admin/upgrade-requests/:id", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { status } = req.body; // 'Aprovado' ou 'Rejeitado'
+    if (!["Aprovado", "Rejeitado"].includes(status)) {
+      return res.status(400).json({ error: "Status inválido" });
+    }
+
+    const { id } = req.params;
+    
+    // Update the request
+    await db.run(
+      "UPDATE upgrade_requests SET Status = ?, Data_Processamento = CURRENT_TIMESTAMP WHERE ID_Request = ?", 
+      [status, id]
+    );
+
+    // If approved, update user role
+    if (status === "Aprovado") {
+      const request = await db.get("SELECT ID_Cliente FROM upgrade_requests WHERE ID_Request = ?", [id]);
+      if (request) {
+        await db.run("UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?", [request.ID_Cliente]);
+      }
+    }
+
+    res.json({ success: true, message: "Pedido processado com sucesso" });
+  } catch (error) {
+    console.error("Upgrade process error:", error);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -2038,6 +2267,49 @@ app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(`
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `, [req.user.id]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run("INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)", [req.user.id, productId]);
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete("/api/user/favorites/remove/:id", authenticateToken, async (req, res) => {
+  try {
+    await db.run("DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?", [req.user.id, req.params.id]);
+    res.json({ success: true, message: "Removed from favorites" });
+  } catch (error) {
+    console.error("Favorites remove error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
 app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) => {
   try {
     const reqInfo = await db.get(
@@ -2054,16 +2326,16 @@ app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) 
   }
 });
 
-app.post("/api/user/upgrade-request", authenticateToken, async (req, res) => {
+app.post("/api/user/upgrade-request", authenticateToken, upload.single("document"), async (req, res) => {
   try {
-    const { experience, motivation } = req.body;
-    const description = `Experiência: ${experience}\nMotivação: ${motivation}`;
+    const descricao = req.body.descricao || "N/A";
+    const docPath = req.file ? req.file.path : "N/A";
     
     const existing = await db.get("SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'", [req.user.id]);
     if (existing) return res.status(400).json({ error: "Já tens um pedido pendente." });
 
     await db.run("INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)", [
-      req.user.id, description, "N/A", "Pendente"
+      req.user.id, descricao, docPath, "Pendente"
     ]);
 
     res.json({ message: "Pedido enviado com sucesso" });
@@ -2857,7 +3129,132 @@ app.post("/api/logs/interaction", (req, res) => {
   res.status(204).send();
 });
 
+// ============================================================
+// SEO SLUG ROUTES
+// ============================================================
+
+// Get product by slug (public)
+app.get("/api/products/by-slug/:slug", async (req, res) => {
+  try {
+    const row = await db.get(`
+      SELECT p.*, 
+      p.Slug,
+      COALESCE(AVG(a.Nota), 0) as Rating, 
+      COUNT(a.ID_Avaliacao) as ReviewCount,
+      c.Nome as ApicultorNome,
+      c.Picture as ApicultorFoto,
+      c.Bio as ApicultorBio,
+      cat.Nome as CategoriaNome,
+      o.Nome as OrigemNome
+      FROM produto p
+      LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+      LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
+      LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+      LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
+      WHERE p.Slug = ? AND (p.Status = 'Aprovado' OR p.Status IS NULL)
+      GROUP BY p.ID_Produto
+    `, [req.params.slug]);
+    if (!row) return res.status(404).json({ error: "Produto não encontrado." });
+    res.json(row);
+  } catch (error) {
+    console.error("Product by slug error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Admin: Edit slug of any product
+app.patch("/api/admin/products/:id/slug", authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  let { slug } = req.body;
+  if (!slug || !slug.trim()) {
+    return res.status(400).json({ error: "O slug é obrigatório." });
+  }
+  slug = slugify(slug);
+  if (!slug) {
+    return res.status(400).json({ error: "Slug inválido." });
+  }
+  try {
+    // Check uniqueness
+    const existing = await db.get("SELECT ID_Produto FROM produto WHERE Slug = ? AND ID_Produto != ?", [slug, id]);
+    if (existing) {
+      return res.status(409).json({ error: "Este slug já está em uso por outro produto." });
+    }
+    await db.run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [slug, id]);
+    res.json({ message: "Slug atualizado com sucesso.", slug });
+  } catch (error) {
+    console.error("Admin update slug error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Apicultor: Edit slug of own product
+app.patch("/api/apicultor/products/:id/slug", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin") {
+    return res.status(403).json({ error: "Access denied." });
+  }
+  const { id } = req.params;
+  let { slug } = req.body;
+  if (!slug || !slug.trim()) {
+    return res.status(400).json({ error: "O slug é obrigatório." });
+  }
+  slug = slugify(slug);
+  if (!slug) {
+    return res.status(400).json({ error: "Slug inválido." });
+  }
+  try {
+    // Verify ownership
+    const product = await db.get("SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?", [id, req.user.id]);
+    if (!product && req.user.role !== "admin") {
+      return res.status(404).json({ error: "Produto não encontrado ou acesso negado." });
+    }
+    // Check uniqueness
+    const existing = await db.get("SELECT ID_Produto FROM produto WHERE Slug = ? AND ID_Produto != ?", [slug, id]);
+    if (existing) {
+      return res.status(409).json({ error: "Este slug já está em uso por outro produto." });
+    }
+    await db.run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [slug, id]);
+    res.json({ message: "Slug atualizado com sucesso.", slug });
+  } catch (error) {
+    console.error("Apicultor update slug error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Get all site slugs (public)
+app.get("/api/site-slugs", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT * FROM site_slugs ORDER BY Pagina ASC");
+    res.json(rows);
+  } catch (error) {
+    console.error("Site slugs fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Admin: Update site slugs
+app.put("/api/admin/site-slugs", authenticateToken, isAdmin, async (req, res) => {
+  const { slugs } = req.body;
+  if (!Array.isArray(slugs)) {
+    return res.status(400).json({ error: "Lista de slugs inválida." });
+  }
+  try {
+    for (const item of slugs) {
+      const cleanSlug = slugify(item.slug || item.Slug);
+      if (!cleanSlug) continue;
+      await db.run(
+        "UPDATE site_slugs SET Slug = ?, Titulo_SEO = ?, Descricao_SEO = ? WHERE Pagina = ?",
+        [cleanSlug, item.titulo_seo || item.Titulo_SEO || null, item.descricao_seo || item.Descricao_SEO || null, item.pagina || item.Pagina]
+      );
+    }
+    res.json({ message: "Slugs do site atualizados com sucesso." });
+  } catch (error) {
+    console.error("Update site slugs error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 startServer();
+
 
 // ============================================================
 // AUTOMATIC CLEANUP: Delete 'Pendente' orders older than 24h
