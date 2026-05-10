@@ -26,6 +26,7 @@ export default defineConfig({
         contact: "contact.html",
         workshops: "workshops.html",
         curiosidades: "curiosidades.html",
+        aprender: "aprender.html",
         comunidade: "comunidade.html",
         apicultor: "apicultor.html",
         apicultores: "apicultores.html",

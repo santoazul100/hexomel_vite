@@ -125,10 +125,27 @@ class HoneyJarHero3D {
       return;
     }
 
+    // Lazy loading: só inicializa quando a secção entra no viewport
+    this._isVisible = false;
+    this._initialized = false;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        this._isVisible = entry.isIntersecting;
+        if (entry.isIntersecting && !this._initialized) {
+          this._initialized = true;
+          this._initScene();
+          observer.disconnect();
+        }
+      });
+    }, { rootMargin: '200px' });
+    observer.observe(this.root);
+  }
+
+  _initScene() {
     try {
       this.createRenderer();
       this.textureLoader = new THREE.TextureLoader();
-      this.maxAnisotropy = this.renderer.capabilities.getMaxAnisotropy();
+      this.maxAnisotropy = Math.min(this.renderer.capabilities.getMaxAnisotropy(), 4);
       this.createScene();
       this.createLights();
       this.createStage();
@@ -136,7 +153,14 @@ class HoneyJarHero3D {
       this.bindEvents();
       this.handleResize();
       this.setActivePart("all");
-      this.renderer.setAnimationLoop(this.animate);
+      this._rafId = requestAnimationFrame(this._loop.bind(this));
+
+      // Esconder a tela de carregamento suavemente após renderizar
+      const loader = document.getElementById("honey-canvas-loader");
+      if (loader) {
+        loader.style.opacity = "0";
+        setTimeout(() => loader.remove(), 500);
+      }
     } catch (error) {
       console.error("Nao foi possivel criar o modelo 3D do frasco.", error);
       this.enableFallback();
@@ -152,18 +176,23 @@ class HoneyJarHero3D {
     );
   }
 
+  _loop() {
+    this._rafId = requestAnimationFrame(this._loop.bind(this));
+    if (!this._isVisible) return; // Pausa quando fora de vista
+    this.animate();
+  }
+
   createRenderer() {
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: window.devicePixelRatio < 2,
       alpha: true,
       powerPreference: "high-performance",
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.enabled = false;
     this.renderer.domElement.setAttribute("aria-hidden", "true");
     this.canvasHost.appendChild(this.renderer.domElement);
   }
@@ -196,22 +225,15 @@ class HoneyJarHero3D {
   }
 
   createLights() {
-    const ambient = new THREE.AmbientLight(0xfffbef, 0.72);
+    const ambient = new THREE.AmbientLight(0xfffbef, 0.82);
     this.scene.add(ambient);
 
-    const hemisphere = new THREE.HemisphereLight(0xffffff, 0xe2b66e, 0.82);
+    const hemisphere = new THREE.HemisphereLight(0xffffff, 0xe2b66e, 0.92);
     hemisphere.position.set(0, 4, 0);
     this.scene.add(hemisphere);
 
     const keyLight = new THREE.DirectionalLight(0xfff3da, 2.7);
     keyLight.position.set(4.8, 6.6, 5.8);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
-    keyLight.shadow.bias = -0.00012;
-    keyLight.shadow.camera.left = -5.8;
-    keyLight.shadow.camera.right = 5.8;
-    keyLight.shadow.camera.top = 5.8;
-    keyLight.shadow.camera.bottom = -5.8;
     this.scene.add(keyLight);
 
     const rimLight = new THREE.DirectionalLight(0xf7ffff, 1.55);
@@ -229,17 +251,16 @@ class HoneyJarHero3D {
     this.scene.add(this.presentationGroup);
 
     const shadowPlane = new THREE.Mesh(
-      new THREE.CircleGeometry(2.8, 64),
-      new THREE.ShadowMaterial({ opacity: 0.18 })
+      new THREE.CircleGeometry(2.8, 32),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.06 })
     );
     shadowPlane.rotation.x = -Math.PI / 2;
     shadowPlane.position.y = -2.20;
     shadowPlane.scale.set(1.05, 0.62, 1);
-    shadowPlane.receiveShadow = true;
     this.presentationGroup.add(shadowPlane);
 
     const floorGlow = new THREE.Mesh(
-      new THREE.CircleGeometry(2.5, 64),
+      new THREE.CircleGeometry(2.5, 32),
       new THREE.MeshBasicMaterial({
         color: 0xf3d07c,
         transparent: true,
@@ -358,8 +379,6 @@ class HoneyJarHero3D {
       ]),
       glassMaterial
     );
-    shell.castShadow = true;
-    shell.receiveShadow = true;
     shell.renderOrder = 3;
     group.add(shell);
 
@@ -578,8 +597,6 @@ class HoneyJarHero3D {
       ]),
       honeyMaterial
     );
-    honeyMesh.castShadow = true;
-    honeyMesh.receiveShadow = true;
     honeyMesh.renderOrder = 1;
     group.add(honeyMesh);
 
@@ -647,10 +664,6 @@ class HoneyJarHero3D {
       [0.24, 0.48, -0.18],
       [0.35, 0.72, 0.10],
       [-0.4, 0.34, -0.20],
-      [0.06, 0.78, -0.28],
-      [-0.12, 0.52, 0.26],
-      [0.42, 0.20, 0.14],
-      [-0.36, -0.10, -0.24],
     ];
 
     bubbleOffsets.forEach(([x, y, z], index) => {
@@ -697,8 +710,6 @@ class HoneyJarHero3D {
       sideMaterial
     );
     side.position.y = 2.34;
-    side.castShadow = true;
-    side.receiveShadow = true;
     group.add(side);
 
     const top = new THREE.Mesh(
@@ -706,7 +717,6 @@ class HoneyJarHero3D {
       topMaterial
     );
     top.position.y = 2.52;
-    top.castShadow = true;
     group.add(top);
 
     const underside = new THREE.Mesh(
@@ -714,7 +724,6 @@ class HoneyJarHero3D {
       bandMaterial
     );
     underside.position.y = 2.12;
-    underside.castShadow = true;
     group.add(underside);
 
     const sealBand = new THREE.Mesh(
@@ -727,7 +736,6 @@ class HoneyJarHero3D {
       })
     );
     sealBand.position.y = 2.00;
-    sealBand.castShadow = true;
     group.add(sealBand);
 
     return group;
@@ -736,7 +744,7 @@ class HoneyJarHero3D {
   createLatheGeometry(points) {
     const geometry = new THREE.LatheGeometry(
       points.map(([radius, y]) => new THREE.Vector2(radius, y)),
-      96
+      48
     );
     geometry.computeVertexNormals();
     return geometry;
@@ -984,6 +992,12 @@ class HoneyJarHero3D {
     });
 
     window.addEventListener("resize", this.handleResize);
+
+    // Visibility observer for performance
+    const visObs = new IntersectionObserver((entries) => {
+      this._isVisible = entries[0].isIntersecting;
+    }, { rootMargin: '100px' });
+    visObs.observe(this.root);
   }
 
   setActivePart(partName) {
@@ -1081,6 +1095,10 @@ class HoneyJarHero3D {
 
   enableFallback() {
     if (!this.canvasHost) return;
+
+    // Remover a tela de carregamento se for ativado o fallback
+    const loader = document.getElementById("honey-canvas-loader");
+    if (loader) loader.remove();
 
     const fallbackImage =
       this.canvasHost.dataset.fallbackImage ||

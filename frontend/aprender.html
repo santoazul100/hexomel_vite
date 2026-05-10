@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hexomel — Aprender sobre Abelhas</title>
+  <meta name="description" content="Aprenda sobre abelhas, mel e apicultura com quizzes interativos e factos educativos." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="src/styles/index.css" />
+  <link rel="stylesheet" href="src/styles/modern.css" />
+  <link rel="stylesheet" href="src/styles/aprender.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+  <script src="src/pre-load.js"></script>
+  <meta name="view-transition" content="same-origin" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html"><img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" /></a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto gap-4">
+          <li class="nav-item"><a class="nav-link" href="index.html">Início</a></li>
+          <li class="nav-item"><a class="nav-link" href="shop.html">Produtos</a></li>
+          <li class="nav-item"><a class="nav-link" href="workshops.html">Workshops</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+            <ul class="dropdown-menu dropdown-menu-hexomel">
+              <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
+              <li><a class="dropdown-item active" href="aprender.html">Aprender</a></li>
+              <li><a class="dropdown-item" href="comunidade.html">Comunidade</a></li>
+            </ul>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="about.html">Sobre</a></li>
+          <li class="nav-item"><a class="nav-link" href="contact.html">Contactos</a></li>
+        </ul>
+        <div class="d-flex align-items-center navbar-right-fixed">
+          <div class="cart-navbar-separate me-3">
+            <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+              <i class="fas fa-shopping-cart fs-5"></i>
+              <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+            </button>
+          </div>
+          <div class="d-flex align-items-center gap-3" id="authSection"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- HERO -->
+    <section class="aprender-hero position-relative">
+      <div class="container position-relative z-1">
+        <div class="row align-items-center">
+          <div class="col-lg-6 text-start animate-fade-up">
+            <span class="product-badge-premium mb-4 d-inline-block px-4 py-2"><i class="fas fa-graduation-cap me-2"></i>EDUCAÇÃO</span>
+            <h1 class="display-3 fw-bold mb-4" style="color:var(--primary-green);letter-spacing:-0.02em;">Aprende Sobre o Mundo das Abelhas</h1>
+            <p class="text-muted mb-4" style="font-size:1.15rem;line-height:1.8;max-width:480px;">Testa os teus conhecimentos com o nosso quiz, descobre factos surpreendentes e explora o glossário do mel.</p>
+            <a href="#quiz-section" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-play me-2"></i>Começar o Quiz</a>
+          </div>
+          <div class="col-lg-6 d-none d-lg-flex justify-content-center animate-fade-up" style="animation-delay:0.2s">
+            <img src="/images/bee_learning_hero.png" alt="Abelha a aprender" class="img-fluid" style="max-width:420px;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.1));" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="py-5 bg-white" id="quiz-section">
+      <div class="container py-5">
+        <div class="text-center mb-5 scroll-reveal">
+          <span class="section-badge" style="background:rgba(26,77,46,0.08);color:var(--primary-green);"><i class="fas fa-question-circle me-2"></i>QUIZ</span>
+          <h2 class="display-5 fw-bold mt-3" style="color:var(--primary-green)">Quiz: Quanto Sabes Sobre Abelhas?</h2>
+          <p class="text-muted mt-2">Responde às perguntas e descobre a tua pontuação!</p>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div id="quiz-container" class="quiz-card scroll-reveal">
+              <div id="quiz-progress" class="quiz-progress mb-4"><div class="quiz-progress-bar" id="quiz-progress-bar"></div></div>
+              <div id="quiz-question-num" class="quiz-question-num">Pergunta 1 de 8</div>
+              <h3 id="quiz-question" class="quiz-question mb-4">A carregar...</h3>
+              <div id="quiz-options" class="d-flex flex-column gap-3"></div>
+              <div id="quiz-feedback" class="quiz-feedback mt-3" style="display:none;"></div>
+              <button id="quiz-next" class="btn btn-auth-enhanced register mt-4 px-5 py-3" style="display:none;">Próxima <i class="fas fa-arrow-right ms-2"></i></button>
+            </div>
+            <div id="quiz-result" class="quiz-result text-center scroll-reveal" style="display:none;">
+              <div class="quiz-result-icon mb-3"><i class="fas fa-trophy"></i></div>
+              <h2 class="fw-bold mb-2" style="color:var(--primary-green)">Quiz Concluído!</h2>
+              <p class="display-4 fw-bold" style="color:var(--secondary-gold);" id="quiz-score">0/8</p>
+              <p class="text-muted mb-4" id="quiz-message">Resultado</p>
+              <button id="quiz-restart" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-redo me-2"></i>Tentar Novamente</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVEAL FACTS -->
+    <section class="py-5" style="background:var(--bg-clean);">
+      <div class="container py-5">
+        <div class="text-center mb-5 scroll-reveal">
+          <span class="section-badge" style="background:rgba(244,180,0,0.1);color:var(--secondary-gold);"><i class="fas fa-eye me-2"></i>DESCOBRE</span>
+          <h2 class="display-5 fw-bold mt-3" style="color:var(--primary-green)">Factos Para Descobrir</h2>
+          <p class="text-muted mt-2">Clica nos cartões para revelar factos surpreendentes!</p>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Quanto mel produz uma abelha?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>Uma abelha produz apenas <strong>1/12 de uma colher de chá de mel</strong> em toda a sua vida (~45 dias).</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>O mel pode expirar?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p><strong>Não!</strong> Mel puro encontrado em tumbas egípcias com 3.000 anos ainda estava comestível. O mel nunca expira.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>As abelhas sabem dançar?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p><strong>Sim!</strong> A "dança das abelhas" comunica a localização de alimentos. Karl von Frisch ganhou o Prémio Nobel em 1973 por esta descoberta.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Porque cristaliza o mel?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>A cristalização é <strong>natural e sinal de pureza</strong>. Basta aquecer em banho-maria para voltar ao estado líquido.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Quantas asas tem uma abelha?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>As abelhas têm <strong>4 asas</strong> que podem bater até <strong>200 vezes por segundo</strong>, voando a ~24 km/h.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Mel é medicinal?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>O mel tem propriedades <strong>antibacterianas</strong> devido à enzima glucose oxidase, que produz peróxido de hidrogénio.</p></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GLOSSARY -->
+    <section class="py-5 bg-white">
+      <div class="container py-5">
+        <div class="text-center mb-5 scroll-reveal">
+          <span class="section-badge" style="background:rgba(26,77,46,0.08);color:var(--primary-green);"><i class="fas fa-book me-2"></i>GLOSSÁRIO</span>
+          <h2 class="display-5 fw-bold mt-3" style="color:var(--primary-green)">Glossário do Mel</h2>
+          <p class="text-muted mt-2">Termos essenciais do mundo apícola</p>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);"><i class="fas fa-droplet"></i></div><h5>Néctar</h5><p>Líquido açucarado produzido pelas flores que as abelhas recolhem e transformam em mel.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);"><i class="fas fa-shield-alt"></i></div><h5>Própolis</h5><p>Substância resinosa recolhida pelas abelhas, usada para desinfetar e selar a colmeia.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-crown"></i></div><h5>Geleia Real</h5><p>Alimento exclusivo da rainha, rico em proteínas e vitaminas. Permite que ela viva até 5 anos.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);"><i class="fas fa-seedling"></i></div><h5>Polinização</h5><p>Transferência de pólen entre flores, essencial para a reprodução das plantas e formação de frutos.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-th"></i></div><h5>Alvéolo</h5><p>Célula hexagonal de cera onde as abelhas armazenam mel, pólen ou criam as larvas.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);"><i class="fas fa-wind"></i></div><h5>Fumigador</h5><p>Ferramenta do apicultor que produz fumo para acalmar as abelhas durante a inspeção.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-5" style="background:var(--bg-clean);">
+      <div class="container py-5">
+        <div class="newsletter-premium text-center scroll-reveal">
+          <h2 class="display-6 fw-bold mb-3" style="color:var(--primary-green)">Explora Mais</h2>
+          <p class="text-muted mb-4 mx-auto" style="max-width:500px">Visita a página de curiosidades ou junta-te à comunidade Hexomel.</p>
+          <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="curiosidades.html" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-lightbulb me-2"></i>Curiosidades</a>
+            <a href="comunidade.html" class="btn btn-auth-enhanced login px-5 py-3"><i class="fas fa-users me-2"></i>Comunidade</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-premium">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <a href="index.html" class="footer-brand"><img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" /></a>
+          <p class="mb-4 text-white-50" style="max-width:300px;font-size:0.95rem;line-height:1.6">Dedicados à produção de mel 100% natural.</p>
+          <div class="social-links">
+            <a href="https://instagram.com" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+            <a href="https://facebook.com" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-2 ms-lg-auto">
+          <h5 class="footer-heading">Navegação</h5>
+          <ul class="list-unstyled">
+            <li><a href="index.html" class="footer-link">Início</a></li>
+            <li><a href="shop.html" class="footer-link">Produtos</a></li>
+            <li><a href="curiosidades.html" class="footer-link">Curiosidades</a></li>
+            <li><a href="aprender.html" class="footer-link" style="color:#f4b400 !important">Aprender</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h5 class="footer-heading">Contactos</h5>
+          <p class="small mb-2 text-white"><i class="fas fa-map-marker-alt me-2 text-warning"></i>Serra da Estrela, Portugal</p>
+          <p class="small mb-2 text-white"><i class="fas fa-envelope me-2 text-warning"></i>hexomelpap@gmail.com</p>
+        </div>
+      </div>
+      <hr class="my-5 opacity-10" />
+      <div class="text-center small opacity-50"><p class="mb-0">&copy; 2026 Hexomel — Todos os direitos reservados.</p></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="src/beeAnimation.js"></script>
+  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/aprender.js"></script>
+  <script>
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.scroll-reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>
