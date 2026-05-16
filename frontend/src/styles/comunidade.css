@@ -1,0 +1,294 @@
+/* ==========================================================================
+   Comunidade UI - Premium Design
+   ========================================================================== */
+
+/* Hero Section */
+.comunidade-hero {
+  padding: clamp(100px, 10vw, 160px) 0 clamp(50px, 6vw, 80px);
+  background: linear-gradient(135deg, #fdfaf5 0%, #f4eee0 100%);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.comunidade-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(244, 180, 0, 0.08) 0%, transparent 40%),
+              radial-gradient(circle at 20% 80%, rgba(26, 77, 46, 0.05) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* Thread Container */
+.qa-thread {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Qa Item Container */
+.qa-item {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03);
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.qa-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(26, 77, 46, 0.08);
+}
+
+/* Thread Question */
+.qa-question {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Avatars */
+.qa-avatar-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border: 2px solid #fff;
+  background: #f8f9fa;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.qa-avatar-beekeeper {
+  border-color: var(--primary-green, #1a4d2e);
+  box-shadow: 0 4px 12px rgba(26, 77, 46, 0.15);
+}
+
+.qa-avatar-client {
+  border-color: #f1f3f5;
+}
+
+/* Content Layout */
+.qa-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Metadata Row */
+.qa-meta {
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qa-author {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--primary-green, #1a4d2e);
+  letter-spacing: -0.2px;
+}
+
+.qa-role {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.qa-role-beekeeper {
+  background: var(--primary-green, #1a4d2e);
+  color: #ffffff;
+  border: 1px solid var(--primary-green, #1a4d2e);
+  box-shadow: 0 2px 6px rgba(26, 77, 46, 0.15);
+}
+
+.qa-role-client {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+}
+
+/* Question & Answer Text */
+.qa-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #495057;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Actions Row */
+.qa-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: #adb5bd;
+}
+
+.qa-vote {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  color: #6c757d;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qa-vote:hover {
+  background: #e9ecef;
+  color: var(--primary-green, #1a4d2e);
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+}
+
+.qa-vote.qa-voted {
+  background: rgba(26, 77, 46, 0.08);
+  color: var(--primary-green, #1a4d2e);
+  border-color: rgba(26, 77, 46, 0.2);
+}
+
+.qa-vote.qa-voted i {
+  color: var(--primary-green, #1a4d2e);
+}
+
+.qa-timestamp, .qa-reply-count {
+  display: flex;
+  align-items: center;
+}
+
+/* Thread Answers */
+.qa-answer {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  margin-left: 24px;
+  position: relative;
+}
+
+.qa-answer-line {
+  position: absolute;
+  top: -40px;
+  bottom: 24px;
+  left: -25px; /* Center of question avatar: 24 + 48/2 = 48. Answer is at 24. Diff is -24 */
+  width: 2px;
+  background: #f1f3f5;
+  z-index: 1;
+}
+
+/* Beekeeper Highlight in Answer (Removed bubble effect for a more professional look) */
+/* Best Badge */
+.qa-badge-best {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f4b400 0%, #ffc107 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(244, 180, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  text-transform: uppercase;
+}
+
+/* Delete Action */
+.qa-delete-btn {
+  background: transparent;
+  border: none;
+  color: #ced4da;
+  transition: color 0.2s;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.qa-delete-btn:hover {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+/* Reply Form */
+.qa-reply-form {
+  margin-top: 16px;
+  margin-left: 64px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.qa-reply-form:focus-within {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border-color: #dee2e6;
+  background: #ffffff;
+}
+
+.qa-reply-input {
+  flex: 1;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  resize: none;
+  background: transparent;
+  transition: border-color 0.2s, background 0.2s;
+  color: #495057;
+}
+
+.qa-reply-input:focus {
+  outline: none;
+}
+
+.qa-reply-btn {
+  background: var(--primary-green, #1a4d2e);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 10px rgba(26, 77, 46, 0.2);
+}
+
+.qa-reply-btn:hover {
+  background: #143d24;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(26, 77, 46, 0.3);
+}
+
+.qa-reply-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .qa-item {
+    padding: 16px;
+  }
+  .qa-answer {
+    margin-left: 12px;
+  }
+  .qa-answer-line {
+    left: -13px;
+  }
+  .qa-reply-form {
+    margin-left: 12px;
+  }
+}

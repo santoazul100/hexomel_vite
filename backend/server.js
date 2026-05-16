@@ -655,6 +655,22 @@ const runDatabaseMigrations = async () => {
       }
     }
 
+    // Site Settings (key-value store for admin preferences)
+    await db
+      .run(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+          setting_key VARCHAR(100) NOT NULL,
+          setting_value TEXT,
+          PRIMARY KEY (setting_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `)
+      .catch(() => console.log("site_settings table creation handled"));
+
+    // Seed default placeholder style if not exists
+    await db
+      .run("INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES ('placeholder_style', 'skeleton')")
+      .catch(() => {});
+
     console.log("Auto-migrations completed.");
   } catch (err) {
     console.log("Migration warning:", err);
@@ -3249,6 +3265,46 @@ app.put("/api/admin/site-slugs", authenticateToken, isAdmin, async (req, res) =>
     res.json({ message: "Slugs do site atualizados com sucesso." });
   } catch (error) {
     console.error("Update site slugs error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// ============================================================
+// SITE SETTINGS (key-value store for admin preferences)
+// ============================================================
+
+// Public: Read all site settings
+app.get("/api/site-settings", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT setting_key, setting_value FROM site_settings");
+    const settings = {};
+    for (const row of rows) {
+      settings[row.setting_key] = row.setting_value;
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error("Site settings fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Admin: Update site settings
+app.put("/api/admin/site-settings", authenticateToken, isAdmin, async (req, res) => {
+  const { settings } = req.body;
+  if (!settings || typeof settings !== "object") {
+    return res.status(400).json({ error: "Formato inválido. Esperado: { settings: { key: value } }" });
+  }
+
+  try {
+    for (const [key, value] of Object.entries(settings)) {
+      await db.run(
+        "INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+        [key, value]
+      );
+    }
+    res.json({ message: "Definições atualizadas com sucesso." });
+  } catch (error) {
+    console.error("Update site settings error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });

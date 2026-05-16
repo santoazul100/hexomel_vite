@@ -28,58 +28,58 @@ const PART_DETAILS = {
 const HONEY_TYPES = [
   {
     id: "lavender",
-    name: "Mel de Alfazema",
-    color: 0xfde68a,
-    coreColor: 0xfbbf24,
-    surfaceColor: 0xfcd34d,
-    transmission: 0.72,
-    attenuationDistance: 2.5,
-    attenuationColor: 0xfef3c7,
-    description: "Um mel extremamente claro e suave, colhido nas flores de alfazema (lavanda). É conhecido pela sua doçura delicada e transparência cristalina.",
+    name: "Mel Claro / Rosmaninho",
+    color: 0xfff6c5,
+    coreColor: 0xffe98a,
+    surfaceColor: 0xfff1ae,
+    transmission: 0.85,
+    attenuationDistance: 3.0,
+    attenuationColor: 0xfffae6,
+    description: "Um mel extremamente claro e suave. É conhecido pela sua doçura delicada e quase total transparência.",
   },
   {
     id: "orange",
     name: "Flor de Laranjeira",
-    color: 0xf59e0b,
-    coreColor: 0xd97706,
-    surfaceColor: 0xfbbf24,
-    transmission: 0.55,
+    color: 0xfcb045,
+    coreColor: 0xe67e22,
+    surfaceColor: 0xfdbb2d,
+    transmission: 0.60,
     attenuationDistance: 1.8,
-    attenuationColor: 0xfde68a,
-    description: "Um mel aromático com notas cítricas, de cor âmbar clara e brilho radiante. Muito popular pela sua textura fluida e sabor refrescante.",
+    attenuationColor: 0xffe4b5,
+    description: "Um mel aromático com notas cítricas, de cor âmbar clara e brilho radiante.",
   },
   {
     id: "wildflower",
     name: "Mel Multiflora",
-    color: 0xe67e22,
-    coreColor: 0xd35400,
-    surfaceColor: 0xf39c12,
-    transmission: 0.38,
-    attenuationDistance: 1.2,
-    attenuationColor: 0xca6f1e,
-    description: "O clássico mel de mil flores, com um tom âmbar médio e sabor equilibrado. Representa a diversidade da flora mediterrânica.",
+    color: 0xd35400,
+    coreColor: 0xa04000,
+    surfaceColor: 0xe67e22,
+    transmission: 0.35,
+    attenuationDistance: 1.0,
+    attenuationColor: 0xba4a00,
+    description: "O clássico mel de mil flores, com um tom âmbar médio e sabor rico. Representa a diversidade da flora.",
   },
   {
     id: "eucalyptus",
     name: "Mel de Eucalipto",
-    color: 0xc0792a,
-    coreColor: 0x935f20,
-    surfaceColor: 0xa8681e,
-    transmission: 0.22,
-    attenuationDistance: 0.7,
-    attenuationColor: 0x7d4e1a,
-    description: "Um mel de cor âmbar escura com reflexos dourados. Possui um aroma intenso a madeira e propriedades balsâmicas naturais.",
+    color: 0x935116,
+    coreColor: 0x6e2c00,
+    surfaceColor: 0xa04000,
+    transmission: 0.20,
+    attenuationDistance: 0.6,
+    attenuationColor: 0x784212,
+    description: "Um mel de cor âmbar escura com reflexos dourados. Possui um aroma intenso a madeira.",
   },
   {
     id: "buckwheat",
     name: "Mel de Urze / Escuro",
-    color: 0x8b5e34,
-    coreColor: 0x5d3a1a,
-    surfaceColor: 0x6d4c2a,
-    transmission: 0.08,
-    attenuationDistance: 0.35,
-    attenuationColor: 0x3e2215,
-    description: "Um dos méis mais escuros e densos, rico em minerais. Tem um sabor persistente, quase amargo, e uma opacidade profunda.",
+    color: 0x4a2311,
+    coreColor: 0x2e1104,
+    surfaceColor: 0x5a2d16,
+    transmission: 0.05,
+    attenuationDistance: 0.2,
+    attenuationColor: 0x3e1706,
+    description: "Um dos méis mais escuros e densos, rico em minerais. Cor profunda, quase negra à luz fraca.",
   },
 ];
 
@@ -492,6 +492,7 @@ class HoneyJarHero3D {
     );
     label.position.y = -0.38;
     label.renderOrder = 2;
+    this.labelMesh = label;
     group.add(label);
 
     return group;
@@ -688,6 +689,8 @@ class HoneyJarHero3D {
       roughness: 0.3,
       envMapIntensity: 2,
       side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 1,
     });
 
     const topMaterial = new THREE.MeshStandardMaterial({
@@ -696,6 +699,8 @@ class HoneyJarHero3D {
       metalness: 0.97,
       roughness: 0.24,
       envMapIntensity: 2.1,
+      transparent: true,
+      opacity: 1,
     });
 
     const bandMaterial = new THREE.MeshStandardMaterial({
@@ -703,6 +708,8 @@ class HoneyJarHero3D {
       metalness: 0.9,
       roughness: 0.34,
       envMapIntensity: 1.8,
+      transparent: true,
+      opacity: 1,
     });
 
     const side = new THREE.Mesh(
@@ -733,6 +740,8 @@ class HoneyJarHero3D {
         metalness: 0.88,
         roughness: 0.38,
         envMapIntensity: 1.7,
+        transparent: true,
+        opacity: 1,
       })
     );
     sealBand.position.y = 2.00;
@@ -1019,9 +1028,15 @@ class HoneyJarHero3D {
       this.textNode.textContent = PART_DETAILS[part].text;
     }
 
+    if (this.labelMesh) {
+      this.labelMesh.visible = part !== "honey";
+    }
+
     this.parts.forEach((entry, key) => {
       const isSelected = part === "all" || key === part;
       const isDimmed = part !== "all" && key !== part;
+      // When focusing on honey, make lid nearly invisible so the mel is fully visible
+      const isLidOnHoney = part === "honey" && key === "lid";
 
       entry.group.position.y =
         entry.baseY + (part !== "all" && key === part ? 0.08 : 0);
@@ -1035,13 +1050,24 @@ class HoneyJarHero3D {
 
       entry.materials.forEach(({ material, opacity, color, emissive }) => {
         if (typeof material.opacity === "number") {
-          material.opacity = isDimmed ? Math.max(0.12, opacity * 0.2) : opacity;
+          if (isLidOnHoney) {
+            material.transparent = true;
+            material.depthWrite = false;
+            material.opacity = 0.18;
+            material.needsUpdate = true;
+          } else {
+            material.opacity = isDimmed ? Math.max(0.12, opacity * 0.2) : opacity;
+            material.depthWrite = opacity >= 0.9;
+            material.needsUpdate = true;
+          }
         }
 
         if (color && material.color) {
           material.color.copy(color);
 
-          if (isDimmed) {
+          if (isLidOnHoney) {
+            material.color.lerp(new THREE.Color(0xe7cd74), 0.5);
+          } else if (isDimmed) {
             material.color.lerp(new THREE.Color(0xbababa), 0.34);
           } else if (!isSelected) {
             material.color.multiplyScalar(0.95);

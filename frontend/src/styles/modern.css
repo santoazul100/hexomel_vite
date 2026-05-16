@@ -203,7 +203,7 @@ main {
   background:
     radial-gradient(circle at top right, #fefdf0 0%, #ffffff 50%),
     radial-gradient(circle at bottom left, #f5f9f7 0%, #ffffff 50%);
-  padding: 160px 0 100px;
+  padding: clamp(100px, 10vw, 160px) 0 clamp(60px, 7vw, 100px);
   min-height: 90vh;
   display: flex;
   align-items: center;
@@ -212,7 +212,7 @@ main {
 }
 
 .hero-title {
-  font-size: 5rem;
+  font-size: clamp(2.5rem, 5vw, 5rem);
   font-weight: 800;
   line-height: 1.05;
   margin-bottom: 2rem;
@@ -221,7 +221,7 @@ main {
 }
 
 .hero-subtitle {
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 1.2vw, 1.4rem);
   color: var(--text-medium);
   line-height: 1.6;
   font-weight: 400;
@@ -898,13 +898,13 @@ main {
 /* --- About Page Exclusive Styles --- */
 .about-hero {
   background: radial-gradient(circle at center, #fdfdfd 0%, #f4f7f5 100%);
-  padding: 180px 0 100px;
+  padding: clamp(110px, 12vw, 180px) 0 clamp(60px, 7vw, 100px);
   position: relative;
   overflow: hidden;
 }
 
 .about-hero-title {
-  font-size: 4rem;
+  font-size: clamp(2.2rem, 4.5vw, 4rem);
   font-weight: 800;
   color: var(--primary-green);
   margin-bottom: 1.5rem;
@@ -955,7 +955,7 @@ main {
 }
 
 .about-story-section {
-  padding: 100px 0;
+  padding: clamp(60px, 7vw, 100px) 0;
   background: white;
 }
 
@@ -2906,7 +2906,7 @@ aside {
     radial-gradient(circle at 20% 20%, rgba(26, 77, 46, 0.06) 0%, transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(244, 180, 0, 0.08) 0%, transparent 40%),
     linear-gradient(180deg, #fefdf8 0%, var(--bg-clean) 100%);
-  padding: 180px 0 60px;
+  padding: clamp(110px, 12vw, 180px) 0 clamp(40px, 5vw, 60px);
   position: relative;
   overflow: hidden;
 }
@@ -2933,6 +2933,6 @@ aside {
   }
 
   .comunidade-hero {
-    padding: 150px 0 50px;
+    padding: clamp(100px, 10vw, 150px) 0 clamp(35px, 4vw, 50px);
   }
 }

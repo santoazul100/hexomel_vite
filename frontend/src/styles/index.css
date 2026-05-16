@@ -73,6 +73,21 @@
 html {
   scroll-behavior: smooth;
   overflow-y: scroll; /* Prevents layout shift caused by scrollbar appearing/disappearing */
+  font-size: 16px; /* Default base for large desktops */
+}
+
+/* Fluid base scaling — prevents "zoomed in" look on laptops */
+@media (max-width: 1600px) {
+  html { font-size: 15.5px; }
+}
+@media (max-width: 1400px) {
+  html { font-size: 15px; }
+}
+@media (max-width: 1200px) {
+  html { font-size: 14px; }
+}
+@media (max-width: 992px) {
+  html { font-size: 13.5px; }
 }
 
 /* Modal Scroll Lock */

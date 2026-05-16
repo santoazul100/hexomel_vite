@@ -49,27 +49,27 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto gap-4">
             <li class="nav-item">
-              <a class="nav-link" href="index.html">Início</a>
+              <a class="nav-link" href="index.html" data-i18n="nav.home">Início</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="shop.html">Produtos</a>
+              <a class="nav-link active" href="shop.html" data-i18n="nav.products">Produtos</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="workshops.html">Workshops</a>
+              <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
               <ul class="dropdown-menu dropdown-menu-hexomel">
-                <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
-                <li><a class="dropdown-item" href="aprender.html">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html">Comunidade</a></li>
+                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
+                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
+                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="about.html">Sobre</a>
+              <a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="contact.html">Contactos</a>
+              <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
             </li>
           </ul>
 
@@ -127,12 +127,12 @@
           <!-- Filter Sidebar (Premium) -->
           <aside class="col-lg-3">
             <div class="premium-filter-container">
-              <h3 class="filter-title-premium">Filtros</h3>
+              <h3 class="filter-title-premium" data-i18n="shop.filters">Filtros</h3>
 
               <!-- Categories -->
               <details class="filter-accordion">
                 <summary class="filter-summary">
-                  <h5 class="filter-subheading mb-0">Categorias</h5>
+                  <h5 class="filter-subheading mb-0" data-i18n="shop.categories">Categorias</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
                 </summary>
                 <div class="filter-content">
@@ -145,7 +145,7 @@
               <!-- Origin -->
               <details class="filter-accordion">
                 <summary class="filter-summary">
-                  <h5 class="filter-subheading mb-0">Origem</h5>
+                  <h5 class="filter-subheading mb-0" data-i18n="shop.origin">Origem</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
                 </summary>
                 <div class="filter-content">
@@ -158,7 +158,7 @@
               <!-- Vendedor -->
               <details class="filter-accordion">
                 <summary class="filter-summary">
-                  <h5 class="filter-subheading mb-0">Vendedor</h5>
+                  <h5 class="filter-subheading mb-0" data-i18n="shop.seller">Vendedor</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
                 </summary>
                 <div class="filter-content">
@@ -171,7 +171,7 @@
                         value="hexomel"
                       />
                       <span class="custom-checkbox-visual"></span>
-                      <span class="checkbox-label-text">Originais Hexomel</span>
+                      <span class="checkbox-label-text" data-i18n="shop.hexomel.orig">Originais Hexomel</span>
                     </label>
                     <label class="custom-checkbox-container">
                       <input
@@ -182,7 +182,7 @@
                       />
                       <span class="custom-checkbox-visual"></span>
                       <span class="checkbox-label-text"
-                        >Comunidade de Apicultores</span
+                         data-i18n="shop.community">Comunidade de Apicultores</span
                       >
                     </label>
                   </div>
@@ -192,7 +192,7 @@
               <!-- Price -->
               <details class="filter-accordion">
                 <summary class="filter-summary">
-                  <h5 class="filter-subheading mb-0">Preço Máximo</h5>
+                  <h5 class="filter-subheading mb-0" data-i18n="shop.maxprice">Preço Máximo</h5>
                   <i class="fas fa-chevron-down accordion-icon"></i>
                 </summary>
                 <div class="filter-content">
@@ -229,7 +229,7 @@
                   type="text" 
                   id="product-search" 
                   class="premium-search-input" 
-                  placeholder="Pesquisar por mel, origem, tags..."
+                  placeholder="Pesquisar por mel, origem, tags..." data-i18n-ph="shop.search"
                   autocomplete="off"
                 >
                 <button id="clear-search" class="clear-search-btn d-none">&times;</button>
@@ -239,7 +239,7 @@
             <div
               class="d-flex justify-content-between align-items-center mb-5 animate-fade-up"
             >
-              <h2 class="display-6 fw-bold mb-0">Nossos Produtos</h2>
+              <h2 class="display-6 fw-bold mb-0" data-i18n="shop.title">Nossos Produtos</h2>
               <div class="d-flex align-items-center">
                 <span class="text-muted small me-2">Ordenar:</span>
                 <select
@@ -276,7 +276,7 @@
             </a>
             <p
               class="mb-4 text-white-50"
-              style="max-width: 300px; font-size: 0.95rem; line-height: 1.6"
+              style="max-width: 300px; font-size: 0.95rem; line-height: 1.6" data-i18n="footer.desc"
             >
               Dedicados à produção de mel 100% natural, preservando a pureza e a
               tradição apícola em cada gota.
@@ -300,26 +300,26 @@
             </div>
           </div>
           <div class="col-lg-2 ms-lg-auto">
-            <h5 class="footer-heading">Navegação</h5>
+            <h5 class="footer-heading" data-i18n="footer.nav">Navegação</h5>
             <ul class="list-unstyled">
-              <li><a href="index.html" class="footer-link">Início</a></li>
-              <li><a href="shop.html" class="footer-link">Produtos</a></li>
-              <li><a href="workshops.html" class="footer-link">Workshops</a></li>
-              <li><a href="about.html" class="footer-link">Sobre</a></li>
-              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+              <li><a href="index.html" class="footer-link" data-i18n="nav.home">Início</a></li>
+              <li><a href="shop.html" class="footer-link" data-i18n="nav.products">Produtos</a></li>
+              <li><a href="workshops.html" class="footer-link" data-i18n="nav.workshops">Workshops</a></li>
+              <li><a href="about.html" class="footer-link" data-i18n="nav.about">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link" data-i18n="nav.contacts">Contactos</a></li>
             </ul>
           </div>
           <div class="col-lg-2">
-            <h5 class="footer-heading">Pedido</h5>
+            <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link">Carrinho</a></li>
-              <li><a href="#" class="footer-link">A minha conta</a></li>
+              <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
               <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link">Termos</a></li>
+              <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">
-            <h5 class="footer-heading">Contactos</h5>
+            <h5 class="footer-heading" data-i18n="footer.contacts">Contactos</h5>
             <p class="small mb-2 text-white">
               <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
               Estrela, Portugal
@@ -334,7 +334,7 @@
         </div>
         <hr class="my-5 opacity-10" />
         <div class="text-center small opacity-50">
-          <p class="mb-0">
+          <p class="mb-0" data-i18n="footer.copy">
             &copy; 2026 Hexomel â€” Excelência em Mel Artesanal. Todos os direitos
             reservados.
           </p>

@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="src/styles/index.css" />
   <link rel="stylesheet" href="src/styles/modern.css" />
   <link rel="stylesheet" href="src/styles/curiosidades.css" />
+  <link rel="stylesheet" href="src/styles/comunidade.css" />
   <!-- Google Auth -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Favicon -->
@@ -36,27 +37,27 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mx-auto gap-4">
           <li class="nav-item">
-            <a class="nav-link" href="index.html">Início</a>
+            <a class="nav-link" href="index.html" data-i18n="nav.home">Início</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="shop.html">Produtos</a>
+            <a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="workshops.html">Workshops</a>
+            <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+            <a class="nav-link active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
             <ul class="dropdown-menu dropdown-menu-hexomel">
-              <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
-              <li><a class="dropdown-item" href="aprender.html">Aprender</a></li>
-              <li><a class="dropdown-item active" href="comunidade.html">Comunidade</a></li>
+              <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
+              <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
+              <li><a class="dropdown-item active" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
             </ul>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="about.html">Sobre</a>
+            <a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="contact.html">Contactos</a>
+            <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
           </li>
         </ul>
 
@@ -86,7 +87,7 @@
       </div>
       <div class="container position-relative z-1">
         <div class="text-center animate-fade-up">
-          <span class="product-badge-premium mb-3 d-inline-block"><i class="fas fa-users me-2"></i>COMUNIDADE</span>
+          <span class="product-badge-premium mb-3 d-inline-block" data-i18n-html="comm.badge"><i class="fas fa-users me-2"></i>COMUNIDADE</span>
           <h1 class="display-4 fw-bold mt-3" style="color: var(--primary-green)">
             Perguntas & Respostas
           </h1>
@@ -101,7 +102,7 @@
     </section>
 
     <!-- Q&A Community Section -->
-    <section id="qa-section" class="py-5 position-relative" style="background: var(--bg-clean)">
+    <section id="qa-section" class="py-5 position-relative" style="background: #fdfaf5">
       <div class="bee-container z-0"
         style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
         <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 3%; width: 45px" />
@@ -114,10 +115,10 @@
           style="max-width: 800px; background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
           <form id="qa-form">
             <div class="mb-3">
-              <label for="qa-input" class="form-label fw-bold" style="color: var(--primary-green)">Tem alguma
+              <label for="qa-input" class="form-label fw-bold" style="color: var(--primary-green)" data-i18n="comm.question">Tem alguma
                 dúvida?</label>
               <textarea class="form-control bg-light" id="qa-input" rows="3"
-                placeholder="Ex: Qual é a melhor forma de conservar o mel?"
+                placeholder="Ex: Qual é a melhor forma de conservar o mel?" data-i18n-ph="comm.placeholder"
                 style="resize: none; border-radius: 12px;"></textarea>
               <div class="invalid-feedback">A pergunta deve ter pelo menos 10 caracteres.</div>
             </div>
@@ -126,7 +127,7 @@
                   class="fas fa-exclamation-circle me-1"></i>Inicie sessão para participar.</div>
               <button type="submit" class="btn btn-primary" id="qa-submit-btn"
                 style="background: var(--primary-green); border: none; border-radius: 50px; padding: 0.6rem 1.5rem;">
-                <i class="fas fa-paper-plane me-2"></i>Publicar Pergunta
+                <i class="fas fa-paper-plane me-2"></i><span data-i18n="comm.submit">Publicar Pergunta</span>
               </button>
             </div>
           </form>
@@ -152,7 +153,7 @@
           <p class="text-muted mb-4 mx-auto" style="max-width: 500px">
             Explore factos fascinantes sobre o mel, as abelhas e a arte da apicultura na nossa página de curiosidades.
           </p>
-          <a href="curiosidades.html" class="btn btn-auth-enhanced register px-5 py-3">Ver Curiosidades <i
+          <a href="curiosidades.html" class="btn btn-auth-enhanced register px-5 py-3" data-i18n="comm.cta.btn">Ver Curiosidades <i
               class="fa-solid fa-arrow-right ms-2"></i></a>
         </div>
       </div>
@@ -167,7 +168,7 @@
           <a href="index.html" class="footer-brand">
             <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" />
           </a>
-          <p class="mb-4 text-white-50" style="max-width: 300px; font-size: 0.95rem; line-height: 1.6">
+          <p class="mb-4 text-white-50" style="max-width: 300px; font-size: 0.95rem; line-height: 1.6" data-i18n="footer.desc">
             Dedicados à produção de mel 100% natural, preservando a pureza e a
             tradição apícola em cada gota.
           </p>
@@ -181,28 +182,28 @@
           </div>
         </div>
         <div class="col-lg-2 ms-lg-auto">
-          <h5 class="footer-heading">Navegação</h5>
+          <h5 class="footer-heading" data-i18n="footer.nav">Navegação</h5>
           <ul class="list-unstyled">
-            <li><a href="index.html" class="footer-link">Início</a></li>
-            <li><a href="shop.html" class="footer-link">Produtos</a></li>
-            <li><a href="workshops.html" class="footer-link">Workshops</a></li>
-            <li><a href="curiosidades.html" class="footer-link">Curiosidades</a></li>
+            <li><a href="index.html" class="footer-link" data-i18n="nav.home">Início</a></li>
+            <li><a href="shop.html" class="footer-link" data-i18n="nav.products">Produtos</a></li>
+            <li><a href="workshops.html" class="footer-link" data-i18n="nav.workshops">Workshops</a></li>
+            <li><a href="curiosidades.html" class="footer-link" data-i18n="nav.curiosities">Curiosidades</a></li>
             <li><a href="comunidade.html" class="footer-link" style="color: #f4b400 !important">Comunidade</a></li>
-            <li><a href="about.html" class="footer-link">Sobre</a></li>
-            <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            <li><a href="about.html" class="footer-link" data-i18n="nav.about">Sobre</a></li>
+            <li><a href="contact.html" class="footer-link" data-i18n="nav.contacts">Contactos</a></li>
           </ul>
         </div>
         <div class="col-lg-2">
-          <h5 class="footer-heading">Pedido</h5>
+          <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
           <ul class="list-unstyled">
-            <li><a href="#" class="footer-link">Carrinho</a></li>
-            <li><a href="#" class="footer-link">A minha conta</a></li>
+            <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+            <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
             <li><a href="#" class="footer-link">FAQ</a></li>
-            <li><a href="#" class="footer-link">Termos</a></li>
+            <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
           </ul>
         </div>
         <div class="col-lg-3">
-          <h5 class="footer-heading">Contactos</h5>
+          <h5 class="footer-heading" data-i18n="footer.contacts">Contactos</h5>
           <p class="small mb-2 text-white">
             <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
             Estrela, Portugal

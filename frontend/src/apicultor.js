@@ -44,6 +44,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   try {
+    // Carregar estilo de placeholder configurado pelo admin
+    await Skeleton.init();
+
     await Promise.all([
       fetchProfile(apicultorId),
       fetchProducts(apicultorId),

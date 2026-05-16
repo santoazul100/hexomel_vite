@@ -1,6 +1,8 @@
 import "./styles/index.css";
+import "./styles/i18n.css";
 // import "./styles/modern.css";
 // Note: modern.css is loaded via HTML now to avoid FOUC
+import { initI18n, createLangToggle, getLang } from "./i18n.js";
 import {
   getLoggedUser,
   logout,
@@ -158,12 +160,28 @@ document.addEventListener("DOMContentLoaded", () => {
   updateNav(getLoggedUser());
   highlightActiveNavLink();
 
+  // Inject language toggle into navbar
+  injectLangToggle();
+
+  // Initialize i18n (apply saved language)
+  initI18n();
+
   // Cart logic
   const cartBtn = document.getElementById("cart-btn");
   if (cartBtn) {
     cartBtn.addEventListener("click", () => cart.toggle(true));
   }
 });
+
+function injectLangToggle() {
+  const navbarRight = document.querySelector(".navbar-right-fixed");
+  if (!navbarRight) return;
+  // Insert before cart
+  const langContainer = document.createElement("div");
+  langContainer.className = "me-3 d-flex align-items-center";
+  langContainer.innerHTML = createLangToggle();
+  navbarRight.insertBefore(langContainer, navbarRight.firstChild);
+}
 
 function highlightActiveNavLink() {
   const currentPath = window.location.pathname;

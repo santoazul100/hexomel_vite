@@ -21,6 +21,9 @@ let userFavorites = [];
 async function fetchProducts() {
   const grid = document.getElementById("products-grid");
 
+  // Carregar estilo de placeholder configurado pelo admin
+  await Skeleton.init();
+
   // Mostrar skeleton placeholders enquanto carrega
   if (grid) {
     grid.innerHTML = Skeleton.productGrid(6);

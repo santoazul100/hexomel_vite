@@ -1,22 +1,84 @@
 /**
  * Hexomel — Skeleton Loader Module
  * 
- * Componentes reutilizáveis de placeholder/loading state.
- * Gera HTML de skeletons para substituir temporariamente o conteúdo
- * enquanto os dados carregam da API.
+ * Sistema centralizado de placeholder/loading state.
+ * Gera HTML de placeholders de acordo com o estilo
+ * configurado pelo admin (skeleton ou spinner).
  * 
  * Uso:
  *   import { Skeleton } from './skeleton.js';
+ *   await Skeleton.init();  // carrega config do admin
  *   container.innerHTML = Skeleton.productGrid(6);
  */
 
 // Importar CSS dos skeletons
 import './styles/skeleton.css';
 
+// Importar i18n para traduzir texto do spinner
+import { getLang } from './i18n.js';
+
+/**
+ * Traduções locais para o spinner (mínimas, independentes do i18n principal)
+ */
+const LOADING_TEXT = {
+  pt: 'Carregando',
+  en: 'Loading'
+};
+
 /**
  * Módulo Skeleton — funções estáticas para gerar HTML de placeholders
  */
 export const Skeleton = {
+
+  /** Estilo ativo: 'skeleton' (cards shimmer) ou 'spinner' (círculo + texto) */
+  _style: 'skeleton',
+
+  /** Flag para evitar múltiplos fetches */
+  _initialized: false,
+
+  /** Promise de inicialização (evita race conditions) */
+  _initPromise: null,
+
+  // ============================
+  // INIT — Carrega configuração do admin
+  // ============================
+  init() {
+    // Se já temos uma promise, reutiliza-a
+    if (this._initPromise) return this._initPromise;
+
+    this._initPromise = (async () => {
+      if (this._initialized) return;
+      try {
+        const res = await fetch('/api/site-settings');
+        if (res.ok) {
+          const settings = await res.json();
+          if (settings.placeholder_style === 'spinner' || settings.placeholder_style === 'skeleton') {
+            this._style = settings.placeholder_style;
+          }
+        }
+      } catch (e) {
+        // Silently fallback to 'skeleton' if API is unavailable
+        console.warn('Skeleton: Could not load site settings, using default style.');
+      }
+      this._initialized = true;
+    })();
+
+    return this._initPromise;
+  },
+
+  // ============================
+  // SPINNER — Estilo com círculo e texto i18n
+  // ============================
+  spinner(lines = 1) {
+    const lang = getLang();
+    const text = LOADING_TEXT[lang] || LOADING_TEXT.pt;
+
+    return `
+      <div class="skeleton-spinner-container">
+        <div class="skeleton-spinner-circle"></div>
+        <p class="skeleton-spinner-text">${text}</p>
+      </div>`;
+  },
 
   // ============================
   // PRODUCT CARD SKELETON
@@ -51,6 +113,7 @@ export const Skeleton = {
   // PRODUCT GRID (múltiplos cards)
   // ============================
   productGrid(count = 6) {
+    if (this._style === 'spinner') return this.spinner();
     return Array.from({ length: count }, () => this.productCard()).join('');
   },
 
@@ -84,6 +147,7 @@ export const Skeleton = {
   // COMMUNITY LIST (múltiplos posts)
   // ============================
   communityList(count = 4) {
+    if (this._style === 'spinner') return this.spinner();
     return Array.from({ length: count }, () => this.communityPost()).join('');
   },
 
@@ -107,6 +171,7 @@ export const Skeleton = {
   // GENERIC GRID (múltiplos cards genéricos)
   // ============================
   genericGrid(count = 3, colClass = 'col-md-4 mb-4') {
+    if (this._style === 'spinner') return this.spinner();
     return Array.from({ length: count }, () => `
       <div class="${colClass}">
         ${this.genericCard()}

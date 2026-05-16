@@ -91,6 +91,9 @@ class ComunidadeQA {
   }
 
   async loadPerguntas() {
+    // Carregar estilo de placeholder configurado pelo admin
+    await Skeleton.init();
+
     // Mostrar skeleton placeholders enquanto carrega
     if (this.container && this.container.children.length === 0) {
       this.container.innerHTML = Skeleton.communityList(4);
@@ -161,7 +164,7 @@ class ComunidadeQA {
     const avatarUrl = this.getAvatarUrl(p.AutorPicture, p.AutorNome);
     const roleClass = isAuthorBeekeeper ? "qa-role-beekeeper" : "qa-role-client";
     const roleLabel = isAuthorBeekeeper
-      ? '<i class="fas fa-check-circle me-1"></i>Apicultor'
+      ? '<i class="fas fa-check-circle me-1"></i>Apicultor Verificado'
       : "Cliente";
     const avatarClass = isAuthorBeekeeper ? "qa-avatar-beekeeper" : "qa-avatar-client";
 

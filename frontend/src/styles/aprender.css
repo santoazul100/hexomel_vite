@@ -5,7 +5,7 @@
     radial-gradient(circle at 20% 20%, rgba(26,77,46,0.08) 0%, transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(244,180,0,0.1) 0%, transparent 40%),
     linear-gradient(180deg, #fefdf8 0%, #ffffff 100%);
-  padding: 140px 0 80px;
+  padding: clamp(100px, 10vw, 140px) 0 clamp(50px, 6vw, 80px);
   min-height: 80vh;
   display: flex;
   align-items: center;

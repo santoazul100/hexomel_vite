@@ -14,15 +14,15 @@ let workshops = [];
 
 // Fetch all approved workshops
 async function fetchWorkshops() {
-  const loadingEl = document.getElementById("workshops-loading");
-  const emptyEl = document.getElementById("workshops-empty");
   const gridEl = document.getElementById("workshops-grid");
+
+  // Carregar estilo de placeholder configurado pelo admin
+  await Skeleton.init();
 
   // Mostrar skeleton placeholders enquanto carrega
   if (gridEl) {
     gridEl.innerHTML = Skeleton.genericGrid(6, 'col-md-6 col-lg-4 mb-4');
   }
-  if (loadingEl) loadingEl.classList.add("d-none");
 
   try {
     const res = await fetch(`${API_URL}/workshops`);

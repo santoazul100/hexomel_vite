@@ -389,10 +389,16 @@ export function updateNav(user) {
   } else {
     authSection.innerHTML = `
       <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-nav-auth-filled" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
-        <button class="btn btn-nav-auth-outline" onclick="window.openAuthModal('register')">Criar Conta</button>
+        <button class="btn btn-nav-auth-filled" data-i18n="auth.login" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
+        <button class="btn btn-nav-auth-outline" data-i18n="auth.register" onclick="window.openAuthModal('register')">Criar Conta</button>
       </div>
     `;
+    // Re-apply i18n if language is not PT (since we just injected new DOM)
+    try {
+      import('./i18n.js').then(({ getLang, initI18n }) => {
+        if (getLang() !== 'pt') initI18n();
+      });
+    } catch(e) { /* ignore if i18n not loaded */ }
   }
 
   // Add the loaded class with a tiny delay to trigger CSS transition anti-FOUC
