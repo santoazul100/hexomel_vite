@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n \"backend,frontend\" -c \"yellow,blue\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev": "node scripts/dev.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bugs": {

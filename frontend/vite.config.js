@@ -40,6 +40,7 @@ export default defineConfig({
         verifyEmail: "verify-email.html",
         success: "success.html",
         cancel: "cancel.html",
+        recuperar: "recuperar.html",
       },
     },
   },

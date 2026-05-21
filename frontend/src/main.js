@@ -13,6 +13,7 @@ import {
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { trackPageView, setupAutoTracking } from "./analytics.js";
+import { API_URL, ensureBackendReady } from "./api.js";
 
 // Global fetch interceptor for automatic logout on 401 Unauthorized
 const originalFetch = window.fetch;
@@ -155,6 +156,56 @@ window.togglePasswordVisibility = function (id) {
   }
 };
 
+function getPasswordStrength(value) {
+  let score = 0;
+  if (value.length >= 6) score++;
+  if (value.length >= 10) score++;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+  if (/[0-9]/.test(value)) score++;
+  if (/[^A-Za-z0-9]/.test(value)) score++;
+
+  const levels = [
+    { cls: "weak", text: "Fraca - adicione letras e números" },
+    { cls: "weak", text: "Fraca - continue a melhorar" },
+    { cls: "fair", text: "Razoável - adicione caracteres especiais" },
+    { cls: "good", text: "Forte - excelente escolha!" },
+    { cls: "strong", text: "Muito forte - segurança máxima" },
+  ];
+
+  return levels[Math.min(score, levels.length - 1)];
+}
+
+function initializePasswordStrengthMeters() {
+  document.querySelectorAll("[data-password-strength-input]").forEach((input) => {
+    if (input.dataset.strengthReady === "true") return;
+
+    const form = input.closest("form");
+    const container = form?.querySelector("[data-password-strength-container]");
+    const fill = form?.querySelector("[data-password-strength-fill]");
+    const label = form?.querySelector("[data-password-strength-label]");
+
+    if (!container || !fill || !label) return;
+
+    input.dataset.strengthReady = "true";
+    input.addEventListener("input", () => {
+      const value = input.value;
+      if (!value) {
+        container.style.display = "none";
+        fill.className = "strength-fill";
+        label.className = "strength-label";
+        label.textContent = "Mínimo 6 caracteres";
+        return;
+      }
+
+      const strength = getPasswordStrength(value);
+      container.style.display = "block";
+      fill.className = `strength-fill ${strength.cls}`;
+      label.className = `strength-label ${strength.cls}`;
+      label.textContent = strength.text;
+    });
+  });
+}
+
 window.toggleAuthMode = function (mode) {
   const loginView = document.getElementById("login-view-v2");
   const registerView = document.getElementById("register-view-v2");
@@ -185,12 +236,17 @@ window.addEventListener("scroll", () => {
 });
 
 // Initialize
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   trackPageView(); // Global analytics
   setupAutoTracking(); // Automatic click tracking
   injectAuthModal();
+  initializePasswordStrengthMeters();
   initializeAuthForms();
   updateNav(getLoggedUser());
+  
+  // Load dynamic menu
+  await loadDynamicMenu();
+
   highlightActiveNavLink();
 
   // Inject language toggle into navbar
@@ -199,12 +255,79 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize i18n (apply saved language)
   initI18n();
 
+  // Apply admin-managed SEO title/description for the current page
+  await applySiteSEO();
+
   // Cart logic
   const cartBtn = document.getElementById("cart-btn");
   if (cartBtn) {
     cartBtn.addEventListener("click", () => cart.toggle(true));
   }
+
+  // Handle URL parameters like ?openAuth=login or ?openAuth=register
+  const urlParams = new URLSearchParams(window.location.search);
+  const openAuth = urlParams.get("openAuth");
+  if (openAuth === "login" || openAuth === "register") {
+    // Wait a brief moment for assets and i18n to load nicely
+    setTimeout(() => {
+      window.openAuthModal(openAuth);
+    }, 150);
+    // Clean URL parameters without reloading
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
+  // Load dynamic CMS content for the current page
+  await loadCMSContent();
 });
+
+async function applySiteSEO() {
+  const pageKeyByFile = {
+    "": "inicio",
+    "index.html": "inicio",
+    "shop.html": "loja",
+    "about.html": "sobre",
+    "contact.html": "contactos",
+    "workshops.html": "workshops",
+    "curiosidades.html": "curiosidades",
+    "comunidade.html": "comunidade",
+    "apicultores.html": "apicultores",
+  };
+
+  const fileName = window.location.pathname.split("/").pop() || "index.html";
+  const pageKey = pageKeyByFile[fileName];
+  if (!pageKey) return;
+
+  try {
+    const backendAvailable = await ensureBackendReady();
+    if (!backendAvailable) return;
+
+    const response = await fetch(`${API_URL}/site-slugs`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return;
+
+    const pages = await response.json();
+    const current = pages.find((page) => page.Pagina === pageKey);
+    if (!current) return;
+
+    if (current.Titulo_SEO) {
+      document.title = current.Titulo_SEO;
+    }
+
+    if (current.Descricao_SEO) {
+      let metaDescription = document.querySelector('meta[name="description"]');
+      if (!metaDescription) {
+        metaDescription = document.createElement("meta");
+        metaDescription.setAttribute("name", "description");
+        document.head.appendChild(metaDescription);
+      }
+      metaDescription.setAttribute("content", current.Descricao_SEO);
+    }
+  } catch (error) {
+    console.warn("SEO settings not available, using static page metadata.", error);
+  }
+}
 
 function injectLangToggle() {
   const navbarRight = document.querySelector(".navbar-right-fixed");
@@ -275,7 +398,7 @@ function injectAuthModal() {
                 </button>
               </div>
             </div>
-            <a href="#" class="forgot-password-link-v2">Esqueceu-se da palavra-passe?</a>
+            <a href="/recuperar.html" class="forgot-password-link-v2">Esqueceu-se da palavra-passe?</a>
             <button type="submit" class="auth-btn-primary" id="login-submit-v2">Entrar</button>
           </form>
 
@@ -303,10 +426,16 @@ function injectAuthModal() {
             <div class="auth-field-v2">
               <label class="auth-label-v2">Password</label>
               <div class="password-wrapper-v2">
-                <input type="password" id="register-password-v2" class="auth-input-v2" placeholder="Mínimo 6 caracteres" required>
+                <input type="password" id="register-password-v2" class="auth-input-v2" placeholder="Mínimo 6 caracteres" data-password-strength-input required>
                 <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('register-password-v2')">
                   <i class="far fa-eye"></i>
                 </button>
+              </div>
+              <div class="strength-container" data-password-strength-container style="display: none;">
+                <div class="strength-track">
+                  <div class="strength-fill" data-password-strength-fill></div>
+                </div>
+                <span class="strength-label" data-password-strength-label>Mínimo 6 caracteres</span>
               </div>
             </div>
             <div class="auth-field-v2">
@@ -337,4 +466,129 @@ function injectAuthModal() {
   //     window.closeAuthModal();
   //   }
   // });
+}
+
+async function loadDynamicMenu() {
+  const navList = document.querySelector("#navbarNav ul.navbar-nav");
+  if (!navList) return;
+
+  try {
+    const backendAvailable = await ensureBackendReady();
+    if (!backendAvailable) return;
+
+    const response = await fetch("/api/menu");
+    if (!response.ok) throw new Error("Failed to fetch menu");
+    const menus = await response.json();
+    
+    if (menus && menus.length > 0) {
+      navList.innerHTML = menus
+        .map((m) => {
+          const target = m.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+          let i18nAttr = "";
+          if (m.Link === "index.html") i18nAttr = 'data-i18n="nav.home"';
+          else if (m.Link === "shop.html") i18nAttr = 'data-i18n="nav.products"';
+          else if (m.Link === "workshops.html") i18nAttr = 'data-i18n="nav.workshops"';
+          else if (m.Link === "about.html") i18nAttr = 'data-i18n="nav.about"';
+          else if (m.Link === "contact.html") i18nAttr = 'data-i18n="nav.contacts"';
+          else if (m.Link === "curiosidades.html") i18nAttr = 'data-i18n="nav.curiosities"';
+          else if (m.Link === "aprender.html") i18nAttr = 'data-i18n="nav.learn"';
+          else if (m.Link === "comunidade.html") i18nAttr = 'data-i18n="nav.community"';
+
+          return `
+            <li class="nav-item">
+              <a class="nav-link" href="${m.Link}" ${target} ${i18nAttr}>${m.Label}</a>
+            </li>
+          `;
+        })
+        .join("");
+
+      // Re-trigger highlight
+      highlightActiveNavLink();
+      
+      // Translate dynamic items
+      if (typeof initI18n === "function") {
+        initI18n();
+      }
+    }
+  } catch (error) {
+    console.warn("Could not load dynamic menu, using static HTML fallback:", error);
+  }
+}
+
+/**
+ * Loads dynamic CMS content from the backend and injects it into the current page.
+ * Maps page filenames to CMS page keys, then maps block keys to CSS selectors.
+ * Falls back gracefully to static HTML content if the API is unreachable.
+ */
+async function loadCMSContent() {
+  // Determine current page key from URL
+  const path = window.location.pathname.replace(/^\//, "").replace(/\.html$/, "") || "index";
+  
+  const pageKeyMap = {
+    "index": "home",
+    "": "home",
+    "about": "about",
+    "contact": "contact",
+  };
+
+  const pageKey = pageKeyMap[path];
+  if (!pageKey) return; // No CMS mapping for this page
+
+  // Map of CMS block keys to CSS selectors for each page
+  const selectorMap = {
+    home: {
+      hero_title: ".hero-title",
+      hero_subtitle: ".hero-subtitle",
+      featured_title: ".featured-collection-title, section.py-5.bg-white h2",
+      featured_subtitle: ".featured-collection-subtitle",
+    },
+    about: {
+      hero_title: ".about-hero-title",
+      hero_subtitle: ".about-hero-subtitle",
+      legacy_text: ".about-legacy-text",
+    },
+    contact: {
+      hero_title: ".contact-hero-title",
+      hero_subtitle: ".contact-hero-subtitle",
+    },
+  };
+
+  const selectors = selectorMap[pageKey];
+  if (!selectors) return;
+
+  try {
+    const backendAvailable = await ensureBackendReady();
+    if (!backendAvailable) return;
+
+    const response = await fetch(`/api/cms/${pageKey}`);
+    if (!response.ok) throw new Error("CMS fetch failed");
+    const blocks = await response.json();
+
+    if (!blocks || blocks.length === 0) return;
+
+    for (const block of blocks) {
+      const selector = selectors[block.Block_Key];
+      if (!selector) continue;
+
+      const el = document.querySelector(selector);
+      if (!el) continue;
+
+      if (block.Type === "html") {
+        el.innerHTML = block.Content_Value;
+      } else if (block.Type === "image_url") {
+        if (el.tagName === "IMG") {
+          el.src = block.Content_Value;
+        } else {
+          el.style.backgroundImage = `url('${block.Content_Value}')`;
+        }
+      } else {
+        // text type — set textContent to preserve XSS safety
+        el.textContent = block.Content_Value;
+      }
+    }
+
+    console.log(`✅ CMS content loaded for page: ${pageKey}`);
+  } catch (error) {
+    console.warn("CMS content not available, using static HTML fallback:", error);
+  }
 }

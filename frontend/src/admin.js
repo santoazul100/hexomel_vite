@@ -1,5 +1,79 @@
 // Hexomel Admin Logic
 const API_URL = "/api";
+const ADMIN_LANG_KEY = "hexomel-admin-lang";
+
+const ADMIN_I18N = {
+  pt: {
+    "admin.panel": "Painel Admin",
+    "admin.nav.main": "Principal",
+    "admin.nav.dashboard": "Dashboard",
+    "admin.nav.products": "Produtos",
+    "admin.nav.categories": "Categorias",
+    "admin.nav.origins": "Origens",
+    "admin.nav.users": "Utilizadores",
+    "admin.nav.customers": "Clientes",
+    "admin.nav.upgrades": "Pedidos Apicultor",
+    "admin.nav.operations": "Operações",
+    "admin.nav.orders": "Encomendas",
+    "admin.nav.workshops": "Workshops",
+    "admin.nav.quiz": "Quiz",
+    "admin.nav.analysis": "Análise",
+    "admin.nav.interactions": "Interações",
+    "admin.nav.settings": "Configurações",
+    "admin.nav.appearance": "Aparência",
+    "admin.nav.menu": "Menu Dinâmico",
+    "admin.nav.cms": "Conteúdo (CMS)",
+    "admin.users.title": "Gestão de Utilizadores",
+    "admin.users.subtitle": "Visualize, crie e gira os utilizadores registados no sistema.",
+    "admin.users.new": "Novo Utilizador",
+    "admin.cms.title": "Gestão de Conteúdo (CMS)",
+    "admin.cms.subtitle": "Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.",
+    "admin.cms.page": "Selecionar Página do Frontoffice",
+    "cms.empty": "Nenhum bloco de conteúdo cadastrado para a página selecionada.",
+    "cms.value": "Valor / Conteúdo",
+    "cms.save": "Guardar Alterações",
+    "cms.delete": "Eliminar",
+    "user.empty": "Nenhum utilizador registado.",
+    "user.client": "Cliente",
+    "user.beekeeper": "Apicultor",
+    "user.admin": "Admin",
+  },
+  en: {
+    "admin.panel": "Admin Panel",
+    "admin.nav.main": "Main",
+    "admin.nav.dashboard": "Dashboard",
+    "admin.nav.products": "Products",
+    "admin.nav.categories": "Categories",
+    "admin.nav.origins": "Origins",
+    "admin.nav.users": "Users",
+    "admin.nav.customers": "Customers",
+    "admin.nav.upgrades": "Beekeeper Requests",
+    "admin.nav.operations": "Operations",
+    "admin.nav.orders": "Orders",
+    "admin.nav.workshops": "Workshops",
+    "admin.nav.quiz": "Quiz",
+    "admin.nav.analysis": "Analytics",
+    "admin.nav.interactions": "Interactions",
+    "admin.nav.settings": "Settings",
+    "admin.nav.appearance": "Appearance",
+    "admin.nav.menu": "Dynamic Menu",
+    "admin.nav.cms": "Content (CMS)",
+    "admin.users.title": "User Management",
+    "admin.users.subtitle": "View, create, and manage registered users.",
+    "admin.users.new": "New User",
+    "admin.cms.title": "Content Management (CMS)",
+    "admin.cms.subtitle": "Create, edit, and delete Frontoffice text blocks without changing code.",
+    "admin.cms.page": "Select Frontoffice Page",
+    "cms.empty": "No content blocks registered for the selected page.",
+    "cms.value": "Value / Content",
+    "cms.save": "Save Changes",
+    "cms.delete": "Delete",
+    "user.empty": "No users registered.",
+    "user.client": "Customer",
+    "user.beekeeper": "Beekeeper",
+    "user.admin": "Admin",
+  },
+};
 
 class AdminUI {
   constructor() {
@@ -8,6 +82,9 @@ class AdminUI {
     this.orders = [];
     this.categories = []; // newly added
     this.quizQuestions = []; // newly added for quiz
+    this.menus = []; // dynamic navigation menus
+    this.cmsBlocks = []; // CMS content blocks
+    this.lang = localStorage.getItem(ADMIN_LANG_KEY) || "pt";
     this.token = localStorage.getItem("token");
     this.userData = JSON.parse(localStorage.getItem("user"));
     this.currentTags = new Set(); // Stores active tags for the modal
@@ -27,6 +104,7 @@ class AdminUI {
     }
 
     this.setupEventListeners();
+    this.setupAdminLanguage();
     // Navbar is now static, just init auth
     this.initAuth();
 
@@ -113,6 +191,36 @@ class AdminUI {
   }
 
   // injectNavbar removed - static in HTML
+
+  t(key) {
+    return ADMIN_I18N[this.lang]?.[key] || ADMIN_I18N.pt[key] || key;
+  }
+
+  setupAdminLanguage() {
+    const apply = () => {
+      document.documentElement.lang = this.lang;
+      document.querySelectorAll("[data-admin-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-admin-i18n");
+        el.textContent = this.t(key);
+      });
+      const label = document.getElementById("admin-lang-label");
+      if (label) label.textContent = this.lang.toUpperCase();
+    };
+
+    const toggle = document.getElementById("admin-lang-toggle");
+    if (toggle) {
+      toggle.addEventListener("click", () => {
+        this.lang = this.lang === "pt" ? "en" : "pt";
+        localStorage.setItem(ADMIN_LANG_KEY, this.lang);
+        apply();
+        const active = document.querySelector(".admin-section.active")?.id?.replace("-section", "");
+        if (active === "customers") this.renderUsers();
+        if (active === "cms") this.renderCMSBlocks(document.getElementById("cms-page-selector")?.value || "home");
+      });
+    }
+
+    apply();
+  }
 
   setupEventListeners() {
     // Nav switching
@@ -203,6 +311,476 @@ class AdminUI {
     if (sectionId === "seo") this.loadSEO();
     if (sectionId === "quiz") this.loadQuizQuestions();
     if (sectionId === "appearance") this.loadAppearanceSettings();
+    if (sectionId === "menus") this.loadMenus();
+    if (sectionId === "cms") this.loadCMSBlocks();
+  }
+
+  // ============================================================
+  // GESTÃO DE MENUS DINÂMICOS
+  // ============================================================
+
+  async loadMenus() {
+    try {
+      const response = await fetch(`${API_URL}/admin/menu`, {
+        headers: { Authorization: `Bearer ${this.token}` }
+      });
+      if (!response.ok) throw new Error("Falha ao carregar menus");
+      this.menus = await response.json();
+      this.renderMenusTable();
+    } catch (error) {
+      console.error("Error loading menus:", error);
+      Swal.fire("Erro", "Não foi possível carregar os itens de menu.", "error");
+    }
+  }
+
+  renderMenusTable() {
+    const listBody = document.getElementById("admin-menus-list");
+    if (!listBody) return;
+
+    if (!this.menus || this.menus.length === 0) {
+      listBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">
+            <i class="fas fa-info-circle me-1"></i> Nenhum item de menu encontrado.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    listBody.innerHTML = this.menus
+      .map((m, index) => {
+        const statusBadge = m.Ativo
+          ? `<span class="badge bg-success-subtle text-success border border-success border-opacity-10 px-2.5 py-1 rounded-pill cursor-pointer" onclick="adminUI.toggleMenuStatus(${m.ID_Menu}, 0)" style="cursor: pointer;">
+              <i class="fas fa-check-circle me-1"></i> Ativo
+             </span>`
+          : `<span class="badge bg-danger-subtle text-danger border border-danger border-opacity-10 px-2.5 py-1 rounded-pill cursor-pointer" onclick="adminUI.toggleMenuStatus(${m.ID_Menu}, 1)" style="cursor: pointer;">
+              <i class="fas fa-times-circle me-1"></i> Oculto
+             </span>`;
+
+        const targetBadge = m.Abrir_Nova_Aba
+          ? `<span class="badge bg-primary-subtle text-primary border border-primary border-opacity-10 px-2.5 py-1 rounded-pill">Sim</span>`
+          : `<span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-10 px-2.5 py-1 rounded-pill">Não</span>`;
+
+        return `
+          <tr>
+            <td class="fw-bold text-muted">${index + 1}</td>
+            <td class="fw-600 text-dark">${m.Label}</td>
+            <td class="text-muted"><code style="font-size: 0.85rem;">${m.Link}</code></td>
+            <td>${targetBadge}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right;">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="adminUI.openMenuModal(${m.ID_Menu})">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="adminUI.deleteMenuItem(${m.ID_Menu})">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  openMenuModal(id = null) {
+    const modalEl = document.getElementById("menuModal");
+    if (!modalEl) return;
+
+    const form = document.getElementById("menuForm");
+    if (form) form.reset();
+
+    const titleEl = document.getElementById("menuModalTitle");
+    const idInput = document.getElementById("menu-id");
+    const labelInput = document.getElementById("menu-label");
+    const linkInput = document.getElementById("menu-link");
+    const ordemInput = document.getElementById("menu-ordem");
+    const targetCheckbox = document.getElementById("menu-abrir-nova-aba");
+    const activeCheckbox = document.getElementById("menu-ativo");
+
+    if (id) {
+      // Edit mode
+      const item = this.menus.find((m) => m.ID_Menu === id);
+      if (!item) return;
+
+      if (titleEl) titleEl.innerText = "Editar Link de Menu";
+      if (idInput) idInput.value = item.ID_Menu;
+      if (labelInput) labelInput.value = item.Label;
+      if (linkInput) linkInput.value = item.Link;
+      if (ordemInput) ordemInput.value = this.menus.findIndex((m) => m.ID_Menu === id) + 1;
+      if (targetCheckbox) targetCheckbox.checked = !!item.Abrir_Nova_Aba;
+      if (activeCheckbox) activeCheckbox.checked = !!item.Ativo;
+    } else {
+      // Create mode
+      if (titleEl) titleEl.innerText = "Novo Link de Menu";
+      if (idInput) idInput.value = "";
+      if (ordemInput) ordemInput.value = this.menus.length + 1;
+      if (targetCheckbox) targetCheckbox.checked = false;
+      if (activeCheckbox) activeCheckbox.checked = true;
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+
+  async saveMenuItem() {
+    const id = document.getElementById("menu-id").value;
+    const label = document.getElementById("menu-label").value.trim();
+    const link = document.getElementById("menu-link").value.trim();
+    const ordem = parseInt(document.getElementById("menu-ordem").value, 10) || 0;
+    const target = document.getElementById("menu-abrir-nova-aba").checked;
+    const ativo = document.getElementById("menu-ativo").checked;
+
+    if (!label || !link) {
+      Swal.fire("Aviso", "Etiqueta e Destino são obrigatórios.", "warning");
+      return;
+    }
+
+    const body = {
+      Label: label,
+      Link: link,
+      Ordenacao: ordem,
+      Abrir_Nova_Aba: target,
+      Ativo: ativo
+    };
+
+    const isEditing = !!id;
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing ? `${API_URL}/admin/menu/${id}` : `${API_URL}/admin/menu`;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao guardar item de menu.");
+
+      const modalEl = document.getElementById("menuModal");
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      Swal.fire({
+        icon: "success",
+        title: isEditing ? "Link atualizado!" : "Link criado!",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      this.loadMenus();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async toggleMenuStatus(id, newStatus) {
+    const item = this.menus.find((m) => m.ID_Menu === id);
+    if (!item) return;
+
+    const body = {
+      Label: item.Label,
+      Link: item.Link,
+      Ordenacao: item.Ordenacao,
+      Abrir_Nova_Aba: !!item.Abrir_Nova_Aba,
+      Ativo: !!newStatus
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/admin/menu/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error("Erro ao atualizar estado.");
+      
+      Swal.fire({
+        icon: "success",
+        title: newStatus ? "Menu visível!" : "Menu ocultado!",
+        timer: 1000,
+        showConfirmButton: false
+      });
+      
+      this.loadMenus();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async deleteMenuItem(id) {
+    const result = await Swal.fire({
+      title: "Eliminar item?",
+      text: "Isto removerá este link da barra de navegação no Frontoffice.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, eliminar!",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/admin/menu/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` }
+        });
+
+        if (!response.ok) throw new Error("Falha ao eliminar item de menu.");
+
+        Swal.fire({
+          icon: "success",
+          title: "Eliminado!",
+          timer: 1000,
+          showConfirmButton: false
+        });
+
+        this.loadMenus();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  // ============================================================
+  // GESTÃO DE CONTEÚDO (CMS)
+  // ============================================================
+
+  async loadCMSBlocks() {
+    const selector = document.getElementById("cms-page-selector");
+    if (!selector) return;
+    const pageKey = selector.value;
+
+    try {
+      const response = await fetch(`${API_URL}/cms/${pageKey}`);
+      if (!response.ok) throw new Error("Falha ao carregar conteúdos CMS.");
+      this.cmsBlocks = await response.json();
+      this.renderCMSBlocks(pageKey);
+    } catch (error) {
+      console.error("Error loading CMS blocks:", error);
+      Swal.fire("Erro", "Não foi possível carregar os blocos de conteúdo.", "error");
+    }
+  }
+
+  renderCMSBlocks(pageKey) {
+    const listContainer = document.getElementById("cms-blocks-list");
+    if (!listContainer) return;
+
+    if (!this.cmsBlocks || this.cmsBlocks.length === 0) {
+      listContainer.innerHTML = `
+        <div class="text-center py-5 text-muted">
+          <i class="fas fa-info-circle fa-2x mb-3 text-secondary"></i>
+          <p class="m-0">${this.t("cms.empty")}</p>
+        </div>
+      `;
+      return;
+    }
+
+    listContainer.innerHTML = this.cmsBlocks
+      .map((b) => {
+        // Humanize keys for nice UI presentation
+        const keyLabel = b.Block_Key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        const inputField = b.Content_Value.length > 80 
+          ? `<textarea id="cms-value-${b.ID_Content}" class="form-control form-control-v2" rows="4" style="border-radius: 8px; font-size: 0.95rem; line-height: 1.5;" required>${b.Content_Value}</textarea>`
+          : `<input type="text" id="cms-value-${b.ID_Content}" class="form-control form-control-v2" value="${b.Content_Value}" style="border-radius: 8px; font-size: 0.95rem;" required />`;
+
+        return `
+          <div class="card mb-4 border border-light-subtle shadow-sm overflow-hidden" style="border-radius: 12px; background: #ffffff;">
+            <div class="card-header bg-light bg-opacity-40 border-0 px-4 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.95rem;">
+                <i class="fas fa-font text-primary"></i> ${keyLabel}
+                <code class="text-muted small px-2 py-0.5 bg-light rounded" style="font-size: 0.75rem;">${b.Block_Key}</code>
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-10 rounded px-2.5 py-1 text-uppercase fw-bold" style="font-size: 0.65rem;">
+                Tipo: ${b.Type}
+              </span>
+            </div>
+            <div class="card-body px-4 py-4">
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">${this.t("cms.value")}</label>
+                ${inputField}
+              </div>
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-danger px-4 py-2 fw-bold btn-sm" onclick="adminUI.deleteCMSBlock(${b.ID_Content})">
+                  <i class="fas fa-trash me-2"></i>${this.t("cms.delete")}
+                </button>
+                <button type="button" class="btn btn-add-product px-4 py-2 fw-bold btn-sm" onclick="adminUI.saveCMSBlock(${b.ID_Content}, '${b.Page_Key}', '${b.Block_Key}', '${b.Type}')">
+                  <i class="fas fa-save me-2"></i>${this.t("cms.save")}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  async saveCMSBlock(id, pageKey, blockKey, type) {
+    const inputEl = document.getElementById(`cms-value-${id}`);
+    if (!inputEl) return;
+    
+    const value = inputEl.value.trim();
+    if (value === "") {
+      Swal.fire("Aviso", "O conteúdo não pode estar vazio.", "warning");
+      return;
+    }
+
+    const body = {
+      Page_Key: pageKey,
+      Block_Key: blockKey,
+      Type: type,
+      Content_Value: value
+    };
+
+    try {
+      Swal.fire({
+        title: "A guardar...",
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
+      const response = await fetch(`${API_URL}/admin/cms`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error("Erro ao guardar alteração no CMS.");
+
+      Swal.fire({
+        icon: "success",
+        title: "Conteúdo atualizado!",
+        text: "As alterações foram guardadas com sucesso.",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      // Reload blocks
+      this.loadCMSBlocks();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async openCMSBlockModal() {
+    const currentPage = document.getElementById("cms-page-selector")?.value || "home";
+    const result = await Swal.fire({
+      title: this.lang === "en" ? "New CMS Block" : "Novo Bloco CMS",
+      width: 620,
+      html: `
+        <div class="text-start">
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Page" : "Página"}</label>
+          <select id="swal-cms-page" class="form-select mb-3">
+            <option value="home" ${currentPage === "home" ? "selected" : ""}>Home</option>
+            <option value="about" ${currentPage === "about" ? "selected" : ""}>About</option>
+            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>Contact</option>
+          </select>
+          <label class="form-label small fw-bold text-uppercase text-muted">Block key</label>
+          <input id="swal-cms-key" class="form-control mb-3" placeholder="ex: hero_title">
+          <label class="form-label small fw-bold text-uppercase text-muted">Tipo</label>
+          <select id="swal-cms-type" class="form-select mb-3">
+            <option value="text">Text</option>
+            <option value="html">HTML</option>
+            <option value="image_url">Image URL</option>
+          </select>
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.t("cms.value")}</label>
+          <textarea id="swal-cms-value" class="form-control" rows="5"></textarea>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: this.lang === "en" ? "Create" : "Criar",
+      cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+      preConfirm: () => {
+        const payload = {
+          Page_Key: document.getElementById("swal-cms-page").value,
+          Block_Key: document.getElementById("swal-cms-key").value.trim(),
+          Type: document.getElementById("swal-cms-type").value,
+          Content_Value: document.getElementById("swal-cms-value").value.trim(),
+        };
+        if (!payload.Page_Key || !payload.Block_Key || !payload.Content_Value) {
+          Swal.showValidationMessage(this.lang === "en" ? "Fill in all required fields." : "Preenche todos os campos obrigatórios.");
+          return false;
+        }
+        return payload;
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetch(`${API_URL}/admin/cms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(result.value),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao criar bloco CMS.");
+
+      const selector = document.getElementById("cms-page-selector");
+      if (selector) selector.value = result.value.Page_Key;
+      Swal.fire({
+        icon: "success",
+        title: this.lang === "en" ? "Block created!" : "Bloco criado!",
+        timer: 1400,
+        showConfirmButton: false,
+      });
+      await this.loadCMSBlocks();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async deleteCMSBlock(id) {
+    const result = await Swal.fire({
+      title: this.lang === "en" ? "Delete block?" : "Eliminar bloco?",
+      text: this.lang === "en" ? "This content block will be removed from the CMS." : "Este bloco de conteúdo será removido do CMS.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: this.lang === "en" ? "Delete" : "Eliminar",
+      cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetch(`${API_URL}/admin/cms/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao eliminar bloco CMS.");
+
+      Swal.fire({
+        icon: "success",
+        title: this.lang === "en" ? "Block deleted!" : "Bloco eliminado!",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      await this.loadCMSBlocks();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
   }
 
   async loadDashboardStats() {
@@ -565,7 +1143,7 @@ class AdminUI {
     const container = document.getElementById("customer-list-body");
 
     if (this.users.length === 0) {
-      container.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Nenhum cliente registado.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">${this.t("user.empty")}</td></tr>`;
       return;
     }
 
@@ -586,9 +1164,9 @@ class AdminUI {
                 <td><div class="small text-dark">${u.Email}</div></td>
                 <td>
                     <select class="form-select form-select-sm d-inline-block w-auto bg-light border p-1 rounded-3" onchange="adminUI.updateUserRole('${u.ID_Cliente}', this.value)">
-                        <option value="client" ${u.UserType === "client" ? "selected" : ""}>Cliente</option>
-                        <option value="apicultor" ${u.UserType === "apicultor" ? "selected" : ""}>Apicultor</option>
-                        <option value="admin" ${u.UserType === "admin" ? "selected" : ""}>Admin</option>
+                        <option value="client" ${u.UserType === "client" ? "selected" : ""}>${this.t("user.client")}</option>
+                        <option value="apicultor" ${u.UserType === "apicultor" ? "selected" : ""}>${this.t("user.beekeeper")}</option>
+                        <option value="admin" ${u.UserType === "admin" ? "selected" : ""}>${this.t("user.admin")}</option>
                     </select>
                 </td>
                 <td class="small text-muted">${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
@@ -698,6 +1276,74 @@ class AdminUI {
         showConfirmButton: false,
       });
       await this.loadProducts();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async openCreateUserModal() {
+    const result = await Swal.fire({
+      title: this.lang === "en" ? "Create User" : "Criar Utilizador",
+      width: 620,
+      html: `
+        <div class="text-start">
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Name" : "Nome"}</label>
+          <input id="swal-user-name" class="form-control mb-3" placeholder="${this.lang === "en" ? "Full name" : "Nome completo"}">
+          <label class="form-label small fw-bold text-uppercase text-muted">Email</label>
+          <input id="swal-user-email" type="email" class="form-control mb-3" placeholder="email@exemplo.com">
+          <label class="form-label small fw-bold text-uppercase text-muted">Username</label>
+          <input id="swal-user-username" class="form-control mb-3" placeholder="utilizador">
+          <label class="form-label small fw-bold text-uppercase text-muted">Password</label>
+          <input id="swal-user-password" type="password" class="form-control mb-3" placeholder="${this.lang === "en" ? "Temporary password" : "Password temporária"}">
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Type" : "Tipo"}</label>
+          <select id="swal-user-type" class="form-select">
+            <option value="client">${this.t("user.client")}</option>
+            <option value="apicultor">${this.t("user.beekeeper")}</option>
+            <option value="admin">${this.t("user.admin")}</option>
+          </select>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: this.lang === "en" ? "Create" : "Criar",
+      cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+      preConfirm: () => {
+        const payload = {
+          name: document.getElementById("swal-user-name").value.trim(),
+          email: document.getElementById("swal-user-email").value.trim(),
+          username: document.getElementById("swal-user-username").value.trim(),
+          password: document.getElementById("swal-user-password").value,
+          userType: document.getElementById("swal-user-type").value,
+        };
+        if (!payload.name || !payload.email || !payload.username || !payload.password) {
+          Swal.showValidationMessage(this.lang === "en" ? "Fill in all fields." : "Preenche todos os campos.");
+          return false;
+        }
+        return payload;
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetch(`${API_URL}/admin/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(result.value),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao criar utilizador.");
+
+      Swal.fire({
+        icon: "success",
+        title: this.lang === "en" ? "User created!" : "Utilizador criado!",
+        timer: 1400,
+        showConfirmButton: false,
+      });
+      await this.loadUsers();
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
     }
@@ -1997,23 +2643,11 @@ class AdminUI {
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-      // Static pages mapping (to real filenames)
-      const pageToHtml = {
-        inicio: "index.html",
-        loja: "shop.html",
-        sobre: "about.html",
-        contactos: "contact.html",
-        workshops: "workshops.html",
-        curiosidades: "curiosidades.html",
-        comunidade: "comunidade.html",
-        apicultores: "apicultores.html"
-      };
-
       // Add site pages
       sitePages.forEach(p => {
-        const fileName = pageToHtml[p.Pagina] || `${p.Pagina}.html`;
+        const publicPath = p.Pagina === "inicio" ? "" : (p.Slug || p.Pagina);
         xml += `  <url>\n`;
-        xml += `    <loc>${baseUrl}/${fileName}</loc>\n`;
+        xml += `    <loc>${baseUrl}/${publicPath}</loc>\n`;
         xml += `    <lastmod>${date}</lastmod>\n`;
         xml += `    <priority>${p.Pagina === 'inicio' ? '1.0' : '0.8'}</priority>\n`;
         xml += `  </url>\n`;

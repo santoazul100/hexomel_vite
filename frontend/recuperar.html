@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Criar Conta — Hexomel</title>
-    <meta name="description" content="Crie a sua conta Hexomel de forma rápida e segura." />
+    <title>Recuperar Palavra-passe — Hexomel</title>
+    <meta name="description" content="Recupere a sua palavra-passe da conta Hexomel de forma segura." />
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
@@ -12,8 +12,6 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="src/styles/index.css" />
     <link rel="stylesheet" href="src/styles/modern.css" />
-    <!-- Google Auth -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.webp" type="image/x-icon" />
     <script src="src/pre-load.js"></script>
@@ -29,28 +27,41 @@
       .password-toggle-btn:hover {
         color: var(--primary-green) !important;
       }
+      .strength-container {
+        margin-top: 6px;
+        margin-bottom: 20px;
+      }
+      .strength-track {
+        height: 4px;
+        background: rgba(0,0,0,0.08);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .strength-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 4px;
+        transition: width 0.4s ease, background-color 0.4s ease;
+      }
+      .strength-fill.weak { background: #ef4444 !important; width: 25%; }
+      .strength-fill.fair { background: #f59e0b !important; width: 50%; }
+      .strength-fill.good { background: #10b981 !important; width: 75%; }
+      .strength-fill.strong { background: #22d3ee !important; width: 100%; }
+
+      .strength-label {
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 6px;
+        display: block;
+        transition: color 0.3s;
+      }
+      .strength-label.weak { color: #ef4444 !important; }
+      .strength-label.fair { color: #f59e0b !important; }
+      .strength-label.good { color: #10b981 !important; }
+      .strength-label.strong { color: #22d3ee !important; }
+      
       .hover-success:hover {
         color: var(--primary-green) !important;
-      }
-      .terms-label-v2 {
-        display: flex;
-        gap: 0.5rem;
-        font-size: 13px;
-        color: var(--text-medium);
-        margin-bottom: 1.5rem;
-        cursor: pointer;
-        align-items: center;
-      }
-      .terms-label-v2 input {
-        accent-color: var(--primary-green);
-      }
-      .terms-link {
-        color: var(--primary-green);
-        text-decoration: none;
-        font-weight: 600;
-      }
-      .terms-link:hover {
-        text-decoration: underline;
       }
     </style>
   </head>
@@ -120,101 +131,98 @@
           <div class="col-lg-5 mx-auto">
             <div class="premium-card p-4 p-md-5 border-0 shadow-lg animate-fade-up">
               
-              <div class="text-center mb-4">
-                <i class="fas fa-user-plus fs-1 mb-2" style="color: var(--primary-green);"></i>
-                <h2 class="fw-bold" style="color: var(--primary-green);">Criar Conta</h2>
-                <p class="text-muted small">Registe-se e desfrute do mel 100% puro e das nossas novidades.</p>
+              <!-- ═══ STATE A: Request Recovery Link ═══ -->
+              <div id="request-view">
+                <div class="text-center mb-4">
+                  <i class="fas fa-envelope-open-text fs-1 mb-2" style="color: var(--primary-green);"></i>
+                  <h2 class="fw-bold" style="color: var(--primary-green);">Recuperar Palavra-passe</h2>
+                  <p class="text-muted small">Introduza o seu email ou nome de utilizador.<br />Enviaremos um link seguro para redefinir o acesso.</p>
+                </div>
+
+                <form id="forgotPasswordForm" autocomplete="off">
+                  <div class="form-group mb-4">
+                    <label class="form-label small fw-bold opacity-75">EMAIL OU USERNAME</label>
+                    <input
+                      type="text"
+                      id="identity-input"
+                      class="auth-input mb-0"
+                      placeholder="Email ou nome de utilizador"
+                      required
+                      autocomplete="username"
+                    />
+                  </div>
+
+                  <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
+                    <i class="fas fa-paper-plane me-2"></i> Enviar Link de Recuperação
+                  </button>
+                </form>
               </div>
 
-              <form id="registerFormV2">
-                <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">NOME COMPLETO</label>
-                  <input
-                    type="text"
-                    id="register-name-v2"
-                    class="auth-input mb-0"
-                    placeholder="Como deseja aparecer"
-                    required
-                  />
+              <!-- ═══ STATE B: Reset Password with Token ═══ -->
+              <div id="reset-view" style="display: none;">
+                <div class="text-center mb-4">
+                  <i class="fas fa-shield-alt fs-1 mb-2" style="color: var(--primary-green);"></i>
+                  <h2 class="fw-bold" style="color: var(--primary-green);">Nova Palavra-passe</h2>
+                  <p class="text-muted small">Escolha uma palavra-passe forte para proteger a sua conta Hexomel.</p>
                 </div>
 
-                <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">NOME DE UTILIZADOR</label>
-                  <input
-                    type="text"
-                    id="register-username-v2"
-                    class="auth-input mb-0"
-                    placeholder="Ex: joao_silva"
-                    required
-                  />
-                </div>
-
-                <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">EMAIL</label>
-                  <input
-                    type="email"
-                    id="register-email-v2"
-                    class="auth-input mb-0"
-                    placeholder="nome@exemplo.com"
-                    required
-                  />
-                </div>
-
-                <div class="form-group mb-3 position-relative">
-                  <label class="form-label small fw-bold opacity-75">PASSWORD</label>
-                  <div class="position-relative">
-                    <input
-                      type="password"
-                      id="register-password-v2"
-                      class="auth-input mb-0"
-                      placeholder="Mínimo 6 caracteres"
-                      data-password-strength-input
-                      required
-                    />
-                    <button type="button" class="password-toggle-btn btn border-0 position-absolute end-0 top-50 translate-middle-y text-muted px-3" data-target="register-password-v2" style="z-index: 10;">
-                      <i class="far fa-eye"></i>
-                    </button>
+                <form id="resetPasswordForm" autocomplete="off">
+                  <div class="form-group mb-3 position-relative">
+                    <label class="form-label small fw-bold opacity-75">NOVA PALAVRA-PASSE</label>
+                    <div class="position-relative">
+                      <input
+                        type="password"
+                        id="new-password"
+                        class="auth-input mb-0"
+                        placeholder="Nova palavra-passe"
+                        required
+                        autocomplete="new-password"
+                      />
+                      <button type="button" class="password-toggle-btn btn border-0 position-absolute end-0 top-50 translate-middle-y text-muted px-3" data-target="new-password" style="z-index: 10;">
+                        <i class="far fa-eye"></i>
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div class="strength-container" data-password-strength-container style="display: none;">
-                  <div class="strength-track">
-                    <div class="strength-fill" data-password-strength-fill></div>
+                  <!-- Password Strength Meter -->
+                  <div class="strength-container" id="strength-container" style="display: none;">
+                    <div class="strength-track">
+                      <div class="strength-fill" id="strength-fill"></div>
+                    </div>
+                    <span class="strength-label" id="strength-label">Mínimo 6 caracteres</span>
                   </div>
-                  <span class="strength-label" data-password-strength-label>Mínimo 6 caracteres</span>
-                </div>
 
-                <div class="form-group mb-4 position-relative">
-                  <label class="form-label small fw-bold opacity-75">CONFIRMAR PASSWORD</label>
-                  <div class="position-relative">
-                    <input
-                      type="password"
-                      id="register-confirm-v2"
-                      class="auth-input mb-0"
-                      placeholder="Repita a password"
-                      required
-                    />
-                    <button type="button" class="password-toggle-btn btn border-0 position-absolute end-0 top-50 translate-middle-y text-muted px-3" data-target="register-confirm-v2" style="z-index: 10;">
-                      <i class="far fa-eye"></i>
-                    </button>
+                  <div class="form-group mb-4 position-relative">
+                    <label class="form-label small fw-bold opacity-75">CONFIRMAR PALAVRA-PASSE</label>
+                    <div class="position-relative">
+                      <input
+                        type="password"
+                        id="confirm-password"
+                        class="auth-input mb-0"
+                        placeholder="Confirmar palavra-passe"
+                        required
+                        autocomplete="new-password"
+                      />
+                      <button type="button" class="password-toggle-btn btn border-0 position-absolute end-0 top-50 translate-middle-y text-muted px-3" data-target="confirm-password" style="z-index: 10;">
+                        <i class="far fa-eye"></i>
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <label class="terms-label-v2">
-                  <input type="checkbox" id="terms-checkbox-v2" required />
-                  <span>Aceito os <a href="#" class="terms-link">Termos e Condições</a></span>
-                </label>
-
-                <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
-                  Criar Conta
-                </button>
-              </form>
+                  <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
+                    <i class="fas fa-check-circle me-2"></i> Guardar Nova Palavra-passe
+                  </button>
+                </form>
+              </div>
 
               <!-- Footer Links -->
               <div class="text-center mt-4 pt-3 border-top">
-                <span class="text-muted small">Já tem uma conta? </span>
-                <a href="login.html" class="text-decoration-none hover-success fw-bold" style="color: var(--primary-green);">
-                  Iniciar Sessão
+                <a href="/?openAuth=login" id="auth-login-link" class="text-muted text-decoration-none me-3 hover-success">
+                  <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sessão
+                </a>
+                <span class="text-muted opacity-25">|</span>
+                <a href="/" class="text-muted text-decoration-none ms-3 hover-success">
+                  <i class="fas fa-home me-1"></i> Página Inicial
                 </a>
               </div>
 
@@ -286,6 +294,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="src/beeAnimation.js"></script>
     <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/recuperar.js"></script>
     <script>
       // Toggle password visibility
       document.querySelectorAll('.password-toggle-btn').forEach(btn => {
@@ -301,6 +310,43 @@
           }
         });
       });
+
+      // Password strength meter
+      const newPwInput = document.getElementById('new-password');
+      const strengthContainer = document.getElementById('strength-container');
+      const strengthFill = document.getElementById('strength-fill');
+      const strengthLabel = document.getElementById('strength-label');
+
+      if (newPwInput) {
+        newPwInput.addEventListener('input', () => {
+          const val = newPwInput.value;
+          if (!val) {
+            strengthContainer.style.display = 'none';
+            return;
+          }
+          strengthContainer.style.display = 'block';
+
+          let score = 0;
+          if (val.length >= 6) score++;
+          if (val.length >= 10) score++;
+          if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+          if (/[0-9]/.test(val)) score++;
+          if (/[^A-Za-z0-9]/.test(val)) score++;
+
+          const levels = [
+            { cls: 'weak', text: 'Fraca — adicione letras e números' },
+            { cls: 'weak', text: 'Fraca — continue a melhorar' },
+            { cls: 'fair', text: 'Razoável — adicione caracteres especiais' },
+            { cls: 'good', text: 'Forte — excelente escolha!' },
+            { cls: 'strong', text: 'Muito Forte — segurança máxima 🛡️' },
+          ];
+
+          const level = levels[Math.min(score, 4)];
+          strengthFill.className = 'strength-fill ' + level.cls;
+          strengthLabel.className = 'strength-label ' + level.cls;
+          strengthLabel.textContent = level.text;
+        });
+      }
     </script>
   </body>
 </html>

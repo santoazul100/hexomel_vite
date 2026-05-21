@@ -590,10 +590,10 @@ function renderProfile(data) {
   if (badgeVerify) {
     if (data.isVerified) {
       badgeVerify.className = "verify-badge-premium verified";
-      badgeVerify.innerHTML = '<i class="fas fa-check-circle me-1"></i>Conta Verificada';
+      badgeVerify.innerHTML = '<i class="fas fa-check-circle"></i><span>Conta Verificada</span>';
     } else {
       badgeVerify.className = "verify-badge-premium pending";
-      badgeVerify.innerHTML = '<i class="fas fa-clock me-1"></i>Verificação Pendente';
+      badgeVerify.innerHTML = '<i class="fas fa-clock"></i><span>Verificação Pendente</span>';
       badgeVerify.title = "Por favor, verifique o seu email.";
     }
   }

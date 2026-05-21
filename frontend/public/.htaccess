@@ -1,0 +1,68 @@
+# ────────────────────────────────────────────────────────────
+# CONFIGURAÇÕES APACHE - HEXOMEL
+# ────────────────────────────────────────────────────────────
+
+# Activar motor de reescrita de URLs
+RewriteEngine On
+RewriteBase /
+
+# 1. REDIRECIONAMENTO DE SITEMAP.XML PARA O BACKEND
+# Redireciona os pedidos de sitemap.xml para a API dinamicamente gerida pelo Node.js.
+# Nota: Substituir "http://localhost:3000" pelo URL do backend em produção se aplicável.
+RewriteRule ^sitemap\.xml$ http://localhost:3000/sitemap.xml [R=301,L]
+
+# 2. SEÇÃO DE URLS AMIGÁVEIS (CLEAN URLS)
+# Permite aceder a páginas sem a extensão .html (ex: aceder a "/loja" em vez de "/shop.html").
+# A reescrita verifica primeiro os mapeamentos manuais para melhor estética de SEO.
+
+# Mapeamentos manuais específicos
+RewriteRule ^inicio$ index.html [L]
+RewriteRule ^loja$ shop.html [L]
+RewriteRule ^sobre$ about.html [L]
+RewriteRule ^contactos$ contact.html [L]
+RewriteRule ^perfil$ profile.html [L]
+RewriteRule ^dashboard-apicultor$ dashboard-apicultor.html [L]
+
+# Regra genérica para outros ficheiros HTML (se o ficheiro com extensão .html existir)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^([^/]+)$ $1.html [L]
+
+# 3. SEGURANÇA E PROTEÇÃO DO DIRETÓRIO
+# Impedir que utilizadores listem os ficheiros das pastas (Directoria Indexes)
+Options -Indexes
+
+# Bloquear acesso a ficheiros de configuração e ocultos do sistema
+<FilesMatch "^\.(htaccess|git|env)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Proibir visualização direta de ficheiros de dependências e logs
+RedirectMatch 403 ^/package(-lock)?\.json$
+RedirectMatch 403 ^/\.env$
+
+# 4. EXPIRES HEADERS (OTIMIZAÇÃO DE PERFORMANCE & SEO)
+# Melhora os tempos de carregamento no browser ativando caching de ativos estáticos.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    
+    # HTML (Carregamento instantâneo, sempre fresco)
+    ExpiresByType text/html "access plus 0 seconds"
+    
+    # CSS, Javascript
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    
+    # Imagens e Média (Cache prolongado)
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    
+    # Fontes
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+</IfModule>

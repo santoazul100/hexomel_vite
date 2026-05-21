@@ -88,16 +88,6 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             color: white;
         }
-        .mock-badge {
-            background: #fff3cd;
-            color: #856404;
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-top: 10px;
-            display: inline-block;
-        }
     </style>
     <meta name="view-transition" content="same-origin" />
   </head>
@@ -119,10 +109,6 @@
 
         <p id="payment-status" style="font-size: 0.95rem; color: #4b5563; margin: 12px auto 0; max-width: 430px;"></p>
 
-        <div id="mock-info" class="d-none">
-            <div class="mock-badge">MODO SIMULAÇÃO ATIVO</div>
-        </div>
-
         <p style="font-size: 0.9rem; color: #666; max-width: 400px; margin: 0 auto;">
             Enviámos um email de confirmação com todos os detalhes. Podes acompanhar o estado no teu perfil.
         </p>
@@ -135,7 +121,6 @@
             const params = new URLSearchParams(window.location.search);
             const orderId = params.get('orderId');
             const sessionId = params.get('session_id');
-            const isMock = params.get('mock');
             const orderInfoEl = document.getElementById('order-info');
             const paymentStatusEl = document.getElementById('payment-status');
 
@@ -174,11 +159,6 @@
                         'Não foi possível validar automaticamente o pagamento nesta página.';
                 }
             };
-
-            if (isMock) {
-                document.getElementById('mock-info').classList.remove('d-none');
-                paymentStatusEl.textContent = 'Modo simulação ativo para testes locais.';
-            }
 
             validateStripeSession();
 

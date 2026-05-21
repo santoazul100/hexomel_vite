@@ -1,7 +1,5 @@
 import { app } from "./common.js";
-import axios from "axios";
-
-const API_URL = "http://127.0.0.1:3000/api";
+import { API_URL } from "./api.js";
 
 const homePage = {
   async init() {
@@ -9,43 +7,32 @@ const homePage = {
   },
 
   async loadFeaturedProducts() {
-    const grid = document.getElementById("products-grid");
-    try {
-      const response = await axios.get(`${API_URL}/produtos`);
-      const products = response.data.slice(0, 3);
+    const grid = document.getElementById("featured-products");
+    if (!grid) return;
 
-      if (products.length === 0) {
-        grid.innerHTML =
-          '<p class="text-center">Novos produtos brevemente.</p>';
-        return;
-      }
+    try {
+      const response = await fetch(`${API_URL}/products`);
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data = await response.json();
+      const products = data.slice(0, 3);
+
+      if (products.length === 0) return; // Keep static HTML placeholders
 
       grid.innerHTML = products
         .map(
-          (p) => `
-                <div class="col-md-4">
-                    <div class="card product-card border-0 h-100 shadow-sm transition-hover">
-                        <div class="position-relative">
-                            <img src="/img/${
-                              p.Imagem || "erro.png"
-                            }" class="card-img-top" style="height: 250px; object-fit: cover;" onerror="this.src='https://placehold.co/400x250?text=Mel+Hexomel'">
-                            <div class="position-absolute bottom-0 end-0 p-3">
-                                <span class="badge bg-success fs-6 shadow">${Number(
-                                  p.Preco
-                                ).toFixed(2)}€</span>
-                            </div>
+          (p, i) => `
+                <div class="col-md-4 animate-fade-up" style="animation-delay: ${0.1 + i * 0.1}s">
+                    <div class="product-card-premium">
+                        <div class="product-img-container">
+                            <img src="/img/${p.Imagem || "erro.png"}" alt="${p.Nome || "Mel Hexomel"}" onerror="this.src='/images/logo_hexomel.webp'" />
                         </div>
-                        <div class="card-body p-4 text-center d-flex flex-column">
-                            <h5 class="fw-bold mb-2">${
-                              p.Nome || "Mel Hexomel"
-                            }</h5>
-                            <p class="text-muted small flex-grow-1">${
-                              p.Descricao ||
-                              "A pureza da natureza em cada gota."
+                        <div class="p-4 text-center">
+                            <h4 class="fw-bold">${p.Nome || "Mel Hexomel"}</h4>
+                            <p class="text-muted small">${
+                              p.Descricao || "A pureza da natureza em cada gota."
                             }</p>
-                            <button class="btn btn-green w-100 add-to-cart-btn mt-3" data-id="${
-                              p.ID_Produto
-                            }">
+                            <p class="price-text mb-3">€${Number(p.Preco).toFixed(2)}</p>
+                            <button class="btn btn-auth-enhanced login w-100 add-to-cart-home" data-id="${p.ID_Produto}">
                                 <i class="bi bi-cart-plus me-2"></i>Adicionar ao Carrinho
                             </button>
                         </div>
@@ -55,20 +42,19 @@ const homePage = {
         )
         .join("");
 
-      // Bind click events
-      document.querySelectorAll(".add-to-cart-btn").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          const id = parseInt(
-            btn.target.closest(".add-to-cart-btn").dataset.id
-          );
+      // Bind click events for add-to-cart
+      grid.querySelectorAll(".add-to-cart-home").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.dataset.id);
           const product = products.find((p) => p.ID_Produto === id);
-          app.addToCart(product);
+          if (product && app && typeof app.addToCart === "function") {
+            app.addToCart(product);
+          }
         });
       });
     } catch (error) {
-      console.error("Home products error:", error);
-      grid.innerHTML =
-        '<p class="text-center text-danger py-5">Indisponível de momento.</p>';
+      console.warn("Home featured products: using static HTML fallback.", error);
+      // Keep the existing static HTML products as fallback
     }
   },
 };

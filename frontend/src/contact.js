@@ -1,9 +1,7 @@
 // Contact page JavaScript - handles functional form submissions
 import "./styles/index.css";
 import { toast } from "./toast.js";
-
-// API Config
-const API_URL = "http://localhost:3000/api";
+import { API_URL } from "./api.js";
 
 // Contact form handler
 const contactForm = document.getElementById("contactForm");

@@ -133,52 +133,30 @@ let mailTransporter = null;
 let mailTransporterError = null;
 
 async function initMailTransporter() {
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    mailTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: parseInt(process.env.SMTP_PORT || "587", 10),
-      secure: String(process.env.SMTP_PORT || "587") === "465",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    try {
-      await mailTransporter.verify();
-      console.log("📧 Email transporter ready.");
-      mailTransporterError = null;
-    } catch (error) {
-      mailTransporter = null;
-      mailTransporterError = error.message;
-      console.warn("⚠️ Email transporter failed:", error.message);
-    }
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    mailTransporterError = "SMTP_USER/SMTP_PASS missing.";
+    console.warn("⚠️ Mailer disabled: SMTP_USER/SMTP_PASS missing.");
     return;
   }
 
-  const allowEthereal =
-    (process.env.ENABLE_ETHEREAL_MAIL || "").toLowerCase() === "true";
-
-  if (!allowEthereal) {
-    console.log("⚠️ SMTP_USER/SMTP_PASS not set — emails disabled (dev mode).");
-    return;
-  }
+  mailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: String(process.env.SMTP_PORT || "587") === "465",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 
   try {
-    const testAccount = await nodemailer.createTestAccount();
-    mailTransporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-    console.log("📧 Mailer initialized with Ethereal:", testAccount.user);
+    await mailTransporter.verify();
+    console.log(`📧 Email transporter ready for ${process.env.SMTP_USER}.`);
+    mailTransporterError = null;
   } catch (error) {
     mailTransporter = null;
-    console.warn("⚠️ Mailer disabled because Ethereal setup failed:", error.message);
+    mailTransporterError = error.message;
+    console.warn("⚠️ Email transporter failed:", error.message);
   }
 }
 initMailTransporter().catch(console.error);
@@ -323,7 +301,7 @@ async function sendReceiptEmail(orderId) {
 
     const html = generateReceiptHTML(order, items, customer.Nome, customer.Email);
 
-    const info = await mailTransporter.sendMail({
+    await mailTransporter.sendMail({
       from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
       to: customer.Email,
       subject: `🍯 Recibo da Encomenda #${orderId} — Hexomel`,
@@ -335,9 +313,6 @@ async function sendReceiptEmail(orderId) {
       }]
     });
     console.log(`📧 Receipt email sent for order #${orderId} to ${customer.Email}`);
-    if (nodemailer.getTestMessageUrl(info)) {
-      console.log(`🔗 Email Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-    }
   } catch (err) {
     console.error(`📧 Failed to send receipt email for order #${orderId}:`, err.message);
   }
@@ -791,6 +766,97 @@ const runDatabaseMigrations = async () => {
       }
     }
 
+    // --- Módulo Menu Dinâmico ---
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS menu_nav (
+        ID_Menu int(10) NOT NULL AUTO_INCREMENT,
+        Label varchar(100) NOT NULL,
+        Link varchar(255) NOT NULL,
+        Ordenacao int(10) DEFAULT 0,
+        Ativo boolean DEFAULT TRUE,
+        Abrir_Nova_Aba boolean DEFAULT FALSE,
+        PRIMARY KEY (ID_Menu)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.error("Error creating menu_nav table:", err));
+
+    const menuCount = await db.get("SELECT COUNT(*) as c FROM menu_nav").catch(() => ({ c: 1 }));
+    if (menuCount && menuCount.c === 0) {
+      const defaultMenus = [
+        ["Início", "index.html", 1, 1],
+        ["Produtos", "shop.html", 2, 1],
+        ["Workshops", "workshops.html", 3, 1],
+        ["Curiosidades", "curiosidades.html", 4, 1],
+        ["Aprender", "aprender.html", 5, 1],
+        ["Comunidade", "comunidade.html", 6, 1],
+        ["Sobre Nós", "about.html", 7, 1],
+        ["Contactos", "contact.html", 8, 1]
+      ];
+      for (const m of defaultMenus) {
+        await db.run(
+          "INSERT INTO menu_nav (Label, Link, Ordenacao, Ativo) VALUES (?, ?, ?, ?)",
+          m
+        ).catch(() => {});
+      }
+    }
+
+    const menuRows = await db.all("SELECT ID_Menu, Ordenacao FROM menu_nav ORDER BY Ordenacao ASC, ID_Menu ASC").catch(() => []);
+    for (let index = 0; index < menuRows.length; index++) {
+      const normalizedOrder = index + 1;
+      if (Number(menuRows[index].Ordenacao) !== normalizedOrder) {
+        await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [
+          normalizedOrder,
+          menuRows[index].ID_Menu
+        ]).catch(() => {});
+      }
+    }
+
+    // --- Módulo Recuperação de Senha ---
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS password_recovery (
+        ID_Recovery int(10) NOT NULL AUTO_INCREMENT,
+        ID_Cliente int(10) NOT NULL,
+        Token varchar(255) NOT NULL,
+        Expires_At datetime NOT NULL,
+        Used boolean DEFAULT FALSE,
+        Created_At timestamp DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (ID_Recovery),
+        UNIQUE KEY uk_recovery_token (Token),
+        CONSTRAINT fk_recovery_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.error("Error creating password_recovery table:", err));
+
+    // --- Módulo CMS Geral ---
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS cms_content (
+        ID_Content int(10) NOT NULL AUTO_INCREMENT,
+        Page_Key varchar(50) NOT NULL,
+        Block_Key varchar(100) NOT NULL,
+        Type varchar(20) DEFAULT 'text',
+        Content_Value text NOT NULL,
+        PRIMARY KEY (ID_Content),
+        UNIQUE KEY uk_page_block (Page_Key, Block_Key)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.error("Error creating cms_content table:", err));
+
+    const cmsCount = await db.get("SELECT COUNT(*) as c FROM cms_content").catch(() => ({ c: 1 }));
+    if (cmsCount && cmsCount.c === 0) {
+      const defaultCMS = [
+        ["home", "hero_title", "text", "Mel Artesanal Premium"],
+        ["home", "hero_subtitle", "text", "O melhor mel natural do Alentejo e da Serra da Estrela, produzido com tradição, amor e pureza desde 1984. Descubra sabores autênticos diretamente das nossas colmeias."],
+        ["home", "featured_title", "text", "Os Nossos Méis Destaque"],
+        ["home", "featured_subtitle", "text", "Colhidos artesanalmente, preservando todas as propriedades nutritivas e medicinais da flor à colmeia."],
+        ["about", "hero_title", "text", "A Nossa História"],
+        ["about", "hero_subtitle", "text", "Compromisso com a natureza, com as abelhas e com a excelência do mel tradicional português."],
+        ["about", "legacy_text", "text", "Desde 1984 que a família Hexomel se dedica à preservação da apicultura tradicional na Serra da Estrela e no Alentejo. O que começou com apenas três colmeias familiares cresceu para um ecossistema sustentável que apoia a biodiversidade local e promove práticas apícolas éticas."]
+      ];
+      for (const c of defaultCMS) {
+        await db.run(
+          "INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value) VALUES (?, ?, ?, ?)",
+          c
+        ).catch(() => {});
+      }
+    }
+
     // Seed default placeholder style if not exists
     await db
       .run("INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES ('placeholder_style', 'skeleton')")
@@ -949,7 +1015,7 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 });
 
 // Basic health check route
-app.get("/health", (req, res) => {
+const healthCheckHandler = (req, res) => {
   res.status(databaseReady ? 200 : 503).json({
     status: databaseReady ? "OK" : "DEGRADED",
     message: "Hexomel API is running",
@@ -960,7 +1026,17 @@ app.get("/health", (req, res) => {
         : describeDatabaseStartupError(databaseStartupError),
     },
   });
-});
+};
+
+const sendServerError = (res, error, fallback = "Database error") => {
+  res.status(500).json({
+    error: fallback,
+    ...(isDevelopment ? { detail: error.message, code: error.code } : {}),
+  });
+};
+
+app.get("/health", healthCheckHandler);
+app.get("/api/health", healthCheckHandler);
 
 app.get("/api/config/public", (req, res) => {
   res.json({
@@ -977,6 +1053,326 @@ app.use((req, res, next) => {
     error: "Database unavailable",
     message: describeDatabaseStartupError(databaseStartupError),
   });
+});
+
+// ============================================================
+// DYNAMIC MENU ENDPOINTS
+// ============================================================
+
+const DEFAULT_MENU_ITEMS = [
+  { ID_Menu: 1, Label: "Início", Link: "index.html", Ordenacao: 1, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 2, Label: "Produtos", Link: "shop.html", Ordenacao: 2, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 3, Label: "Workshops", Link: "workshops.html", Ordenacao: 3, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 4, Label: "Curiosidades", Link: "curiosidades.html", Ordenacao: 4, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 5, Label: "Aprender", Link: "aprender.html", Ordenacao: 5, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 6, Label: "Comunidade", Link: "comunidade.html", Ordenacao: 6, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 7, Label: "Sobre Nós", Link: "about.html", Ordenacao: 7, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 8, Label: "Contactos", Link: "contact.html", Ordenacao: 8, Ativo: 1, Abrir_Nova_Aba: 0 },
+];
+
+async function reorderMenuItem(menuId, requestedPosition) {
+  const rows = await db.all(
+    "SELECT ID_Menu FROM menu_nav WHERE ID_Menu <> ? ORDER BY Ordenacao ASC, ID_Menu ASC",
+    [menuId]
+  );
+  const ids = rows.map((row) => row.ID_Menu);
+  const position = Math.max(1, Math.min(Number(requestedPosition) || ids.length + 1, ids.length + 1));
+
+  ids.splice(position - 1, 0, Number(menuId));
+
+  for (let index = 0; index < ids.length; index++) {
+    await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [index + 1, ids[index]]);
+  }
+}
+
+async function normalizeMenuOrder() {
+  const rows = await db.all("SELECT ID_Menu FROM menu_nav ORDER BY Ordenacao ASC, ID_Menu ASC");
+  for (let index = 0; index < rows.length; index++) {
+    await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [
+      index + 1,
+      rows[index].ID_Menu
+    ]);
+  }
+}
+
+// Get active menu items (Public)
+app.get("/api/menu", async (req, res) => {
+  try {
+    const menus = await db.all("SELECT * FROM menu_nav WHERE Ativo = 1 ORDER BY Ordenacao ASC");
+    res.json(menus && menus.length > 0 ? menus : DEFAULT_MENU_ITEMS);
+  } catch (error) {
+    console.error("Error fetching menus:", error);
+    res.json(DEFAULT_MENU_ITEMS);
+  }
+});
+
+// Get all menu items (Admin)
+app.get("/api/admin/menu", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const menus = await db.all("SELECT * FROM menu_nav ORDER BY Ordenacao ASC");
+    res.json(menus);
+  } catch (error) {
+    console.error("Error fetching admin menus:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Add a menu item (Admin)
+app.post("/api/admin/menu", authenticateToken, isAdmin, async (req, res) => {
+  const { Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba } = req.body;
+  if (!Label || !Link) {
+    return res.status(400).json({ error: "Label and Link are required" });
+  }
+  try {
+    const result = await db.run(
+      "INSERT INTO menu_nav (Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba) VALUES (?, ?, ?, ?, ?)",
+      [Label, Link, Ordenacao || 0, Ativo !== false ? 1 : 0, Abrir_Nova_Aba ? 1 : 0]
+    );
+    await reorderMenuItem(result.lastID, Ordenacao);
+    res.status(201).json({ id: result.lastID, message: "Menu item created successfully" });
+  } catch (error) {
+    console.error("Error adding menu item:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update a menu item (Admin)
+app.put("/api/admin/menu/:id", authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba } = req.body;
+  if (!Label || !Link) {
+    return res.status(400).json({ error: "Label and Link are required" });
+  }
+  try {
+    const result = await db.run(
+      "UPDATE menu_nav SET Label = ?, Link = ?, Ativo = ?, Abrir_Nova_Aba = ? WHERE ID_Menu = ?",
+      [Label, Link, Ativo ? 1 : 0, Abrir_Nova_Aba ? 1 : 0, id]
+    );
+    if (result.changes === 0) {
+      return res.status(404).json({ error: "Menu item not found" });
+    }
+    await reorderMenuItem(id, Ordenacao);
+    res.json({ message: "Menu item updated successfully" });
+  } catch (error) {
+    console.error("Error updating menu item:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete a menu item (Admin)
+app.delete("/api/admin/menu/:id", authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.run("DELETE FROM menu_nav WHERE ID_Menu = ?", [id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: "Menu item not found" });
+    }
+    await normalizeMenuOrder();
+    res.json({ message: "Menu item deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting menu item:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ============================================================
+// PASSWORD RECOVERY ENDPOINTS
+// ============================================================
+
+// Request password recovery link (Public)
+app.post("/api/auth/forgot-password", async (req, res) => {
+  const { identity } = req.body; // Can be email or username
+  if (!identity) {
+    return res.status(400).json({ error: "Email ou nome de utilizador é obrigatório." });
+  }
+
+  try {
+    const client = await db.get("SELECT * FROM cliente WHERE Email = ? OR Username = ?", [identity, identity]);
+    
+    // Always return 200 to avoid user enumeration
+    const genericResponse = { message: "Se o email introduzido estiver registado, receberá um link de recuperação em breve." };
+    
+    if (!client) {
+      return res.json(genericResponse);
+    }
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString("hex");
+    
+    // Store token in database
+    await db.run(
+      "INSERT INTO password_recovery (ID_Cliente, Token, Expires_At) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))",
+      [client.ID_Cliente, token]
+    );
+
+    const resetLink = `${req.headers.origin || "http://localhost:5173"}/recuperar.html?token=${token}`;
+
+    if (mailTransporter) {
+      try {
+        await mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
+          to: client.Email,
+          subject: "🍯 Recuperação de Palavra-passe — Hexomel",
+          html: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e8f5e9; border-radius: 8px;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #2d5f3f; margin-bottom: 5px;">Recuperação de Palavra-passe</h2>
+                <p style="color: #666; font-size: 14px;">Hexomel — Excelência em Mel Artesanal</p>
+              </div>
+              <p>Olá, <strong>${client.Nome}</strong>,</p>
+              <p>Recebemos um pedido para redefinir a palavra-passe da sua conta Hexomel. Se não efetuou este pedido, por favor ignore este email.</p>
+              <p>Para escolher uma nova palavra-passe, clique no botão abaixo dentro de 5 minutos:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetLink}" style="background-color: #2d5f3f; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; display: inline-block;">Redefinir Palavra-passe</a>
+              </div>
+              <p style="font-size: 12px; color: #999; line-height: 1.5;">Se o botão não funcionar, copie e cole o seguinte link no seu navegador:<br>
+              <a href="${resetLink}" style="color: #2d5f3f;">${resetLink}</a></p>
+              <hr style="border: 0; border-top: 1px solid #e8f5e9; margin: 20px 0;">
+              <p style="font-size: 12px; color: #999; text-align: center;">&copy; 2026 Hexomel. Todos os direitos reservados.</p>
+            </div>
+          `
+        });
+      } catch (mailError) {
+        console.error("Failed to send recovery email:", mailError.message);
+      }
+    } else {
+      console.warn("Nodemailer not configured. Link only logged in console.");
+    }
+    // Always return the same generic response to avoid user enumeration
+    return res.json(genericResponse);
+
+  } catch (error) {
+    console.error("Error in forgot-password:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Redefine password using token (Public)
+app.post("/api/auth/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ error: "Token e nova password são obrigatórios." });
+  }
+
+  try {
+    const recovery = await db.get("SELECT * FROM password_recovery WHERE Token = ?", [token]);
+    if (!recovery) {
+      return res.status(400).json({ error: "Token de recuperação inválido. Por favor peça um novo link." });
+    }
+
+    if (Number(recovery.Used) === 1) {
+      return res.status(400).json({ error: "Este link de recuperação já foi utilizado. Por favor peça um novo link." });
+    }
+
+    const expiryCheck = await db.get("SELECT ? > NOW() AS valid", [recovery.Expires_At]);
+    if (!expiryCheck || Number(expiryCheck.valid) !== 1) {
+      return res.status(400).json({ error: "O token de recuperação expirou. Por favor peça um novo link." });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update password
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [hashedPassword, recovery.ID_Cliente]);
+
+    // Mark token as used
+    const usedResult = await db.run(
+      "UPDATE password_recovery SET Used = 1 WHERE ID_Recovery = ? AND Used = 0",
+      [recovery.ID_Recovery]
+    );
+    if (usedResult.changes === 0) {
+      return res.status(400).json({ error: "Este link de recuperação já foi utilizado. Por favor peça um novo link." });
+    }
+
+    res.json({ message: "Palavra-passe redefinida com sucesso! Pode agora iniciar sessão com a sua nova password." });
+
+  } catch (error) {
+    console.error("Error in reset-password:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ============================================================
+// CMS ENDPOINTS (CONTENT MANAGEMENT SYSTEM)
+// ============================================================
+
+// Get all CMS content blocks (Public)
+app.get("/api/cms", async (req, res) => {
+  try {
+    const contents = await db.all("SELECT * FROM cms_content");
+    res.json(contents);
+  } catch (error) {
+    console.error("Error fetching CMS contents:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get CMS content blocks for a specific page (Public)
+app.get("/api/cms/:pageKey", async (req, res) => {
+  const { pageKey } = req.params;
+  try {
+    const contents = await db.all("SELECT * FROM cms_content WHERE Page_Key = ?", [pageKey]);
+    res.json(contents);
+  } catch (error) {
+    console.error(`Error fetching CMS contents for page ${pageKey}:`, error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create/Update a CMS block (Admin only)
+app.put("/api/admin/cms", authenticateToken, isAdmin, async (req, res) => {
+  const { Page_Key, Block_Key, Type, Content_Value } = req.body;
+  if (!Page_Key || !Block_Key || Content_Value === undefined) {
+    return res.status(400).json({ error: "Page_Key, Block_Key, and Content_Value are required" });
+  }
+  try {
+    await db.run(
+      `INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value) 
+       VALUES (?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE Content_Value = ?, Type = ?`,
+      [Page_Key, Block_Key, Type || 'text', Content_Value, Content_Value, Type || 'text']
+    );
+    res.json({ message: "CMS block saved successfully" });
+  } catch (error) {
+    console.error("Error saving CMS block:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/admin/cms", authenticateToken, isAdmin, async (req, res) => {
+  const { Page_Key, Block_Key, Type, Content_Value } = req.body;
+  if (!Page_Key || !Block_Key || Content_Value === undefined) {
+    return res.status(400).json({ error: "Page_Key, Block_Key e Content_Value são obrigatórios." });
+  }
+
+  try {
+    const result = await db.run(
+      `INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value)
+       VALUES (?, ?, ?, ?)`,
+      [Page_Key, Block_Key, Type || "text", Content_Value]
+    );
+    res.status(201).json({ id: result.lastID, message: "Bloco CMS criado com sucesso." });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Já existe um bloco com essa página e chave." });
+    }
+    console.error("Error creating CMS block:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.delete("/api/admin/cms/:id", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const result = await db.run("DELETE FROM cms_content WHERE ID_Content = ?", [req.params.id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: "Bloco CMS não encontrado." });
+    }
+    res.json({ message: "Bloco CMS eliminado com sucesso." });
+  } catch (error) {
+    console.error("Error deleting CMS block:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // AUTH ROUTES
@@ -1167,7 +1563,7 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
     
     if (mailTransporter) {
       try {
-        const info = await mailTransporter.sendMail({
+        await mailTransporter.sendMail({
           from: process.env.SMTP_FROM || `Hexomel Segurança <${process.env.SMTP_USER || 'noreply@hexomel.pt'}>`,
           to: user.Email,
           subject: "O seu código de verificação para Checkout — Hexomel",
@@ -1201,9 +1597,6 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
             </div>
           `
         });
-        if (nodemailer.getTestMessageUrl(info)) {
-          console.log(`🔗 2FA Email Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-        }
       } catch (emailErr) {
         console.error("2FA Email fail:", emailErr);
         return res.status(500).json({ 
@@ -1584,7 +1977,7 @@ app.get("/api/admin/products", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin products fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    sendServerError(res, error);
   }
 });
 
@@ -2266,6 +2659,47 @@ app.get("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin users fetch error:", error);
+    sendServerError(res, error);
+  }
+});
+
+app.post("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
+  let { name, email, username, password, userType } = req.body;
+
+  if (!name || !email || !username || !password) {
+    return res.status(400).json({ error: "Nome, email, username e password são obrigatórios." });
+  }
+
+  email = email.toLowerCase().trim();
+  username = username.trim();
+  userType = userType || "client";
+
+  const validTypes = ["admin", "client", "apicultor"];
+  if (!validTypes.includes(userType)) {
+    return res.status(400).json({ error: "Tipo de utilizador inválido." });
+  }
+
+  try {
+    const existing = await db.get(
+      "SELECT ID_Cliente FROM cliente WHERE Email = ? OR Username = ?",
+      [email, username]
+    );
+    if (existing) {
+      return res.status(409).json({ error: "Email ou username já está em utilização." });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const result = await db.run(
+      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified, Verification_Token) VALUES (?, ?, ?, ?, ?, 1, NULL)",
+      [name.trim(), email, username, hashed, userType]
+    );
+
+    res.status(201).json({
+      id: result.lastID,
+      message: "Utilizador criado com sucesso."
+    });
+  } catch (error) {
+    console.error("Admin create user error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -2340,7 +2774,7 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
     });
   } catch (error) {
     console.error("Admin analytics error:", error);
-    res.status(500).json({ error: "Database error" });
+    sendServerError(res, error);
   }
 });
 
@@ -2799,7 +3233,7 @@ app.get("/api/admin/orders", authenticateToken, isAdmin, async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Admin orders fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    sendServerError(res, error);
   }
 });
 
@@ -3642,7 +4076,7 @@ app.post("/api/logs/interaction", async (req, res) => {
     res.status(204).send();
   } catch (error) {
     console.error("Log interaction error:", error);
-    res.status(500).json({ error: "Database error" });
+    res.status(204).send();
   }
 });
 
@@ -3784,21 +4218,10 @@ app.get("/sitemap.xml", async (req, res) => {
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-    const pageToHtml = {
-      inicio: "index.html",
-      loja: "shop.html",
-      sobre: "about.html",
-      contactos: "contact.html",
-      workshops: "workshops.html",
-      curiosidades: "curiosidades.html",
-      comunidade: "comunidade.html",
-      apicultores: "apicultores.html"
-    };
-
     sitePages.forEach(p => {
-      const fileName = pageToHtml[p.Pagina] || `${p.Pagina}.html`;
+      const publicPath = p.Pagina === "inicio" ? "" : (p.Slug || p.Pagina);
       xml += `  <url>\n`;
-      xml += `    <loc>${baseUrl}/${fileName}</loc>\n`;
+      xml += `    <loc>${baseUrl}/${publicPath}</loc>\n`;
       xml += `    <lastmod>${date}</lastmod>\n`;
       xml += `    <priority>${p.Pagina === "inicio" ? "1.0" : "0.8"}</priority>\n`;
       xml += `  </url>\n`;

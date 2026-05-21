@@ -1467,6 +1467,73 @@ aside {
   color: var(--primary-gold);
 }
 
+.strength-container {
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.auth-field-v2 .strength-container {
+  margin-bottom: 0;
+}
+
+.strength-track {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+.strength-fill.weak {
+  background: #ef4444 !important;
+  width: 25%;
+}
+
+.strength-fill.fair {
+  background: #f59e0b !important;
+  width: 50%;
+}
+
+.strength-fill.good {
+  background: #10b981 !important;
+  width: 75%;
+}
+
+.strength-fill.strong {
+  background: #22d3ee !important;
+  width: 100%;
+}
+
+.strength-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+
+.strength-label.weak {
+  color: #ef4444 !important;
+}
+
+.strength-label.fair {
+  color: #f59e0b !important;
+}
+
+.strength-label.good {
+  color: #10b981 !important;
+}
+
+.strength-label.strong {
+  color: #22d3ee !important;
+}
+
 .forgot-password-link-v2 {
   display: block;
   text-align: right;
@@ -1764,7 +1831,10 @@ aside {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 12px;
+  width: max-content;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 5px 14px;
   border-radius: 50px;
   font-size: 0.7rem;
   font-weight: 700;
@@ -1773,9 +1843,10 @@ aside {
   transition: all 0.3s ease;
   vertical-align: middle;
   border: 1px solid transparent;
-  line-height: 1;
+  line-height: 1.15;
   white-space: nowrap;
-  height: 24px;
+  height: auto;
+  overflow: visible;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -1800,9 +1871,27 @@ aside {
 
 .verify-badge-premium i {
   font-size: 0.85rem;
-  line-height: 0;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
+}
+
+#account-verify-badge {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+#account-verify-badge.verify-badge-premium {
+  min-width: 190px;
+  justify-content: flex-start;
+  padding-left: 16px;
+  padding-right: 16px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
 }
 
 /* --- Premium Form Components --- */

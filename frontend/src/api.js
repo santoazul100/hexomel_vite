@@ -1,7 +1,7 @@
 export const API_URL = "/api";
 
-const RETRY_COUNT = 12;
-const RETRY_DELAY_MS = 250;
+const RETRY_COUNT = 30;
+const RETRY_DELAY_MS = 300;
 
 let backendReady = false;
 let backendReadyPromise = null;
@@ -9,12 +9,6 @@ let publicConfigCache = null;
 let publicConfigPromise = null;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getBackendOrigin = () => {
-  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-  const hostname = window.location.hostname || "127.0.0.1";
-  return `${protocol}//${hostname}:3000`;
-};
 
 export const parseJsonSafely = async (response) => {
   const text = await response.text();
@@ -41,11 +35,11 @@ export const ensureBackendReady = async ({
     backendReadyPromise = (async () => {
       for (let attempt = 0; attempt < retries; attempt += 1) {
         try {
-          const response = await fetch(`${getBackendOrigin()}/health`, {
+          const response = await fetch(`${API_URL}/health`, {
             headers: { Accept: "application/json" },
           });
 
-          if (response.ok || response.status === 503) {
+          if (response.ok) {
             backendReady = true;
             return true;
           }
