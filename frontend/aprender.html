@@ -101,6 +101,31 @@
               <h2 class="fw-bold mb-2" style="color:var(--primary-green)" data-i18n="learn.quiz.done">Quiz Concluído!</h2>
               <p class="display-4 fw-bold" style="color:var(--secondary-gold);" id="quiz-score">0/8</p>
               <p class="text-muted mb-4" id="quiz-message">Resultado</p>
+              
+              <!-- Leaderboard Section -->
+              <div id="quiz-leaderboard" class="mb-4 text-start bg-light p-3 rounded-4 border mx-auto" style="max-width: 400px; display: none;">
+                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-medal text-warning me-2"></i>Tabela de Liderança</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                  <div>
+                    <span class="d-block small text-muted text-uppercase fw-bold">O Teu Melhor</span>
+                    <span id="lb-user-score" class="fw-bold text-dark">--</span>
+                  </div>
+                  <i class="fas fa-user-circle fs-4 text-muted"></i>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="d-block small text-muted text-uppercase fw-bold">Melhor Global</span>
+                    <span id="lb-global-score" class="fw-bold text-dark">--</span>
+                    <span id="lb-global-user" class="small text-muted d-block">--</span>
+                  </div>
+                  <i class="fas fa-globe-europe fs-4 text-muted"></i>
+                </div>
+              </div>
+              
+              <div id="quiz-login-prompt" class="mb-4 small text-muted" style="display: none;">
+                <a href="#" onclick="document.getElementById('authSection').querySelector('button').click(); return false;" class="text-decoration-underline text-success fw-bold">Inicia sessão</a> para guardar a tua pontuação e entrar na tabela de liderança!
+              </div>
+
               <button id="quiz-restart" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-redo me-2"></i>Tentar Novamente</button>
             </div>
           </div>
@@ -109,7 +134,7 @@
     </section>
 
     <!-- REVEAL FACTS -->
-    <section class="py-5" style="background: #fffaf0; border-top: 1px solid rgba(244,180,0,0.1); border-bottom: 1px solid rgba(244,180,0,0.1);">
+    <section class="py-5 position-relative" style="background: linear-gradient(180deg, #fefdf8 0%, #ffffff 100%);">
       <div class="container py-5">
         <div class="text-center mb-5 scroll-reveal">
           <span class="section-badge" style="background:rgba(244,180,0,0.1);color:var(--secondary-gold);"><i class="fas fa-eye me-2"></i><span data-i18n="learn.reveal.badge">DESCOBRE</span></span>
@@ -117,18 +142,18 @@
           <p class="text-muted mt-2">Clica nos cartões para revelar factos surpreendentes!</p>
         </div>
         <div class="row g-4">
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Quanto mel produz uma abelha?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>Uma abelha produz apenas <strong>1/12 de uma colher de chá de mel</strong> em toda a sua vida (~45 dias).</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>O mel pode expirar?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p><strong>Não!</strong> Mel puro encontrado em tumbas egípcias com 3.000 anos ainda estava comestível. O mel nunca expira.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>As abelhas sabem dançar?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p><strong>Sim!</strong> A "dança das abelhas" comunica a localização de alimentos. Karl von Frisch ganhou o Prémio Nobel em 1973 por esta descoberta.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Porque cristaliza o mel?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>A cristalização é <strong>natural e sinal de pureza</strong>. Basta aquecer em banho-maria para voltar ao estado líquido.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Quantas asas tem uma abelha?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>As abelhas têm <strong>4 asas</strong> que podem bater até <strong>200 vezes por segundo</strong>, voando a ~24 km/h.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><i class="fas fa-question fa-2x mb-3"></i><h5>Mel é medicinal?</h5><span class="small text-muted">Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-lightbulb fa-2x mb-3 text-warning"></i><p>O mel tem propriedades <strong>antibacterianas</strong> devido à enzima glucose oxidase, que produz peróxido de hidrogénio.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.1s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-droplet fa-lg"></i></div><h5>A Produção de uma Vida</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-crown"></i><p>Durante o seu ciclo natural, uma abelha obreira produz apenas <strong>uma fração de colher de chá</strong> de mel, evidenciando o valor de cada gota.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.2s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-hourglass-half fa-lg"></i></div><h5>Conservação Milenar</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-shield-alt"></i><p>Pela sua baixa humidade e acidez natural, o mel puro é dos únicos alimentos que <strong>nunca se estraga</strong>, mantendo-se inalterado por séculos.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.3s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-route fa-lg"></i></div><h5>A Dança das Abelhas</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-map-marked-alt"></i><p>As abelhas comunicam a localização exata das flores através de uma <strong>coreografia complexa</strong>, um padrão de movimentos único na natureza.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.4s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-gem fa-lg"></i></div><h5>O Processo de Cristalização</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-temperature-low"></i><p>A cristalização atesta a <strong>pureza e qualidade</strong> do mel cru. Para o devolver ao estado líquido original, basta aquecê-lo suavemente.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.5s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-wind fa-lg"></i></div><h5>Engenharia Natural</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-tachometer-alt"></i><p>Equipadas com quatro asas, conseguem bater as asas até <strong>200 vezes por segundo</strong>, alcançando velocidades de voo surpreendentes.</p></div></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.6s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-leaf fa-lg"></i></div><h5>Propriedades Terapêuticas</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-heartbeat"></i><p>O mel natural possui <strong>propriedades antibacterianas</strong> e antioxidantes notáveis, sendo utilizado há milénios como aliado do bem-estar.</p></div></div></div>
         </div>
       </div>
     </section>
 
     <!-- GLOSSARY -->
-    <section class="py-5" style="background: #f4f7f5;">
+    <section class="py-5 position-relative" style="background: radial-gradient(circle at center, #f4f7f5 0%, #ffffff 100%);">
       <div class="container py-5">
         <div class="text-center mb-5 scroll-reveal">
           <span class="section-badge" style="background:rgba(26,77,46,0.08);color:var(--primary-green);"><i class="fas fa-book me-2"></i><span data-i18n="learn.glossary.badge">GLOSSÁRIO</span></span>
@@ -136,25 +161,30 @@
           <p class="text-muted mt-2">Termos essenciais do mundo apícola</p>
         </div>
         <div class="row g-4">
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);"><i class="fas fa-droplet"></i></div><h5>Néctar</h5><p>Líquido açucarado produzido pelas flores que as abelhas recolhem e transformam em mel.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);"><i class="fas fa-shield-alt"></i></div><h5>Própolis</h5><p>Substância resinosa recolhida pelas abelhas, usada para desinfetar e selar a colmeia.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-crown"></i></div><h5>Geleia Real</h5><p>Alimento exclusivo da rainha, rico em proteínas e vitaminas. Permite que ela viva até 5 anos.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);"><i class="fas fa-seedling"></i></div><h5>Polinização</h5><p>Transferência de pólen entre flores, essencial para a reprodução das plantas e formação de frutos.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-th"></i></div><h5>Alvéolo</h5><p>Célula hexagonal de cera onde as abelhas armazenam mel, pólen ou criam as larvas.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);"><i class="fas fa-wind"></i></div><h5>Fumigador</h5><p>Ferramenta do apicultor que produz fumo para acalmar as abelhas durante a inspeção.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.1s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);"><i class="fas fa-droplet"></i></div><h5>Néctar</h5><p>Líquido açucarado produzido pelas flores que as abelhas recolhem e transformam em mel.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.2s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);"><i class="fas fa-shield-alt"></i></div><h5>Própolis</h5><p>Substância resinosa recolhida pelas abelhas, usada para desinfetar e selar a colmeia.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.3s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-crown"></i></div><h5>Geleia Real</h5><p>Alimento exclusivo da rainha, rico em proteínas e vitaminas. Permite que ela viva até 5 anos.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.4s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);"><i class="fas fa-seedling"></i></div><h5>Polinização</h5><p>Transferência de pólen entre flores, essencial para a reprodução das plantas e formação de frutos.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.5s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-th"></i></div><h5>Alvéolo</h5><p>Célula hexagonal de cera onde as abelhas armazenam mel, pólen ou criam as larvas.</p></div></div>
+          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.6s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);"><i class="fas fa-wind"></i></div><h5>Fumigador</h5><p>Ferramenta do apicultor que produz fumo para acalmar as abelhas durante a inspeção.</p></div></div>
         </div>
       </div>
     </section>
 
     <!-- CTA -->
-    <section class="py-5" style="background:var(--bg-clean);">
-      <div class="container py-5">
-        <div class="newsletter-premium text-center scroll-reveal">
-          <h2 class="display-6 fw-bold mb-3" style="color:var(--primary-green)" data-i18n="learn.explore">Explora Mais</h2>
-          <p class="text-muted mb-4 mx-auto" style="max-width:500px">Visita a página de curiosidades ou junta-te à comunidade Hexomel.</p>
+    <section class="py-5 position-relative overflow-hidden" style="background: var(--primary-green-dark);">
+      <!-- Abstract shapes for premium look -->
+      <div style="position:absolute;top:-50%;left:-10%;width:50%;height:200%;background:radial-gradient(circle, rgba(244,180,0,0.1) 0%, transparent 70%);border-radius:50%;pointer-events:none;"></div>
+      <div style="position:absolute;bottom:-50%;right:-10%;width:50%;height:200%;background:radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);border-radius:50%;pointer-events:none;"></div>
+      
+      <div class="container py-5 position-relative z-1">
+        <div class="text-center scroll-reveal" style="padding:4rem 2rem;">
+          <span class="product-badge-premium mb-4 d-inline-block px-4 py-2" style="background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);color:white;border:1px solid rgba(255,255,255,0.2);"><i class="fas fa-compass me-2 text-warning"></i>CONTINUA A EXPLORAR</span>
+          <h2 class="display-5 fw-bold mb-3 text-white" data-i18n="learn.explore">Aventura-te no Mundo Hexomel</h2>
+          <p class="mb-5 mx-auto text-white-50" style="max-width:550px;font-size:1.15rem;line-height:1.7;">Descobre as nossas curiosidades fascinantes ou junta-te à nossa comunidade de amantes de mel 100% natural.</p>
           <div class="d-flex gap-3 justify-content-center flex-wrap">
-            <a href="curiosidades.html" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-lightbulb me-2"></i>Curiosidades</a>
-            <a href="comunidade.html" class="btn btn-auth-enhanced login px-5 py-3"><i class="fas fa-users me-2"></i>Comunidade</a>
+            <a href="curiosidades.html" class="btn btn-auth-enhanced px-5 py-3" style="background:var(--secondary-gold);color:var(--primary-green-dark);border:none;box-shadow:0 10px 20px rgba(0,0,0,0.2);"><i class="fas fa-lightbulb me-2"></i>Curiosidades</a>
+            <a href="comunidade.html" class="btn btn-auth-enhanced px-5 py-3 text-white" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(10px);"><i class="fas fa-users me-2"></i>Comunidade</a>
           </div>
         </div>
       </div>
@@ -199,7 +229,7 @@
   <script>
     const obs = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px 50px 0px' });
     document.querySelectorAll('.scroll-reveal').forEach(el => obs.observe(el));
   </script>
 </body>

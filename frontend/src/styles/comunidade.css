@@ -282,13 +282,41 @@
   .qa-item {
     padding: 16px;
   }
+
+  .qa-question,
+  .qa-answer {
+    gap: 12px;
+  }
+
   .qa-answer {
     margin-left: 12px;
   }
+
   .qa-answer-line {
     left: -13px;
   }
+
   .qa-reply-form {
     margin-left: 12px;
+  }
+}
+
+@media (max-width: 575px) {
+  .qa-item {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .qa-avatar-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .qa-actions {
+    gap: 10px;
+  }
+
+  .qa-reply-form {
+    margin-left: 0;
   }
 }

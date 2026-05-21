@@ -84,3 +84,18 @@
 .toast-close:hover {
   opacity: 1;
 }
+
+@media (max-width: 767px) {
+  #toast-container {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .premium-toast {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+    padding: 14px 16px;
+  }
+}

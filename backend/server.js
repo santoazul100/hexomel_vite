@@ -130,6 +130,8 @@ const startServer = () => {
 // EMAIL TRANSPORTER (Nodemailer)
 // ============================================================
 let mailTransporter = null;
+let mailTransporterError = null;
+
 async function initMailTransporter() {
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     mailTransporter = nodemailer.createTransport({
@@ -145,8 +147,10 @@ async function initMailTransporter() {
     try {
       await mailTransporter.verify();
       console.log("📧 Email transporter ready.");
+      mailTransporterError = null;
     } catch (error) {
       mailTransporter = null;
+      mailTransporterError = error.message;
       console.warn("⚠️ Email transporter failed:", error.message);
     }
     return;
@@ -397,33 +401,51 @@ function buildAbsoluteAppUrl(origin, assetPath) {
   }
 
   const publicBaseUrl =
-    process.env.CHECKOUT_PUBLIC_BASE_URL ||
+    (process.env.CHECKOUT_PUBLIC_BASE_URL ||
     process.env.PUBLIC_APP_URL ||
-    origin;
+    origin).replace(/\/$/, ""); // Remove trailing slash if present
 
   if (/^https?:\/\//i.test(assetPath)) {
     return assetPath;
   }
 
   const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
-  return new URL(normalizedPath, `${publicBaseUrl}/`).toString();
+  return `${publicBaseUrl}${normalizedPath}`;
 }
 
-function getCheckoutProductImages(origin, imagePath, productName) {
+function getCheckoutProductImages(origin, imagePath, productName, productId) {
   const publicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
   
-  // If we have an explicit public URL configured (e.g. Ngrok), use it even if we are developing on localhost
-  if (publicBaseUrl && !publicBaseUrl.includes("localhost") && !publicBaseUrl.includes("127.0.0.1")) {
-    const absoluteUrl = buildAbsoluteAppUrl(publicBaseUrl, imagePath);
-    if (absoluteUrl) return [absoluteUrl];
+  console.log(`[Stripe Debug] Resolving images for ${productName} (ID: ${productId}). BaseUrl: ${publicBaseUrl}, Origin: ${origin}, Path: ${imagePath}`);
+
+  // 1. Fallback for missing image path
+  let finalPath = imagePath;
+  if (!finalPath) {
+    // Try to guess based on productId or use default logo
+    finalPath = `/images/logo_hexomel.webp`;
+    console.log(`[Stripe Debug] Image path missing, using default logo.`);
   }
 
-  const isLocalhost = !origin || origin.includes("localhost") || origin.includes("127.0.0.1");
+  // 2. Resolve absolute URL
+  const buildUrl = (baseUrl, path) => {
+    const normalizedBase = baseUrl.replace(/\/$/, "");
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${normalizedBase}${normalizedPath}`;
+  };
+
+  // If we have an explicit public URL configured (e.g. Ngrok), use it
+  if (publicBaseUrl && !publicBaseUrl.includes("localhost") && !publicBaseUrl.includes("127.0.0.1")) {
+    const absoluteUrl = buildUrl(publicBaseUrl, finalPath);
+    console.log(`[Stripe Debug] Using configured public URL: ${absoluteUrl}`);
+    return [absoluteUrl];
+  }
+
+  const isLocalhost = !origin || origin.includes("localhost") || origin.includes("127.0.0.1") || (publicBaseUrl && (publicBaseUrl.includes("localhost") || publicBaseUrl.includes("127.0.0.1")));
 
   if (isLocalhost) {
+    console.log(`[Stripe Debug] Localhost detected. Using high-quality placeholders.`);
     const nameLower = (productName || "").toLowerCase();
     
-    // Use high-quality themed images for common honey products on localhost
     if (nameLower.includes("mel")) {
       return ["https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=600"];
     } else if (nameLower.includes("polen") || nameLower.includes("pólen")) {
@@ -436,8 +458,9 @@ function getCheckoutProductImages(origin, imagePath, productName) {
     return [`https://placehold.co/600x600/1a4d2e/ffffff/png?text=${encodedName}`];
   }
   
-  const absoluteUrl = buildAbsoluteAppUrl(origin, imagePath);
-  return absoluteUrl ? [absoluteUrl] : [];
+  const absoluteUrl = buildUrl(origin, finalPath);
+  console.log(`[Stripe Debug] Using origin-based URL: ${absoluteUrl}`);
+  return [absoluteUrl];
 }
 
 const runDatabaseMigrations = async () => {
@@ -666,10 +689,133 @@ const runDatabaseMigrations = async () => {
       `)
       .catch(() => console.log("site_settings table creation handled"));
 
+    // Quiz Tables
+    await db
+      .run(`
+        CREATE TABLE IF NOT EXISTS quiz_pergunta (
+          ID_Pergunta int(10) NOT NULL AUTO_INCREMENT,
+          Pergunta TEXT NOT NULL,
+          Opcao1 VARCHAR(255) NOT NULL,
+          Opcao2 VARCHAR(255) NOT NULL,
+          Opcao3 VARCHAR(255) NOT NULL,
+          Opcao4 VARCHAR(255) NOT NULL,
+          Resposta_Correta INT NOT NULL,
+          Explicacao TEXT NOT NULL,
+          Data_Criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (ID_Pergunta)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `)
+      .catch(() => console.log("quiz_pergunta table creation handled"));
+
+    await db
+      .run(`
+        CREATE TABLE IF NOT EXISTS quiz_score (
+          ID_Score int(10) NOT NULL AUTO_INCREMENT,
+          ID_Cliente int(10) NOT NULL,
+          Score INT NOT NULL,
+          Max_Score INT NOT NULL,
+          Data_Score TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (ID_Score),
+          KEY ID_Cliente (ID_Cliente),
+          CONSTRAINT fk_quiz_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `)
+      .catch(() => console.log("quiz_score table creation handled"));
+
+    // Seed default quiz questions if empty
+    const quizCount = await db.get("SELECT COUNT(*) as c FROM quiz_pergunta").catch(() => ({ c: 1 }));
+    if (quizCount && quizCount.c === 0) {
+      const defaultQuestions = [
+        ["Quantas flores uma abelha visita para produzir 1 kg de mel?", "500 mil", "2 a 4 milhões", "100 mil", "10 milhões", 1, "Para produzir 1 kg de mel, as abelhas visitam entre 2 a 4 milhões de flores!"],
+        ["Quanto tempo vive uma abelha operária no verão?", "1 ano", "6 meses", "Cerca de 45 dias", "2 semanas", 2, "Uma abelha operária vive cerca de 45 dias no verão, trabalhando incansavelmente."],
+        ["Quantos ovos pode a abelha rainha pôr por dia?", "100", "500", "1.000", "Até 3.000", 3, "A rainha pode pôr até 3.000 ovos por dia — quase um a cada 30 segundos!"],
+        ["O mel puro tem prazo de validade?", "Sim, 2 anos", "Sim, 5 anos", "Não, nunca expira", "Depende da flor", 2, "O mel puro nunca expira! Potes de mel com 3.000 anos foram encontrados intactos em tumbas egípcias."],
+        ["Que percentagem das plantas com flor depende das abelhas para polinização?", "20%", "50%", "80%", "95%", 2, "As abelhas são responsáveis pela polinização de cerca de 80% das plantas com flor."],
+        ["Quem recebeu o Prémio Nobel pela descoberta da 'dança das abelhas'?", "Charles Darwin", "Karl von Frisch", "Albert Einstein", "Gregor Mendel", 1, "Karl von Frisch recebeu o Nobel de Fisiologia/Medicina em 1973 pela descoberta da dança das abelhas."],
+        ["O que indica a cristalização do mel?", "Mel estragado", "Mel com açúcar adicionado", "Pureza e qualidade", "Mel de fraca qualidade", 2, "A cristalização é um processo natural e forte indicador de que o mel é puro e de qualidade."],
+        ["Quantas asas tem uma abelha?", "2", "4", "6", "8", 1, "As abelhas têm 4 asas que podem bater até 200 vezes por segundo!"]
+      ];
+      for (const q of defaultQuestions) {
+        await db.run(
+          "INSERT INTO quiz_pergunta (Pergunta, Opcao1, Opcao2, Opcao3, Opcao4, Resposta_Correta, Explicacao) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          q
+        ).catch(() => {});
+      }
+    }
+
     // Seed default placeholder style if not exists
     await db
       .run("INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES ('placeholder_style', 'skeleton')")
       .catch(() => {});
+
+    // Seed default interactions for analytics if empty
+    const interacaoCount = await db.get("SELECT COUNT(*) as c FROM interacao").catch(() => ({ c: 1 }));
+    if (interacaoCount && interacaoCount.c === 0) {
+      console.log("Seeding realistic sample interactions for analytics...");
+      const pages = ["index.html", "shop.html", "about.html", "contact.html", "aprender.html", "curiosidades.html"];
+      const searchTerms = ["mel de urze", "mel silvestre", "propólis", "mel com favo", "pólen abelha", "colmeia", "apicultura"];
+      const clickLabels = ["Adicionar ao Carrinho", "Comprar Agora", "Saber Mais", "Ver Receita de Mel", "Subscrever Newsletter", "Falar Connosco"];
+      const clickElements = ["button", "button", "a", "a", "button", "a"];
+      
+      // Get some products to reference realistically
+      const dbProducts = await db.all("SELECT ID_Produto, Nome FROM produto LIMIT 5").catch(() => []);
+      const sampleProducts = dbProducts.length > 0 ? dbProducts : [
+        { ID_Produto: 1, Nome: "Mel de Rosmaninho Premium" },
+        { ID_Produto: 2, Nome: "Mel de Urze Puro" },
+        { ID_Produto: 3, Nome: "Pólen Silvestre" },
+        { ID_Produto: 4, Nome: "Própolis Spray Bio" }
+      ];
+
+      // Get some clients to reference realistically
+      const dbClients = await db.all("SELECT ID_Cliente FROM cliente LIMIT 5").catch(() => []);
+      const sampleClients = dbClients.map(c => c.ID_Cliente);
+
+      // Seed 200 interactions distributed over the last 14 days
+      for (let i = 0; i < 200; i++) {
+        const daysAgo = Math.floor(Math.random() * 15);
+        const hoursAgo = Math.floor(Math.random() * 24);
+        const minsAgo = Math.floor(Math.random() * 60);
+        
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        date.setHours(date.getHours() - hoursAgo);
+        date.setMinutes(date.getMinutes() - minsAgo);
+        const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
+
+        const isLogged = Math.random() > 0.4;
+        const clientId = (isLogged && sampleClients.length > 0) 
+          ? sampleClients[Math.floor(Math.random() * sampleClients.length)] 
+          : null;
+
+        let tipo = "page_view";
+        const rand = Math.random();
+        if (rand > 0.85) tipo = "add_to_cart";
+        else if (rand > 0.7) tipo = "click";
+        else if (rand > 0.6) tipo = "search";
+        else if (rand > 0.35) tipo = "product_view";
+
+        const pagina = pages[Math.floor(Math.random() * pages.length)];
+        let dados = {};
+
+        if (tipo === "product_view" || tipo === "add_to_cart") {
+          const prod = sampleProducts[Math.floor(Math.random() * sampleProducts.length)];
+          dados = { productId: prod.ID_Produto, productName: prod.Nome };
+        } else if (tipo === "search") {
+          dados = { term: searchTerms[Math.floor(Math.random() * searchTerms.length)] };
+        } else if (tipo === "click") {
+          const idx = Math.floor(Math.random() * clickLabels.length);
+          dados = { label: clickLabels[idx], element: clickElements[idx] };
+        } else {
+          dados = { pagina };
+        }
+
+        await db.run(
+          "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados, Data_Interacao) VALUES (?, ?, ?, ?, ?)",
+          [clientId, tipo, pagina, JSON.stringify(dados), formattedDate]
+        ).catch((err) => console.error("Seed row error:", err));
+      }
+      console.log("Analytics seeded successfully!");
+    }
 
     console.log("Auto-migrations completed.");
   } catch (err) {
@@ -705,6 +851,10 @@ const urlencodedBodyParser = express.urlencoded({ limit: "10mb", extended: true 
 
 app.use(compression());
 app.use(cors());
+
+// Serve static files from frontend/public/uploads
+app.use("/uploads", express.static(path.join(__dirname, "../frontend/public/uploads")));
+
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith("/api/webhooks/stripe")) {
     return next();
@@ -934,7 +1084,7 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
     if (mailTransporter) {
       try {
         const info = await mailTransporter.sendMail({
-          from: process.env.SMTP_FROM || "Hexomel Segurança <noreply@hexomel.pt>",
+          from: process.env.SMTP_FROM || `Hexomel Segurança <${process.env.SMTP_USER || 'noreply@hexomel.pt'}>`,
           to: user.Email,
           subject: "O seu código de verificação para Checkout — Hexomel",
           html: `
@@ -953,9 +1103,20 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
         }
       } catch (emailErr) {
         console.error("2FA Email fail:", emailErr);
+        return res.status(500).json({ 
+          error: "Falha ao enviar o email de verificação.", 
+          details: emailErr.message 
+        });
       }
     } else {
-      console.log(`⚠️ Dev Mode: OTP para ${user.Email} é ${otp}`);
+      console.log(`⚠️ Email disabled or failed. OTP para ${user.Email} é ${otp}`);
+      if (mailTransporterError) {
+        return res.status(503).json({ 
+          error: "O serviço de email está temporariamente indisponível.", 
+          details: "Erro na configuração SMTP. Por favor, contacte o suporte.",
+          debug: process.env.NODE_ENV === 'development' ? mailTransporterError : undefined
+        });
+      }
     }
 
     res.json({ message: "Código enviado com sucesso para o seu email." });
@@ -2047,7 +2208,7 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
 
     // Users Growth (Dummy/Simple grouping)
     const usersGrowth = await db.all(`
-      SELECT strftime('%Y-%m', Data_Resgistro) as month, COUNT(*) as count 
+      SELECT DATE_FORMAT(Data_Resgistro, '%Y-%m') as month, COUNT(*) as count 
       FROM cliente 
       GROUP BY month 
       ORDER BY month DESC LIMIT 6
@@ -2055,9 +2216,9 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
 
     // Sales 30d (Simplified)
     const sales30d = await db.all(`
-      SELECT date(Data_Encomenda) as date, SUM(Total) as revenue 
+      SELECT DATE(Data_Encomenda) as date, SUM(Total) as revenue 
       FROM encomenda 
-      WHERE Status != 'Cancelada' AND Data_Encomenda >= date('now','-30 day')
+      WHERE Status != 'Cancelada' AND Data_Encomenda >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       GROUP BY date 
       ORDER BY date ASC
     `);
@@ -2082,15 +2243,113 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
 
 app.get("/api/admin/analytics/interactions", authenticateToken, isAdmin, async (req, res) => {
   try {
-    const interactions = await db.all(`
-      SELECT i.ID_Interacao as id, i.Tipo as type, i.Pagina as page, i.Data_Interacao as date, c.Nome as user
-      FROM interacao i
-      LEFT JOIN cliente c ON i.ID_Cliente = c.ID_Cliente
-      ORDER BY i.Data_Interacao DESC LIMIT 100
+    const rows = await db.all(`
+      SELECT ID_Cliente, Tipo, Pagina, Dados, Data_Interacao 
+      FROM interacao 
+      WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      ORDER BY Data_Interacao DESC
     `);
-    res.json(interactions || []);
+
+    // Aggregate in Javascript
+    const totals = { total: 0, logged_in: 0, anonymous: 0 };
+    const typeCounts = {};
+    const pageCounts = {};
+    const dayCounts = {};
+    const productViews = {};
+    const productCarts = {};
+    const searchTerms = {};
+    const clickCounts = {};
+
+    for (const r of rows) {
+      totals.total++;
+      if (r.ID_Cliente) {
+        totals.logged_in++;
+      } else {
+        totals.anonymous++;
+      }
+
+      const tipo = r.Tipo;
+      typeCounts[tipo] = (typeCounts[tipo] || 0) + 1;
+      
+      const pagina = r.Pagina || "index.html";
+      pageCounts[pagina] = (pageCounts[pagina] || 0) + 1;
+
+      // Day format: YYYY-MM-DD
+      const date = new Date(r.Data_Interacao);
+      const day = date.toISOString().split("T")[0];
+      dayCounts[day] = (dayCounts[day] || 0) + 1;
+
+      // Parse JSON Dados
+      let dados = {};
+      if (r.Dados) {
+        try {
+          dados = typeof r.Dados === "string" ? JSON.parse(r.Dados) : r.Dados;
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      if (tipo === "product_view") {
+        const prodId = dados.productId;
+        const prodName = dados.productName || `Produto #${prodId}`;
+        if (prodId) {
+          if (!productViews[prodId]) {
+            productViews[prodId] = { id: prodId, nome: prodName, views: 0 };
+          }
+          productViews[prodId].views++;
+        }
+      } else if (tipo === "add_to_cart") {
+        const prodId = dados.productId;
+        const prodName = dados.productName || `Produto #${prodId}`;
+        if (prodId) {
+          if (!productCarts[prodId]) {
+            productCarts[prodId] = { id: prodId, nome: prodName, adds: 0 };
+          }
+          productCarts[prodId].adds++;
+        }
+      } else if (tipo === "search") {
+        const term = dados.term;
+        if (term) {
+          const lowerTerm = term.trim().toLowerCase();
+          searchTerms[lowerTerm] = (searchTerms[lowerTerm] || 0) + 1;
+        }
+      } else if (tipo === "click") {
+        const label = dados.label || "Elemento sem texto";
+        const element = dados.element || "element";
+        const key = `${label}||${element}`;
+        if (!clickCounts[key]) {
+          clickCounts[key] = { label, element, clicks: 0 };
+        }
+        clickCounts[key].clicks++;
+      }
+    }
+
+    // Convert objects to sorted arrays
+    const byType = Object.entries(typeCounts).map(([tipo, count]) => ({ tipo, count }));
+    const byPage = Object.entries(pageCounts).map(([pagina, count]) => ({ pagina, count })).sort((a,b) => b.count - a.count);
+    
+    // perDay: last 7 or 30 days
+    // Sort perDay ascending by date
+    const perDay = Object.entries(dayCounts).map(([dia, total]) => ({ dia, total })).sort((a,b) => a.dia.localeCompare(b.dia));
+
+    const topViewed = Object.values(productViews).sort((a,b) => b.views - a.views).slice(0, 5);
+    const topCart = Object.values(productCarts).sort((a,b) => b.adds - a.adds).slice(0, 5);
+    
+    const topSearches = Object.entries(searchTerms).map(([termo, count]) => ({ termo, count })).sort((a,b) => b.count - a.count).slice(0, 5);
+    const topClicks = Object.values(clickCounts).sort((a,b) => b.clicks - a.clicks).slice(0, 5);
+
+    res.json({
+      totals,
+      byType,
+      byPage,
+      topViewed,
+      topCart,
+      perDay,
+      topSearches,
+      topClicks
+    });
   } catch (error) {
-    console.error("Interactions fetch error:", error);
+    console.error("Interactions aggregate error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -2675,6 +2934,7 @@ app.post("/api/checkout/init", authenticateToken, async (req, res) => {
 
 // Stripe Checkout Session Creation
 app.post("/api/checkout/create-session", authenticateToken, async (req, res) => {
+  console.log(`[Stripe Debug] Creating session for user ${req.user.id}`);
   const {
     address,
     phone,
@@ -2693,9 +2953,19 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
     const requestedPaymentType = paymentType === "mbway" ? "mb_way" : "card";
 
     if (finalOrderId) {
+      console.log(`[Stripe Debug] Using existing order ${finalOrderId}`);
       // Validate existing order
       const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [finalOrderId, req.user.id]);
-      if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
+      if (!order) {
+        console.error(`[Stripe Debug] Order ${finalOrderId} not found for user ${req.user.id}`);
+        return res.status(404).json({ error: "Encomenda não encontrada" });
+      }
+
+      // Check if order is already paid
+      if (order.Status === 'Pago') {
+        console.warn(`[Stripe Debug] Order ${finalOrderId} is already paid`);
+        return res.status(400).json({ error: "Esta encomenda já foi paga." });
+      }
 
       items = await db.all(
         `SELECT ie.*, p.Nome, p.Imagem 
@@ -2716,9 +2986,13 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
         [total, address, phone, nome, apelido, shippingCost, shippingType, finalOrderId]
       );
     } else {
+      console.log(`[Stripe Debug] Creating new order from cart`);
       // Create from cart
       const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
+      if (!cart) {
+        console.error(`[Stripe Debug] Cart not found for user ${req.user.id}`);
+        return res.status(400).json({ error: "Carrinho vazio" });
+      }
 
       items = await db.all(
         `SELECT ic.*, p.Nome, p.Preco, p.Imagem 
@@ -2728,7 +3002,10 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
         [cart.ID_Carrinho],
       );
 
-      if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
+      if (items.length === 0) {
+        console.error(`[Stripe Debug] Cart empty for user ${req.user.id}`);
+        return res.status(400).json({ error: "Carrinho vazio" });
+      }
 
       subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
       const total = subtotal + Number(shippingCost || 0);
@@ -2738,6 +3015,7 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
         [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
       );
       finalOrderId = result.lastID;
+      console.log(`[Stripe Debug] Created order ${finalOrderId}`);
 
       for (const item of items) {
         await db.run(
@@ -2747,11 +3025,16 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       }
     }
     
-    // CLEAR CART: Clear the database cart when the order is created/finalized
+    /* 
+       REMOVED: Clear cart only on SUCCESSFUL payment in fulfillPaidOrder
+       to allow retrying the checkout if canceled.
+    */
+    /*
     await db.run(
       "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
       [req.user.id]
     );
+    */
 
 
     // 5. MOCK MODE LOGIC
@@ -2782,8 +3065,7 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
 
     // 6. REAL STRIPE SESSION
     const lineItems = items.map(item => {
-      const productImages = getCheckoutProductImages(req.headers.origin, item.Imagem, item.Nome);
-
+      const productImages = getCheckoutProductImages(req.headers.origin, item.Imagem, item.Nome, item.ID_Produto);
       return {
         price_data: {
           currency: 'eur',
@@ -2833,8 +3115,11 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
     res.json({ url: session.url });
 
   } catch (error) {
-    console.error("Stripe session error:", error);
-    res.status(500).json({ error: "Falha ao criar sessão de pagamento" });
+    console.error("[Stripe Debug] Error creating session:", error);
+    res.status(500).json({ 
+      error: "Falha ao criar sessão de pagamento",
+      details: error.message 
+    });
   }
 });
 
@@ -3140,9 +3425,34 @@ app.post("/api/comunidade/respostas/:id/votar", authenticateToken, async (req, r
   }
 });
 
-// Analytics mock route to prevent 404s in the console
-app.post("/api/logs/interaction", (req, res) => {
-  res.status(204).send();
+app.post("/api/logs/interaction", async (req, res) => {
+  try {
+    const { tipo, pagina, dados } = req.body;
+    let userId = null;
+
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id;
+      } catch (err) {
+        // Silently ignore token verification errors for analytics logs
+      }
+    }
+
+    const dadosJson = dados ? JSON.stringify(dados) : null;
+
+    await db.run(
+      "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados) VALUES (?, ?, ?, ?)",
+      [userId, tipo, pagina, dadosJson]
+    );
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("Log interaction error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ============================================================
@@ -3306,6 +3616,131 @@ app.put("/api/admin/site-settings", authenticateToken, isAdmin, async (req, res)
   } catch (error) {
     console.error("Update site settings error:", error);
     res.status(500).json({ error: "Database error" });
+  }
+});
+
+// ============================================================
+// QUIZ API ROUTES
+// ============================================================
+
+// Get all quiz questions
+app.get("/api/quiz/perguntas", async (req, res) => {
+  try {
+    const questions = await db.all("SELECT * FROM quiz_pergunta ORDER BY ID_Pergunta ASC");
+    res.json(questions);
+  } catch (error) {
+    console.error("Error fetching quiz questions:", error);
+    res.status(500).json({ error: "Failed to fetch questions." });
+  }
+});
+
+// Admin: Add a new quiz question
+app.post("/api/quiz/perguntas", authenticateToken, isAdmin, async (req, res) => {
+  const { pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao } = req.body;
+  if (!pergunta || !opcao1 || !opcao2 || !opcao3 || !opcao4 || resposta_correta === undefined || !explicacao) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  try {
+    const result = await db.run(
+      "INSERT INTO quiz_pergunta (Pergunta, Opcao1, Opcao2, Opcao3, Opcao4, Resposta_Correta, Explicacao) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao]
+    );
+    res.status(201).json({ message: "Question added successfully.", id: result.insertId });
+  } catch (error) {
+    console.error("Error adding question:", error);
+    res.status(500).json({ error: "Failed to add question." });
+  }
+});
+
+// Admin: Update a quiz question
+app.put("/api/quiz/perguntas/:id", authenticateToken, isAdmin, async (req, res) => {
+  const { pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao } = req.body;
+  if (!pergunta || !opcao1 || !opcao2 || !opcao3 || !opcao4 || resposta_correta === undefined || !explicacao) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  try {
+    await db.run(
+      "UPDATE quiz_pergunta SET Pergunta = ?, Opcao1 = ?, Opcao2 = ?, Opcao3 = ?, Opcao4 = ?, Resposta_Correta = ?, Explicacao = ? WHERE ID_Pergunta = ?",
+      [pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao, req.params.id]
+    );
+    res.json({ message: "Question updated successfully." });
+  } catch (error) {
+    console.error("Error updating question:", error);
+    res.status(500).json({ error: "Failed to update question." });
+  }
+});
+
+// Admin: Delete a quiz question
+app.delete("/api/quiz/perguntas/:id", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    await db.run("DELETE FROM quiz_pergunta WHERE ID_Pergunta = ?", [req.params.id]);
+    res.json({ message: "Question deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting question:", error);
+    res.status(500).json({ error: "Failed to delete question." });
+  }
+});
+
+// Submit a quiz score
+app.post("/api/quiz/score", authenticateToken, async (req, res) => {
+  const { score, maxScore } = req.body;
+  if (score === undefined || maxScore === undefined) {
+    return res.status(400).json({ error: "Missing score data." });
+  }
+
+  try {
+    await db.run(
+      "INSERT INTO quiz_score (ID_Cliente, Score, Max_Score) VALUES (?, ?, ?)",
+      [req.user.id, score, maxScore]
+    );
+    res.status(201).json({ message: "Score saved successfully." });
+  } catch (error) {
+    console.error("Error saving score:", error);
+    res.status(500).json({ error: "Failed to save score." });
+  }
+});
+
+// Get leaderboard
+app.get("/api/quiz/leaderboard", async (req, res) => {
+  try {
+    // Get global top score
+    const globalBest = await db.get(`
+      SELECT qs.Score, qs.Max_Score, c.Nome, c.Apelido, c.Username 
+      FROM quiz_score qs 
+      JOIN cliente c ON qs.ID_Cliente = c.ID_Cliente 
+      ORDER BY (qs.Score * 1.0 / qs.Max_Score) DESC, qs.Score DESC, qs.Data_Score ASC 
+      LIMIT 1
+    `);
+
+    let userBest = null;
+    
+    // Attempt to extract token manually if Authorization header is provided
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret_key");
+        if (decoded && decoded.id) {
+          userBest = await db.get(`
+            SELECT Score, Max_Score 
+            FROM quiz_score 
+            WHERE ID_Cliente = ? 
+            ORDER BY (Score * 1.0 / Max_Score) DESC, Score DESC 
+            LIMIT 1
+          `, [decoded.id]);
+        }
+      } catch(e) {
+        // invalid token, ignore user best
+      }
+    }
+
+    res.json({ globalBest, userBest });
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ error: "Failed to fetch leaderboard." });
   }
 });
 

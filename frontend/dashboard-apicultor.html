@@ -451,6 +451,96 @@
         font-weight: 500;
       }
       .search-box-premium input::placeholder { color: #c0ccda; }
+
+      .admin-main,
+      .admin-card,
+      .admin-section {
+        min-width: 0;
+      }
+
+      @media (max-width: 1199.98px) {
+        .admin-main {
+          padding: 1.5rem;
+        }
+      }
+
+      @media (max-width: 991.98px) {
+        :root {
+          --admin-sidebar-width: min(82vw, 320px);
+        }
+
+        .admin-sidebar {
+          transform: translateX(-100%);
+          box-shadow: 18px 0 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .admin-layout:not(.sidebar-collapsed) .admin-sidebar {
+          transform: translateX(0);
+        }
+
+        .admin-main,
+        .admin-layout.sidebar-collapsed .admin-main {
+          margin-left: 0;
+          padding: 1rem;
+        }
+
+        .sidebar-branding,
+        .sidebar-section-title {
+          padding-inline: 1rem;
+        }
+
+        .admin-nav-link {
+          width: calc(100% - 0.75rem);
+        }
+
+        .welcome-card {
+          padding: 2rem;
+        }
+
+        .welcome-icon {
+          right: 1.5rem;
+          font-size: 4rem;
+        }
+
+        .search-box-premium,
+        .search-box-premium:focus-within {
+          width: 100%;
+        }
+
+        .admin-card div[style*="height: 300px"] {
+          height: 240px !important;
+        }
+
+        .upload-area[style*="height: 380px"] {
+          height: min(320px, 68vw) !important;
+        }
+
+        .upload-area[style*="height: 280px"] {
+          height: min(240px, 56vw) !important;
+        }
+      }
+
+      @media (max-width: 575.98px) {
+        .admin-main {
+          padding: 0.85rem;
+        }
+
+        .admin-nav-link {
+          padding: 0.8rem 1rem;
+        }
+
+        .welcome-card {
+          padding: 1.5rem;
+        }
+
+        .welcome-card h1 {
+          font-size: 1.75rem;
+        }
+
+        #navbar-sidebar-toggle {
+          margin-right: 0;
+        }
+      }
     </style>
       <meta name="view-transition" content="same-origin" />
   </head>

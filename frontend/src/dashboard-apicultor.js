@@ -46,23 +46,50 @@ class ApicultorUI {
 
   initSidebar() {
     const adminLayout = document.getElementById("admin-layout");
-    const isCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
-    if (isCollapsed && adminLayout) {
-      adminLayout.classList.add("sidebar-collapsed");
-    }
-
+    const mobileQuery = window.matchMedia("(max-width: 991.98px)");
     const toggleMain = document.getElementById("navbar-sidebar-toggle");
     const toggleHide = document.getElementById("sidebar-hide");
+    const sectionLinks = document.querySelectorAll(".admin-nav-link[data-section]");
+
+    const applySidebarState = () => {
+      if (!adminLayout) return;
+
+      const isCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+
+      if (mobileQuery.matches) {
+        adminLayout.classList.add("sidebar-collapsed");
+        return;
+      }
+
+      adminLayout.classList.toggle("sidebar-collapsed", isCollapsed);
+    };
 
     const toggleLogic = () => {
       if (adminLayout) {
         const collapsed = adminLayout.classList.toggle("sidebar-collapsed");
-        localStorage.setItem("sidebarCollapsed", collapsed);
+        if (!mobileQuery.matches) {
+          localStorage.setItem("sidebarCollapsed", collapsed);
+        }
       }
     };
 
+    applySidebarState();
     if (toggleMain) toggleMain.addEventListener("click", toggleLogic);
     if (toggleHide) toggleHide.addEventListener("click", toggleLogic);
+
+    sectionLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        if (mobileQuery.matches && adminLayout) {
+          adminLayout.classList.add("sidebar-collapsed");
+        }
+      });
+    });
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", applySidebarState);
+    } else if (mobileQuery.addListener) {
+      mobileQuery.addListener(applySidebarState);
+    }
   }
 
   async initAuth() {

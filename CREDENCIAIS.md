@@ -11,10 +11,10 @@
 ---
 
 
-
 > ⚠️ Atenção: Estas são as passwords do ambiente de desenvolvimento/teste.
 > Após correr o seed (`node backend/scripts/seed_db.js`), corre sempre:
 > `node backend/reset_admin.js` para restaurar as passwords.
+
 
 ---
 

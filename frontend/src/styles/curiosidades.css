@@ -9,13 +9,18 @@
     radial-gradient(circle at 82% 18%, rgba(26, 77, 46, 0.12) 0%, transparent 34%),
     radial-gradient(circle at top left, #fefdf0 0%, #ffffff 42%),
     radial-gradient(circle at bottom right, #f0f7f2 0%, #ffffff 58%);
-  padding: clamp(100px, 10vw, 140px) 0 clamp(50px, 6vw, 80px);
-  min-height: 80vh;
+  padding: clamp(72px, 7vw, 108px) 0 clamp(32px, 4vw, 56px);
+  min-height: auto;
   display: flex;
   align-items: center;
   position: relative;
   overflow: hidden;
   isolation: isolate;
+}
+
+.curiosidades-hero .row {
+  --bs-gutter-x: clamp(2rem, 4vw, 4.5rem);
+  row-gap: 2rem;
 }
 
 .curiosidades-hero::before {
@@ -402,6 +407,21 @@
 /* ============================
    RESPONSIVE
    ============================ */
+@media (min-width: 992px) {
+  .curiosidades-hero [data-honey-hero] {
+    max-width: 520px !important;
+    padding: 1.25rem !important;
+  }
+
+  .curiosidades-hero [data-honey-hero] .honey-showcase__canvas-shell {
+    min-height: 340px !important;
+  }
+
+  .curiosidades-hero [data-honey-hero] .honey-showcase__canvas {
+    height: 340px !important;
+  }
+}
+
 @media (max-width: 991px) {
   .curiosidades-hero { padding: 120px 0 60px; min-height: auto; }
   .curiosidades-hero h1 { font-size: 2.8rem !important; }

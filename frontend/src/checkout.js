@@ -21,10 +21,20 @@ class CheckoutManager {
     }
 
     // Parallelize cart sync and user profile fetch
+    console.log("[Checkout Debug] Initializing...");
     await Promise.all([cart.syncWithBackend(), this.fetchUserProfile()]);
 
+    console.log("[Checkout Debug] User Data:", this.userData);
     if (this.userData && this.userData.checkoutVerified !== true) {
-      window.location.href = "profile.html?tab=security";
+      console.log("[Checkout Debug] Redirecting to security tab because checkoutVerified is false");
+      Swal.fire({
+        icon: "info",
+        title: "Verificação Necessária",
+        text: "Para tua segurança, precisamos de validar a tua sessão antes de prosseguires com o checkout.",
+        confirmButtonColor: "#1a4d2e",
+      }).then(() => {
+        window.location.href = "profile.html?tab=security";
+      });
       return;
     }
 
@@ -428,9 +438,9 @@ class CheckoutManager {
         subtotal += item.Preco * item.Quantidade;
         return `
                 <div class="summary-item">
-                    <img src="${item.Imagem || "/img/produtos/" + item.ID_Produto + ".webp"}" 
+                    <img src="${item.Imagem || "/images/logo_hexomel.webp"}" 
                          class="summary-item-img" 
-                         onerror="this.src='https://placehold.co/100x100?text=Mel'">
+                         onerror="this.src='/images/logo_hexomel.webp'">
                     <div class="summary-item-info">
                         <div class="summary-item-name">${item.Nome}</div>
                         <div style="font-size: 0.75rem; color: var(--text-light)">Quantidade: ${item.Quantidade}</div>
@@ -469,6 +479,7 @@ class CheckoutManager {
     const paymentType = "card";
 
     try {
+      console.log("[Checkout Debug] Creating session...");
       const res = await fetch(`${API_URL}/checkout/create-session`, {
         method: "POST",
         headers: {
@@ -487,12 +498,27 @@ class CheckoutManager {
         }),
       });
 
+      console.log("[Checkout Debug] Response Status:", res.status);
+      if (res.status === 401 || res.status === 403) {
+        console.log("[Checkout Debug] Authentication error. Token might be invalid or expired.");
+        Swal.fire({
+          icon: "warning",
+          title: "Sessão Expirada",
+          text: "A tua sessão expirou ou é inválida. Por favor, faz login novamente.",
+          confirmButtonColor: "#f4b400",
+        }).then(() => {
+          window.location.href = "login.html";
+        });
+        return;
+      }
+
       const data = await res.json();
+      console.log("[Checkout Debug] Response Data:", data);
 
       if (res.ok) {
         if (data.url) {
           // Stripe Session (Real or Mock)
-          cart.clear(); // Clear cart immediately on redirect
+          // REMOVED: cart.clear() - we only clear when successful
           window.location.href = data.url;
         } else {
           // Manual Checkout Success (Legacy)
@@ -513,10 +539,12 @@ class CheckoutManager {
           });
         }
       } else {
+        console.error("[Checkout Debug] Checkout error:", data);
         Swal.fire({
           icon: "error",
           title: "Erro no Checkout",
           text: data.error || "Não foi possível processar a encomenda",
+          footer: data.details ? `<small>Detalhes: ${data.details}</small>` : null,
           confirmButtonColor: "#f4b400",
         });
       }
