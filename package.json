@@ -14,6 +14,7 @@
   "homepage": "https://github.com/santoazul100/hexomel_vite#readme",
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "docx": "^9.6.1",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^4.0.379"
   }
