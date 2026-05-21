@@ -2936,3 +2936,135 @@ aside {
     padding: clamp(100px, 10vw, 150px) 0 clamp(35px, 4vw, 50px);
   }
 }
+
+/* --- Sitewide Responsive Updates --- */
+.hero-premium {
+  padding: clamp(88px, 8vw, 132px) 0 clamp(48px, 5vw, 72px);
+  min-height: auto;
+}
+
+.hero-premium .container > .row {
+  --bs-gutter-x: clamp(2rem, 4vw, 4.5rem);
+  row-gap: 2rem;
+}
+
+.about-hero {
+  padding: clamp(90px, 10vw, 150px) 0 clamp(48px, 5vw, 72px);
+}
+
+.comunidade-hero {
+  padding: clamp(96px, 10vw, 150px) 0 clamp(36px, 4vw, 56px);
+}
+
+.footer-premium {
+  padding: clamp(56px, 8vw, 80px) 0 clamp(28px, 4vw, 40px);
+}
+
+.footer-logo {
+  height: clamp(58px, 8vw, 80px);
+  padding: clamp(10px, 1.5vw, 14px) clamp(14px, 2vw, 18px);
+}
+
+@media (max-width: 991px) {
+  .navbar-enhanced {
+    padding: 0.95rem 0;
+  }
+
+  .navbar-enhanced .navbar-toggler {
+    padding: 0.35rem 0.5rem;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .navbar-enhanced .navbar-collapse {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .hero-premium {
+    padding: 112px 0 56px;
+    text-align: center;
+  }
+
+  .hero-premium .container > .row {
+    justify-content: center;
+  }
+
+  .hero-subtitle {
+    max-width: 42rem;
+    margin-inline: auto;
+  }
+
+  .hero-image-wrapper {
+    max-width: min(100%, 420px);
+    margin-inline: auto;
+  }
+
+  .about-hero-subtitle {
+    font-size: 1.05rem;
+  }
+
+  .footer-brand {
+    margin-bottom: 1rem;
+  }
+
+  .auth-card-v2 {
+    width: min(100%, 100%);
+    padding: 28px 22px;
+    border-radius: 24px;
+  }
+
+  .order-card-header {
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-title {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .hero-premium .product-badge-premium {
+    font-size: 0.85rem;
+  }
+
+  .about-hero,
+  .comunidade-hero {
+    padding-top: 104px;
+  }
+
+  .about-hero-title {
+    font-size: clamp(2rem, 8vw, 2.8rem);
+  }
+
+  .footer-logo {
+    height: 64px;
+  }
+
+  .auth-card-v2 {
+    padding: 24px 18px;
+  }
+
+  .auth-header-row {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .auth-header-right-v2 {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 575px) {
+  .navbar-enhanced .btn-auth-enhanced {
+    width: 100%;
+    text-align: center;
+  }
+}

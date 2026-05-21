@@ -390,7 +390,6 @@ export function updateNav(user) {
     authSection.innerHTML = `
       <div class="d-flex align-items-center gap-2">
         <button class="btn btn-nav-auth-filled" data-i18n="auth.login" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
-        <button class="btn btn-nav-auth-outline" data-i18n="auth.register" onclick="window.openAuthModal('register')">Criar Conta</button>
       </div>
     `;
     // Re-apply i18n if language is not PT (since we just injected new DOM)

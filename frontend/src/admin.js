@@ -7,6 +7,7 @@ class AdminUI {
     this.users = [];
     this.orders = [];
     this.categories = []; // newly added
+    this.quizQuestions = []; // newly added for quiz
     this.token = localStorage.getItem("token");
     this.userData = JSON.parse(localStorage.getItem("user"));
     this.currentTags = new Set(); // Stores active tags for the modal
@@ -47,23 +48,50 @@ class AdminUI {
 
   initSidebar() {
     const adminLayout = document.getElementById("admin-layout");
-    const isCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
-    if (isCollapsed && adminLayout) {
-      adminLayout.classList.add("sidebar-collapsed");
-    }
-
+    const mobileQuery = window.matchMedia("(max-width: 991.98px)");
     const toggleMain = document.getElementById("navbar-sidebar-toggle");
     const toggleHide = document.getElementById("sidebar-hide");
+    const sectionLinks = document.querySelectorAll(".admin-nav-link[data-section]");
+
+    const applySidebarState = () => {
+      if (!adminLayout) return;
+
+      const isCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+
+      if (mobileQuery.matches) {
+        adminLayout.classList.add("sidebar-collapsed");
+        return;
+      }
+
+      adminLayout.classList.toggle("sidebar-collapsed", isCollapsed);
+    };
 
     const toggleLogic = () => {
       if (adminLayout) {
         const collapsed = adminLayout.classList.toggle("sidebar-collapsed");
-        localStorage.setItem("sidebarCollapsed", collapsed);
+        if (!mobileQuery.matches) {
+          localStorage.setItem("sidebarCollapsed", collapsed);
+        }
       }
     };
 
+    applySidebarState();
     if (toggleMain) toggleMain.addEventListener("click", toggleLogic);
     if (toggleHide) toggleHide.addEventListener("click", toggleLogic);
+
+    sectionLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        if (mobileQuery.matches && adminLayout) {
+          adminLayout.classList.add("sidebar-collapsed");
+        }
+      });
+    });
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", applySidebarState);
+    } else if (mobileQuery.addListener) {
+      mobileQuery.addListener(applySidebarState);
+    }
   }
 
   async initAuth() {
@@ -151,7 +179,12 @@ class AdminUI {
     document
       .querySelectorAll(".admin-section")
       .forEach((s) => s.classList.remove("active"));
-    document.getElementById(`${sectionId}-section`).classList.add("active");
+    const targetSection = document.getElementById(`${sectionId}-section`);
+    if (targetSection) {
+      targetSection.classList.add("active");
+    } else {
+      console.warn(`Section ${sectionId}-section not found`);
+    }
 
     // Load Data
     if (sectionId === "dashboard") this.loadDashboardStats();
@@ -168,6 +201,8 @@ class AdminUI {
     if (sectionId === "workshops") this.loadWorkshops();
     if (sectionId === "interactions") this.loadInteractions();
     if (sectionId === "seo") this.loadSEO();
+    if (sectionId === "quiz") this.loadQuizQuestions();
+    if (sectionId === "appearance") this.loadAppearanceSettings();
   }
 
   async loadDashboardStats() {
@@ -1644,6 +1679,19 @@ class AdminUI {
 
   // --- INTERACTIONS ANALYTICS ---
   async loadInteractions() {
+    const loadingEl = document.getElementById("interactions-loading");
+    const contentEl = document.getElementById("interactions-content");
+
+    // Mostrar loader e ocultar conteúdo por defeito
+    if (loadingEl) {
+      loadingEl.classList.remove("d-none");
+      loadingEl.classList.add("d-block");
+    }
+    if (contentEl) {
+      contentEl.classList.remove("d-block");
+      contentEl.classList.add("d-none");
+    }
+
     try {
       const res = await fetch(`${API_URL}/admin/analytics/interactions`, {
         headers: { Authorization: `Bearer ${this.token}` },
@@ -1652,7 +1700,17 @@ class AdminUI {
       const data = await res.json();
 
       // KPI Cards
-      const { totals, byType, byPage, topViewed, topCart, perDay } = data;
+      const { 
+        totals = { total: 0, logged_in: 0, anonymous: 0 }, 
+        byType = [], 
+        byPage = [], 
+        topViewed = [], 
+        topCart = [], 
+        perDay = [],
+        topSearches = [],
+        topClicks = []
+      } = data || {};
+
       const totalEl = document.getElementById("int-total");
       const loggedEl = document.getElementById("int-logged");
       const anonEl = document.getElementById("int-anon");
@@ -1765,7 +1823,6 @@ class AdminUI {
       }
 
       // 1. NEW: Search Queries Table
-      const { topSearches, topClicks } = data;
       const searchesBody = document.getElementById("int-searches-body");
       if (searchesBody) {
         searchesBody.innerHTML = !topSearches || topSearches.length === 0
@@ -1811,6 +1868,16 @@ class AdminUI {
             scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
           }
         });
+      }
+
+      // Ocultar loader e revelar conteúdo
+      if (loadingEl) {
+        loadingEl.classList.remove("d-block");
+        loadingEl.classList.add("d-none");
+      }
+      if (contentEl) {
+        contentEl.classList.remove("d-none");
+        contentEl.classList.add("d-block");
       }
 
     } catch (err) {
@@ -1991,7 +2058,219 @@ class AdminUI {
       Swal.fire("Erro", err.message, "error");
     }
   }
+
+  // --- APPEARANCE MANAGEMENT ---
+  selectLoadingStyle(style) {
+    const placeholderStyleEl = document.getElementById("app-placeholder-style");
+    if (placeholderStyleEl) {
+      placeholderStyleEl.value = style;
+    }
+
+    const optSkeleton = document.getElementById("opt-skeleton");
+    const optSpinner = document.getElementById("opt-spinner");
+
+    if (style === "spinner") {
+      optSkeleton?.classList.remove("active");
+      optSpinner?.classList.add("active");
+    } else {
+      optSpinner?.classList.remove("active");
+      optSkeleton?.classList.add("active");
+    }
+  }
+
+  async loadAppearanceSettings() {
+    try {
+      const res = await fetch(`${API_URL}/site-settings`);
+      if (!res.ok) throw new Error("Falha ao carregar definições de aparência");
+      const settings = await res.json();
+
+      const style = settings.placeholder_style || "skeleton";
+      const placeholderStyleEl = document.getElementById("app-placeholder-style");
+      if (placeholderStyleEl) placeholderStyleEl.value = style;
+
+      // Update active UI cards state
+      this.selectLoadingStyle(style);
+
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar as definições de aparência.", "error");
+    }
+  }
+
+  async saveAppearanceSettings() {
+    try {
+      const settings = {
+        placeholder_style: document.getElementById("app-placeholder-style")?.value || "skeleton",
+      };
+
+      const res = await fetch(`${API_URL}/admin/site-settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ settings }),
+      });
+
+      if (!res.ok) throw new Error("Falha ao salvar definições de aparência");
+
+      Swal.fire({
+        icon: "success",
+        title: "Definições Guardadas!",
+        text: "As alterações de aparência foram guardadas com sucesso.",
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível guardar as definições de aparência.", "error");
+    }
+  }
+
+  // --- QUIZ MANAGEMENT ---
+  async loadQuizQuestions() {
+    try {
+      const response = await fetch(`${API_URL}/quiz/perguntas`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar perguntas do quiz");
+      this.quizQuestions = await response.json();
+      this.renderQuizQuestions();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar as perguntas.", "error");
+    }
+  }
+
+  renderQuizQuestions() {
+    const container = document.getElementById("quiz-list-body");
+    if (!container) return;
+
+    if (this.quizQuestions.length === 0) {
+      container.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Nenhuma pergunta registada.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = this.quizQuestions.map(q => {
+      const optionsHtml = [q.Opcao1, q.Opcao2, q.Opcao3, q.Opcao4].map((opt, i) => {
+        const isCorrect = i === q.Resposta_Correta;
+        return `<div style="${isCorrect ? 'font-weight:bold;color:var(--primary-green)' : ''}">
+          ${isCorrect ? '<i class="fas fa-check-circle me-1"></i>' : '<i class="far fa-circle me-1 text-muted"></i>'}
+          ${opt}
+        </div>`;
+      }).join("");
+
+      return `
+        <tr>
+            <td class="fw-bold text-muted">#${q.ID_Pergunta}</td>
+            <td>
+              <div class="fw-bold text-dark mb-1">${q.Pergunta}</div>
+              <div class="small text-muted fst-italic">Explic: ${q.Explicacao}</div>
+            </td>
+            <td class="small">${optionsHtml}</td>
+            <td class="text-end">
+                <button class="btn-action-premium me-1" onclick="adminUI.editQuizQuestion(${q.ID_Pergunta})" title="Editar">
+                    <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                </button>
+                <button class="btn-action-premium delete" onclick="adminUI.deleteQuizQuestion(${q.ID_Pergunta})" title="Eliminar">
+                    <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                </button>
+            </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  resetQuizForm() {
+    document.getElementById("quizForm").reset();
+    document.getElementById("quizId").value = "";
+    document.getElementById("quizModalLabel").innerText = "Adicionar Nova Pergunta";
+  }
+
+  editQuizQuestion(id) {
+    const q = this.quizQuestions.find(x => x.ID_Pergunta === id);
+    if (!q) return;
+
+    document.getElementById("quizId").value = q.ID_Pergunta;
+    document.getElementById("quizQuestion").value = q.Pergunta;
+    document.getElementById("quizOpt1").value = q.Opcao1;
+    document.getElementById("quizOpt2").value = q.Opcao2;
+    document.getElementById("quizOpt3").value = q.Opcao3;
+    document.getElementById("quizOpt4").value = q.Opcao4;
+    document.getElementById("quizCorrectOpt").value = q.Resposta_Correta;
+    document.getElementById("quizExplanation").value = q.Explicacao;
+    document.getElementById("quizModalLabel").innerText = "Editar Pergunta #" + id;
+
+    const modal = new bootstrap.Modal(document.getElementById("quizModal"));
+    modal.show();
+  }
+
+  async saveQuizQuestion() {
+    const id = document.getElementById("quizId").value;
+    const body = {
+      pergunta: document.getElementById("quizQuestion").value,
+      opcao1: document.getElementById("quizOpt1").value,
+      opcao2: document.getElementById("quizOpt2").value,
+      opcao3: document.getElementById("quizOpt3").value,
+      opcao4: document.getElementById("quizOpt4").value,
+      resposta_correta: parseInt(document.getElementById("quizCorrectOpt").value, 10),
+      explicacao: document.getElementById("quizExplanation").value,
+    };
+
+    if (!body.pergunta || !body.opcao1 || !body.opcao2 || !body.opcao3 || !body.opcao4 || !body.explicacao) {
+      Swal.fire("Erro", "Preencha todos os campos obrigatórios.", "warning");
+      return;
+    }
+
+    const isEditing = !!id;
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing ? `${API_URL}/quiz/perguntas/${id}` : `${API_URL}/quiz/perguntas`;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.token}` },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) throw new Error("Falha ao guardar pergunta");
+      
+      const modal = bootstrap.Modal.getInstance(document.getElementById("quizModal"));
+      if (modal) modal.hide();
+      
+      Swal.fire({ icon: "success", title: "Pergunta Guardada", timer: 1500, showConfirmButton: false });
+      this.loadQuizQuestions();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async deleteQuizQuestion(id) {
+    const result = await Swal.fire({
+      title: "Remover Pergunta?",
+      text: "Esta ação não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, apagar!"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/quiz/perguntas/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` }
+        });
+        if (!response.ok) throw new Error("Erro ao apagar");
+        Swal.fire({ icon: "success", title: "Apagada", timer: 1000, showConfirmButton: false });
+        this.loadQuizQuestions();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
 }
 
 const adminUI = new AdminUI();
 window.adminUI = adminUI;
+export default adminUI;

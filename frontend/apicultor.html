@@ -14,25 +14,33 @@
     />
     <link rel="stylesheet" href="src/styles/index.css" />
     <style>
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      }
+
       .apicultor-header {
         background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
-        padding: 80px 0 40px;
+        padding: clamp(110px, 12vw, 150px) 0 clamp(32px, 4vw, 48px);
         border-bottom: 1px solid rgba(244, 180, 0, 0.1);
       }
       .apicultor-avatar {
-        width: 150px;
-        height: 150px;
+        width: clamp(110px, 18vw, 150px);
+        height: clamp(110px, 18vw, 150px);
         border-radius: 50%;
         object-fit: cover;
         border: 5px solid white;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       }
       .bio-text {
-        font-size: 1.1rem;
+        font-size: clamp(1rem, 2vw, 1.1rem);
         line-height: 1.8;
         color: #555;
-        max-width: 800px;
+        max-width: 65ch;
         margin: 0 auto;
+        padding-inline: 1rem;
       }
       .section-title {
         position: relative;
@@ -64,12 +72,31 @@
       }
       .workshop-img {
         height: 200px;
+        aspect-ratio: 16 / 10;
         object-fit: cover;
       }
       .badge-date {
         background: rgba(244, 180, 0, 0.1);
         color: #b58900;
         font-weight: 600;
+      }
+
+      @media (max-width: 767px) {
+        .apicultor-header {
+          padding-top: 104px;
+        }
+
+        .section-title {
+          margin-bottom: 32px;
+        }
+
+        .section-title::after {
+          bottom: -8px;
+        }
+
+        .workshop-card:hover {
+          transform: none;
+        }
       }
     </style>
       <meta name="view-transition" content="same-origin" />

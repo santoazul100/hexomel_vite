@@ -17,6 +17,7 @@
     />
     <link rel="stylesheet" href="src/styles/index.css" />
     <link rel="stylesheet" href="src/styles/modern.css" />
+    <link rel="stylesheet" href="src/styles/skeleton.css" />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -386,6 +387,150 @@
       .admin-layout {
         padding-top: 87px;
       }
+
+      /* LOADING STYLE CHOOSE STYLES */
+      .loading-option-card {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        cursor: pointer;
+        background: #ffffff;
+        overflow: hidden;
+      }
+      .loading-option-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+      }
+      .loading-option-card.active {
+        border-color: #1c5236 !important;
+        background-color: rgba(28, 82, 54, 0.02) !important;
+        box-shadow: 0 8px 20px rgba(28, 82, 54, 0.08);
+      }
+      .loading-option-card.active .check-badge {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        background-color: #1c5236 !important;
+        color: #ffffff;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+      }
+      .loading-preview-wrapper {
+        aspect-ratio: 16/10;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 12px;
+      }
+      .loading-preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+      .loading-option-card:hover .loading-preview-img {
+        transform: scale(1.04);
+      }
+
+      .admin-main,
+      .admin-card,
+      .admin-section {
+        min-width: 0;
+      }
+
+      @media (max-width: 1199.98px) {
+        .admin-main {
+          padding: 1.5rem;
+        }
+      }
+
+      @media (max-width: 991.98px) {
+        :root {
+          --admin-sidebar-width: min(82vw, 320px);
+        }
+
+        .admin-sidebar {
+          transform: translateX(-100%);
+          box-shadow: 18px 0 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .admin-layout:not(.sidebar-collapsed) .admin-sidebar {
+          transform: translateX(0);
+        }
+
+        .admin-main,
+        .admin-layout.sidebar-collapsed .admin-main {
+          margin-left: 0;
+          padding: 1rem;
+        }
+
+        .sidebar-branding,
+        .sidebar-section-title {
+          padding-inline: 1rem;
+        }
+
+        .admin-nav-link {
+          width: calc(100% - 0.75rem);
+        }
+
+        .admin-card {
+          padding: 1.15rem;
+        }
+
+        .admin-card:hover {
+          transform: none;
+        }
+
+        .admin-card div[style*="height: 350px"] {
+          height: 260px !important;
+        }
+
+        .admin-card div[style*="height: 300px"] {
+          height: 240px !important;
+        }
+
+        .admin-card div[style*="height: 260px"] {
+          height: 220px !important;
+        }
+
+        .product-table th,
+        .product-table td {
+          white-space: nowrap;
+        }
+
+        .modal-dialog.modal-xl {
+          margin: 1rem;
+          max-width: calc(100vw - 2rem);
+        }
+
+        .modal-content[style*="height: 85vh"] {
+          height: calc(100vh - 2rem) !important;
+        }
+      }
+
+      @media (max-width: 575.98px) {
+        .admin-main {
+          padding: 0.85rem;
+        }
+
+        .admin-nav-link {
+          padding: 0.8rem 1rem;
+        }
+
+        #navbar-sidebar-toggle {
+          margin-right: 0;
+        }
+
+        .admin-card div[style*="height: 350px"],
+        .admin-card div[style*="height: 300px"],
+        .admin-card div[style*="height: 260px"] {
+          height: 220px !important;
+        }
+      }
     </style>
       <meta name="view-transition" content="same-origin" />
   </head>
@@ -502,6 +647,9 @@
           </a>
           <a class="admin-nav-link" data-section="workshops">
             <i class="fas fa-chalkboard-teacher"></i> <span>Workshops</span>
+          </a>
+          <a class="admin-nav-link" data-section="quiz">
+            <i class="fas fa-question-circle"></i> <span>Quiz</span>
           </a>
 
           <p class="sidebar-section-title">Análise</p>
@@ -905,136 +1053,147 @@
             </p>
           </header>
 
-          <!-- KPI Cards -->
-          <div class="row g-4 mb-4" id="interactions-kpis">
-            <div class="col-md-4">
-              <div class="admin-card border-0 shadow-sm p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Total de Eventos</span>
-                    <h4 id="int-total" class="fw-bold mb-0">—</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#f3e8ff;color:#9333ea;display:flex;align-items:center;justify-content:center;">
-                    <i class="fas fa-bolt" style="font-size:0.9rem"></i>
-                  </div>
-                </div>
-              </div>
+          <!-- Loading state placeholder -->
+          <div id="interactions-loading" class="text-center py-5 my-5">
+            <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; color: #1c5236 !important;">
+              <span class="visually-hidden">A carregar...</span>
             </div>
-            <div class="col-md-4">
-              <div class="admin-card border-0 shadow-sm p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Utilizadores Autenticados</span>
-                    <h4 id="int-logged" class="fw-bold mb-0">—</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#dcfce7;color:#166534;display:flex;align-items:center;justify-content:center;">
-                    <i class="fas fa-user-check" style="font-size:0.9rem"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="admin-card border-0 shadow-sm p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Utilizadores Anónimos</span>
-                    <h4 id="int-anon" class="fw-bold mb-0">—</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;">
-                    <i class="fas fa-user-secret" style="font-size:0.9rem"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p class="text-muted mt-3 fw-medium">A carregar interações...</p>
           </div>
 
-          <!-- Charts Row 1 -->
-          <div class="row g-4 mb-4">
-            <div class="col-lg-8">
-              <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Eventos por Dia (14 Dias)</h5>
-                <div style="height: 260px;">
-                  <canvas id="intPerDayChart"></canvas>
+          <!-- Content Container -->
+          <div id="interactions-content" class="d-none">
+            <!-- KPI Cards -->
+            <div class="row g-4 mb-4" id="interactions-kpis">
+              <div class="col-md-4">
+                <div class="admin-card border-0 shadow-sm p-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <span class="d-block text-muted small mb-1">Total de Eventos</span>
+                      <h4 id="int-total" class="fw-bold mb-0">—</h4>
+                    </div>
+                    <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#f3e8ff;color:#9333ea;display:flex;align-items:center;justify-content:center;">
+                      <i class="fas fa-bolt" style="font-size:0.9rem"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="admin-card border-0 shadow-sm p-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <span class="d-block text-muted small mb-1">Utilizadores Autenticados</span>
+                      <h4 id="int-logged" class="fw-bold mb-0">—</h4>
+                    </div>
+                    <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#dcfce7;color:#166534;display:flex;align-items:center;justify-content:center;">
+                      <i class="fas fa-user-check" style="font-size:0.9rem"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="admin-card border-0 shadow-sm p-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <span class="d-block text-muted small mb-1">Utilizadores Anónimos</span>
+                      <h4 id="int-anon" class="fw-bold mb-0">—</h4>
+                    </div>
+                    <div class="icon-box rounded-3 p-2" style="width:32px;height:32px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;">
+                      <i class="fas fa-user-secret" style="font-size:0.9rem"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="col-lg-4">
-              <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Tipo de Evento</h5>
-                <div style="height: 260px;">
-                  <canvas id="intByTypeChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Charts Row 2: Behavioral Detail -->
-          <div class="row g-4 mb-4">
-            <!-- Top Viewed Products -->
-            <div class="col-lg-6">
-              <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Produtos Mais Vistos</h5>
-                <div style="height: 300px;">
-                  <canvas id="intTopViewedChart"></canvas>
+            <!-- Charts Row 1 -->
+            <div class="row g-4 mb-4">
+              <div class="col-lg-8">
+                <div class="admin-card border-0 shadow-sm h-100">
+                  <h5 class="fw-bold mb-4">Eventos por Dia (14 Dias)</h5>
+                  <div style="height: 260px;">
+                    <canvas id="intPerDayChart"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="admin-card border-0 shadow-sm h-100">
+                  <h5 class="fw-bold mb-4">Tipo de Evento</h5>
+                  <div style="height: 260px;">
+                    <canvas id="intByTypeChart"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
-            <!-- Top Add-to-Cart -->
-            <div class="col-lg-6">
-              <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Mais Adicionados ao Carrinho</h5>
-                <div style="height: 300px;">
-                  <canvas id="intTopCartChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Charts Row 3: Search & Clicks -->
-          <div class="row g-4 mb-4">
-            <!-- Top Searches -->
-            <div class="col-lg-5">
-              <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Termos Mais Pesquisados 🔍</h5>
-                <div class="table-responsive">
-                  <table class="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Termo</th>
-                        <th class="text-end">Vezes</th>
-                      </tr>
-                    </thead>
-                    <tbody id="int-searches-body">
-                      <!-- Injected by admin.js -->
-                    </tbody>
-                  </table>
+            <!-- Charts Row 2: Behavioral Detail -->
+            <div class="row g-4 mb-4">
+              <!-- Top Viewed Products -->
+              <div class="col-lg-6">
+                <div class="admin-card border-0 shadow-sm h-100">
+                  <h5 class="fw-bold mb-4">Produtos Mais Vistos</h5>
+                  <div style="height: 300px;">
+                    <canvas id="intTopViewedChart"></canvas>
+                  </div>
+                </div>
+              </div>
+              <!-- Top Add-to-Cart -->
+              <div class="col-lg-6">
+                <div class="admin-card border-0 shadow-sm h-100">
+                  <h5 class="fw-bold mb-4">Mais Adicionados ao Carrinho</h5>
+                  <div style="height: 300px;">
+                    <canvas id="intTopCartChart"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
-            <!-- Top Clicks -->
-            <div class="col-lg-7">
-              <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Principais Cliques (Heatmap Summary) ⚡</h5>
-                <div style="height: 350px;">
-                  <canvas id="intTopClicksChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Pages Table -->
-          <div class="admin-card border-0 shadow-sm">
-            <h5 class="fw-bold mb-4">Páginas Mais Visitadas</h5>
-            <div class="table-responsive">
-              <table class="table align-middle product-table">
-                <thead>
-                  <tr>
-                    <th>Página</th>
-                    <th class="text-end">Visitas (30d)</th>
-                  </tr>
-                </thead>
-                <tbody id="int-pages-body"></tbody>
-              </table>
+            <!-- Charts Row 3: Search & Clicks -->
+            <div class="row g-4 mb-4">
+              <!-- Top Searches -->
+              <div class="col-lg-5">
+                <div class="admin-card border-0 shadow-sm h-100">
+                  <h5 class="fw-bold mb-4">Termos Mais Pesquisados 🔍</h5>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Termo</th>
+                          <th class="text-end">Vezes</th>
+                        </tr>
+                      </thead>
+                      <tbody id="int-searches-body">
+                        <!-- Injected by admin.js -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <!-- Top Clicks -->
+              <div class="col-lg-7">
+                <div class="admin-card border-0 shadow-sm h-100">
+                  <h5 class="fw-bold mb-4">Principais Cliques (Heatmap Summary) ⚡</h5>
+                  <div style="height: 350px;">
+                    <canvas id="intTopClicksChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pages Table -->
+            <div class="admin-card border-0 shadow-sm">
+              <h5 class="fw-bold mb-4">Páginas Mais Visitadas</h5>
+              <div class="table-responsive">
+                <table class="table align-middle product-table">
+                  <thead>
+                    <tr>
+                      <th>Página</th>
+                      <th class="text-end">Visitas (30d)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="int-pages-body"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -1087,6 +1246,124 @@
                 </thead>
                 <tbody id="product-slugs-body"></tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- QUIZ SECTION -->
+        <section id="quiz-section" class="admin-section">
+          <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="fw-bold mb-1">Gestão de Quiz Melífero</h2>
+              <p class="text-muted small">
+                Crie e edite perguntas educativas sobre abelhas e mel para engajar os clientes.
+              </p>
+            </div>
+            <button
+              class="btn btn-add-product"
+              data-bs-toggle="modal"
+              data-bs-target="#quizModal"
+              onclick="adminUI.resetQuizForm()"
+            >
+              <i class="fas fa-plus me-2"></i> Nova Pergunta
+            </button>
+          </header>
+
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th style="width: 45%">Pergunta / Explicação</th>
+                    <th style="width: 35%">Opções de Resposta</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="quiz-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- APPEARANCE SECTION -->
+        <section id="appearance-section" class="admin-section">
+          <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+              <header class="mb-4">
+                <h2 class="fw-bold mb-1">Personalização de Aparência</h2>
+                <p class="text-muted small">
+                  Ajuste as definições visuais, estilo do placeholder e informações gerais do site.
+                </p>
+              </header>
+
+              <div class="admin-card border-0 shadow-sm">
+                <h5 class="fw-bold mb-4"><i class="fas fa-magic me-2 text-warning"></i>Elementos Visuais</h5>
+                <form id="appearanceForm" onsubmit="event.preventDefault(); adminUI.saveAppearanceSettings();">
+                  <div class="mb-4">
+                    <label class="form-label small fw-bold text-uppercase text-muted mb-3 d-block">Estilo de Placeholder (Loading)</label>
+                    
+                    <div class="row g-4">
+                      <div class="col-md-6">
+                        <div class="card loading-option-card border-2 p-3 text-center cursor-pointer position-relative h-100" id="opt-skeleton" onclick="adminUI.selectLoadingStyle('skeleton')">
+                          <div class="loading-preview-wrapper mb-3 p-3 bg-light d-flex align-items-center justify-content-center" style="height: 180px; border-radius: 12px; overflow: hidden;">
+                            <!-- Live mini skeleton product card from our site -->
+                            <div class="skeleton-product-card w-100" style="max-width: 220px; transform: scale(0.85); transform-origin: center; box-shadow: 0 4px 12px rgba(0,0,0,0.03); text-align: left; border: 1px solid rgba(0,0,0,0.05); pointer-events: none;">
+                              <div class="skeleton-product-image" style="position:relative; height: 90px;">
+                                <div class="skeleton-product-tags">
+                                  <div class="skeleton skeleton-badge" style="height: 18px; width: 45px;"></div>
+                                </div>
+                              </div>
+                              <div class="skeleton-product-body" style="padding: 0.8rem;">
+                                <div class="skeleton skeleton-title" style="height: 12px; margin-bottom: 6px; width: 75%;"></div>
+                                <div class="skeleton skeleton-text short" style="height: 8px; margin-bottom: 4px; width: 45%;"></div>
+                                <div class="skeleton-product-footer" style="padding-top: 0.4rem; margin-top: 0.4rem; border-top: 1px solid rgba(0,0,0,0.05);">
+                                  <div class="skeleton skeleton-price" style="height: 14px; width: 50px;"></div>
+                                  <div class="skeleton-product-actions">
+                                    <div class="skeleton skeleton-btn-circle" style="width: 18px; height: 18px;"></div>
+                                    <div class="skeleton skeleton-btn-circle" style="width: 18px; height: 18px;"></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <h6 class="fw-bold mb-1 text-dark">Skeleton Loader</h6>
+                          <p class="text-muted small mb-0">Ecrã de carregamento dinâmico com blocos simulados (shimmer effect).</p>
+                          <div class="position-absolute top-0 end-0 m-3 check-badge d-none">
+                            <i class="fas fa-check text-white"></i>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="card loading-option-card border-2 p-3 text-center cursor-pointer position-relative h-100" id="opt-spinner" onclick="adminUI.selectLoadingStyle('spinner')">
+                          <div class="loading-preview-wrapper mb-3 p-3 bg-light d-flex align-items-center justify-content-center" style="height: 180px; border-radius: 12px; overflow: hidden;">
+                            <!-- Live spinner from our site -->
+                            <div class="skeleton-spinner-container py-2" style="padding: 0 !important; min-height: auto; pointer-events: none;">
+                              <div class="skeleton-spinner-circle" style="width: 44px; height: 44px; border-width: 4px;"></div>
+                              <p class="skeleton-spinner-text" style="font-size: 0.85rem; margin-top: 0.8rem; font-weight: 600;">Carregando...</p>
+                            </div>
+                          </div>
+                          <h6 class="fw-bold mb-1 text-dark">Spinner Tradicional</h6>
+                          <p class="text-muted small mb-0">Carregador circular clássico de alta performance com a cor da marca.</p>
+                          <div class="position-absolute top-0 end-0 m-3 check-badge d-none">
+                            <i class="fas fa-check text-white"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <input type="hidden" id="app-placeholder-style" value="skeleton">
+                    <small class="text-muted d-block mt-3">Clique numa das opções acima para selecionar a forma como os dados serão exibidos enquanto são descarregados do servidor.</small>
+                  </div>
+
+                  <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <button type="button" class="btn btn-light px-4 fw-bold text-muted" onclick="adminUI.loadAppearanceSettings()">Repor</button>
+                    <button type="button" class="btn btn-add-product px-5 py-2 fw-bold" onclick="adminUI.saveAppearanceSettings()">
+                      <i class="fas fa-save me-2"></i>Guardar Definições
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </section>
@@ -1362,6 +1639,67 @@
                 <button type="submit" class="btn btn-add-product px-5 py-2">
                   Guardar Produto
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Modal (Add/Edit) -->
+    <div class="modal fade" id="quizModal" tabindex="-1" aria-labelledby="quizModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden">
+          <div class="modal-header border-0 pb-0 ps-4 pe-4 pt-4">
+            <h5 class="modal-title fw-bold text-dark fs-4" id="quizModalLabel">Adicionar Nova Pergunta</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="quizForm" onsubmit="event.preventDefault(); adminUI.saveQuizQuestion();">
+              <input type="hidden" id="quizId" />
+              
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Pergunta</label>
+                <input type="text" id="quizQuestion" class="form-control form-control-v2" placeholder="Ex: Qual é a principal função da abelha rainha?" required />
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Opção 1</label>
+                  <input type="text" id="quizOpt1" class="form-control form-control-v2" placeholder="Opção 1" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Opção 2</label>
+                  <input type="text" id="quizOpt2" class="form-control form-control-v2" placeholder="Opção 2" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Opção 3</label>
+                  <input type="text" id="quizOpt3" class="form-control form-control-v2" placeholder="Opção 3" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Opção 4</label>
+                  <input type="text" id="quizOpt4" class="form-control form-control-v2" placeholder="Opção 4" required />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Opção Correta</label>
+                <select id="quizCorrectOpt" class="form-select form-control-v2" required>
+                  <option value="0">Opção 1</option>
+                  <option value="1">Opção 2</option>
+                  <option value="2">Opção 3</option>
+                  <option value="3">Opção 4</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Explicação (Aparece após o utilizador responder)</label>
+                <textarea id="quizExplanation" class="form-control form-control-v2" rows="3" placeholder="Explique sucintamente o porquê desta resposta estar correta..." required></textarea>
+              </div>
+
+              <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-light px-4 fw-bold text-muted" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Pergunta</button>
               </div>
             </form>
           </div>

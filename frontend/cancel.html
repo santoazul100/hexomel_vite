@@ -68,9 +68,22 @@
         <p class="text-muted">Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.</p>
         
         <div class="d-flex flex-column gap-2 mt-4">
-            <a href="checkout.html" class="btn-retry">Tentar Novamente</a>
+            <a href="checkout.html" id="retry-link" class="btn-retry">Tentar Novamente</a>
             <a href="shop.html" class="text-decoration-none text-muted small mt-2">Voltar à Loja</a>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get('orderId');
+            if (orderId) {
+                const retryLink = document.getElementById('retry-link');
+                if (retryLink) {
+                    retryLink.href = `checkout.html?orderId=${orderId}`;
+                }
+            }
+        });
+    </script>
 </body>
 </html>

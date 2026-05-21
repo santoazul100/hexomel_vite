@@ -243,6 +243,19 @@ body.checkout-body {
   border-color: rgba(26, 77, 46, 0.05);
 }
 
+.checkout-inline-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.checkout-inline-grid--equal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.checkout-inline-grid--address {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
 .checkout-title {
   font-family: var(--font-heading);
   font-size: 2.2rem;
@@ -746,5 +759,12 @@ body.checkout-body {
 
   .step2-heading {
     font-size: 1.3rem;
+  }
+
+  .checkout-inline-grid,
+  .checkout-inline-grid--equal,
+  .checkout-inline-grid--address {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
