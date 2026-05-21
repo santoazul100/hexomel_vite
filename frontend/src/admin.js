@@ -1971,6 +1971,92 @@ class AdminUI {
     }
   }
 
+  async downloadSitemap() {
+    try {
+      Swal.fire({
+        title: 'A gerar sitemap...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
+      // 1. Fetch data
+      const [siteRes, prodRes] = await Promise.all([
+        fetch(`${API_URL}/site-slugs`),
+        fetch(`${API_URL}/admin/products`, { headers: { Authorization: `Bearer ${this.token}` } })
+      ]);
+
+      if (!siteRes.ok || !prodRes.ok) throw new Error("Falha ao obter dados para o sitemap");
+
+      const sitePages = await siteRes.json();
+      const products = await prodRes.json();
+
+      // 2. Build XML
+      const baseUrl = window.location.origin;
+      const date = new Date().toISOString().split('T')[0];
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+      // Static pages mapping (to real filenames)
+      const pageToHtml = {
+        inicio: "index.html",
+        loja: "shop.html",
+        sobre: "about.html",
+        contactos: "contact.html",
+        workshops: "workshops.html",
+        curiosidades: "curiosidades.html",
+        comunidade: "comunidade.html",
+        apicultores: "apicultores.html"
+      };
+
+      // Add site pages
+      sitePages.forEach(p => {
+        const fileName = pageToHtml[p.Pagina] || `${p.Pagina}.html`;
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}/${fileName}</loc>\n`;
+        xml += `    <lastmod>${date}</lastmod>\n`;
+        xml += `    <priority>${p.Pagina === 'inicio' ? '1.0' : '0.8'}</priority>\n`;
+        xml += `  </url>\n`;
+      });
+
+      // Add product pages
+      products.forEach(p => {
+        if (p.Slug) {
+          xml += `  <url>\n`;
+          xml += `    <loc>${baseUrl}/produto.html?slug=${p.Slug}</loc>\n`;
+          xml += `    <lastmod>${date}</lastmod>\n`;
+          xml += `    <priority>0.6</priority>\n`;
+          xml += `  </url>\n`;
+        }
+      });
+
+      xml += `</urlset>`;
+
+      // 3. Trigger Download
+      const blob = new Blob([xml], { type: 'application/xml' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sitemap.xml';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Sitemap Gerado!',
+        text: 'O ficheiro sitemap.xml foi descarregado com sucesso.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+    } catch (err) {
+      console.error("Sitemap error", err);
+      Swal.fire("Erro", err.message, "error");
+    }
+  }
+
   async loadProductSlugs() {
     try {
       // Reuse products if already loaded, otherwise fetch

@@ -413,54 +413,102 @@ function buildAbsoluteAppUrl(origin, assetPath) {
   return `${publicBaseUrl}${normalizedPath}`;
 }
 
-function getCheckoutProductImages(origin, imagePath, productName, productId) {
-  const publicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
-  
-  console.log(`[Stripe Debug] Resolving images for ${productName} (ID: ${productId}). BaseUrl: ${publicBaseUrl}, Origin: ${origin}, Path: ${imagePath}`);
-
-  // 1. Fallback for missing image path
-  let finalPath = imagePath;
-  if (!finalPath) {
-    // Try to guess based on productId or use default logo
-    finalPath = `/images/logo_hexomel.webp`;
-    console.log(`[Stripe Debug] Image path missing, using default logo.`);
+function isLocalCheckoutUrl(value) {
+  if (!value) {
+    return true;
   }
 
-  // 2. Resolve absolute URL
+  try {
+    const { hostname } = new URL(value);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return true;
+  }
+}
+
+function normalizeProductNameForImage(productName) {
+  return (productName || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function getCheckoutProductImages(origin, imagePath, productName, productId) {
+  const publicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
+  const nameLower = (productName || "").toLowerCase();
+  
+  console.log(`[Stripe Debug] Resolving images for: "${productName}" (ID: ${productId})`);
+  console.log(`[Stripe Debug] Config: BaseUrl=${publicBaseUrl}, Origin=${origin}`);
+
+  // 1. Resolve absolute URL if we have a public base URL
   const buildUrl = (baseUrl, path) => {
     const normalizedBase = baseUrl.replace(/\/$/, "");
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `${normalizedBase}${normalizedPath}`;
   };
 
-  // If we have an explicit public URL configured (e.g. Ngrok), use it
-  if (publicBaseUrl && !publicBaseUrl.includes("localhost") && !publicBaseUrl.includes("127.0.0.1")) {
-    const absoluteUrl = buildUrl(publicBaseUrl, finalPath);
-    console.log(`[Stripe Debug] Using configured public URL: ${absoluteUrl}`);
+  // 2. Determine if we are in Localhost mode
+  const isLocalhost = !origin || 
+                     origin.includes("localhost") || 
+                     origin.includes("127.0.0.1") || 
+                     (publicBaseUrl && (publicBaseUrl.includes("localhost") || publicBaseUrl.includes("127.0.0.1")));
+
+  if (isLocalhost) {
+    console.log(`[Stripe Debug] Localhost detected. Stripe cannot access local files. Using public placeholders...`);
+    
+    let placeholderUrl = "";
+    if (nameLower.includes("mel")) {
+      placeholderUrl = "https://images.unsplash.com/photo-1471943311424-646960669fba?q=80&w=600";
+    } else if (nameLower.includes("favo")) {
+      placeholderUrl = "https://images.unsplash.com/photo-1558583082-409143c794ca?q=80&w=600";
+    } else if (nameLower.includes("polen") || nameLower.includes("pólen")) {
+      placeholderUrl = "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?q=80&w=600";
+    } else if (nameLower.includes("prop") || nameLower.includes("próp") || nameLower.includes("cera")) {
+      placeholderUrl = "https://images.unsplash.com/photo-1610424564335-9774d008d56c?q=80&w=600";
+    } else {
+      const encodedName = encodeURIComponent(productName || "Hexomel").replace(/%20/g, "+");
+      placeholderUrl = `https://placehold.co/600x600/1a4d2e/ffffff/png?text=${encodedName}`;
+    }
+
+    console.log(`[Stripe Debug] Generated Placeholder: ${placeholderUrl}`);
+    return [placeholderUrl];
+  }
+
+  // 3. In Production or with Ngrok
+  let finalPath = imagePath || `/images/logo_hexomel.webp`;
+  const absoluteUrl = buildUrl(publicBaseUrl || origin, finalPath);
+  
+  console.log(`[Stripe Debug] Using absolute URL: ${absoluteUrl}`);
+  return [absoluteUrl];
+}
+
+function getStripeCheckoutProductImages(origin, imagePath, productName, productId) {
+  const configuredPublicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
+  const checkoutBaseUrl = configuredPublicBaseUrl || origin;
+
+  console.log(`[Stripe Debug] Resolving public image for: "${productName}" (ID: ${productId})`);
+  console.log(`[Stripe Debug] Config: BaseUrl=${configuredPublicBaseUrl}, Origin=${origin}`);
+
+  if (imagePath && /^https?:\/\//i.test(imagePath) && !isLocalCheckoutUrl(imagePath)) {
+    console.log(`[Stripe Debug] Using product absolute URL: ${imagePath}`);
+    return [imagePath];
+  }
+
+  if (imagePath && checkoutBaseUrl && !isLocalCheckoutUrl(checkoutBaseUrl)) {
+    const absoluteUrl = new URL(
+      imagePath.replace(/\\/g, "/"),
+      `${checkoutBaseUrl.replace(/\/$/, "")}/`,
+    ).toString();
+
+    console.log(`[Stripe Debug] Using product public URL: ${absoluteUrl}`);
     return [absoluteUrl];
   }
 
-  const isLocalhost = !origin || origin.includes("localhost") || origin.includes("127.0.0.1") || (publicBaseUrl && (publicBaseUrl.includes("localhost") || publicBaseUrl.includes("127.0.0.1")));
+  const placeholderUrl = "https://placehold.co/600x600/e5e7eb/374151.png?font=montserrat&text=IMG";
 
-  if (isLocalhost) {
-    console.log(`[Stripe Debug] Localhost detected. Using high-quality placeholders.`);
-    const nameLower = (productName || "").toLowerCase();
-    
-    if (nameLower.includes("mel")) {
-      return ["https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=600"];
-    } else if (nameLower.includes("polen") || nameLower.includes("pólen")) {
-      return ["https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=600"];
-    } else if (nameLower.includes("prop") || nameLower.includes("próp") || nameLower.includes("cera")) {
-      return ["https://images.unsplash.com/photo-1610424564335-9774d008d56c?auto=format&fit=crop&q=80&w=600"];
-    }
-
-    const encodedName = encodeURIComponent(productName || "Hexomel").replace(/%20/g, "+");
-    return [`https://placehold.co/600x600/1a4d2e/ffffff/png?text=${encodedName}`];
-  }
-  
-  const absoluteUrl = buildUrl(origin, finalPath);
-  console.log(`[Stripe Debug] Using origin-based URL: ${absoluteUrl}`);
-  return [absoluteUrl];
+  console.log("[Stripe Debug] Public URL not available. Using public placeholder image.");
+  return [placeholderUrl];
 }
 
 const runDatabaseMigrations = async () => {
@@ -956,36 +1004,67 @@ app.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     const fullName = `${firstName} ${lastName}`.trim();
 
-    // Insert user without verification
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    // Insert user with verification token and Is_Verified = false
     const result = await db.run(
-      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified, Verification_Token) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         fullName,
         email,
         username,
         hashedPassword,
         "client",
-        true
+        false, // Needs verification
+        verificationToken
       ],
     );
 
-    // Auto-login after registration
-    const token = jwt.sign(
-      { id: result.lastID, role: "client" },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-    );
+    // Send Verification Email
+    if (mailTransporter) {
+      const frontendUrl = process.env.FRONTEND_URL || (req.get("origin") || `${req.protocol}://${req.get("host")}`);
+      const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
+
+      try {
+        await mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || `Hexomel <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: "Confirme o seu email — Hexomel",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eef2f0; border-radius: 12px; overflow: hidden;">
+              <div style="background-color: #1a4d2e; padding: 20px; text-align: center;">
+                <h1 style="color: #f4b400; margin: 0;">Bem-vindo à Hexomel!</h1>
+              </div>
+              <div style="padding: 30px; background-color: #ffffff;">
+                <p>Olá <strong>${fullName}</strong>,</p>
+                <p>Obrigado por te registares na Hexomel. Para ativares a tua conta e começares a explorar o melhor mel de Portugal, por favor confirma o teu endereço de email clicando no botão abaixo:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${verifyUrl}" style="background-color: #1a4d2e; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Verificar a minha conta</a>
+                </div>
+                <p style="font-size: 0.9em; color: #718096;">Se o botão não funcionar, copia e cola o seguinte link no teu navegador:</p>
+                <p style="font-size: 0.8em; color: #1a4d2e; word-break: break-all;">${verifyUrl}</p>
+              </div>
+              <div style="background-color: #fcfdfc; padding: 20px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #edf2f7;">
+                Se não criaste uma conta na Hexomel, podes ignorar este email.
+              </div>
+            </div>
+          `
+        });
+      } catch (emailErr) {
+        console.error("Verification email failed to send:", emailErr);
+        // We still created the user, but they might need a resend option later
+      }
+    }
 
     res.status(201).json({
-      message: "Conta criada com sucesso.",
-      token,
+      message: "Conta criada com sucesso! Por favor, verifica o teu email para ativares a conta.",
+      requiresVerification: true,
       user: {
         id: result.lastID,
         name: fullName,
         email,
-        picture: null,
-        UserType: "client",
-        role: "client"
+        UserType: "client"
       }
     });
   } catch (error) {
@@ -1015,6 +1094,14 @@ app.post("/api/auth/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.Senha);
     if (!isMatch) {
       return res.status(400).json({ error: "Credenciais inválidas" });
+    }
+
+    if (!user.Is_Verified) {
+      return res.status(403).json({ 
+        error: "Conta não verificada", 
+        message: "Por favor, verifique o seu email para ativar a sua conta.",
+        unverified: true 
+      });
     }
 
     const token = jwt.sign(
@@ -1055,7 +1142,7 @@ app.get("/api/auth/verify-email", async (req, res) => {
       return res.status(400).json({ error: "Token de verificação inválido ou expirado." });
     }
 
-    await db.run("UPDATE cliente SET Is_Verified = TRUE, Verification_Token = NULL WHERE ID_Cliente = ?", [user.ID_Cliente]);
+    await db.run("UPDATE cliente SET Is_Verified = 1, Verification_Token = NULL WHERE ID_Cliente = ?", [user.ID_Cliente]);
     
     res.json({ message: "Email verificado com sucesso!" });
   } catch (error) {
@@ -1069,14 +1156,11 @@ app.get("/api/auth/verify-email", async (req, res) => {
 app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) => {
   try {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
-    const expiresDate = new Date(Date.now() + 10 * 60 * 1000);
-    // Format as local YYYY-MM-DD HH:MM:SS (MySQL DATETIME is timezone-naive, must match server local time)
-    const pad = (n) => String(n).padStart(2, '0');
-    const expires = `${expiresDate.getFullYear()}-${pad(expiresDate.getMonth()+1)}-${pad(expiresDate.getDate())} ${pad(expiresDate.getHours())}:${pad(expiresDate.getMinutes())}:${pad(expiresDate.getSeconds())}`;
+    const expiresDate = new Date(Date.now() + 10 * 1000 * 60); // 10 minutes from now
 
     await db.run(
       "UPDATE cliente SET Checkout_OTP = ?, Checkout_OTP_Expires = ? WHERE ID_Cliente = ?",
-      [otp, expires, req.user.id]
+      [otp, expiresDate, req.user.id]
     );
 
     const user = await db.get("SELECT Email, Nome FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
@@ -1088,13 +1172,32 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
           to: user.Email,
           subject: "O seu código de verificação para Checkout — Hexomel",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
-              <h2 style="color: #1a4d2e;">Código de Segurança</h2>
-              <p>Olá ${user.Nome || 'Cliente'},</p>
-              <p>O seu código de verificação para prosseguir com a encomenda é:</p>
-              <h1 style="background: #f4f7f6; padding: 15px; text-align: center; font-size: 32px; letter-spacing: 5px; color: #f4b400; border-radius: 8px;">${otp}</h1>
-              <p>Este código é válido por 10 minutos. Se não pediu este código, por favor ignore este email.</p>
-              <p style="color: #718096; font-size: 0.85em;">A equipa Hexomel</p>
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 550px; margin: 40px auto; padding: 40px; border-radius: 20px; background: #ffffff; border: 1px solid #f0f0f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <div style="background: #1a4d2e; width: 60px; height: 60px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                  <span style="font-size: 30px; line-height: 60px;">🐝</span>
+                </div>
+                <h1 style="color: #1a4d2e; font-size: 26px; margin: 0; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">Hexomel</h1>
+                <p style="color: #f4b400; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0 0 0; font-weight: 700;">Segurança de Checkout</p>
+              </div>
+              
+              <div style="background: #fcfdfd; border-radius: 16px; padding: 30px; border: 1px dashed #e0e0e0; text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #1a4d2e; font-size: 18px; margin-top: 0; margin-bottom: 20px; font-weight: 600;">O teu código de verificação</h2>
+                <div style="background: #ffffff; display: inline-block; padding: 15px 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #f0f0f0;">
+                  <span style="font-family: 'Monaco', 'Consolas', monospace; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #1a4d2e;">${otp}</span>
+                </div>
+                <p style="color: #718096; font-size: 14px; margin-top: 20px;">Este código expira em <strong>10 minutos</strong>.</p>
+              </div>
+              
+              <div style="text-align: center; color: #4a5568; font-size: 15px; line-height: 1.6;">
+                <p>Olá <strong>${user.Nome || 'Cliente'}</strong>,</p>
+                <p>Para concluir a tua encomenda com segurança, introduz o código acima na página de verificação.</p>
+              </div>
+              
+              <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid #f0f0f0; text-align: center; color: #a0aec0; font-size: 12px;">
+                <p>Se não solicitaste este código, podes ignorar este email com segurança.</p>
+                <p style="margin-top: 15px; color: #1a4d2e; font-weight: 600; font-size: 14px;">Equipa Hexomel 🐝</p>
+              </div>
             </div>
           `
         });
@@ -1155,7 +1258,7 @@ app.post("/api/auth/checkout-2fa/verify", authenticateToken, async (req, res) =>
     }
 
     // Success -> Clear OTP and set as verified
-    await db.run("UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL, Checkout_Verified = TRUE WHERE ID_Cliente = ?", [req.user.id]);
+    await db.run("UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL, Checkout_Verified = 1 WHERE ID_Cliente = ?", [req.user.id]);
 
     // Issue updated token
     const token = jwt.sign(
@@ -2474,7 +2577,7 @@ app.patch(
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
       [req.user.id]
     );
 
@@ -2487,8 +2590,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
       [req.user.id]
     );
 
-    // Provide default checkoutVerified = false since it's session based
-    res.json({ ...user, checkoutVerified: false, orders });
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ error: "Database error", details: error.message });
@@ -2512,7 +2614,7 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
     await db.run(`UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`, params);
 
     const user = await db.get(
-      "SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified FROM cliente WHERE ID_Cliente = ?",
       [req.user.id]
     );
 
@@ -3065,7 +3167,7 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
 
     // 6. REAL STRIPE SESSION
     const lineItems = items.map(item => {
-      const productImages = getCheckoutProductImages(req.headers.origin, item.Imagem, item.Nome, item.ID_Produto);
+      const productImages = getStripeCheckoutProductImages(req.headers.origin, item.Imagem, item.Nome, item.ID_Produto);
       return {
         price_data: {
           currency: 'eur',
@@ -3083,7 +3185,10 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       lineItems.push({
         price_data: {
           currency: 'eur',
-          product_data: { name: 'Envio (CTT Expresso)' },
+          product_data: {
+            name: 'Envio (CTT Expresso)',
+            images: ["https://placehold.co/600x600/fef3c7/92400e.png?font=montserrat&text=CTT"],
+          },
           unit_amount: Math.round(Number(shippingCost || 0) * 100),
         },
         quantity: 1,
@@ -3103,6 +3208,8 @@ app.post("/api/checkout/create-session", authenticateToken, async (req, res) => 
       line_items: lineItems,
       mode: 'payment',
       locale: 'pt',
+      submit_type: 'pay',
+      billing_address_collection: 'auto',
       success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${finalOrderId}`,
       cancel_url: `${req.headers.origin}/cancel.html?orderId=${finalOrderId}`,
       metadata: {
@@ -3576,6 +3683,58 @@ app.put("/api/admin/site-slugs", authenticateToken, isAdmin, async (req, res) =>
   } catch (error) {
     console.error("Update site slugs error:", error);
     res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Dynamic sitemap generation
+app.get("/sitemap.xml", async (req, res) => {
+  try {
+    const [sitePages, products] = await Promise.all([
+      db.all("SELECT Pagina, Slug FROM site_slugs"),
+      db.all("SELECT Slug FROM produto WHERE Slug IS NOT NULL")
+    ]);
+
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const date = new Date().toISOString().split("T")[0];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    const pageToHtml = {
+      inicio: "index.html",
+      loja: "shop.html",
+      sobre: "about.html",
+      contactos: "contact.html",
+      workshops: "workshops.html",
+      curiosidades: "curiosidades.html",
+      comunidade: "comunidade.html",
+      apicultores: "apicultores.html"
+    };
+
+    sitePages.forEach(p => {
+      const fileName = pageToHtml[p.Pagina] || `${p.Pagina}.html`;
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}/${fileName}</loc>\n`;
+      xml += `    <lastmod>${date}</lastmod>\n`;
+      xml += `    <priority>${p.Pagina === "inicio" ? "1.0" : "0.8"}</priority>\n`;
+      xml += `  </url>\n`;
+    });
+
+    products.forEach(p => {
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}/produto.html?slug=${p.Slug}</loc>\n`;
+      xml += `    <lastmod>${date}</lastmod>\n`;
+      xml += `    <priority>0.6</priority>\n`;
+      xml += `  </url>\n`;
+    });
+
+    xml += `</urlset>`;
+
+    res.header("Content-Type", "application/xml");
+    res.send(xml);
+  } catch (error) {
+    console.error("Sitemap generation error:", error);
+    res.status(500).send("Error generating sitemap");
   }
 });
 

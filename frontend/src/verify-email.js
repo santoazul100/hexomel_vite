@@ -25,6 +25,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await parseJsonSafely(response);
 
     if (response.ok) {
+      // If user is already logged in, update their local status
+      const localUserStr = localStorage.getItem("user");
+      if (localUserStr) {
+        try {
+          const localUser = JSON.parse(localUserStr);
+          localUser.isVerified = true;
+          localUser.Is_Verified = true; // Support both cases
+          localStorage.setItem("user", JSON.stringify(localUser));
+          console.log("Local user status updated to verified.");
+        } catch (e) {
+          console.error("Error updating local user status:", e);
+        }
+      }
+
       contentDiv.innerHTML = `
         <i class="success-icon" style="font-style: normal;">✅</i>
         <p class="auth-subtitle" style="color: #1a4d2e; font-weight: bold; font-size: 1.2rem;">${data.message}</p>

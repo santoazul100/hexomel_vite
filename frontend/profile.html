@@ -157,11 +157,12 @@
                 style="display: none"
               />
             </div>
-            <div class="flex-grow-1 text-center text-md-start mb-3">
+            <div class="flex-grow-1 text-center text-md-start mb-3 pt-2">
               <h1 class="profile-name mb-2" id="profile-name">Carregando...</h1>
-              <p class="profile-email mb-1" id="profile-email">
-                email@exemplo.com
-              </p>
+              <div class="d-flex align-items-center flex-wrap gap-3 mb-2 justify-content-center justify-content-md-start" style="min-height: 32px;">
+                <p class="profile-email mb-0 opacity-75" id="profile-email">email@exemplo.com</p>
+                <div id="account-verify-badge"></div>
+              </div>
               <p
                 class="profile-address small text-muted mb-3"
                 id="profile-address"
@@ -453,9 +454,9 @@
 
               <!-- Novo Bloco: Verificação Checkout (2FA) -->
               <div class="premium-card p-4 mt-4" style="max-width: 600px">
-                <div class="d-flex justify-content-between align-items-center mb-1">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                   <h5 class="fw-bold mb-0">Verificação de Checkout (2FA)</h5>
-                  <span id="2fa-status-badge" class="badge bg-danger">Sessão Não Verificada</span>
+                  <div id="2fa-status-badge" class="verify-badge-premium unverified">Sessão Não Verificada</div>
                 </div>
                 <p class="text-muted small mb-4">
                   Por segurança, para concluir encomendas nesta sessão necessitas de obter um código validado por email. <br/>

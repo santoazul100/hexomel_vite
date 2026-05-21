@@ -27,5 +27,20 @@ Para que o site saiba AUTOMATICAMENTE quando o pagamento foi feito:
 3. Copia o **Webhook Secret** (`whsec_...`) que o comando te der para o `.env`:
    `STRIPE_WEBHOOK_SECRET=whsec_...`
 
+## 5. Fazer as Imagens Aparecerem (Localhost)
+A Stripe não consegue ver imagens que estão no teu `localhost`. Se quiseres ver as imagens REAIS dos teus produtos no Checkout:
+1. Usa o **Ngrok** para criar um túnel público.
+2. Adiciona esta variável ao teu `backend/.env`:
+   `CHECKOUT_PUBLIC_BASE_URL=https://teu-subdominio-ngrok.ngrok-free.app`
+3. Substitui o URL acima pelo URL que o Ngrok te der.
+
+## 6. Configurar o Logótipo do Site
+Para que o logótipo da Hexomel e o nome apareçam no topo da página de pagamento:
+1. Vai ao Dashboard da Stripe > **Settings** > **Branding**.
+2. Carrega o teu **Icon** e **Logo**.
+3. Define as **Brand colors**.
+4. Clica em **Save changes**.
+5. No Checkout Session, o nome que aparece é o **Public business name** definido em **Settings** > **Account details**.
+
 ---
 **Nota:** Enquanto não definires estas chaves, o projeto funcionará em **MOCK MODE** (Simulação), permitindo-te testar tudo sem precisar destas chaves!

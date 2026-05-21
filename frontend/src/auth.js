@@ -46,6 +46,18 @@ export const initializeAuthForms = () => {
             window.closeAuthModal();
           }
 
+          if (data.requiresVerification) {
+            Swal.fire({
+              icon: "info",
+              title: "Verifica o teu email",
+              text:
+                data.message ||
+                "Enviámos um link de ativação para o teu email.",
+              confirmButtonColor: "#1a4d2e",
+            });
+            return;
+          }
+
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           if (typeof updateNav === "function") {
@@ -122,7 +134,16 @@ export const initializeAuthForms = () => {
           });
         } else {
           window.closeAllPopups();
-          Swal.fire("Login Falhou", data.error, "error");
+          if (data.unverified) {
+            Swal.fire({
+              icon: "warning",
+              title: "Email não verificado",
+              text: data.message,
+              confirmButtonColor: "#b45309",
+            });
+          } else {
+            Swal.fire("Login Falhou", data.error, "error");
+          }
         }
       } catch (error) {
         console.error("Login failed:", error);
@@ -366,10 +387,22 @@ export function updateNav(user) {
     // Incomplete Profile Notification Logic
     const phone = user.phone || user.Telefone;
     const address = user.address || user.Morada;
+    const isVerified = user.isVerified || user.Is_Verified;
     
     setTimeout(() => {
        const existingBanner = document.getElementById("profile-incomplete-banner");
        
+       // Verification reminder
+       if (!isVerified && !sessionStorage.getItem("hideVerifyBanner")) {
+          if (window.toast) {
+            window.toast.info(
+              "Por favor, verifique o seu email para ativar todas as funcionalidades da sua conta.", 
+              "Conta Não Verificada"
+            );
+            sessionStorage.setItem("hideVerifyBanner", "true");
+          }
+       }
+
        if (!phone || !address) {
          if (!sessionStorage.getItem("hideProfileBanner") && window.location.pathname.indexOf('profile.html') === -1 && window.location.pathname.indexOf('checkout.html') === -1) {
            sessionStorage.setItem("hideProfileBanner", "true"); // mark as shown so it doesn't spam on every un-related navigation
@@ -407,3 +440,12 @@ export function updateNav(user) {
   }, 10);
 }
 
+
+// Auto-initialize if on standalone auth pages
+if (
+  typeof document !== "undefined" &&
+  (window.location.pathname.includes("login.html") ||
+    window.location.pathname.includes("register.html"))
+) {
+  document.addEventListener("DOMContentLoaded", initializeAuthForms);
+}

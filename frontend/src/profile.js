@@ -302,6 +302,7 @@ async function handleUserDataSave(section) {
       const localUser = JSON.parse(localStorage.getItem("user") || "{}");
       const updatedUser = {
         ...localUser,
+        ...currentUserData,
         name: currentUserData.name,
         email: currentUserData.email,
         picture: currentUserData.picture,
@@ -367,6 +368,14 @@ async function fetchProfileData() {
 
     const data = result.data;
     currentUserData = data;
+
+    // Update localStorage with fresh data to ensure persistence across refreshes
+    const localUser = getLoggedUser();
+    if (localUser) {
+      const updatedUser = { ...localUser, ...data };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+
     renderProfile(data);
   } catch (error) {
     console.error("Profile fetch error:", error);
@@ -475,9 +484,13 @@ function initialize2FA() {
         
         if (res.ok) {
           // Update local token and user
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          
+          if (data.token) localStorage.setItem("token", data.token);
+          if (data.user) {
+            const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+            localStorage.setItem("user", JSON.stringify({ ...localUser, ...data.user }));
+            currentUserData = { ...currentUserData, ...data.user };
+          }
+      
           currentUserData.checkoutVerified = true;
           clearInterval(timerInterval);
           renderProfile(currentUserData);
@@ -562,13 +575,26 @@ function renderProfile(data) {
   const requestSec = document.getElementById("2fa-request-section");
   if (badge2FA) {
     if (data.checkoutVerified) {
-      badge2FA.className = "badge bg-success";
-      badge2FA.innerHTML = '<i class="fas fa-shield-check me-1"></i>Sessão Protegida';
+      badge2FA.className = "verify-badge-premium verified";
+      badge2FA.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Sessão Protegida';
       if(requestSec) requestSec.classList.add("d-none"); // Hide request if already verified
     } else {
-      badge2FA.className = "badge bg-danger";
-      badge2FA.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Não Verificada';
+      badge2FA.className = "verify-badge-premium unverified";
+      badge2FA.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Sessão Não Verificada';
       if(requestSec) requestSec.classList.remove("d-none");
+    }
+  }
+
+  // Account Verification Badge
+  const badgeVerify = document.getElementById("account-verify-badge");
+  if (badgeVerify) {
+    if (data.isVerified) {
+      badgeVerify.className = "verify-badge-premium verified";
+      badgeVerify.innerHTML = '<i class="fas fa-check-circle me-1"></i>Conta Verificada';
+    } else {
+      badgeVerify.className = "verify-badge-premium pending";
+      badgeVerify.innerHTML = '<i class="fas fa-clock me-1"></i>Verificação Pendente';
+      badgeVerify.title = "Por favor, verifique o seu email.";
     }
   }
 
