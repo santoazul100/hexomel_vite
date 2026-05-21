@@ -351,16 +351,92 @@ class CheckoutManager {
         return;
       }
 
-      // Removed Step 1 initialization to only create order on final submit
+      // Step 1 -> Step 2: Initialize order in backend
+      if (this.currentStep === 1) {
+        const btn = document.getElementById("init-checkout-btn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fas fa-spinner fa-spin me-2"></i>A processar...';
+
+        try {
+          const address = `${document.getElementById("morada").value}, ${document.getElementById("cod-postal").value} ${document.getElementById("cidade").value}`;
+          const phone = document.getElementById("telemovel").value;
+          const nome = document.getElementById("nome").value;
+          const apelido = document.getElementById("apelido").value;
+          const shippingType = document.querySelector(
+            'input[name="envio"]:checked',
+          ).value;
+          const shippingCost = shippingType === "ctt" ? 4.9 : 0;
+
+          const res = await fetch(`${API_URL}/checkout/init`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({
+              address,
+              phone,
+              nome,
+              apelido,
+              shippingCost,
+              shippingType,
+              orderId: this.currentOrderId,
+            }),
+          });
+
+          if (!res.ok) throw new Error("Falha ao inicializar checkout");
+
+          const data = await res.json();
+          this.currentOrderId = data.orderId;
+
+          // Clear local cart since it's now an order in the backend
+          if (cart && typeof cart.clear === "function") {
+            cart.clear();
+          } else {
+            localStorage.removeItem("cart");
+            window.dispatchEvent(new Event("cartUpdated"));
+          }
+
+          console.log(
+            "[Checkout Debug] Order initialized:",
+            this.currentOrderId,
+          );
+        } catch (error) {
+          console.error("Checkout init error:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Erro",
+            text: "Não foi possível preparar a tua encomenda. Tenta novamente.",
+            confirmButtonColor: "#f4b400",
+          });
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+
       this.currentStep++;
-      this.updateUI();
+      if (document.startViewTransition) {
+        document.startViewTransition(() => this.updateUI()).finished.catch(() => {});
+      } else {
+        this.updateUI();
+      }
     }
   }
 
   prevStep() {
     if (this.currentStep > 1) {
       this.currentStep--;
-      this.updateUI();
+      if (document.startViewTransition) {
+        document.startViewTransition(() => this.updateUI()).finished.catch(() => {});
+      } else {
+        this.updateUI();
+      }
     }
   }
 

@@ -74,19 +74,37 @@ document
 // Navbar and Auth initialization handled in DOMContentLoaded below
 
 // Custom Auth Modal Logic (Vercel Style)
+window.updateScrollLock = function () {
+  const anyModalOpen = !!document.querySelector(".modal.show");
+  const anyOverlayActive = !!document.querySelector(
+    ".auth-overlay.active, .cart-sidebar.open, .product-details-overlay.active, #checkoutModal.show",
+  );
+  const anySwalOpen = document.body.classList.contains("swal2-shown");
+
+  if (anyModalOpen || anyOverlayActive || anySwalOpen) {
+    document.documentElement.classList.add("modal-open");
+    // Adicionar padding ao html se necessário (mesma lógica que o Bootstrap faz no body)
+    if (window.innerWidth > document.documentElement.clientWidth) {
+      // O scrollbar-gutter: stable já cuida disso na maioria dos browsers modernos
+    }
+  } else {
+    document.documentElement.classList.remove("modal-open");
+  }
+};
+
 window.openAuthModal = function (mode = "login") {
   const overlay = document.getElementById("authOverlay");
   if (!overlay) return;
 
   window.toggleAuthMode(mode);
   overlay.classList.add("active");
-  document.documentElement.classList.add("modal-open"); // Prevent scroll
+  window.updateScrollLock();
 };
 
 window.closeAuthModal = function () {
   const overlay = document.getElementById("authOverlay");
   overlay?.classList.remove("active");
-  document.documentElement.classList.remove("modal-open");
+  window.updateScrollLock();
 };
 
 // Global utility to close all active overlays/modals
@@ -109,6 +127,19 @@ window.closeAllPopups = function () {
     window.cart.closeCheckoutModal();
   }
 };
+
+// Listen for all Bootstrap modals to prevent scroll on <html> as well
+document.addEventListener("show.bs.modal", () => {
+  window.updateScrollLock();
+});
+
+document.addEventListener("shown.bs.modal", () => {
+  window.updateScrollLock();
+});
+
+document.addEventListener("hidden.bs.modal", () => {
+  window.updateScrollLock();
+});
 
 window.togglePasswordVisibility = function (id) {
   const input = document.getElementById(id);

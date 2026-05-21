@@ -2850,6 +2850,90 @@ app.get("/api/user/orders/:id", authenticateToken, async (req, res) => {
   }
 });
 
+// Get order items
+app.get("/api/user/orders/:id/items", authenticateToken, async (req, res) => {
+  try {
+    const items = await db.all(
+      `SELECT ie.*, p.Nome, p.Imagem, a.Nome as ApicultorNome
+       FROM item_encomenda ie 
+       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
+       LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
+       WHERE ie.ID_Encomenda = ?`,
+      [req.params.id],
+    );
+    res.json(items);
+  } catch (error) {
+    console.error("Fetch order items error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Get order receipt (HTML for print/download)
+app.get("/api/user/orders/:id/receipt", authenticateToken, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await db.get(
+      "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+      [orderId, req.user.id],
+    );
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    const items = await db.all(
+      `SELECT ie.*, p.Nome, a.Nome as ApicultorNome
+       FROM item_encomenda ie 
+       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
+       LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
+       WHERE ie.ID_Encomenda = ?`,
+      [orderId],
+    );
+
+    const customer = await db.get(
+      "SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    // Use absolute URL for the logo so it loads correctly in the browser
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.headers.host;
+    const logoUrl = `${protocol}://${host}/images/logo_hexomel.webp`;
+
+    const html = generateReceiptHTML(
+      order,
+      items,
+      customer.Nome,
+      customer.Email,
+      logoUrl,
+      { autoPrint: true },
+    );
+    res.send(html);
+  } catch (error) {
+    console.error("Generate receipt error:", error);
+    res.status(500).json({ error: "Failed to generate receipt" });
+  }
+});
+
+// Resend order receipt (Send email notification)
+app.post("/api/user/orders/:id/resend-receipt", authenticateToken, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await db.get(
+      "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+      [orderId, req.user.id],
+    );
+    if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
+
+    if (!mailTransporter) {
+      return res.status(503).json({ error: "O serviço de email está temporariamente indisponível. Por favor, tente mais tarde." });
+    }
+
+    await sendReceiptEmail(orderId);
+    res.json({ success: true, message: "Recibo enviado com sucesso." });
+  } catch (error) {
+    console.error("Resend receipt error:", error);
+    res.status(500).json({ error: "Falha ao reenviar o recibo" });
+  }
+});
+
 // Delete product (keeping existing)
 app.delete(
   "/api/admin/products/:id",

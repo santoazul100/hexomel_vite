@@ -461,7 +461,11 @@ window.openProductDetails = async function (productId) {
 
   setTimeout(() => {
     document.getElementById("detailsOverlay").classList.add("active");
-    document.documentElement.classList.add("modal-open");
+    if (typeof window.updateScrollLock === "function") {
+      window.updateScrollLock();
+    } else {
+      document.documentElement.classList.add("modal-open");
+    }
   }, 10);
 };
 
@@ -478,7 +482,11 @@ window.closeProductDetails = function () {
   overlay.classList.remove("active");
   setTimeout(() => {
     overlay.remove();
-    document.documentElement.classList.remove("modal-open");
+    if (typeof window.updateScrollLock === "function") {
+      window.updateScrollLock();
+    } else {
+      document.documentElement.classList.remove("modal-open");
+    }
   }, 400);
 };
 

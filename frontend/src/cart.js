@@ -246,10 +246,15 @@ class CartManager {
   toggle(show) {
     document.getElementById("cart-sidebar").classList.toggle("open", show);
     document.getElementById("cart-overlay").classList.toggle("show", show);
-    if (show) {
-      document.documentElement.classList.add("modal-open");
+    if (typeof window.updateScrollLock === "function") {
+      window.updateScrollLock();
     } else {
-      document.documentElement.classList.remove("modal-open");
+      // Fallback if main.js is not loaded yet or in different context
+      if (show) {
+        document.documentElement.classList.add("modal-open");
+      } else {
+        document.documentElement.classList.remove("modal-open");
+      }
     }
   }
 

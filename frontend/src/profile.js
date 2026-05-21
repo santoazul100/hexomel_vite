@@ -1126,28 +1126,36 @@ window.downloadReceipt = async function (orderId) {
   if (!token) return handleSessionExpired();
 
   try {
+    Swal.fire({
+      title: "A gerar recibo...",
+      html: "A preparar o documento para impressão",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const res = await fetch(`/api/user/orders/${orderId}/receipt`, {
       headers: buildAuthHeaders(),
     });
-    
+
     if (!res.ok) throw new Error("Falha ao gerar recibo");
 
     const html = await res.text();
-    const win = window.open("", "_blank");
-    win.document.write(html);
-    win.document.close();
     
-    // Auto-print after fonts load
-    win.onload = () => {
-      setTimeout(() => {
-        win.print();
-        Swal.close();
-      }, 500);
-    };
+    // Abrir em nova aba de forma profissional usando Blob
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank");
+    
+    if (!win) {
+      throw new Error("O seu navegador bloqueou a abertura do recibo. Por favor, permita pop-ups para este site.");
+    }
 
+    Swal.close();
   } catch (error) {
     console.error("Download receipt error:", error);
-    Swal.fire("Erro", "Não foi possível carregar o recibo para impressão.", "error");
+    Swal.fire("Erro", error.message || "Não foi possível carregar o recibo para impressão.", "error");
   }
 };
 
