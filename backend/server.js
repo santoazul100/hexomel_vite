@@ -775,28 +775,64 @@ const runDatabaseMigrations = async () => {
         Ordenacao int(10) DEFAULT 0,
         Ativo boolean DEFAULT TRUE,
         Abrir_Nova_Aba boolean DEFAULT FALSE,
-        PRIMARY KEY (ID_Menu)
+        ID_Parent int(10) DEFAULT NULL,
+        PRIMARY KEY (ID_Menu),
+        CONSTRAINT fk_menu_parent FOREIGN KEY (ID_Parent) REFERENCES menu_nav (ID_Menu) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `).catch((err) => console.error("Error creating menu_nav table:", err));
+
+    await db.run("ALTER TABLE menu_nav ADD COLUMN ID_Parent INT DEFAULT NULL").catch(() => {});
 
     const menuCount = await db.get("SELECT COUNT(*) as c FROM menu_nav").catch(() => ({ c: 1 }));
     if (menuCount && menuCount.c === 0) {
       const defaultMenus = [
-        ["Início", "index.html", 1, 1],
-        ["Produtos", "shop.html", 2, 1],
-        ["Workshops", "workshops.html", 3, 1],
-        ["Curiosidades", "curiosidades.html", 4, 1],
-        ["Aprender", "aprender.html", 5, 1],
-        ["Comunidade", "comunidade.html", 6, 1],
-        ["Sobre Nós", "about.html", 7, 1],
-        ["Contactos", "contact.html", 8, 1]
+        [1, "Início", "index.html", 1, 1, null],
+        [2, "Produtos", "shop.html", 2, 1, null],
+        [3, "Workshops", "workshops.html", 3, 1, null],
+        [4, "Descobrir", "#", 4, 1, null],
+        [5, "Curiosidades", "curiosidades.html", 1, 1, 4],
+        [6, "Aprender", "aprender.html", 2, 1, 4],
+        [7, "Comunidade", "comunidade.html", 3, 1, 4],
+        [8, "Sobre Nós", "about.html", 5, 1, null],
+        [9, "Contactos", "contact.html", 6, 1, null]
       ];
       for (const m of defaultMenus) {
         await db.run(
-          "INSERT INTO menu_nav (Label, Link, Ordenacao, Ativo) VALUES (?, ?, ?, ?)",
+          "INSERT INTO menu_nav (ID_Menu, Label, Link, Ordenacao, Ativo, ID_Parent) VALUES (?, ?, ?, ?, ?, ?)",
           m
         ).catch(() => {});
       }
+    }
+
+    // Garantir migração de dados para a estrutura de dropdown (se o utilizador tiver dados antigos)
+    try {
+      const descMenu = await db.get("SELECT ID_Menu FROM menu_nav WHERE Label = 'Descobrir' OR Label = 'descobrir'");
+      let parentId;
+      if (!descMenu) {
+        const insertRes = await db.run(
+          "INSERT INTO menu_nav (Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba, ID_Parent) VALUES (?, ?, ?, ?, ?, ?)",
+          ["Descobrir", "#", 4, 1, 0, null]
+        );
+        parentId = insertRes.lastID;
+        console.log(`Created 'Descobrir' menu with ID: ${parentId}`);
+      } else {
+        parentId = descMenu.ID_Menu;
+      }
+
+      await db.run(
+        "UPDATE menu_nav SET ID_Parent = ?, Ordenacao = 1 WHERE Label = 'Curiosidades' AND ID_Parent IS NULL",
+        [parentId]
+      );
+      await db.run(
+        "UPDATE menu_nav SET ID_Parent = ?, Ordenacao = 2 WHERE Label = 'Aprender' AND ID_Parent IS NULL",
+        [parentId]
+      );
+      await db.run(
+        "UPDATE menu_nav SET ID_Parent = ?, Ordenacao = 3 WHERE Label = 'Comunidade' AND ID_Parent IS NULL",
+        [parentId]
+      );
+    } catch (migError) {
+      console.error("Error running menu data migration:", migError);
     }
 
     const menuRows = await db.all("SELECT ID_Menu, Ordenacao FROM menu_nav ORDER BY Ordenacao ASC, ID_Menu ASC").catch(() => []);
@@ -1060,14 +1096,15 @@ app.use((req, res, next) => {
 // ============================================================
 
 const DEFAULT_MENU_ITEMS = [
-  { ID_Menu: 1, Label: "Início", Link: "index.html", Ordenacao: 1, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 2, Label: "Produtos", Link: "shop.html", Ordenacao: 2, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 3, Label: "Workshops", Link: "workshops.html", Ordenacao: 3, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 4, Label: "Curiosidades", Link: "curiosidades.html", Ordenacao: 4, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 5, Label: "Aprender", Link: "aprender.html", Ordenacao: 5, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 6, Label: "Comunidade", Link: "comunidade.html", Ordenacao: 6, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 7, Label: "Sobre Nós", Link: "about.html", Ordenacao: 7, Ativo: 1, Abrir_Nova_Aba: 0 },
-  { ID_Menu: 8, Label: "Contactos", Link: "contact.html", Ordenacao: 8, Ativo: 1, Abrir_Nova_Aba: 0 },
+  { ID_Menu: 1, Label: "Início", Link: "index.html", Ordenacao: 1, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
+  { ID_Menu: 2, Label: "Produtos", Link: "shop.html", Ordenacao: 2, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
+  { ID_Menu: 3, Label: "Workshops", Link: "workshops.html", Ordenacao: 3, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
+  { ID_Menu: 4, Label: "Descobrir", Link: "#", Ordenacao: 4, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
+  { ID_Menu: 5, Label: "Curiosidades", Link: "curiosidades.html", Ordenacao: 1, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: 4 },
+  { ID_Menu: 6, Label: "Aprender", Link: "aprender.html", Ordenacao: 2, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: 4 },
+  { ID_Menu: 7, Label: "Comunidade", Link: "comunidade.html", Ordenacao: 3, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: 4 },
+  { ID_Menu: 8, Label: "Sobre Nós", Link: "about.html", Ordenacao: 5, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
+  { ID_Menu: 9, Label: "Contactos", Link: "contact.html", Ordenacao: 6, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
 ];
 
 async function reorderMenuItem(menuId, requestedPosition) {
@@ -1119,14 +1156,24 @@ app.get("/api/admin/menu", authenticateToken, isAdmin, async (req, res) => {
 
 // Add a menu item (Admin)
 app.post("/api/admin/menu", authenticateToken, isAdmin, async (req, res) => {
-  const { Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba } = req.body;
-  if (!Label || !Link) {
+  const { Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba, ID_Parent } = req.body;
+  if (!Label || (!Link && Link !== "")) {
     return res.status(400).json({ error: "Label and Link are required" });
   }
+
+  const parent = ID_Parent ? parseInt(ID_Parent, 10) : null;
+
   try {
+    if (!parent) {
+      const topCount = await db.get("SELECT COUNT(*) as c FROM menu_nav WHERE ID_Parent IS NULL");
+      if (topCount && topCount.c >= 8) {
+        return res.status(400).json({ error: "Limite máximo de 8 menus principais atingido. Por favor, remova ou edite um existente." });
+      }
+    }
+
     const result = await db.run(
-      "INSERT INTO menu_nav (Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba) VALUES (?, ?, ?, ?, ?)",
-      [Label, Link, Ordenacao || 0, Ativo !== false ? 1 : 0, Abrir_Nova_Aba ? 1 : 0]
+      "INSERT INTO menu_nav (Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba, ID_Parent) VALUES (?, ?, ?, ?, ?, ?)",
+      [Label, Link, Ordenacao || 0, Ativo !== false ? 1 : 0, Abrir_Nova_Aba ? 1 : 0, parent]
     );
     await reorderMenuItem(result.lastID, Ordenacao);
     res.status(201).json({ id: result.lastID, message: "Menu item created successfully" });
@@ -1139,14 +1186,24 @@ app.post("/api/admin/menu", authenticateToken, isAdmin, async (req, res) => {
 // Update a menu item (Admin)
 app.put("/api/admin/menu/:id", authenticateToken, isAdmin, async (req, res) => {
   const { id } = req.params;
-  const { Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba } = req.body;
-  if (!Label || !Link) {
+  const { Label, Link, Ordenacao, Ativo, Abrir_Nova_Aba, ID_Parent } = req.body;
+  if (!Label || (!Link && Link !== "")) {
     return res.status(400).json({ error: "Label and Link are required" });
   }
+
+  const parent = ID_Parent ? parseInt(ID_Parent, 10) : null;
+
   try {
+    if (!parent) {
+      const topCount = await db.get("SELECT COUNT(*) as c FROM menu_nav WHERE ID_Parent IS NULL AND ID_Menu != ?", [id]);
+      if (topCount && topCount.c >= 8) {
+        return res.status(400).json({ error: "Limite máximo de 8 menus principais atingido." });
+      }
+    }
+
     const result = await db.run(
-      "UPDATE menu_nav SET Label = ?, Link = ?, Ativo = ?, Abrir_Nova_Aba = ? WHERE ID_Menu = ?",
-      [Label, Link, Ativo ? 1 : 0, Abrir_Nova_Aba ? 1 : 0, id]
+      "UPDATE menu_nav SET Label = ?, Link = ?, Ativo = ?, Abrir_Nova_Aba = ?, ID_Parent = ? WHERE ID_Menu = ?",
+      [Label, Link, Ativo ? 1 : 0, Abrir_Nova_Aba ? 1 : 0, parent, id]
     );
     if (result.changes === 0) {
       return res.status(404).json({ error: "Menu item not found" });

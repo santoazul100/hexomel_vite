@@ -481,24 +481,47 @@ async function loadDynamicMenu() {
     const menus = await response.json();
     
     if (menus && menus.length > 0) {
-      navList.innerHTML = menus
+      const topLevel = menus.filter(m => !m.ID_Parent);
+      
+      navList.innerHTML = topLevel
         .map((m) => {
-          const target = m.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+          const children = menus.filter(child => child.ID_Parent === m.ID_Menu);
+          
           let i18nAttr = "";
           if (m.Link === "index.html") i18nAttr = 'data-i18n="nav.home"';
           else if (m.Link === "shop.html") i18nAttr = 'data-i18n="nav.products"';
           else if (m.Link === "workshops.html") i18nAttr = 'data-i18n="nav.workshops"';
           else if (m.Link === "about.html") i18nAttr = 'data-i18n="nav.about"';
           else if (m.Link === "contact.html") i18nAttr = 'data-i18n="nav.contacts"';
-          else if (m.Link === "curiosidades.html") i18nAttr = 'data-i18n="nav.curiosities"';
-          else if (m.Link === "aprender.html") i18nAttr = 'data-i18n="nav.learn"';
-          else if (m.Link === "comunidade.html") i18nAttr = 'data-i18n="nav.community"';
+          else if (m.Label.toLowerCase() === "descobrir") i18nAttr = 'data-i18n="nav.discover"';
 
-          return `
-            <li class="nav-item">
-              <a class="nav-link" href="${m.Link}" ${target} ${i18nAttr}>${m.Label}</a>
-            </li>
-          `;
+          if (children.length > 0) {
+            const childrenHtml = children.map(c => {
+              const cTarget = c.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+              let cI18n = "";
+              if (c.Link === "curiosidades.html") cI18n = 'data-i18n="nav.curiosities"';
+              else if (c.Link === "aprender.html") cI18n = 'data-i18n="nav.learn"';
+              else if (c.Link === "comunidade.html") cI18n = 'data-i18n="nav.community"';
+              
+              return `<li><a class="dropdown-item" href="${c.Link || '#'}" ${cTarget} ${cI18n}>${c.Label}</a></li>`;
+            }).join("");
+
+            return `
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="${m.Link || '#'}" role="button" data-bs-toggle="dropdown" aria-expanded="false" ${i18nAttr}>${m.Label}</a>
+                <ul class="dropdown-menu dropdown-menu-hexomel">
+                  ${childrenHtml}
+                </ul>
+              </li>
+            `;
+          } else {
+            const target = m.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+            return `
+              <li class="nav-item">
+                <a class="nav-link" href="${m.Link || '#'}" ${target} ${i18nAttr}>${m.Label}</a>
+              </li>
+            `;
+          }
         })
         .join("");
 

@@ -27,11 +27,12 @@ const ADMIN_I18N = {
     "admin.users.subtitle": "Visualize, crie e gira os utilizadores registados no sistema.",
     "admin.users.new": "Novo Utilizador",
     "admin.cms.title": "Gestão de Conteúdo (CMS)",
-    "admin.cms.subtitle": "Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.",
+    "admin.cms.subtitle": "Altere os textos ou imagens do site de forma simples e direta, sem mexer em código ou programação.",
+    "admin.cms.new": "Novo Bloco de Conteúdo",
     "admin.cms.page": "Selecionar Página do Frontoffice",
     "cms.empty": "Nenhum bloco de conteúdo cadastrado para a página selecionada.",
-    "cms.value": "Valor / Conteúdo",
-    "cms.save": "Guardar Alterações",
+    "cms.value": "O que deve aparecer no site?",
+    "cms.save": "Guardar Texto",
     "cms.delete": "Eliminar",
     "user.empty": "Nenhum utilizador registado.",
     "user.client": "Cliente",
@@ -62,11 +63,12 @@ const ADMIN_I18N = {
     "admin.users.subtitle": "View, create, and manage registered users.",
     "admin.users.new": "New User",
     "admin.cms.title": "Content Management (CMS)",
-    "admin.cms.subtitle": "Create, edit, and delete Frontoffice text blocks without changing code.",
+    "admin.cms.subtitle": "Change texts or images on the website simply and directly, without touching any code or programming.",
+    "admin.cms.new": "New Content Block",
     "admin.cms.page": "Select Frontoffice Page",
     "cms.empty": "No content blocks registered for the selected page.",
-    "cms.value": "Value / Content",
-    "cms.save": "Save Changes",
+    "cms.value": "What should appear on the website?",
+    "cms.save": "Save Text",
     "cms.delete": "Delete",
     "user.empty": "No users registered.",
     "user.client": "Customer",
@@ -84,6 +86,7 @@ class AdminUI {
     this.quizQuestions = []; // newly added for quiz
     this.menus = []; // dynamic navigation menus
     this.cmsBlocks = []; // CMS content blocks
+    this.showCmsTechnical = false; // toggle for showing technical details
     this.lang = localStorage.getItem(ADMIN_LANG_KEY) || "pt";
     this.token = localStorage.getItem("token");
     this.userData = JSON.parse(localStorage.getItem("user"));
@@ -121,7 +124,23 @@ class AdminUI {
 
     this.initTagInput();
     this.initSidebar(); // Collapsed preference
+    this.loadAdminNavbar();
+    this.initTooltips();
     this.switchSection("dashboard"); // Default view
+  }
+
+  initTooltips() {
+    if (window.bootstrap && bootstrap.Tooltip) {
+      const tooltipTriggerList = document.querySelectorAll('[title]');
+      [...tooltipTriggerList].forEach(el => {
+        // Discard previous instance if any
+        const existing = bootstrap.Tooltip.getInstance(el);
+        if (existing) {
+          existing.dispose();
+        }
+        new bootstrap.Tooltip(el);
+      });
+    }
   }
 
   initSidebar() {
@@ -241,6 +260,17 @@ class AdminUI {
       });
     }
 
+    // Menu Type Select Switcher
+    const typeRadios = document.querySelectorAll('input[name="menuType"]');
+    if (typeRadios) {
+      typeRadios.forEach(radio => radio.addEventListener("change", () => this.updateMenuModalFields()));
+    }
+
+    // Auto-init tooltips inside modals when fully shown
+    document.addEventListener("shown.bs.modal", () => {
+      this.initTooltips();
+    });
+
     this.setupImagePreview();
   }
 
@@ -271,6 +301,128 @@ class AdminUI {
           // Keep existing logic for clearing
         }
       });
+    }
+  }
+
+  updateMenuModalFields() {
+    const typeRadio = document.querySelector('input[name="menuType"]:checked');
+    const linkContainer = document.getElementById("menu-link-container");
+    const parentContainer = document.getElementById("menu-parent-container");
+    const linkInput = document.getElementById("menu-link");
+    const parentSelect = document.getElementById("menu-parent");
+    const infoContainer = document.getElementById("menu-type-info");
+    const infoText = document.getElementById("menu-type-info-text");
+
+    if (!typeRadio) return;
+
+    const val = typeRadio.value;
+    
+    if (infoContainer && infoText) {
+      infoContainer.style.setProperty("display", "flex", "important");
+      if (val === "main") {
+        infoText.innerHTML = "<strong>Link Normal:</strong> Um atalho direto na barra. Requer um destino (ex: <code>shop.html</code>).";
+      } else if (val === "group") {
+        infoText.innerHTML = "<strong>Grupo:</strong> Cria apenas um título na navbar sem link próprio. Após guardar, crie <em>Sub-itens</em> e associe-os a este grupo!";
+      } else if (val === "sub") {
+        infoText.innerHTML = "<strong>Sub-item:</strong> Será agrupado dentro de um menu dropdown (Grupo).";
+      }
+    }
+
+    if (val === "main") {
+      if (linkContainer) linkContainer.style.display = "block";
+      if (parentContainer) parentContainer.style.display = "none";
+      if (linkInput) {
+        linkInput.required = true;
+        if (linkInput.value === "#") linkInput.value = "";
+      }
+      if (parentSelect) {
+        parentSelect.value = "";
+        parentSelect.required = false;
+      }
+    } else if (val === "group") {
+      if (linkContainer) linkContainer.style.display = "none";
+      if (parentContainer) parentContainer.style.display = "none";
+      if (linkInput) {
+        linkInput.value = "#";
+        linkInput.required = false;
+      }
+      if (parentSelect) {
+        parentSelect.value = "";
+        parentSelect.required = false;
+      }
+    } else if (val === "sub") {
+      if (linkContainer) linkContainer.style.display = "block";
+      if (parentContainer) parentContainer.style.display = "block";
+      if (linkInput) {
+        linkInput.required = true;
+        if (linkInput.value === "#") linkInput.value = "";
+      }
+      if (parentSelect) {
+        parentSelect.required = true;
+      }
+    }
+  }
+
+  async loadAdminNavbar() {
+    const navList = document.querySelector("#navbarNav ul.navbar-nav");
+    if (!navList) return;
+
+    try {
+      const response = await fetch("/api/menu");
+      if (!response.ok) throw new Error("Failed to fetch menu");
+      const menus = await response.json();
+      
+      if (menus && menus.length > 0) {
+        const topLevel = menus.filter(m => !m.ID_Parent);
+        
+        navList.innerHTML = topLevel
+          .map((m) => {
+            const children = menus.filter(child => child.ID_Parent === m.ID_Menu);
+            
+            let i18nAttr = "";
+            if (m.Link === "index.html") i18nAttr = 'data-i18n="nav.home"';
+            else if (m.Link === "shop.html") i18nAttr = 'data-i18n="nav.products"';
+            else if (m.Link === "workshops.html") i18nAttr = 'data-i18n="nav.workshops"';
+            else if (m.Link === "about.html") i18nAttr = 'data-i18n="nav.about"';
+            else if (m.Link === "contact.html") i18nAttr = 'data-i18n="nav.contacts"';
+            else if (m.Label.toLowerCase() === "descobrir") i18nAttr = 'data-i18n="nav.discover"';
+
+            if (children.length > 0) {
+              const childrenHtml = children.map(c => {
+                const cTarget = c.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+                let cI18n = "";
+                if (c.Link === "curiosidades.html") cI18n = 'data-i18n="nav.curiosities"';
+                else if (c.Link === "aprender.html") cI18n = 'data-i18n="nav.learn"';
+                else if (c.Link === "comunidade.html") cI18n = 'data-i18n="nav.community"';
+                
+                return `<li><a class="dropdown-item" href="${c.Link || '#'}" ${cTarget} ${cI18n}>${c.Label}</a></li>`;
+              }).join("");
+
+              return `
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="${m.Link || '#'}" role="button" data-bs-toggle="dropdown" aria-expanded="false" ${i18nAttr}>${m.Label}</a>
+                  <ul class="dropdown-menu dropdown-menu-hexomel">
+                    ${childrenHtml}
+                  </ul>
+                </li>
+              `;
+            } else {
+              const target = m.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+              return `
+                <li class="nav-item">
+                  <a class="nav-link" href="${m.Link || '#'}" ${target} ${i18nAttr}>${m.Label}</a>
+                </li>
+              `;
+            }
+          })
+          .join("");
+        
+        if (typeof initI18n === "function") {
+          initI18n();
+        }
+      }
+    } catch (error) {
+      console.warn("Could not load dynamic admin navbar:", error);
     }
   }
 
@@ -327,6 +479,7 @@ class AdminUI {
       if (!response.ok) throw new Error("Falha ao carregar menus");
       this.menus = await response.json();
       this.renderMenusTable();
+      this.loadAdminNavbar();
     } catch (error) {
       console.error("Error loading menus:", error);
       Swal.fire("Erro", "Não foi possível carregar os itens de menu.", "error");
@@ -348,7 +501,24 @@ class AdminUI {
       return;
     }
 
-    listBody.innerHTML = this.menus
+    // Organizar menus hierarquicamente: itens principais primeiro, e seus filhos logo a seguir
+    const structuredMenus = [];
+    const topLevel = this.menus.filter(m => !m.ID_Parent);
+    
+    topLevel.forEach(parent => {
+      structuredMenus.push(parent);
+      const children = this.menus.filter(child => child.ID_Parent === parent.ID_Menu);
+      structuredMenus.push(...children);
+    });
+
+    // Se algum item tiver ID_Parent mas o pai não for encontrado na lista (ex: órfão), listamos no fim
+    this.menus.forEach(m => {
+      if (m.ID_Parent && !structuredMenus.includes(m)) {
+        structuredMenus.push(m);
+      }
+    });
+
+    listBody.innerHTML = structuredMenus
       .map((m, index) => {
         const statusBadge = m.Ativo
           ? `<span class="badge bg-success-subtle text-success border border-success border-opacity-10 px-2.5 py-1 rounded-pill cursor-pointer" onclick="adminUI.toggleMenuStatus(${m.ID_Menu}, 0)" style="cursor: pointer;">
@@ -362,19 +532,40 @@ class AdminUI {
           ? `<span class="badge bg-primary-subtle text-primary border border-primary border-opacity-10 px-2.5 py-1 rounded-pill">Sim</span>`
           : `<span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-10 px-2.5 py-1 rounded-pill">Não</span>`;
 
+        let parentBadge = "";
+        if (m.ID_Parent) {
+          parentBadge = `<span class="badge bg-info-subtle text-info border border-info border-opacity-10 px-2 py-1 rounded-pill ms-2" style="font-size: 0.7rem;">Sub-item</span>`;
+        } else if (m.Link === "#") {
+          parentBadge = `<span class="badge bg-warning-subtle text-warning border border-warning border-opacity-10 px-2 py-1 rounded-pill ms-2" style="font-size: 0.7rem;"><i class="fas fa-folder me-1"></i>Grupo (Pai)</span>`;
+        } else {
+          parentBadge = `<span class="badge bg-primary-subtle text-primary border border-primary border-opacity-10 px-2 py-1 rounded-pill ms-2" style="font-size: 0.7rem;"><i class="fas fa-link me-1"></i>Link Normal</span>`;
+        }
+
+        const visibilityBtn = m.Ativo
+          ? `<button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3" onclick="adminUI.toggleMenuStatus(${m.ID_Menu}, 0)" title="Ocultar do Menu">
+               <i class="fas fa-eye-slash"></i>
+             </button>`
+          : `<button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="adminUI.toggleMenuStatus(${m.ID_Menu}, 1)" title="Mostrar no Menu">
+               <i class="fas fa-eye"></i>
+             </button>`;
+
         return `
-          <tr>
+          <tr ${m.ID_Parent ? 'style="background-color: #f8f9fa;"' : ''}>
             <td class="fw-bold text-muted">${index + 1}</td>
-            <td class="fw-600 text-dark">${m.Label}</td>
-            <td class="text-muted"><code style="font-size: 0.85rem;">${m.Link}</code></td>
+            <td class="fw-600 text-dark">
+              ${m.ID_Parent ? '<i class="fas fa-level-up-alt fa-rotate-90 text-muted me-2 ms-4"></i>' : ''}
+              ${m.Label} ${parentBadge}
+            </td>
+            <td class="text-muted"><code style="font-size: 0.85rem;">${m.Link || '#'}</code></td>
             <td>${targetBadge}</td>
             <td>${statusBadge}</td>
             <td style="text-align: right;">
               <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="adminUI.openMenuModal(${m.ID_Menu})">
+                ${visibilityBtn}
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="adminUI.openMenuModal(${m.ID_Menu})" title="Editar Link">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="adminUI.deleteMenuItem(${m.ID_Menu})">
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="adminUI.deleteMenuItem(${m.ID_Menu})" title="Eliminar Link">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
@@ -383,6 +574,8 @@ class AdminUI {
         `;
       })
       .join("");
+    
+    this.initTooltips();
   }
 
   openMenuModal(id = null) {
@@ -399,6 +592,25 @@ class AdminUI {
     const ordemInput = document.getElementById("menu-ordem");
     const targetCheckbox = document.getElementById("menu-abrir-nova-aba");
     const activeCheckbox = document.getElementById("menu-ativo");
+    const parentSelect = document.getElementById("menu-parent");
+
+    // Populate Parent Select (only top-level groups, i.e. Link is '#')
+    if (parentSelect) {
+      parentSelect.innerHTML = '<option value="">-- Selecione o Grupo Pai --</option>';
+      let count = 0;
+      this.menus.forEach(m => {
+        if (m.ID_Parent == null && m.ID_Menu !== id && m.Link === "#") {
+          const option = document.createElement("option");
+          option.value = m.ID_Menu;
+          option.textContent = m.Label;
+          parentSelect.appendChild(option);
+          count++;
+        }
+      });
+      if (count === 0) {
+        parentSelect.innerHTML = '<option value="">-- Crie primeiro um Grupo Dropdown --</option>';
+      }
+    }
 
     if (id) {
       // Edit mode
@@ -409,15 +621,71 @@ class AdminUI {
       if (idInput) idInput.value = item.ID_Menu;
       if (labelInput) labelInput.value = item.Label;
       if (linkInput) linkInput.value = item.Link;
-      if (ordemInput) ordemInput.value = this.menus.findIndex((m) => m.ID_Menu === id) + 1;
+      if (ordemInput) ordemInput.value = item.Ordenacao || this.menus.findIndex((m) => m.ID_Menu === id) + 1;
       if (targetCheckbox) targetCheckbox.checked = !!item.Abrir_Nova_Aba;
       if (activeCheckbox) activeCheckbox.checked = !!item.Ativo;
+
+      // Determine type
+      let typeVal = "main";
+      if (item.ID_Parent) {
+        typeVal = "sub";
+      } else if (item.Link === "#") {
+        // It's a group. Redirect to group modal.
+        return this.openGroupModal(id);
+      }
+
+      const typeRadio = document.querySelector(`input[name="menuType"][value="${typeVal}"]`);
+      if (typeRadio) typeRadio.checked = true;
+      if (parentSelect) parentSelect.value = item.ID_Parent || "";
+      
+      this.updateMenuModalFields();
+      
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
     } else {
       // Create mode
       if (titleEl) titleEl.innerText = "Novo Link de Menu";
       if (idInput) idInput.value = "";
       if (ordemInput) ordemInput.value = this.menus.length + 1;
       if (targetCheckbox) targetCheckbox.checked = false;
+      if (activeCheckbox) activeCheckbox.checked = true;
+      if (parentSelect) parentSelect.value = "";
+      const typeRadio = document.querySelector('input[name="menuType"][value="main"]');
+      if (typeRadio) typeRadio.checked = true;
+      
+      this.updateMenuModalFields();
+      
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
+
+  openGroupModal(id = null) {
+    const modalEl = document.getElementById("groupModal");
+    if (!modalEl) return;
+
+    const form = document.getElementById("groupForm");
+    if (form) form.reset();
+
+    const titleEl = document.getElementById("groupModalTitle");
+    const idInput = document.getElementById("group-id");
+    const labelInput = document.getElementById("group-label");
+    const ordemInput = document.getElementById("group-ordem");
+    const activeCheckbox = document.getElementById("group-ativo");
+
+    if (id) {
+      const item = this.menus.find((m) => m.ID_Menu === id);
+      if (!item) return;
+
+      if (titleEl) titleEl.innerText = "Editar Grupo";
+      if (idInput) idInput.value = item.ID_Menu;
+      if (labelInput) labelInput.value = item.Label;
+      if (ordemInput) ordemInput.value = item.Ordenacao || this.menus.findIndex((m) => m.ID_Menu === id) + 1;
+      if (activeCheckbox) activeCheckbox.checked = !!item.Ativo;
+    } else {
+      if (titleEl) titleEl.innerText = "Novo Grupo";
+      if (idInput) idInput.value = "";
+      if (ordemInput) ordemInput.value = this.menus.length + 1;
       if (activeCheckbox) activeCheckbox.checked = true;
     }
 
@@ -428,22 +696,53 @@ class AdminUI {
   async saveMenuItem() {
     const id = document.getElementById("menu-id").value;
     const label = document.getElementById("menu-label").value.trim();
-    const link = document.getElementById("menu-link").value.trim();
+    const linkInput = document.getElementById("menu-link");
+    const parentSelect = document.getElementById("menu-parent");
+    const typeRadio = document.querySelector('input[name="menuType"]:checked');
     const ordem = parseInt(document.getElementById("menu-ordem").value, 10) || 0;
     const target = document.getElementById("menu-abrir-nova-aba").checked;
     const ativo = document.getElementById("menu-ativo").checked;
 
-    if (!label || !link) {
-      Swal.fire("Aviso", "Etiqueta e Destino são obrigatórios.", "warning");
+    if (!label) {
+      Swal.fire("Aviso", "A etiqueta (Label) é obrigatória.", "warning");
       return;
+    }
+
+    const typeVal = typeRadio ? typeRadio.value : "main";
+    let finalLink = "";
+    let finalParent = null;
+
+    if (typeVal === "main") {
+      finalLink = linkInput ? linkInput.value.trim() : "";
+      if (!finalLink) {
+        Swal.fire("Aviso", "O destino (Link) é obrigatório para links principais.", "warning");
+        return;
+      }
+      finalParent = null;
+    } else if (typeVal === "group") {
+      finalLink = "#";
+      finalParent = null;
+    } else if (typeVal === "sub") {
+      finalLink = linkInput ? linkInput.value.trim() : "";
+      if (!finalLink) {
+        Swal.fire("Aviso", "O destino (Link) é obrigatório para sub-itens.", "warning");
+        return;
+      }
+      const parentVal = parentSelect ? parentSelect.value : "";
+      if (!parentVal) {
+        Swal.fire("Aviso", "Por favor, selecione um grupo pai para este sub-item.", "warning");
+        return;
+      }
+      finalParent = parseInt(parentVal, 10);
     }
 
     const body = {
       Label: label,
-      Link: link,
+      Link: finalLink,
       Ordenacao: ordem,
       Abrir_Nova_Aba: target,
-      Ativo: ativo
+      Ativo: ativo,
+      ID_Parent: finalParent
     };
 
     const isEditing = !!id;
@@ -470,6 +769,60 @@ class AdminUI {
       Swal.fire({
         icon: "success",
         title: isEditing ? "Link atualizado!" : "Link criado!",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      this.loadMenus();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async saveGroupItem() {
+    const id = document.getElementById("group-id").value;
+    const label = document.getElementById("group-label").value.trim();
+    const ordem = parseInt(document.getElementById("group-ordem").value, 10) || 0;
+    const ativo = document.getElementById("group-ativo").checked;
+
+    if (!label) {
+      Swal.fire("Aviso", "A etiqueta do grupo é obrigatória.", "warning");
+      return;
+    }
+
+    const body = {
+      Label: label,
+      Link: "#",
+      Ordenacao: ordem,
+      Abrir_Nova_Aba: false,
+      Ativo: ativo,
+      ID_Parent: null
+    };
+
+    const isEditing = !!id;
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing ? `${API_URL}/admin/menu/${id}` : `${API_URL}/admin/menu`;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao guardar grupo.");
+
+      const modalEl = document.getElementById("groupModal");
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      Swal.fire({
+        icon: "success",
+        title: isEditing ? "Grupo atualizado!" : "Grupo criado!",
         timer: 1500,
         showConfirmButton: false
       });
@@ -556,6 +909,12 @@ class AdminUI {
   // GESTÃO DE CONTEÚDO (CMS)
   // ============================================================
 
+  toggleCmsTechMode(enabled) {
+    this.showCmsTechnical = enabled;
+    const pageKey = document.getElementById("cms-page-selector")?.value || "home";
+    this.renderCMSBlocks(pageKey);
+  }
+
   async loadCMSBlocks() {
     const selector = document.getElementById("cms-page-selector");
     if (!selector) return;
@@ -586,46 +945,151 @@ class AdminUI {
       return;
     }
 
+    const blockDescriptions = {
+      pt: {
+        hero_title: {
+          title: "Título de Boas-vindas (Topo da Página)",
+          desc: "O grande título chamativo exibido no topo da página.",
+          icon: "fas fa-heading",
+          badge: "Título Principal"
+        },
+        hero_subtitle: {
+          title: "Mensagem de Apresentação (Subtítulo do Topo)",
+          desc: "O texto explicativo por baixo do título principal do cabeçalho.",
+          icon: "fas fa-align-left",
+          badge: "Subtítulo / Introdução"
+        },
+        featured_title: {
+          title: "Título da Secção de Destaques",
+          desc: "O título que introduz a vitrine de produtos em destaque.",
+          icon: "fas fa-star",
+          badge: "Título Secundário"
+        },
+        featured_subtitle: {
+          title: "Subtítulo da Secção de Destaques",
+          desc: "A frase de apoio colocada por baixo do título de destaques.",
+          icon: "fas fa-comment-alt",
+          badge: "Subtítulo"
+        },
+        legacy_text: {
+          title: "História Hexomel (Nosso Legado)",
+          desc: "O texto completo que narra a nossa história e o legado tradicional.",
+          icon: "fas fa-book-open",
+          badge: "Texto Narrativo Longo"
+        }
+      },
+      en: {
+        hero_title: {
+          title: "Main Welcome Title (Page Top)",
+          desc: "The big, prominent title displayed at the very top of the page.",
+          icon: "fas fa-heading",
+          badge: "Header Title"
+        },
+        hero_subtitle: {
+          title: "Header Subtitle / Tagline",
+          desc: "The explanatory paragraph beneath the main welcome title.",
+          icon: "fas fa-align-left",
+          badge: "Intro Text"
+        },
+        featured_title: {
+          title: "Featured Section Title",
+          desc: "The title introducing the section of our selected honeys.",
+          icon: "fas fa-star",
+          badge: "Section Title"
+        },
+        featured_subtitle: {
+          title: "Featured Section Subtitle",
+          desc: "A brief supportive phrase below the featured products title.",
+          icon: "fas fa-comment-alt",
+          badge: "Section Subtitle"
+        },
+        legacy_text: {
+          title: "Our Legacy Story Text",
+          desc: "The detailed historical text recounting our traditional apiculture values.",
+          icon: "fas fa-book-open",
+          badge: "Long Narrative Text"
+        }
+      }
+    };
+
     listContainer.innerHTML = this.cmsBlocks
       .map((b) => {
-        // Humanize keys for nice UI presentation
-        const keyLabel = b.Block_Key
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
+        // Fallback or custom friendly details if key is not predefined
+        const langData = blockDescriptions[this.lang] || blockDescriptions.pt;
+        const info = langData[b.Block_Key] || {
+          title: b.Block_Key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          desc: this.lang === "en" 
+            ? "Custom website text block." 
+            : "Bloco de texto personalizado do site.",
+          icon: "fas fa-edit",
+          badge: b.Type.toUpperCase()
+        };
 
         const inputField = b.Content_Value.length > 80 
           ? `<textarea id="cms-value-${b.ID_Content}" class="form-control form-control-v2" rows="4" style="border-radius: 8px; font-size: 0.95rem; line-height: 1.5;" required>${b.Content_Value}</textarea>`
           : `<input type="text" id="cms-value-${b.ID_Content}" class="form-control form-control-v2" value="${b.Content_Value}" style="border-radius: 8px; font-size: 0.95rem;" required />`;
 
         return `
-          <div class="card mb-4 border border-light-subtle shadow-sm overflow-hidden" style="border-radius: 12px; background: #ffffff;">
-            <div class="card-header bg-light bg-opacity-40 border-0 px-4 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <span class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.95rem;">
-                <i class="fas fa-font text-primary"></i> ${keyLabel}
-                <code class="text-muted small px-2 py-0.5 bg-light rounded" style="font-size: 0.75rem;">${b.Block_Key}</code>
-              </span>
-              <span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-10 rounded px-2.5 py-1 text-uppercase fw-bold" style="font-size: 0.65rem;">
-                Tipo: ${b.Type}
-              </span>
+          <div class="card mb-4 border border-light-subtle shadow-sm overflow-hidden" style="border-radius: 16px; background: #ffffff; transition: all 0.2s;">
+            <div class="card-header bg-white border-0 px-4 pt-4 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-3" style="width: 42px; height: 42px; font-size: 1.2rem;">
+                  <i class="${info.icon}"></i>
+                </div>
+                <div>
+                  <h5 class="fw-bold text-dark m-0" style="font-size: 1.05rem;">${info.title}</h5>
+                  <small class="text-muted" style="font-size: 0.85rem;">${info.desc}</small>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                ${
+                  this.showCmsTechnical 
+                    ? `<span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-10 rounded px-2.5 py-1 text-uppercase fw-bold" style="font-size: 0.65rem;">
+                         Tipo: ${b.Type}
+                       </span>
+                       <code class="text-muted small px-2 py-0.5 bg-light rounded border" style="font-size: 0.75rem;">
+                         Chave: ${b.Block_Key}
+                       </code>`
+                    : `<span class="badge bg-success-subtle text-success border border-success border-opacity-10 rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
+                         ${info.badge}
+                       </span>`
+                }
+              </div>
             </div>
-            <div class="card-body px-4 py-4">
+            <div class="card-body px-4 pb-4 pt-2">
               <div class="mb-3">
-                <label class="form-label small fw-bold text-uppercase text-muted">${this.t("cms.value")}</label>
+                <label class="form-label small fw-bold text-uppercase text-muted" style="letter-spacing: 0.5px;">
+                  ${this.t("cms.value")}
+                </label>
                 ${inputField}
               </div>
-              <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-danger px-4 py-2 fw-bold btn-sm" onclick="adminUI.deleteCMSBlock(${b.ID_Content})">
-                  <i class="fas fa-trash me-2"></i>${this.t("cms.delete")}
-                </button>
-                <button type="button" class="btn btn-add-product px-4 py-2 fw-bold btn-sm" onclick="adminUI.saveCMSBlock(${b.ID_Content}, '${b.Page_Key}', '${b.Block_Key}', '${b.Type}')">
-                  <i class="fas fa-save me-2"></i>${this.t("cms.save")}
-                </button>
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <small class="text-muted d-flex align-items-center gap-1">
+                    <i class="fas fa-history text-secondary"></i>
+                    ${this.lang === "en" ? "Changes will reflect instantly on the website." : "As alterações são refletidas no site de imediato."}
+                  </small>
+                </div>
+                <div class="d-flex gap-2">
+                  ${
+                    this.showCmsTechnical 
+                      ? `<button type="button" class="btn btn-outline-danger px-4 py-2 fw-bold btn-sm rounded-pill" onclick="adminUI.deleteCMSBlock(${b.ID_Content})">
+                           <i class="fas fa-trash me-2"></i>${this.t("cms.delete")}
+                         </button>`
+                      : ""
+                  }
+                  <button type="button" class="btn btn-add-product px-4 py-2 fw-bold btn-sm rounded-pill" onclick="adminUI.saveCMSBlock(${b.ID_Content}, '${b.Page_Key}', '${b.Block_Key}', '${b.Type}')" style="box-shadow: 0 4px 6px rgba(26, 77, 46, 0.15);">
+                    <i class="fas fa-save me-2"></i>${this.t("cms.save")}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         `;
       })
       .join("");
+    
+    this.initTooltips();
   }
 
   async saveCMSBlock(id, pageKey, blockKey, type) {
@@ -685,37 +1149,62 @@ class AdminUI {
       width: 620,
       html: `
         <div class="text-start">
+          <div class="alert alert-warning d-flex align-items-start py-2.5 small mb-3 border-0 rounded-3" style="background-color: rgba(255, 193, 7, 0.08); color: #856404;">
+            <i class="fas fa-exclamation-triangle mt-1 me-2 text-warning" style="font-size: 1rem;"></i>
+            <span>
+              <strong>${this.lang === "en" ? "Developer Area" : "Nota para Administradores"}:</strong> 
+              ${this.lang === "en" 
+                ? "Creating new custom blocks is recommended for developers. A block requires matching frontend code to display on the site."
+                : "A criação de novos blocos personalizados é recomendada para programadores, pois cada bloco precisa de uma chave correspondente no código do site para poder ser exibido."}
+            </span>
+          </div>
+          
           <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Page" : "Página"}</label>
-          <select id="swal-cms-page" class="form-select mb-3">
-            <option value="home" ${currentPage === "home" ? "selected" : ""}>Home</option>
-            <option value="about" ${currentPage === "about" ? "selected" : ""}>About</option>
-            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>Contact</option>
+          <select id="swal-cms-page" class="form-select mb-3 form-control-v2" style="border-radius: 8px;">
+            <option value="home" ${currentPage === "home" ? "selected" : ""}>${this.lang === "en" ? "Homepage (Home)" : "Página Inicial (Home)"}</option>
+            <option value="about" ${currentPage === "about" ? "selected" : ""}>${this.lang === "en" ? "About Page (About)" : "Página Sobre Nós (About)"}</option>
+            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>${this.lang === "en" ? "Contact Page (Contact)" : "Página Contactos (Contact)"}</option>
           </select>
-          <label class="form-label small fw-bold text-uppercase text-muted">Block key</label>
-          <input id="swal-cms-key" class="form-control mb-3" placeholder="ex: hero_title">
-          <label class="form-label small fw-bold text-uppercase text-muted">Tipo</label>
-          <select id="swal-cms-type" class="form-select mb-3">
-            <option value="text">Text</option>
-            <option value="html">HTML</option>
-            <option value="image_url">Image URL</option>
+          
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Block Key (Technical Identifier)" : "Chave Técnica (Identificador no Código)"}</label>
+          <input id="swal-cms-key" class="form-control mb-3 form-control-v2" placeholder="ex: intro_text" style="border-radius: 8px;">
+          <small class="text-muted d-block mb-3" style="font-size: 0.75rem; margin-top: -10px;">
+            ${this.lang === "en" ? "Must be unique, lowercase, using underscores instead of spaces." : "Deve ser único, apenas letras minúsculas e underscores (ex: titulo_topo)."}
+          </small>
+          
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Content Type" : "Tipo de Conteúdo"}</label>
+          <select id="swal-cms-type" class="form-select mb-3 form-control-v2" style="border-radius: 8px;">
+            <option value="text">${this.lang === "en" ? "Simple Text" : "Texto Curto / Linha Única"}</option>
+            <option value="html">${this.lang === "en" ? "Large Paragraph / HTML" : "Parágrafo Longo / HTML"}</option>
+            <option value="image_url">${this.lang === "en" ? "Image Link (URL)" : "Link da Imagem (URL)"}</option>
           </select>
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.t("cms.value")}</label>
-          <textarea id="swal-cms-value" class="form-control" rows="5"></textarea>
+          
+          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Initial Content" : "Conteúdo Inicial"}</label>
+          <textarea id="swal-cms-value" class="form-control form-control-v2" rows="4" placeholder="${this.lang === "en" ? "Enter content..." : "Escreve aqui o texto inicial..."}" style="border-radius: 8px;"></textarea>
         </div>
       `,
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: this.lang === "en" ? "Create" : "Criar",
+      confirmButtonText: this.lang === "en" ? "Create" : "Criar Bloco",
       cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+      customClass: {
+        confirmButton: 'btn btn-add-product px-4 py-2 rounded-pill fw-bold border-0',
+        cancelButton: 'btn btn-light px-4 py-2 rounded-pill fw-bold border-0 text-muted'
+      },
+      buttonsStyling: false,
       preConfirm: () => {
         const payload = {
           Page_Key: document.getElementById("swal-cms-page").value,
-          Block_Key: document.getElementById("swal-cms-key").value.trim(),
+          Block_Key: document.getElementById("swal-cms-key").value.trim().toLowerCase(),
           Type: document.getElementById("swal-cms-type").value,
           Content_Value: document.getElementById("swal-cms-value").value.trim(),
         };
         if (!payload.Page_Key || !payload.Block_Key || !payload.Content_Value) {
-          Swal.showValidationMessage(this.lang === "en" ? "Fill in all required fields." : "Preenche todos os campos obrigatórios.");
+          Swal.showValidationMessage(this.lang === "en" ? "Fill in all fields." : "Preenche todos os campos obrigatórios.");
+          return false;
+        }
+        if (!/^[a-z0-9_]+$/.test(payload.Block_Key)) {
+          Swal.showValidationMessage(this.lang === "en" ? "Key must only contain lowercase letters, numbers, or underscores." : "A chave só pode conter letras minúsculas, números ou underscores.");
           return false;
         }
         return payload;

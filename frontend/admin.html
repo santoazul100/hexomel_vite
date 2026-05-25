@@ -22,12 +22,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
-        --admin-sidebar-width: 260px;
+        --admin-sidebar-width: 220px;
       }
 
       body {
         background-color: var(--bg-clean);
         font-family: "Outfit", sans-serif;
+        font-size: 0.85rem;
       }
 
       .admin-layout {
@@ -39,7 +40,7 @@
         width: var(--admin-sidebar-width);
         background: #ffffff;
         border-right: 1px solid rgba(0, 0, 0, 0.06);
-        padding: 2rem 0;
+        padding: 1.25rem 0;
         display: flex;
         flex-direction: column;
         position: fixed;
@@ -58,7 +59,7 @@
       .admin-main {
         flex: 1;
         margin-left: var(--admin-sidebar-width);
-        padding: 2rem;
+        padding: 1.25rem;
         transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
@@ -131,16 +132,16 @@
       .admin-nav-link {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 0.75rem 1.5rem;
+        gap: 10px;
+        padding: 0.55rem 1.25rem;
         color: #64748b;
         text-decoration: none;
         font-weight: 500;
-        font-size: 0.9rem;
+        font-size: 0.82rem;
         transition: all 0.2s ease;
         border-left: 3px solid transparent;
         margin: 0 0 2px 0;
-        border-radius: 0 12px 12px 0;
+        border-radius: 0 10px 10px 0;
         width: 94%;
         cursor: pointer;
       }
@@ -202,8 +203,8 @@
         background: var(--glass-bg);
         backdrop-filter: var(--glass-blur);
         -webkit-backdrop-filter: var(--glass-blur);
-        border-radius: 20px;
-        padding: 1.5rem;
+        border-radius: 16px;
+        padding: 1.25rem;
         box-shadow: var(--shadow-sm);
         border: 1px solid rgba(0, 0, 0, 0.05);
         transition: var(--transition-smooth);
@@ -531,6 +532,142 @@
           height: 220px !important;
         }
       }
+
+      /* ============================================================
+         COMPACT MODALS, TABLES & SWAL OVERRIDES
+         ============================================================ */
+      @media (min-width: 576px) {
+        .modal-dialog {
+          max-width: 440px !important;
+        }
+        .modal-dialog.modal-lg {
+          max-width: 720px !important;
+        }
+        .modal-dialog.modal-xl {
+          max-width: 980px !important;
+        }
+      }
+      
+      .modal-content {
+        border-radius: 16px !important;
+        border: none !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+      }
+      .modal-header {
+        padding: 1.25rem 1.5rem 0.75rem !important;
+      }
+      .modal-body {
+        padding: 1.5rem !important;
+      }
+      .modal-footer {
+        padding: 0.75rem 1.5rem 1.25rem !important;
+      }
+      
+      /* SweetAlert Compact Refinements */
+      .swal2-popup {
+        font-size: 0.82rem !important;
+        padding: 1.25rem !important;
+        border-radius: 16px !important;
+        width: 420px !important;
+      }
+      .swal2-popup.swal2-toast {
+        width: auto !important;
+      }
+      /* SweetAlert layout sizes inside CMS creation modal */
+      .swal2-popup[style*="width: 620px"] {
+        width: 520px !important;
+      }
+      
+      /* Modal elements refinement */
+      .modal-body .form-control, 
+      .modal-body .form-select,
+      .swal2-popup .form-control,
+      .swal2-popup .form-select {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+        border-radius: 8px !important;
+      }
+      
+      .modal-body .form-label,
+      .swal2-popup .form-label {
+        font-size: 0.75rem !important;
+        margin-bottom: 4px !important;
+      }
+      
+      .modal-body .btn,
+      .swal2-popup .btn,
+      .swal2-popup .swal2-confirm,
+      .swal2-popup .swal2-cancel {
+        padding: 8px 16px !important;
+        font-size: 0.82rem !important;
+        border-radius: 30px !important;
+      }
+      
+      /* Compact tables cell spacing */
+      .table > :not(caption) > * > * {
+        padding: 8px 10px !important;
+        font-size: 0.82rem !important;
+      }
+
+      /* ============================================================
+         DASHBOARD STAT CARDS
+         ============================================================ */
+      .dash-stat-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 14px;
+        padding: 14px 16px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      }
+      .dash-stat-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .dash-stat-icon {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+      }
+      .dash-stat-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .dash-stat-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #94a3b8;
+      }
+      .dash-stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+      }
+
+      /* Fix: prevent stat/chart admin-cards from lifting on hover */
+      #dashboard-section .admin-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Chart card headings */
+      #dashboard-section .admin-card h5 {
+        font-size: 0.85rem;
+        letter-spacing: 0.2px;
+      }
     </style>
       <meta name="view-transition" content="same-origin" />
   </head>
@@ -570,7 +707,7 @@
               <a class="nav-link" href="workshops.html">Workshops</a>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html">Aprender</a></li>
@@ -678,125 +815,103 @@
         </nav>
       </aside>
 
-      <main class="admin-main" style="padding-top: 2rem">
+      <main class="admin-main" style="padding-top: 1.5rem">
         <section id="dashboard-section" class="admin-section active">
           <!-- Welcome Header -->
-          <div
-            class="admin-card glass-card mb-4 border-0"
-          >
-            <div class="row align-items-center">
-              <div class="col-md-10">
-                <span
-                  class="text-uppercase small fw-bold mb-2 d-inline-block px-3 py-1 rounded-pill"
-                  style="
-                    background: #f1f5f9;
-                    color: #64748b;
-                    letter-spacing: 1px;
-                  "
-                  >Bem-vindo ao Painel</span
-                >
-                <h1 class="fw-bold text-dark mt-3 mb-2">
-                  Administrador do Sistema
-                </h1>
-                <p class="text-muted mb-0 fs-5">
-                  Visão geral e gestão dos dados principais.
-                </p>
-              </div>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+              <h4 class="fw-bold text-dark mb-1" style="font-size: 1.15rem;">
+                <i class="fas fa-chart-pie text-success me-2" style="font-size: 0.95rem;"></i>Dashboard
+              </h4>
+              <p class="text-muted mb-0" style="font-size: 0.8rem;">Visão geral e gestão dos dados principais.</p>
             </div>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+              <i class="fas fa-circle text-success me-1" style="font-size: 0.45rem; vertical-align: middle;"></i> SISTEMA ONLINE
+            </span>
           </div>
 
           <!-- Stats Grid -->
-          <div class="row g-4 mb-4">
+          <div class="row g-3 mb-4">
             <!-- Total Users -->
-            <div class="col-md-2 col-sm-4">
-              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Utilizadores</span>
-                    <h4 id="dash-total-users" class="fw-bold mb-0">0</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #e0f2fe; color: #0284c7;">
-                    <i class="fas fa-users" style="font-size: 0.9rem;"></i>
-                  </div>
+            <div class="col-lg col-md-4 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #eff6ff; color: #3b82f6;">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-label">Utilizadores</span>
+                  <span id="dash-total-users" class="dash-stat-value">0</span>
                 </div>
               </div>
             </div>
 
             <!-- Total Products -->
-            <div class="col-md-2 col-sm-4">
-              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Produtos</span>
-                    <h4 id="dash-total-products" class="fw-bold mb-0">0</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #dcfce7; color: #166534;">
-                    <i class="fas fa-leaf" style="font-size: 0.9rem;"></i>
-                  </div>
+            <div class="col-lg col-md-4 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #f0fdf4; color: #22c55e;">
+                  <i class="fas fa-leaf"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-label">Produtos</span>
+                  <span id="dash-total-products" class="dash-stat-value">0</span>
                 </div>
               </div>
             </div>
 
             <!-- Orders -->
-            <div class="col-md-2 col-sm-4">
-              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Encomendas</span>
-                    <h4 id="dash-total-orders" class="fw-bold mb-0">0</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #f3e8ff; color: #9333ea;">
-                    <i class="fas fa-check-circle" style="font-size: 0.9rem;"></i>
-                  </div>
+            <div class="col-lg col-md-4 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #faf5ff; color: #a855f7;">
+                  <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-label">Encomendas</span>
+                  <span id="dash-total-orders" class="dash-stat-value">0</span>
                 </div>
               </div>
             </div>
 
             <!-- Revenue -->
-            <div class="col-md-3 col-sm-6">
-              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, #fff8e6 0%, #ffffff 100%); border: 1px solid #ffeeba !important;">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Receita Total</span>
-                    <h4 id="dash-total-revenue" class="fw-bold mb-0" style="color: #854d0e;">0.00€</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #fef3c7; color: #b45309;">
-                    <i class="fas fa-euro-sign" style="font-size: 0.9rem;"></i>
-                  </div>
+            <div class="col-lg col-md-6 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #fff7ed; color: #f97316;">
+                  <i class="fas fa-euro-sign"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-label">Receita Total</span>
+                  <span id="dash-total-revenue" class="dash-stat-value">0.00€</span>
                 </div>
               </div>
             </div>
 
-            <!-- Average Order Value (KPI) -->
-            <div class="col-md-3 col-sm-6">
-              <div class="admin-card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px solid #bbf7d0 !important;">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <span class="d-block text-muted small mb-1">Ticket Médio (AOV)</span>
-                    <h4 id="dash-avg-order-value" class="fw-bold mb-0" style="color: #166534;">0.00€</h4>
-                  </div>
-                  <div class="icon-box rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #dcfce7; color: #15803d;">
-                    <i class="fas fa-chart-line" style="font-size: 0.9rem;"></i>
-                  </div>
+            <!-- Average Order Value -->
+            <div class="col-lg col-md-6 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #ecfeff; color: #0891b2;">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-label">Ticket Médio</span>
+                  <span id="dash-avg-order-value" class="dash-stat-value">0.00€</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Charts Row 1: Sales and Orders Distribution -->
-          <div class="row g-4 mb-4">
+          <div class="row g-3 mb-3">
             <div class="col-lg-8">
               <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Tendência de Vendas (30 Dias)</h5>
-                <div style="height: 300px;">
+                <h5 class="fw-bold mb-3">Tendência de Vendas (30 Dias)</h5>
+                <div style="height: 240px;">
                   <canvas id="salesChart"></canvas>
                 </div>
               </div>
             </div>
             <div class="col-lg-4">
               <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Estado das Encomendas</h5>
-                <div style="height: 300px;">
+                <h5 class="fw-bold mb-3">Estado das Encomendas</h5>
+                <div style="height: 240px;">
                   <canvas id="orderStatusChart"></canvas>
                 </div>
               </div>
@@ -804,19 +919,19 @@
           </div>
 
           <!-- Charts Row 2: Categories and Users Growth -->
-          <div class="row g-4 mb-4">
+          <div class="row g-3 mb-3">
             <div class="col-lg-4">
               <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Produtos por Categoria</h5>
-                <div style="height: 300px;">
+                <h5 class="fw-bold mb-3">Produtos por Categoria</h5>
+                <div style="height: 240px;">
                   <canvas id="categoryChart"></canvas>
                 </div>
               </div>
             </div>
             <div class="col-lg-8">
               <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Crescimento de Utilizadores</h5>
-                <div style="height: 300px;">
+                <h5 class="fw-bold mb-3">Crescimento de Utilizadores</h5>
+                <div style="height: 240px;">
                   <canvas id="usersGrowthChart"></canvas>
                 </div>
               </div>
@@ -824,19 +939,19 @@
           </div>
 
           <!-- Charts Row 3: Top Products and Sales by Beekeeper -->
-          <div class="row g-4 mb-4">
+          <div class="row g-3 mb-3">
             <div class="col-lg-6">
               <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Top 10 Produtos (Receita)</h5>
-                <div style="height: 350px;">
+                <h5 class="fw-bold mb-3">Top 10 Produtos (Receita)</h5>
+                <div style="height: 280px;">
                   <canvas id="topProductsChart"></canvas>
                 </div>
               </div>
             </div>
             <div class="col-lg-6">
               <div class="admin-card border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-4">Vendas por Apicultor</h5>
-                <div style="height: 350px;">
+                <h5 class="fw-bold mb-3">Vendas por Apicultor</h5>
+                <div style="height: 280px;">
                   <canvas id="beekeeperSalesChart"></canvas>
                 </div>
               </div>
@@ -850,7 +965,7 @@
             class="d-flex justify-content-between align-items-center mb-4"
           >
             <div>
-              <h2 class="fw-bold mb-1">Gestão de Produtos</h2>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Produtos</h2>
               <p class="text-muted small">
                 Adicione, edite ou remova produtos da loja virtual.
               </p>
@@ -891,7 +1006,7 @@
             class="d-flex justify-content-between align-items-center mb-4"
           >
             <div>
-              <h2 class="fw-bold mb-1">Gestão de Categorias</h2>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Categorias</h2>
               <p class="text-muted small">
                 Adicione, edite ou remova categorias de produtos.
               </p>
@@ -922,7 +1037,7 @@
             class="d-flex justify-content-between align-items-center mb-4"
           >
             <div>
-              <h2 class="fw-bold mb-1">Gestão de Origens</h2>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Origens</h2>
               <p class="text-muted small">
                 Adicione, edite ou remova as localizações de origem dos
                 produtos.
@@ -982,7 +1097,7 @@
         <!-- ORDERS SECTION -->
         <section id="orders-section" class="admin-section">
           <header class="mb-4">
-            <h2 class="fw-bold mb-1">Gestão de Encomendas</h2>
+            <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Encomendas</h2>
             <p class="text-muted small">
               Acompanhe e atualize o estado das encomendas dos clientes.
             </p>
@@ -1009,7 +1124,7 @@
         <!-- UPGRADE REQUESTS SECTION -->
         <section id="upgrade-requests-section" class="admin-section">
           <header class="mb-4">
-            <h2 class="fw-bold mb-1">Pedidos de Apicultor</h2>
+            <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Pedidos de Apicultor</h2>
             <p class="text-muted small">
               Analise os pedidos dos utilizadores que pretendem vender produtos (Apicultores).
             </p>
@@ -1036,7 +1151,7 @@
         <!-- WORKSHOPS SECTION -->
         <section id="workshops-section" class="admin-section">
           <header class="mb-4">
-            <h2 class="fw-bold mb-1">Gestão de Workshops</h2>
+            <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Workshops</h2>
             <p class="text-muted small">
               Reveja e aprove os workshops submetidos pelos apicultores.
             </p>
@@ -1063,7 +1178,7 @@
         <!-- INTERACTIONS SECTION -->
         <section id="interactions-section" class="admin-section">
           <header class="mb-4">
-            <h2 class="fw-bold mb-1">Interações dos Utilizadores</h2>
+            <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Interações dos Utilizadores</h2>
             <p class="text-muted small">
               Análise do comportamento dos utilizadores no site (últimos 30 dias).
             </p>
@@ -1217,7 +1332,7 @@
         <!-- SEO & URLs SECTION -->
         <section id="seo-section" class="admin-section">
           <header class="mb-4">
-            <h2 class="fw-bold mb-1">SEO & URLs Amigáveis</h2>
+            <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">SEO & URLs Amigáveis</h2>
             <p class="text-muted small">
               Gira os slugs (URLs amigáveis) das páginas e produtos do site para melhor SEO.
             </p>
@@ -1275,7 +1390,7 @@
         <section id="quiz-section" class="admin-section">
           <header class="d-flex justify-content-between align-items-center mb-4">
             <div>
-              <h2 class="fw-bold mb-1">Gestão de Quiz Melífero</h2>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Quiz Melífero</h2>
               <p class="text-muted small">
                 Crie e edite perguntas educativas sobre abelhas e mel para engajar os clientes.
               </p>
@@ -1312,7 +1427,7 @@
           <div class="row justify-content-center">
             <div class="col-lg-8 col-xl-7">
               <header class="mb-4">
-                <h2 class="fw-bold mb-1">Personalização de Aparência</h2>
+                <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Personalização de Aparência</h2>
                 <p class="text-muted small">
                   Ajuste as definições visuais, estilo do placeholder e informações gerais do site.
                 </p>
@@ -1395,14 +1510,19 @@
             <div class="col-lg-10">
               <header class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
-                  <h2 class="fw-bold mb-1"><i class="fas fa-bars text-primary me-2"></i>Gestão de Menu Dinâmico</h2>
+                  <h2 class="fw-bold mb-1" style="font-size: 1.05rem;"><i class="fas fa-bars text-primary me-2"></i>Gestão de Menu Dinâmico</h2>
                   <p class="text-muted small m-0">
                     Ordene, edite, adicione ou oculte links na barra de navegação principal do Frontoffice.
                   </p>
                 </div>
-                <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.openMenuModal()">
-                  <i class="fas fa-plus me-2"></i>Novo Link
-                </button>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-bold" onclick="adminUI.openGroupModal()">
+                    <i class="fas fa-folder-plus me-2"></i>Novo Grupo
+                  </button>
+                  <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.openMenuModal()">
+                    <i class="fas fa-plus me-2"></i>Novo Link
+                  </button>
+                </div>
               </header>
 
               <div class="admin-card border-0 shadow-sm">
@@ -1413,7 +1533,7 @@
                         <th style="width: 80px;">Posição</th>
                         <th>Etiqueta (Label)</th>
                         <th>Destino (Link)</th>
-                        <th style="width: 140px;">Abrir Nova Aba</th>
+                        <th style="width: 160px;">Nova Janela <i class="fas fa-question-circle text-muted ms-1" title="Se ativo, o link abre num novo separador em vez de sair da página atual."></i></th>
                         <th style="width: 120px;">Estado</th>
                         <th style="width: 150px; text-align: right;">Ações</th>
                       </tr>
@@ -1434,7 +1554,7 @@
             <div class="col-lg-10">
               <header class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
-                  <h2 class="fw-bold mb-1"><i class="fas fa-edit text-success me-2"></i><span data-admin-i18n="admin.cms.title">Gestão de Conteúdo (CMS)</span></h2>
+                  <h2 class="fw-bold mb-1" style="font-size: 1.05rem;"><i class="fas fa-edit text-success me-2"></i><span data-admin-i18n="admin.cms.title">Gestão de Conteúdo (CMS)</span></h2>
                   <p class="text-muted small mb-0" data-admin-i18n="admin.cms.subtitle">
                     Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.
                   </p>
@@ -1445,13 +1565,21 @@
               </header>
 
               <div class="admin-card border-0 shadow-sm p-4">
-                <div class="mb-4" style="max-width: 350px;">
-                  <label class="form-label fw-bold small text-muted text-uppercase mb-2" data-admin-i18n="admin.cms.page">Selecionar Página do Frontoffice</label>
-                  <select class="form-select" id="cms-page-selector" onchange="adminUI.loadCMSBlocks()" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500;">
-                    <option value="home">Página Inicial (Home)</option>
-                    <option value="about">Página Sobre Nós (About)</option>
-                    <option value="contact">Página Contactos (Contact)</option>
-                  </select>
+                <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-4">
+                  <div style="min-width: 250px; max-width: 350px;">
+                    <label class="form-label fw-bold small text-muted text-uppercase mb-2" data-admin-i18n="admin.cms.page">Selecionar Página do Frontoffice</label>
+                    <select class="form-select" id="cms-page-selector" onchange="adminUI.loadCMSBlocks()" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500;">
+                      <option value="home">Página Inicial (Home)</option>
+                      <option value="about">Página Sobre Nós (About)</option>
+                      <option value="contact">Página Contactos (Contact)</option>
+                    </select>
+                  </div>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="cms-tech-mode" onchange="adminUI.toggleCmsTechMode(this.checked)" style="cursor: pointer;" />
+                    <label class="form-check-label small fw-bold text-muted text-uppercase cursor-pointer" for="cms-tech-mode">
+                      <i class="fas fa-code me-1 text-success"></i> Modo Programador (Ver Chaves)
+                    </label>
+                  </div>
                 </div>
 
                 <hr class="my-4" style="border-color: rgba(0,0,0,0.05)">
@@ -1815,15 +1943,47 @@
             <form id="menuForm" onsubmit="event.preventDefault(); adminUI.saveMenuItem();">
               <input type="hidden" id="menu-id" />
               
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase text-muted">Tipo de Link</label>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <input type="radio" class="btn-check" name="menuType" id="type-main" value="main" autocomplete="off" checked onchange="adminUI.updateMenuModalFields()">
+                    <label class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-2" for="type-main">
+                      <i class="fas fa-link mb-1"></i> <small>Link Normal</small>
+                    </label>
+                  </div>
+                  <div class="col-6">
+                    <input type="radio" class="btn-check" name="menuType" id="type-sub" value="sub" autocomplete="off" onchange="adminUI.updateMenuModalFields()">
+                    <label class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-2" for="type-sub">
+                      <i class="fas fa-level-up-alt fa-rotate-90 mb-1"></i> <small>Sub-item</small>
+                    </label>
+                  </div>
+                </div>
+                <!-- Dynamic Helper Text -->
+                <div id="menu-type-info" class="alert alert-success d-flex align-items-start py-2 small mt-2 mb-0" style="background-color: rgba(26, 77, 46, 0.05); border-color: rgba(26, 77, 46, 0.2); color: #1a4d2e; display: none !important;">
+                  <i class="fas fa-info-circle mt-1 me-2"></i>
+                  <span id="menu-type-info-text"></span>
+                </div>
+              </div>
+
               <div class="mb-3">
                 <label class="form-label small fw-bold text-uppercase text-muted">Etiqueta (Label)</label>
                 <input type="text" id="menu-label" class="form-control form-control-v2" placeholder="Ex: Início" required />
               </div>
 
-              <div class="mb-3">
+              <div class="mb-3" id="menu-link-container">
                 <label class="form-label small fw-bold text-uppercase text-muted">Destino (Link)</label>
-                <input type="text" id="menu-link" class="form-control form-control-v2" placeholder="Ex: index.html" required />
+                <input type="text" id="menu-link" class="form-control form-control-v2" placeholder="Ex: index.html" />
                 <small class="text-muted" style="font-size: 0.8rem;">Utilize caminhos locais (como <code>index.html</code>) ou links completos (como <code>https://...</code>).</small>
+              </div>
+
+              <div class="mb-3" id="menu-parent-container">
+                <label class="form-label small fw-bold text-uppercase text-muted">Grupo / Menu Pai</label>
+                <select id="menu-parent" class="form-select form-control-v2">
+                  <option value="">-- Selecione o Grupo Pai --</option>
+                  <!-- Populated dynamically -->
+                </select>
+                <small class="text-muted" style="font-size: 0.8rem;">Escolha o grupo ao qual este sub-item pertence.</small>
               </div>
 
               <div class="row mb-3 g-3">
@@ -1834,7 +1994,9 @@
                 <div class="col-6 d-flex align-items-end">
                   <div class="form-check form-switch mb-2 ms-2">
                     <input class="form-check-input" type="checkbox" id="menu-abrir-nova-aba" />
-                    <label class="form-check-label small fw-bold text-uppercase text-muted" for="menu-abrir-nova-aba">Nova Aba</label>
+                    <label class="form-check-label small fw-bold text-uppercase text-muted" for="menu-abrir-nova-aba">Nova Janela
+                      <i class="fas fa-question-circle text-muted ms-1" title="Abre o link num novo separador do navegador."></i>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -1847,6 +2009,51 @@
               <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
                 <button type="button" class="btn btn-light px-4 fw-bold text-muted" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Link</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group Management Modal -->
+    <div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden">
+          <div class="modal-header border-0 pb-0 ps-4 pe-4 pt-4">
+            <h5 class="modal-title fw-bold fs-4" id="groupModalTitle">Novo Grupo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="groupForm" onsubmit="event.preventDefault(); adminUI.saveGroupItem();">
+              <input type="hidden" id="group-id" />
+              
+              <div class="alert alert-success d-flex align-items-start py-2 small mb-4" style="background-color: rgba(26, 77, 46, 0.05); border-color: rgba(26, 77, 46, 0.2); color: #1a4d2e;">
+                <i class="fas fa-info-circle mt-1 me-2"></i>
+                <span><strong>Grupo:</strong> Cria apenas um título na navbar. Após guardar, crie <em>Sub-itens</em> usando o botão 'Novo Link' e associe-os a este grupo.</span>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Etiqueta (Label do Grupo)</label>
+                <input type="text" id="group-label" class="form-control form-control-v2" placeholder="Ex: Descobrir" required />
+              </div>
+
+              <div class="row mb-3 g-3">
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Posição</label>
+                  <input type="number" id="group-ordem" class="form-control form-control-v2" value="0" required />
+                </div>
+                <div class="col-6"></div>
+              </div>
+
+              <div class="form-check form-switch mb-4">
+                <input class="form-check-input" type="checkbox" id="group-ativo" checked />
+                <label class="form-check-label small fw-bold text-uppercase text-muted" for="group-ativo">Grupo Ativo (Visível no Menu)</label>
+              </div>
+
+              <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-light px-4 fw-bold text-muted" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Grupo</button>
               </div>
             </form>
           </div>
