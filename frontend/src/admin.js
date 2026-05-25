@@ -24,12 +24,15 @@ const ADMIN_I18N = {
     "admin.nav.menu": "Menu Dinâmico",
     "admin.nav.cms": "Conteúdo (CMS)",
     "admin.users.title": "Gestão de Utilizadores",
-    "admin.users.subtitle": "Visualize, crie e gira os utilizadores registados no sistema.",
+    "admin.users.subtitle":
+      "Visualize, crie e gira os utilizadores registados no sistema.",
     "admin.users.new": "Novo Utilizador",
     "admin.cms.title": "Gestão de Conteúdo (CMS)",
-    "admin.cms.subtitle": "Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.",
+    "admin.cms.subtitle":
+      "Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.",
     "admin.cms.page": "Selecionar Página do Frontoffice",
-    "cms.empty": "Nenhum bloco de conteúdo cadastrado para a página selecionada.",
+    "cms.empty":
+      "Nenhum bloco de conteúdo cadastrado para a página selecionada.",
     "cms.value": "Valor / Conteúdo",
     "cms.save": "Guardar Alterações",
     "cms.delete": "Eliminar",
@@ -62,7 +65,8 @@ const ADMIN_I18N = {
     "admin.users.subtitle": "View, create, and manage registered users.",
     "admin.users.new": "New User",
     "admin.cms.title": "Content Management (CMS)",
-    "admin.cms.subtitle": "Create, edit, and delete Frontoffice text blocks without changing code.",
+    "admin.cms.subtitle":
+      "Create, edit, and delete Frontoffice text blocks without changing code.",
     "admin.cms.page": "Select Frontoffice Page",
     "cms.empty": "No content blocks registered for the selected page.",
     "cms.value": "Value / Content",
@@ -129,7 +133,9 @@ class AdminUI {
     const mobileQuery = window.matchMedia("(max-width: 991.98px)");
     const toggleMain = document.getElementById("navbar-sidebar-toggle");
     const toggleHide = document.getElementById("sidebar-hide");
-    const sectionLinks = document.querySelectorAll(".admin-nav-link[data-section]");
+    const sectionLinks = document.querySelectorAll(
+      ".admin-nav-link[data-section]",
+    );
 
     const applySidebarState = () => {
       if (!adminLayout) return;
@@ -213,9 +219,14 @@ class AdminUI {
         this.lang = this.lang === "pt" ? "en" : "pt";
         localStorage.setItem(ADMIN_LANG_KEY, this.lang);
         apply();
-        const active = document.querySelector(".admin-section.active")?.id?.replace("-section", "");
+        const active = document
+          .querySelector(".admin-section.active")
+          ?.id?.replace("-section", "");
         if (active === "customers") this.renderUsers();
-        if (active === "cms") this.renderCMSBlocks(document.getElementById("cms-page-selector")?.value || "home");
+        if (active === "cms")
+          this.renderCMSBlocks(
+            document.getElementById("cms-page-selector")?.value || "home",
+          );
       });
     }
 
@@ -322,7 +333,7 @@ class AdminUI {
   async loadMenus() {
     try {
       const response = await fetch(`${API_URL}/admin/menu`, {
-        headers: { Authorization: `Bearer ${this.token}` }
+        headers: { Authorization: `Bearer ${this.token}` },
       });
       if (!response.ok) throw new Error("Falha ao carregar menus");
       this.menus = await response.json();
@@ -409,7 +420,8 @@ class AdminUI {
       if (idInput) idInput.value = item.ID_Menu;
       if (labelInput) labelInput.value = item.Label;
       if (linkInput) linkInput.value = item.Link;
-      if (ordemInput) ordemInput.value = this.menus.findIndex((m) => m.ID_Menu === id) + 1;
+      if (ordemInput)
+        ordemInput.value = this.menus.findIndex((m) => m.ID_Menu === id) + 1;
       if (targetCheckbox) targetCheckbox.checked = !!item.Abrir_Nova_Aba;
       if (activeCheckbox) activeCheckbox.checked = !!item.Ativo;
     } else {
@@ -429,7 +441,8 @@ class AdminUI {
     const id = document.getElementById("menu-id").value;
     const label = document.getElementById("menu-label").value.trim();
     const link = document.getElementById("menu-link").value.trim();
-    const ordem = parseInt(document.getElementById("menu-ordem").value, 10) || 0;
+    const ordem =
+      parseInt(document.getElementById("menu-ordem").value, 10) || 0;
     const target = document.getElementById("menu-abrir-nova-aba").checked;
     const ativo = document.getElementById("menu-ativo").checked;
 
@@ -443,25 +456,28 @@ class AdminUI {
       Link: link,
       Ordenacao: ordem,
       Abrir_Nova_Aba: target,
-      Ativo: ativo
+      Ativo: ativo,
     };
 
     const isEditing = !!id;
     const method = isEditing ? "PUT" : "POST";
-    const url = isEditing ? `${API_URL}/admin/menu/${id}` : `${API_URL}/admin/menu`;
+    const url = isEditing
+      ? `${API_URL}/admin/menu/${id}`
+      : `${API_URL}/admin/menu`;
 
     try {
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.token}`
+          Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Erro ao guardar item de menu.");
+      if (!response.ok)
+        throw new Error(data.error || "Erro ao guardar item de menu.");
 
       const modalEl = document.getElementById("menuModal");
       const modal = bootstrap.Modal.getInstance(modalEl);
@@ -471,7 +487,7 @@ class AdminUI {
         icon: "success",
         title: isEditing ? "Link atualizado!" : "Link criado!",
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
 
       this.loadMenus();
@@ -489,7 +505,7 @@ class AdminUI {
       Link: item.Link,
       Ordenacao: item.Ordenacao,
       Abrir_Nova_Aba: !!item.Abrir_Nova_Aba,
-      Ativo: !!newStatus
+      Ativo: !!newStatus,
     };
 
     try {
@@ -497,20 +513,20 @@ class AdminUI {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.token}`
+          Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) throw new Error("Erro ao atualizar estado.");
-      
+
       Swal.fire({
         icon: "success",
         title: newStatus ? "Menu visível!" : "Menu ocultado!",
         timer: 1000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
-      
+
       this.loadMenus();
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
@@ -526,14 +542,14 @@ class AdminUI {
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Sim, eliminar!",
-      cancelButtonText: "Cancelar"
+      cancelButtonText: "Cancelar",
     });
 
     if (result.isConfirmed) {
       try {
         const response = await fetch(`${API_URL}/admin/menu/${id}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${this.token}` }
+          headers: { Authorization: `Bearer ${this.token}` },
         });
 
         if (!response.ok) throw new Error("Falha ao eliminar item de menu.");
@@ -542,7 +558,7 @@ class AdminUI {
           icon: "success",
           title: "Eliminado!",
           timer: 1000,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
 
         this.loadMenus();
@@ -568,7 +584,11 @@ class AdminUI {
       this.renderCMSBlocks(pageKey);
     } catch (error) {
       console.error("Error loading CMS blocks:", error);
-      Swal.fire("Erro", "Não foi possível carregar os blocos de conteúdo.", "error");
+      Swal.fire(
+        "Erro",
+        "Não foi possível carregar os blocos de conteúdo.",
+        "error",
+      );
     }
   }
 
@@ -589,13 +609,14 @@ class AdminUI {
     listContainer.innerHTML = this.cmsBlocks
       .map((b) => {
         // Humanize keys for nice UI presentation
-        const keyLabel = b.Block_Key
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
+        const keyLabel = b.Block_Key.replace(/_/g, " ").replace(/\b\w/g, (c) =>
+          c.toUpperCase(),
+        );
 
-        const inputField = b.Content_Value.length > 80 
-          ? `<textarea id="cms-value-${b.ID_Content}" class="form-control form-control-v2" rows="4" style="border-radius: 8px; font-size: 0.95rem; line-height: 1.5;" required>${b.Content_Value}</textarea>`
-          : `<input type="text" id="cms-value-${b.ID_Content}" class="form-control form-control-v2" value="${b.Content_Value}" style="border-radius: 8px; font-size: 0.95rem;" required />`;
+        const inputField =
+          b.Content_Value.length > 80
+            ? `<textarea id="cms-value-${b.ID_Content}" class="form-control form-control-v2" rows="4" style="border-radius: 8px; font-size: 0.95rem; line-height: 1.5;" required>${b.Content_Value}</textarea>`
+            : `<input type="text" id="cms-value-${b.ID_Content}" class="form-control form-control-v2" value="${b.Content_Value}" style="border-radius: 8px; font-size: 0.95rem;" required />`;
 
         return `
           <div class="card mb-4 border border-light-subtle shadow-sm overflow-hidden" style="border-radius: 12px; background: #ffffff;">
@@ -631,7 +652,7 @@ class AdminUI {
   async saveCMSBlock(id, pageKey, blockKey, type) {
     const inputEl = document.getElementById(`cms-value-${id}`);
     if (!inputEl) return;
-    
+
     const value = inputEl.value.trim();
     if (value === "") {
       Swal.fire("Aviso", "O conteúdo não pode estar vazio.", "warning");
@@ -642,23 +663,25 @@ class AdminUI {
       Page_Key: pageKey,
       Block_Key: blockKey,
       Type: type,
-      Content_Value: value
+      Content_Value: value,
     };
 
     try {
       Swal.fire({
         title: "A guardar...",
         allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
       const response = await fetch(`${API_URL}/admin/cms`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.token}`
+          Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) throw new Error("Erro ao guardar alteração no CMS.");
@@ -668,7 +691,7 @@ class AdminUI {
         title: "Conteúdo atualizado!",
         text: "As alterações foram guardadas com sucesso.",
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
 
       // Reload blocks
@@ -679,7 +702,8 @@ class AdminUI {
   }
 
   async openCMSBlockModal() {
-    const currentPage = document.getElementById("cms-page-selector")?.value || "home";
+    const currentPage =
+      document.getElementById("cms-page-selector")?.value || "home";
     const result = await Swal.fire({
       title: this.lang === "en" ? "New CMS Block" : "Novo Bloco CMS",
       width: 620,
@@ -715,7 +739,11 @@ class AdminUI {
           Content_Value: document.getElementById("swal-cms-value").value.trim(),
         };
         if (!payload.Page_Key || !payload.Block_Key || !payload.Content_Value) {
-          Swal.showValidationMessage(this.lang === "en" ? "Fill in all required fields." : "Preenche todos os campos obrigatórios.");
+          Swal.showValidationMessage(
+            this.lang === "en"
+              ? "Fill in all required fields."
+              : "Preenche todos os campos obrigatórios.",
+          );
           return false;
         }
         return payload;
@@ -734,7 +762,8 @@ class AdminUI {
         body: JSON.stringify(result.value),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Erro ao criar bloco CMS.");
+      if (!response.ok)
+        throw new Error(data.error || "Erro ao criar bloco CMS.");
 
       const selector = document.getElementById("cms-page-selector");
       if (selector) selector.value = result.value.Page_Key;
@@ -753,7 +782,10 @@ class AdminUI {
   async deleteCMSBlock(id) {
     const result = await Swal.fire({
       title: this.lang === "en" ? "Delete block?" : "Eliminar bloco?",
-      text: this.lang === "en" ? "This content block will be removed from the CMS." : "Este bloco de conteúdo será removido do CMS.",
+      text:
+        this.lang === "en"
+          ? "This content block will be removed from the CMS."
+          : "Este bloco de conteúdo será removido do CMS.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -769,7 +801,8 @@ class AdminUI {
         headers: { Authorization: `Bearer ${this.token}` },
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Erro ao eliminar bloco CMS.");
+      if (!response.ok)
+        throw new Error(data.error || "Erro ao eliminar bloco CMS.");
 
       Swal.fire({
         icon: "success",
@@ -846,7 +879,14 @@ class AdminUI {
   }
 
   renderCharts(data) {
-    const { sales30d, distribution, ordersByStatus, topProducts, salesByBeekeeper, usersGrowth } = data;
+    const {
+      sales30d,
+      distribution,
+      ordersByStatus,
+      topProducts,
+      salesByBeekeeper,
+      usersGrowth,
+    } = data;
 
     // --- SHARED STYLING ---
     const goldenPalette = [
@@ -857,14 +897,14 @@ class AdminUI {
       "#ef4444", // Red
       "#64748b", // Slate
       "#f97316", // Orange
-      "#ec4899"  // Pink
+      "#ec4899", // Pink
     ];
 
     // 1. Sales Chart (Line)
     const salesCtx = document.getElementById("salesChart")?.getContext("2d");
     if (salesCtx) {
       if (this.salesChart) this.salesChart.destroy();
-      
+
       const gradient = salesCtx.createLinearGradient(0, 0, 0, 300);
       gradient.addColorStop(0, "rgba(244, 180, 0, 0.4)");
       gradient.addColorStop(1, "rgba(244, 180, 0, 0)");
@@ -872,7 +912,10 @@ class AdminUI {
       this.salesChart = new Chart(salesCtx, {
         type: "line",
         data: {
-          labels: sales30d.length > 0 ? sales30d.map((s) => new Date(s.date).toLocaleDateString()) : ["Sem dados"],
+          labels:
+            sales30d.length > 0
+              ? sales30d.map((s) => new Date(s.date).toLocaleDateString())
+              : ["Sem dados"],
           datasets: [
             {
               label: "Receita (€)",
@@ -895,17 +938,17 @@ class AdminUI {
               backgroundColor: "rgba(0,0,0,0.8)",
               padding: 12,
               callbacks: {
-                label: (context) => `Receita: ${context.parsed.y.toFixed(2)}€`
-              }
-            }
+                label: (context) => `Receita: ${context.parsed.y.toFixed(2)}€`,
+              },
+            },
           },
           scales: {
-            y: { 
+            y: {
               beginAtZero: true,
               grid: { color: "rgba(0,0,0,0.03)", drawBorder: false },
-              ticks: { callback: (value) => value + "€", maxTicksLimit: 5 }
+              ticks: { callback: (value) => value + "€", maxTicksLimit: 5 },
             },
-            x: { grid: { display: false }, ticks: { maxRotation: 0 } }
+            x: { grid: { display: false }, ticks: { maxRotation: 0 } },
           },
         },
       });
@@ -919,63 +962,84 @@ class AdminUI {
         type: "doughnut",
         data: {
           labels: distribution.map((d) => d.category),
-          datasets: [{
-            data: distribution.map((d) => d.count),
-            backgroundColor: goldenPalette,
-            borderWidth: 0,
-            hoverOffset: 15
-          }],
+          datasets: [
+            {
+              data: distribution.map((d) => d.count),
+              backgroundColor: goldenPalette,
+              borderWidth: 0,
+              hoverOffset: 15,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '75%',
+          cutout: "75%",
           plugins: {
-            legend: { position: "bottom", labels: { usePointStyle: true, padding: 20 } }
+            legend: {
+              position: "bottom",
+              labels: { usePointStyle: true, padding: 20 },
+            },
           },
         },
       });
     }
 
     // 3. Orders by Status Chart (Doughnut)
-    const statusCtx = document.getElementById("orderStatusChart")?.getContext("2d");
+    const statusCtx = document
+      .getElementById("orderStatusChart")
+      ?.getContext("2d");
     if (statusCtx) {
       if (this.statusChart) this.statusChart.destroy();
       this.statusChart = new Chart(statusCtx, {
         type: "doughnut",
         data: {
-          labels: ordersByStatus.map(o => o.status),
-          datasets: [{
-            data: ordersByStatus.map(o => o.count),
-            backgroundColor: ["#fef08a", "#bbf7d0", "#bfdbfe", "#bae6fd", "#fecaca"],
-            borderWidth: 0,
-          }]
+          labels: ordersByStatus.map((o) => o.status),
+          datasets: [
+            {
+              data: ordersByStatus.map((o) => o.count),
+              backgroundColor: [
+                "#fef08a",
+                "#bbf7d0",
+                "#bfdbfe",
+                "#bae6fd",
+                "#fecaca",
+              ],
+              borderWidth: 0,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '70%',
-          plugins: { legend: { position: "bottom", labels: { usePointStyle: true } } }
-        }
+          cutout: "70%",
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true } },
+          },
+        },
       });
     }
 
     // 4. Users Growth Chart (Line)
-    const growthCtx = document.getElementById("usersGrowthChart")?.getContext("2d");
+    const growthCtx = document
+      .getElementById("usersGrowthChart")
+      ?.getContext("2d");
     if (growthCtx) {
       if (this.growthChart) this.growthChart.destroy();
       this.growthChart = new Chart(growthCtx, {
         type: "line",
         data: {
-          labels: usersGrowth.map(u => u.month),
-          datasets: [{
-            label: "Novos Utilizadores",
-            data: usersGrowth.map(u => u.count),
-            borderColor: "#1c5236",
-            backgroundColor: "rgba(28, 82, 54, 0.1)",
-            fill: true,
-            tension: 0.4
-          }]
+          labels: usersGrowth.map((u) => u.month),
+          datasets: [
+            {
+              label: "Novos Utilizadores",
+              data: usersGrowth.map((u) => u.count),
+              borderColor: "#1c5236",
+              backgroundColor: "rgba(28, 82, 54, 0.1)",
+              fill: true,
+              tension: 0.4,
+            },
+          ],
         },
         options: {
           responsive: true,
@@ -983,64 +1047,72 @@ class AdminUI {
           plugins: { legend: { display: false } },
           scales: {
             y: { beginAtZero: true, ticks: { stepSize: 1 } },
-            x: { grid: { display: false } }
-          }
-        }
+            x: { grid: { display: false } },
+          },
+        },
       });
     }
 
     // 5. Top Products (Horizontal Bar)
-    const topCtx = document.getElementById("topProductsChart")?.getContext("2d");
+    const topCtx = document
+      .getElementById("topProductsChart")
+      ?.getContext("2d");
     if (topCtx) {
       if (this.topChart) this.topChart.destroy();
       this.topChart = new Chart(topCtx, {
         type: "bar",
         data: {
-          labels: topProducts.map(p => p.name),
-          datasets: [{
-            label: "Receita",
-            data: topProducts.map(p => p.revenue),
-            backgroundColor: "#f4b400",
-            borderRadius: 8
-          }]
+          labels: topProducts.map((p) => p.name),
+          datasets: [
+            {
+              label: "Receita",
+              data: topProducts.map((p) => p.revenue),
+              backgroundColor: "#f4b400",
+              borderRadius: 8,
+            },
+          ],
         },
         options: {
-          indexAxis: 'y',
+          indexAxis: "y",
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { callback: v => v + "€" } },
-            y: { grid: { display: false } }
-          }
-        }
+            x: { ticks: { callback: (v) => v + "€" } },
+            y: { grid: { display: false } },
+          },
+        },
       });
     }
 
     // 6. Sales by Beekeeper (Bar)
-    const beeCtx = document.getElementById("beekeeperSalesChart")?.getContext("2d");
+    const beeCtx = document
+      .getElementById("beekeeperSalesChart")
+      ?.getContext("2d");
     if (beeCtx) {
       if (this.beeChart) this.beeChart.destroy();
       this.beeChart = new Chart(beeCtx, {
         type: "bar",
         data: {
-          labels: salesByBeekeeper.map(b => b.name),
-          datasets: [{
-            label: "Total de Vendas",
-            data: salesByBeekeeper.map(b => b.revenue),
-            backgroundColor: "#1c5236",
-            borderRadius: 8
-          }]
+          labels: salesByBeekeeper.map((b) => b.name),
+          datasets: [
+            {
+              label: "Total de Vendas",
+              data: salesByBeekeeper.map((b) => b.revenue),
+              backgroundColor: "#1c5236",
+              borderRadius: 8,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { ticks: { callback: v => v + "€" } },
-            x: { grid: { display: false } }
-          }
-        }
+            y: { ticks: { callback: (v) => v + "€" } },
+            x: { grid: { display: false } },
+          },
+        },
       });
     }
   }
@@ -1099,19 +1171,23 @@ class AdminUI {
                     }</span>
                 </td>
                 <td>
-                    <span class="badge-premium ${p.Status === 'Pendente' ? 'pendente' : p.Status === 'Rejeitado' ? 'rejeitado' : 'aprovado'}">
-                        ${p.Status || 'Aprovado'}
+                    <span class="badge-premium ${p.Status === "Pendente" ? "pendente" : p.Status === "Rejeitado" ? "rejeitado" : "aprovado"}">
+                        ${p.Status || "Aprovado"}
                     </span>
                 </td>
                 <td class="text-end">
-                    ${p.Status === 'Pendente' ? `
+                    ${
+                      p.Status === "Pendente"
+                        ? `
                       <button class="btn-action-premium success me-1" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Aprovado')" title="Aprovar">
                           <i class="fas fa-check" style="font-size: 0.8rem;"></i>
                       </button>
                       <button class="btn-action-premium delete me-1" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Rejeitado')" title="Rejeitar">
                           <i class="fas fa-times" style="font-size: 0.8rem;"></i>
                       </button>
-                    ` : ""}
+                    `
+                        : ""
+                    }
                     <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
                         <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
                     </button>
@@ -1149,7 +1225,13 @@ class AdminUI {
 
     container.innerHTML = this.users
       .map((u) => {
-        const initials = u.Nome ? u.Nome.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) : "??";
+        const initials = u.Nome
+          ? u.Nome.split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .substring(0, 2)
+          : "??";
         return `
             <tr>
                 <td>
@@ -1315,8 +1397,17 @@ class AdminUI {
           password: document.getElementById("swal-user-password").value,
           userType: document.getElementById("swal-user-type").value,
         };
-        if (!payload.name || !payload.email || !payload.username || !payload.password) {
-          Swal.showValidationMessage(this.lang === "en" ? "Fill in all fields." : "Preenche todos os campos.");
+        if (
+          !payload.name ||
+          !payload.email ||
+          !payload.username ||
+          !payload.password
+        ) {
+          Swal.showValidationMessage(
+            this.lang === "en"
+              ? "Fill in all fields."
+              : "Preenche todos os campos.",
+          );
           return false;
         }
         return payload;
@@ -1335,7 +1426,8 @@ class AdminUI {
         body: JSON.stringify(result.value),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Erro ao criar utilizador.");
+      if (!response.ok)
+        throw new Error(data.error || "Erro ao criar utilizador.");
 
       Swal.fire({
         icon: "success",
@@ -1708,7 +1800,7 @@ class AdminUI {
         }),
       });
       if (!response.ok) throw new Error("Erro ao guardar produto");
-      
+
       const responseData = await response.json();
       const productId = id || responseData.ID_Produto || responseData.id;
 
@@ -2028,7 +2120,8 @@ class AdminUI {
       const response = await fetch(`${API_URL}/admin/upgrade-requests`, {
         headers: { Authorization: `Bearer ${this.token}` },
       });
-      if (!response.ok) throw new Error("Falha ao carregar pedidos de Apicultor");
+      if (!response.ok)
+        throw new Error("Falha ao carregar pedidos de Apicultor");
       this.upgradeRequests = await response.json();
       this.renderUpgradeRequests();
     } catch (error) {
@@ -2052,9 +2145,15 @@ class AdminUI {
 
     container.innerHTML = this.upgradeRequests
       .map((r) => {
-        const initials = r.ClienteNome ? r.ClienteNome.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2) : "??";
+        const initials = r.ClienteNome
+          ? r.ClienteNome.split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .substring(0, 2)
+          : "??";
         const statusClass = r.Status.toLowerCase();
-        
+
         return `
             <tr>
                 <td>
@@ -2113,14 +2212,17 @@ class AdminUI {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${API_URL}/admin/upgrade-requests/${id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.token}`,
+        const response = await fetch(
+          `${API_URL}/admin/upgrade-requests/${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ status }),
           },
-          body: JSON.stringify({ status }),
-        });
+        );
 
         if (!response.ok) throw new Error("Erro ao processar pedido");
 
@@ -2162,7 +2264,9 @@ class AdminUI {
     container.innerHTML = this.workshopsList
       .map((w) => {
         const apicultorNome = w.ApicultorNome || "Desconhecido";
-        const statusClass = w.Status ? w.Status.toLowerCase().replace(" ", "-") : "pendente";
+        const statusClass = w.Status
+          ? w.Status.toLowerCase().replace(" ", "-")
+          : "pendente";
 
         return `
             <tr>
@@ -2173,7 +2277,7 @@ class AdminUI {
                     <div class="small text-muted"><i class="fas fa-users me-1"></i>${w.Vagas} vagas</div>
                 </td>
                 <td class="fw-bold text-dark">${parseFloat(w.Preco).toFixed(2)}€</td>
-                <td><span class="badge-premium ${statusClass}">${w.Status || 'Pendente'}</span></td>
+                <td><span class="badge-premium ${statusClass}">${w.Status || "Pendente"}</span></td>
                 <td class="text-end">
                     <div class="d-flex justify-content-end gap-2">
                     ${
@@ -2205,23 +2309,30 @@ class AdminUI {
       showCancelButton: true,
       confirmButtonColor: status === "Aprovado" ? "#198754" : "#dc3545",
       confirmButtonText: "Sim, confirmar",
-      cancelButtonText: "Cancelar"
+      cancelButtonText: "Cancelar",
     });
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${API_URL}/admin/workshops/${id}/status`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.token}`,
+        const response = await fetch(
+          `${API_URL}/admin/workshops/${id}/status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ status }),
           },
-          body: JSON.stringify({ status }),
-        });
+        );
 
         if (!response.ok) throw new Error("Erro ao processar workshop");
 
-        Swal.fire("Sucesso", `Workshop ${status.toLowerCase()} com sucesso!`, "success");
+        Swal.fire(
+          "Sucesso",
+          `Workshop ${status.toLowerCase()} com sucesso!`,
+          "success",
+        );
         await this.loadWorkshops();
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
@@ -2247,7 +2358,7 @@ class AdminUI {
     const modalElement = document.getElementById("documentModal");
     let modal = bootstrap.Modal.getInstance(modalElement);
     if (!modal) modal = new bootstrap.Modal(modalElement);
-    
+
     const iframe = document.getElementById("doc-iframe");
     const imgContainer = document.getElementById("doc-image-container");
     const img = document.getElementById("doc-image");
@@ -2261,11 +2372,10 @@ class AdminUI {
     iframe.classList.add("d-none");
     imgContainer.classList.add("d-none");
     errorView.classList.add("d-none");
-    
+
     loader.classList.remove("d-none");
     loader.classList.add("d-flex");
 
-    
     // Set download links
     downloadBtn.href = path;
     fallbackLink.href = path;
@@ -2319,8 +2429,6 @@ class AdminUI {
       errorView.classList.remove("d-none");
       errorView.classList.add("d-flex");
     }
-
-
   }
 
   // --- INTERACTIONS ANALYTICS ---
@@ -2346,15 +2454,15 @@ class AdminUI {
       const data = await res.json();
 
       // KPI Cards
-      const { 
-        totals = { total: 0, logged_in: 0, anonymous: 0 }, 
-        byType = [], 
-        byPage = [], 
-        topViewed = [], 
-        topCart = [], 
+      const {
+        totals = { total: 0, logged_in: 0, anonymous: 0 },
+        byType = [],
+        byPage = [],
+        topViewed = [],
+        topCart = [],
         perDay = [],
         topSearches = [],
-        topClicks = []
+        topClicks = [],
       } = data || {};
 
       const totalEl = document.getElementById("int-total");
@@ -2367,19 +2475,35 @@ class AdminUI {
       // Pages Table
       const pagesBody = document.getElementById("int-pages-body");
       if (pagesBody) {
-        pagesBody.innerHTML = byPage.length === 0
-          ? `<tr><td colspan="2" class="text-center text-muted py-3">Sem dados ainda.</td></tr>`
-          : byPage.map(p => `
+        pagesBody.innerHTML =
+          byPage.length === 0
+            ? `<tr><td colspan="2" class="text-center text-muted py-3">Sem dados ainda.</td></tr>`
+            : byPage
+                .map(
+                  (p) => `
               <tr>
                 <td><i class="fas fa-file-alt me-2 text-muted" style="font-size:0.8rem"></i>${p.pagina}</td>
                 <td class="text-end fw-bold">${p.count}</td>
-              </tr>`).join("");
+              </tr>`,
+                )
+                .join("");
       }
 
-      const palette = ["#f4b400","#1c5236","#0284c7","#9333ea","#ef4444","#f97316","#ec4899","#64748b"];
+      const palette = [
+        "#f4b400",
+        "#1c5236",
+        "#0284c7",
+        "#9333ea",
+        "#ef4444",
+        "#f97316",
+        "#ec4899",
+        "#64748b",
+      ];
 
       // Chart: Events per Day
-      const perDayCtx = document.getElementById("intPerDayChart")?.getContext("2d");
+      const perDayCtx = document
+        .getElementById("intPerDayChart")
+        ?.getContext("2d");
       if (perDayCtx) {
         if (this.intPerDayChart) this.intPerDayChart.destroy();
         const gradient = perDayCtx.createLinearGradient(0, 0, 0, 260);
@@ -2388,131 +2512,209 @@ class AdminUI {
         this.intPerDayChart = new Chart(perDayCtx, {
           type: "line",
           data: {
-            labels: perDay.map(d => new Date(d.dia).toLocaleDateString("pt-PT", { day: "2-digit", month: "short" })),
-            datasets: [{
-              label: "Eventos",
-              data: perDay.map(d => d.total),
-              borderColor: "#1c5236",
-              backgroundColor: gradient,
-              fill: true,
-              tension: 0.4,
-              pointRadius: 3,
-              borderWidth: 2,
-            }]
+            labels: perDay.map((d) =>
+              new Date(d.dia).toLocaleDateString("pt-PT", {
+                day: "2-digit",
+                month: "short",
+              }),
+            ),
+            datasets: [
+              {
+                label: "Eventos",
+                data: perDay.map((d) => d.total),
+                borderColor: "#1c5236",
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                borderWidth: 2,
+              },
+            ],
           },
           options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.03)" }, ticks: { stepSize: 1 } },
-              x: { grid: { display: false } }
-            }
-          }
+              y: {
+                beginAtZero: true,
+                grid: { color: "rgba(0,0,0,0.03)" },
+                ticks: { stepSize: 1 },
+              },
+              x: { grid: { display: false } },
+            },
+          },
         });
       }
 
       // Chart: Events by Type (Doughnut)
-      const byTypeCtx = document.getElementById("intByTypeChart")?.getContext("2d");
+      const byTypeCtx = document
+        .getElementById("intByTypeChart")
+        ?.getContext("2d");
       if (byTypeCtx) {
         if (this.intByTypeChart) this.intByTypeChart.destroy();
-        const typeLabels = { page_view: "Visita Página", product_view: "Viu Produto", add_to_cart: "Add Carrinho", checkout_start: "Checkout", search: "Pesquisa" };
+        const typeLabels = {
+          page_view: "Visita Página",
+          product_view: "Viu Produto",
+          add_to_cart: "Add Carrinho",
+          checkout_start: "Checkout",
+          search: "Pesquisa",
+        };
         this.intByTypeChart = new Chart(byTypeCtx, {
           type: "doughnut",
           data: {
-            labels: byType.map(t => typeLabels[t.tipo] || t.tipo),
-            datasets: [{ data: byType.map(t => t.count), backgroundColor: palette, borderWidth: 0, hoverOffset: 12 }]
+            labels: byType.map((t) => typeLabels[t.tipo] || t.tipo),
+            datasets: [
+              {
+                data: byType.map((t) => t.count),
+                backgroundColor: palette,
+                borderWidth: 0,
+                hoverOffset: 12,
+              },
+            ],
           },
           options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             cutout: "72%",
-            plugins: { legend: { position: "bottom", labels: { usePointStyle: true, padding: 16, font: { size: 11 } } } }
-          }
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  usePointStyle: true,
+                  padding: 16,
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
         });
       }
 
       // Chart: Top Viewed Products (horizontal bar)
-      const viewCtx = document.getElementById("intTopViewedChart")?.getContext("2d");
+      const viewCtx = document
+        .getElementById("intTopViewedChart")
+        ?.getContext("2d");
       if (viewCtx) {
         if (this.intTopViewedChart) this.intTopViewedChart.destroy();
         this.intTopViewedChart = new Chart(viewCtx, {
           type: "bar",
           data: {
-            labels: topViewed.map(p => p.nome || `Produto ${p.id}`),
-            datasets: [{ label: "Visualizações", data: topViewed.map(p => p.views), backgroundColor: "#f4b400", borderRadius: 8 }]
+            labels: topViewed.map((p) => p.nome || `Produto ${p.id}`),
+            datasets: [
+              {
+                label: "Visualizações",
+                data: topViewed.map((p) => p.views),
+                backgroundColor: "#f4b400",
+                borderRadius: 8,
+              },
+            ],
           },
           options: {
             indexAxis: "y",
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
-          }
+            scales: {
+              x: { ticks: { stepSize: 1 } },
+              y: { grid: { display: false } },
+            },
+          },
         });
       }
 
       // Chart: Top Add-to-Cart Products (horizontal bar)
-      const cartCtx = document.getElementById("intTopCartChart")?.getContext("2d");
+      const cartCtx = document
+        .getElementById("intTopCartChart")
+        ?.getContext("2d");
       if (cartCtx) {
         if (this.intTopCartChart) this.intTopCartChart.destroy();
         this.intTopCartChart = new Chart(cartCtx, {
           type: "bar",
           data: {
-            labels: topCart.map(p => p.nome || `Produto ${p.id}`),
-            datasets: [{ label: "Adds ao Carrinho", data: topCart.map(p => p.adds), backgroundColor: "#1c5236", borderRadius: 8 }]
+            labels: topCart.map((p) => p.nome || `Produto ${p.id}`),
+            datasets: [
+              {
+                label: "Adds ao Carrinho",
+                data: topCart.map((p) => p.adds),
+                backgroundColor: "#1c5236",
+                borderRadius: 8,
+              },
+            ],
           },
           options: {
             indexAxis: "y",
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
-          }
+            scales: {
+              x: { ticks: { stepSize: 1 } },
+              y: { grid: { display: false } },
+            },
+          },
         });
       }
 
       // 1. NEW: Search Queries Table
       const searchesBody = document.getElementById("int-searches-body");
       if (searchesBody) {
-        searchesBody.innerHTML = !topSearches || topSearches.length === 0
-          ? `<tr><td colspan="2" class="text-center text-muted py-3">Sem pesquisas capturadas.</td></tr>`
-          : topSearches.map(s => `
+        searchesBody.innerHTML =
+          !topSearches || topSearches.length === 0
+            ? `<tr><td colspan="2" class="text-center text-muted py-3">Sem pesquisas capturadas.</td></tr>`
+            : topSearches
+                .map(
+                  (s) => `
               <tr>
                 <td class="fw-bold"><i class="fas fa-search me-2 text-muted small"></i>${s.termo}</td>
                 <td class="text-end"><span class="badge bg-light text-dark border">${s.count}</span></td>
-              </tr>`).join("");
+              </tr>`,
+                )
+                .join("");
       }
 
       // 2. NEW: Top Clicks Chart (Horizontal Bar)
-      const clickCtx = document.getElementById("intTopClicksChart")?.getContext("2d");
+      const clickCtx = document
+        .getElementById("intTopClicksChart")
+        ?.getContext("2d");
       if (clickCtx) {
         if (this.intTopClicksChart) this.intTopClicksChart.destroy();
         this.intTopClicksChart = new Chart(clickCtx, {
           type: "bar",
           data: {
-            labels: topClicks.map(c => c.label.length > 25 ? c.label.substring(0,25) + "..." : c.label),
-            datasets: [{ 
-              label: "Cliques", 
-              data: topClicks.map(c => c.clicks), 
-              backgroundColor: "rgba(244, 180, 0, 0.7)", 
-              borderColor: "#f4b400",
-              borderWidth: 1,
-              borderRadius: 4 
-            }]
+            labels: topClicks.map((c) =>
+              c.label.length > 25 ? c.label.substring(0, 25) + "..." : c.label,
+            ),
+            datasets: [
+              {
+                label: "Cliques",
+                data: topClicks.map((c) => c.clicks),
+                backgroundColor: "rgba(244, 180, 0, 0.7)",
+                borderColor: "#f4b400",
+                borderWidth: 1,
+                borderRadius: 4,
+              },
+            ],
           },
           options: {
             indexAxis: "y",
-            responsive: true, maintainAspectRatio: false,
-            plugins: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
               legend: { display: false },
               tooltip: {
                 callbacks: {
                   afterLabel: (context) => {
                     const item = topClicks[context.dataIndex];
                     return `Elemento: <${item.element}>`;
-                  }
-                }
-              }
+                  },
+                },
+              },
             },
-            scales: { x: { ticks: { stepSize: 1 } }, y: { grid: { display: false } } }
-          }
+            scales: {
+              x: { ticks: { stepSize: 1 } },
+              y: { grid: { display: false } },
+            },
+          },
         });
       }
 
@@ -2525,7 +2727,6 @@ class AdminUI {
         contentEl.classList.remove("d-none");
         contentEl.classList.add("d-block");
       }
-
     } catch (err) {
       console.error("Interactions load error", err);
     }
@@ -2557,19 +2758,21 @@ class AdminUI {
         apicultores: "🐝 Apicultores",
       };
 
-      container.innerHTML = slugs.map(s => `
+      container.innerHTML = slugs
+        .map(
+          (s) => `
         <tr>
           <td class="fw-bold">${pageLabels[s.Pagina] || s.Pagina}</td>
           <td>
             <input type="text" class="form-control form-control-sm" 
-                   value="${s.Slug || ''}" 
+                   value="${s.Slug || ""}" 
                    data-pagina="${s.Pagina}" 
                    data-field="slug"
                    style="border-radius:8px; font-family:monospace; font-size:0.85rem;">
           </td>
           <td>
             <input type="text" class="form-control form-control-sm" 
-                   value="${s.Titulo_SEO || ''}" 
+                   value="${s.Titulo_SEO || ""}" 
                    data-pagina="${s.Pagina}" 
                    data-field="titulo"
                    style="border-radius:8px; font-size:0.85rem;" 
@@ -2577,14 +2780,16 @@ class AdminUI {
           </td>
           <td>
             <input type="text" class="form-control form-control-sm" 
-                   value="${s.Descricao_SEO || ''}" 
+                   value="${s.Descricao_SEO || ""}" 
                    data-pagina="${s.Pagina}" 
                    data-field="descricao"
                    style="border-radius:8px; font-size:0.85rem;" 
                    placeholder="Meta descrição">
           </td>
         </tr>
-      `).join("");
+      `,
+        )
+        .join("");
     } catch (err) {
       console.error("Load site slugs error", err);
     }
@@ -2593,25 +2798,38 @@ class AdminUI {
   async saveSiteSlugs() {
     const rows = document.querySelectorAll("#site-slugs-body tr");
     const slugs = [];
-    rows.forEach(row => {
-      const pagina = row.querySelector('[data-field="slug"]')?.getAttribute('data-pagina');
+    rows.forEach((row) => {
+      const pagina = row
+        .querySelector('[data-field="slug"]')
+        ?.getAttribute("data-pagina");
       const slug = row.querySelector('[data-field="slug"]')?.value;
       const titulo_seo = row.querySelector('[data-field="titulo"]')?.value;
-      const descricao_seo = row.querySelector('[data-field="descricao"]')?.value;
+      const descricao_seo = row.querySelector(
+        '[data-field="descricao"]',
+      )?.value;
       if (pagina) slugs.push({ pagina, slug, titulo_seo, descricao_seo });
     });
 
     try {
       const res = await fetch(`${API_URL}/admin/site-slugs`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
         body: JSON.stringify({ slugs }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Falha ao guardar");
       }
-      Swal.fire({ icon: "success", title: "Guardado!", text: "Slugs do site atualizados.", timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: "Guardado!",
+        text: "Slugs do site atualizados.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (err) {
       Swal.fire("Erro", err.message, "error");
     }
@@ -2620,41 +2838,46 @@ class AdminUI {
   async downloadSitemap() {
     try {
       Swal.fire({
-        title: 'A gerar sitemap...',
+        title: "A gerar sitemap...",
         allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
       // 1. Fetch data
       const [siteRes, prodRes] = await Promise.all([
         fetch(`${API_URL}/site-slugs`),
-        fetch(`${API_URL}/admin/products`, { headers: { Authorization: `Bearer ${this.token}` } })
+        fetch(`${API_URL}/admin/products`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        }),
       ]);
 
-      if (!siteRes.ok || !prodRes.ok) throw new Error("Falha ao obter dados para o sitemap");
+      if (!siteRes.ok || !prodRes.ok)
+        throw new Error("Falha ao obter dados para o sitemap");
 
       const sitePages = await siteRes.json();
       const products = await prodRes.json();
 
       // 2. Build XML
       const baseUrl = window.location.origin;
-      const date = new Date().toISOString().split('T')[0];
+      const date = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
       // Add site pages
-      sitePages.forEach(p => {
-        const publicPath = p.Pagina === "inicio" ? "" : (p.Slug || p.Pagina);
+      sitePages.forEach((p) => {
+        const publicPath = p.Pagina === "inicio" ? "" : p.Slug || p.Pagina;
         xml += `  <url>\n`;
         xml += `    <loc>${baseUrl}/${publicPath}</loc>\n`;
         xml += `    <lastmod>${date}</lastmod>\n`;
-        xml += `    <priority>${p.Pagina === 'inicio' ? '1.0' : '0.8'}</priority>\n`;
+        xml += `    <priority>${p.Pagina === "inicio" ? "1.0" : "0.8"}</priority>\n`;
         xml += `  </url>\n`;
       });
 
       // Add product pages
-      products.forEach(p => {
+      products.forEach((p) => {
         if (p.Slug) {
           xml += `  <url>\n`;
           xml += `    <loc>${baseUrl}/produto.html?slug=${p.Slug}</loc>\n`;
@@ -2667,24 +2890,23 @@ class AdminUI {
       xml += `</urlset>`;
 
       // 3. Trigger Download
-      const blob = new Blob([xml], { type: 'application/xml' });
+      const blob = new Blob([xml], { type: "application/xml" });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'sitemap.xml';
+      a.download = "sitemap.xml";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
       Swal.fire({
-        icon: 'success',
-        title: 'Sitemap Gerado!',
-        text: 'O ficheiro sitemap.xml foi descarregado com sucesso.',
+        icon: "success",
+        title: "Sitemap Gerado!",
+        text: "O ficheiro sitemap.xml foi descarregado com sucesso.",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
-
     } catch (err) {
       console.error("Sitemap error", err);
       Swal.fire("Erro", err.message, "error");
@@ -2705,34 +2927,43 @@ class AdminUI {
       if (!container) return;
 
       if (!this.products || this.products.length === 0) {
-        container.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Nenhum produto encontrado.</td></tr>';
+        container.innerHTML =
+          '<tr><td colspan="4" class="text-center text-muted py-4">Nenhum produto encontrado.</td></tr>';
         return;
       }
 
-      container.innerHTML = this.products.map(p => `
+      container.innerHTML = this.products
+        .map(
+          (p) => `
         <tr>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <img src="${p.Imagem || '/images/wildflower.png'}" class="product-img-rounded" alt="${p.Nome}" style="width:32px;height:32px;object-fit:cover;border-radius:8px;">
+              <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}" style="width:32px;height:32px;object-fit:cover;border-radius:8px;">
               <span class="fw-bold small">${p.Nome}</span>
             </div>
           </td>
           <td>
-            <code style="background:#f1f5f9; padding:4px 10px; border-radius:6px; font-size:0.82rem; color:#475569;">${p.Slug || '—'}</code>
+            <code style="background:#f1f5f9; padding:4px 10px; border-radius:6px; font-size:0.82rem; color:#475569;">${p.Slug || "—"}</code>
           </td>
           <td>
-            ${p.Slug ? `<a href="produto.html?slug=${p.Slug}" target="_blank" class="small text-decoration-none" style="color:var(--primary-green);">
+            ${
+              p.Slug
+                ? `<a href="produto.html?slug=${p.Slug}" target="_blank" class="small text-decoration-none" style="color:var(--primary-green);">
               <i class="fas fa-external-link-alt me-1"></i>/produto.html?slug=${p.Slug}
-            </a>` : '<span class="text-muted small">—</span>'}
+            </a>`
+                : '<span class="text-muted small">—</span>'
+            }
           </td>
           <td class="text-end">
-            <button class="btn-action-premium" onclick="adminUI.editProductSlug('${p.ID_Produto}', '${(p.Slug || '').replace(/'/g, "\\'")}')"
+            <button class="btn-action-premium" onclick="adminUI.editProductSlug('${p.ID_Produto}', '${(p.Slug || "").replace(/'/g, "\\'")}')"
                     title="Editar Slug">
               <i class="fas fa-pen" style="font-size: 0.75rem;"></i>
             </button>
           </td>
         </tr>
-      `).join("");
+      `,
+        )
+        .join("");
     } catch (err) {
       console.error("Load product slugs error", err);
     }
@@ -2759,7 +2990,10 @@ class AdminUI {
     try {
       const res = await fetch(`${API_URL}/admin/products/${productId}/slug`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
         body: JSON.stringify({ slug: newSlug }),
       });
 
@@ -2769,8 +3003,14 @@ class AdminUI {
       }
 
       const data = await res.json();
-      Swal.fire({ icon: "success", title: "Slug Atualizado!", text: `Novo slug: ${data.slug}`, timer: 2000, showConfirmButton: false });
-      
+      Swal.fire({
+        icon: "success",
+        title: "Slug Atualizado!",
+        text: `Novo slug: ${data.slug}`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
       // Refresh the product list to show updated slug
       this.products = []; // Force re-fetch
       this.loadProductSlugs();
@@ -2805,22 +3045,28 @@ class AdminUI {
       const settings = await res.json();
 
       const style = settings.placeholder_style || "skeleton";
-      const placeholderStyleEl = document.getElementById("app-placeholder-style");
+      const placeholderStyleEl = document.getElementById(
+        "app-placeholder-style",
+      );
       if (placeholderStyleEl) placeholderStyleEl.value = style;
 
       // Update active UI cards state
       this.selectLoadingStyle(style);
-
     } catch (error) {
       console.error(error);
-      Swal.fire("Erro", "Não foi possível carregar as definições de aparência.", "error");
+      Swal.fire(
+        "Erro",
+        "Não foi possível carregar as definições de aparência.",
+        "error",
+      );
     }
   }
 
   async saveAppearanceSettings() {
     try {
       const settings = {
-        placeholder_style: document.getElementById("app-placeholder-style")?.value || "skeleton",
+        placeholder_style:
+          document.getElementById("app-placeholder-style")?.value || "skeleton",
       };
 
       const res = await fetch(`${API_URL}/admin/site-settings`, {
@@ -2839,11 +3085,15 @@ class AdminUI {
         title: "Definições Guardadas!",
         text: "As alterações de aparência foram guardadas com sucesso.",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     } catch (error) {
       console.error(error);
-      Swal.fire("Erro", "Não foi possível guardar as definições de aparência.", "error");
+      Swal.fire(
+        "Erro",
+        "Não foi possível guardar as definições de aparência.",
+        "error",
+      );
     }
   }
 
@@ -2871,16 +3121,19 @@ class AdminUI {
       return;
     }
 
-    container.innerHTML = this.quizQuestions.map(q => {
-      const optionsHtml = [q.Opcao1, q.Opcao2, q.Opcao3, q.Opcao4].map((opt, i) => {
-        const isCorrect = i === q.Resposta_Correta;
-        return `<div style="${isCorrect ? 'font-weight:bold;color:var(--primary-green)' : ''}">
+    container.innerHTML = this.quizQuestions
+      .map((q) => {
+        const optionsHtml = [q.Opcao1, q.Opcao2, q.Opcao3, q.Opcao4]
+          .map((opt, i) => {
+            const isCorrect = i === q.Resposta_Correta;
+            return `<div style="${isCorrect ? "font-weight:bold;color:var(--primary-green)" : ""}">
           ${isCorrect ? '<i class="fas fa-check-circle me-1"></i>' : '<i class="far fa-circle me-1 text-muted"></i>'}
           ${opt}
         </div>`;
-      }).join("");
+          })
+          .join("");
 
-      return `
+        return `
         <tr>
             <td class="fw-bold text-muted">#${q.ID_Pergunta}</td>
             <td>
@@ -2898,17 +3151,19 @@ class AdminUI {
             </td>
         </tr>
       `;
-    }).join("");
+      })
+      .join("");
   }
 
   resetQuizForm() {
     document.getElementById("quizForm").reset();
     document.getElementById("quizId").value = "";
-    document.getElementById("quizModalLabel").innerText = "Adicionar Nova Pergunta";
+    document.getElementById("quizModalLabel").innerText =
+      "Adicionar Nova Pergunta";
   }
 
   editQuizQuestion(id) {
-    const q = this.quizQuestions.find(x => x.ID_Pergunta === id);
+    const q = this.quizQuestions.find((x) => x.ID_Pergunta === id);
     if (!q) return;
 
     document.getElementById("quizId").value = q.ID_Pergunta;
@@ -2919,7 +3174,8 @@ class AdminUI {
     document.getElementById("quizOpt4").value = q.Opcao4;
     document.getElementById("quizCorrectOpt").value = q.Resposta_Correta;
     document.getElementById("quizExplanation").value = q.Explicacao;
-    document.getElementById("quizModalLabel").innerText = "Editar Pergunta #" + id;
+    document.getElementById("quizModalLabel").innerText =
+      "Editar Pergunta #" + id;
 
     const modal = new bootstrap.Modal(document.getElementById("quizModal"));
     modal.show();
@@ -2933,32 +3189,54 @@ class AdminUI {
       opcao2: document.getElementById("quizOpt2").value,
       opcao3: document.getElementById("quizOpt3").value,
       opcao4: document.getElementById("quizOpt4").value,
-      resposta_correta: parseInt(document.getElementById("quizCorrectOpt").value, 10),
+      resposta_correta: parseInt(
+        document.getElementById("quizCorrectOpt").value,
+        10,
+      ),
       explicacao: document.getElementById("quizExplanation").value,
     };
 
-    if (!body.pergunta || !body.opcao1 || !body.opcao2 || !body.opcao3 || !body.opcao4 || !body.explicacao) {
+    if (
+      !body.pergunta ||
+      !body.opcao1 ||
+      !body.opcao2 ||
+      !body.opcao3 ||
+      !body.opcao4 ||
+      !body.explicacao
+    ) {
       Swal.fire("Erro", "Preencha todos os campos obrigatórios.", "warning");
       return;
     }
 
     const isEditing = !!id;
     const method = isEditing ? "PUT" : "POST";
-    const url = isEditing ? `${API_URL}/quiz/perguntas/${id}` : `${API_URL}/quiz/perguntas`;
+    const url = isEditing
+      ? `${API_URL}/quiz/perguntas/${id}`
+      : `${API_URL}/quiz/perguntas`;
 
     try {
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.token}` },
-        body: JSON.stringify(body)
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) throw new Error("Falha ao guardar pergunta");
-      
-      const modal = bootstrap.Modal.getInstance(document.getElementById("quizModal"));
+
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("quizModal"),
+      );
       if (modal) modal.hide();
-      
-      Swal.fire({ icon: "success", title: "Pergunta Guardada", timer: 1500, showConfirmButton: false });
+
+      Swal.fire({
+        icon: "success",
+        title: "Pergunta Guardada",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       this.loadQuizQuestions();
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
@@ -2972,17 +3250,22 @@ class AdminUI {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      confirmButtonText: "Sim, apagar!"
+      confirmButtonText: "Sim, apagar!",
     });
 
     if (result.isConfirmed) {
       try {
         const response = await fetch(`${API_URL}/quiz/perguntas/${id}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${this.token}` }
+          headers: { Authorization: `Bearer ${this.token}` },
         });
         if (!response.ok) throw new Error("Erro ao apagar");
-        Swal.fire({ icon: "success", title: "Apagada", timer: 1000, showConfirmButton: false });
+        Swal.fire({
+          icon: "success",
+          title: "Apagada",
+          timer: 1000,
+          showConfirmButton: false,
+        });
         this.loadQuizQuestions();
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
