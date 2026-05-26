@@ -19,17 +19,17 @@ import compression from "compression";
 // SLUG UTILITIES
 // ============================================================
 function slugify(text) {
-  if (!text) return '';
+  if (!text) return "";
   return text
     .toString()
-    .normalize('NFD')                   // Decompose accented characters
-    .replace(/[\u0300-\u036f]/g, '')     // Remove diacritics
+    .normalize("NFD") // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '')       // Remove non-alphanumeric
-    .replace(/[\s_]+/g, '-')            // Spaces/underscores to hyphens
-    .replace(/-+/g, '-')                // Collapse multiple hyphens
-    .replace(/^-+|-+$/g, '');           // Trim leading/trailing hyphens
+    .replace(/[^a-z0-9\s-]/g, "") // Remove non-alphanumeric
+    .replace(/[\s_]+/g, "-") // Spaces/underscores to hyphens
+    .replace(/-+/g, "-") // Collapse multiple hyphens
+    .replace(/^-+|-+$/g, ""); // Trim leading/trailing hyphens
 }
 
 async function generateUniqueSlug(baseSlug, existingId = null) {
@@ -47,17 +47,17 @@ async function generateUniqueSlug(baseSlug, existingId = null) {
   }
 }
 
-
 const configuredGoogleClientId =
-  process.env.GOOGLE_CLIENT_ID &&
-  process.env.GOOGLE_CLIENT_ID !== "change-me"
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID !== "change-me"
     ? process.env.GOOGLE_CLIENT_ID
     : null;
-const stripe = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== "placeholder" 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-02-25.clover",
-    }) 
-  : null;
+const stripe =
+  process.env.STRIPE_SECRET_KEY &&
+  process.env.STRIPE_SECRET_KEY !== "placeholder"
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2026-02-25.clover",
+      })
+    : null;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -162,25 +162,42 @@ async function initMailTransporter() {
 initMailTransporter().catch(console.error);
 
 // Generate Receipt HTML (used for email and download)
-function generateReceiptHTML(order, items, customerName, customerEmail, logoSrc = "cid:logo") {
-  const orderDate = new Date(order.Data_Encomenda || order.date).toLocaleDateString("pt-PT", {
-    year: "numeric", month: "long", day: "numeric",
+function generateReceiptHTML(
+  order,
+  items,
+  customerName,
+  customerEmail,
+  logoSrc = "cid:logo",
+) {
+  const orderDate = new Date(
+    order.Data_Encomenda || order.date,
+  ).toLocaleDateString("pt-PT", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-  const subtotal = items.reduce((sum, i) => sum + i.Preco_Unitario * i.Quantidade, 0);
+  const subtotal = items.reduce(
+    (sum, i) => sum + i.Preco_Unitario * i.Quantidade,
+    0,
+  );
   const total = parseFloat(order.Total || order.total);
   const shipping = total - subtotal;
 
-  const itemRows = items.map(i => `
+  const itemRows = items
+    .map(
+      (i) => `
     <tr>
       <td style="padding:15px; border-bottom:1px solid #edf2f7; font-family: sans-serif;">
         <div style="font-weight:bold; color:#1a4d2e; font-size:16px;">${i.Nome}</div>
-        <div style="font-size:12px; color:#718096; margin-top:4px;"><span style="color:#b45309; font-weight:bold;">Apicultor:</span> ${i.ApicultorNome || 'Hexomel'} &bull; Qtd: ${i.Quantidade} &bull; €${parseFloat(i.Preco_Unitario).toFixed(2)}/un</div>
+        <div style="font-size:12px; color:#718096; margin-top:4px;"><span style="color:#b45309; font-weight:bold;">Apicultor:</span> ${i.ApicultorNome || "Hexomel"} &bull; Qtd: ${i.Quantidade} &bull; €${parseFloat(i.Preco_Unitario).toFixed(2)}/un</div>
       </td>
       <td style="padding:15px; border-bottom:1px solid #edf2f7; text-align:right; font-family: sans-serif; font-weight:bold; color:#1a4d2e; font-size:16px;">
         €${(i.Preco_Unitario * i.Quantidade).toFixed(2)}
       </td>
     </tr>
-  `).join("");
+  `,
+    )
+    .join("");
 
   return `<!DOCTYPE html>
 <html lang="pt">
@@ -250,10 +267,14 @@ function generateReceiptHTML(order, items, customerName, customerEmail, logoSrc 
                         <td style="padding:5px 0; font-size:14px; color:#4a5568;">Subtotal</td>
                         <td style="padding:5px 0; font-size:14px; color:#4a5568; text-align:right;">€${subtotal.toFixed(2)}</td>
                       </tr>
-                      ${shipping > 0.05 ? `<tr>
+                      ${
+                        shipping > 0.05
+                          ? `<tr>
                         <td style="padding:5px 0; font-size:14px; color:#4a5568;">Portes</td>
                         <td style="padding:5px 0; font-size:14px; color:#4a5568; text-align:right;">€${shipping.toFixed(2)}</td>
-                      </tr>` : ""}
+                      </tr>`
+                          : ""
+                      }
                       <tr>
                         <td style="padding:15px 0 0; font-size:18px; font-weight:bold; color:#1a4d2e; border-top:1px solid #edf2f7; margin-top:10px;">Total</td>
                         <td style="padding:15px 0 0; font-size:20px; font-weight:bold; color:#1a4d2e; text-align:right; border-top:1px solid #edf2f7; margin-top:10px;">€${total.toFixed(2)}</td>
@@ -288,36 +309,57 @@ async function sendReceiptEmail(orderId) {
     return;
   }
   try {
-    const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ?", [orderId]);
+    const order = await db.get(
+      "SELECT * FROM encomenda WHERE ID_Encomenda = ?",
+      [orderId],
+    );
     if (!order) return;
 
-    const customer = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [order.ID_Cliente]);
+    const customer = await db.get(
+      "SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?",
+      [order.ID_Cliente],
+    );
     if (!customer || !customer.Email) return;
 
     const items = await db.all(
       `SELECT ie.*, p.Nome FROM item_encomenda ie JOIN produto p ON ie.ID_Produto = p.ID_Produto WHERE ie.ID_Encomenda = ?`,
-      [orderId]
+      [orderId],
     );
 
-    const html = generateReceiptHTML(order, items, customer.Nome, customer.Email);
+    const html = generateReceiptHTML(
+      order,
+      items,
+      customer.Nome,
+      customer.Email,
+    );
 
     await mailTransporter.sendMail({
       from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
       to: customer.Email,
       subject: `🍯 Recibo da Encomenda #${orderId} — Hexomel`,
       html,
-      attachments: [{
-        filename: 'logo_hexomel.webp',
-        path: '../frontend/public/images/logo_hexomel.webp',
-        cid: 'logo' // referenced in the HTML as src="cid:logo"
-      }]
+      attachments: [
+        {
+          filename: "logo_hexomel.webp",
+          path: "../frontend/public/images/logo_hexomel.webp",
+          cid: "logo", // referenced in the HTML as src="cid:logo"
+        },
+      ],
     });
-    console.log(`📧 Receipt email sent for order #${orderId} to ${customer.Email}`);
+    console.log(
+      `📧 Receipt email sent for order #${orderId} to ${customer.Email}`,
+    );
   } catch (err) {
-    console.error(`📧 Failed to send receipt email for order #${orderId}:`, err.message);
+    console.error(
+      `📧 Failed to send receipt email for order #${orderId}:`,
+      err.message,
+    );
   }
 }
-async function syncCustomerCheckoutDetails(customerId, { nome, apelido, address, phone }) {
+async function syncCustomerCheckoutDetails(
+  customerId,
+  { nome, apelido, address, phone },
+) {
   const fullName = [nome, apelido].filter(Boolean).join(" ").trim();
 
   if (!fullName && !address && !phone) {
@@ -350,10 +392,10 @@ async function fulfillPaidOrder(orderId) {
   );
 
   for (const item of items) {
-    await db.run(
-      "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
-      [item.Quantidade, item.ID_Produto],
-    );
+    await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [
+      item.Quantidade,
+      item.ID_Produto,
+    ]);
   }
 
   await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
@@ -375,16 +417,19 @@ function buildAbsoluteAppUrl(origin, assetPath) {
     return null;
   }
 
-  const publicBaseUrl =
-    (process.env.CHECKOUT_PUBLIC_BASE_URL ||
+  const publicBaseUrl = (
+    process.env.CHECKOUT_PUBLIC_BASE_URL ||
     process.env.PUBLIC_APP_URL ||
-    origin).replace(/\/$/, ""); // Remove trailing slash if present
+    origin
+  ).replace(/\/$/, ""); // Remove trailing slash if present
 
   if (/^https?:\/\//i.test(assetPath)) {
     return assetPath;
   }
 
-  const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
+  const normalizedPath = assetPath.startsWith("/")
+    ? assetPath
+    : `/${assetPath}`;
   return `${publicBaseUrl}${normalizedPath}`;
 }
 
@@ -395,7 +440,9 @@ function isLocalCheckoutUrl(value) {
 
   try {
     const { hostname } = new URL(value);
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+    return (
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+    );
   } catch {
     return true;
   }
@@ -410,11 +457,16 @@ function normalizeProductNameForImage(productName) {
 }
 
 function getCheckoutProductImages(origin, imagePath, productName, productId) {
-  const publicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
+  const publicBaseUrl =
+    process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
   const nameLower = (productName || "").toLowerCase();
-  
-  console.log(`[Stripe Debug] Resolving images for: "${productName}" (ID: ${productId})`);
-  console.log(`[Stripe Debug] Config: BaseUrl=${publicBaseUrl}, Origin=${origin}`);
+
+  console.log(
+    `[Stripe Debug] Resolving images for: "${productName}" (ID: ${productId})`,
+  );
+  console.log(
+    `[Stripe Debug] Config: BaseUrl=${publicBaseUrl}, Origin=${origin}`,
+  );
 
   // 1. Resolve absolute URL if we have a public base URL
   const buildUrl = (baseUrl, path) => {
@@ -424,25 +476,41 @@ function getCheckoutProductImages(origin, imagePath, productName, productId) {
   };
 
   // 2. Determine if we are in Localhost mode
-  const isLocalhost = !origin || 
-                     origin.includes("localhost") || 
-                     origin.includes("127.0.0.1") || 
-                     (publicBaseUrl && (publicBaseUrl.includes("localhost") || publicBaseUrl.includes("127.0.0.1")));
+  const isLocalhost =
+    !origin ||
+    origin.includes("localhost") ||
+    origin.includes("127.0.0.1") ||
+    (publicBaseUrl &&
+      (publicBaseUrl.includes("localhost") ||
+        publicBaseUrl.includes("127.0.0.1")));
 
   if (isLocalhost) {
-    console.log(`[Stripe Debug] Localhost detected. Stripe cannot access local files. Using public placeholders...`);
-    
+    console.log(
+      `[Stripe Debug] Localhost detected. Stripe cannot access local files. Using public placeholders...`,
+    );
+
     let placeholderUrl = "";
     if (nameLower.includes("mel")) {
-      placeholderUrl = "https://images.unsplash.com/photo-1471943311424-646960669fba?q=80&w=600";
+      placeholderUrl =
+        "https://images.unsplash.com/photo-1471943311424-646960669fba?q=80&w=600";
     } else if (nameLower.includes("favo")) {
-      placeholderUrl = "https://images.unsplash.com/photo-1558583082-409143c794ca?q=80&w=600";
+      placeholderUrl =
+        "https://images.unsplash.com/photo-1558583082-409143c794ca?q=80&w=600";
     } else if (nameLower.includes("polen") || nameLower.includes("pólen")) {
-      placeholderUrl = "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?q=80&w=600";
-    } else if (nameLower.includes("prop") || nameLower.includes("próp") || nameLower.includes("cera")) {
-      placeholderUrl = "https://images.unsplash.com/photo-1610424564335-9774d008d56c?q=80&w=600";
+      placeholderUrl =
+        "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?q=80&w=600";
+    } else if (
+      nameLower.includes("prop") ||
+      nameLower.includes("próp") ||
+      nameLower.includes("cera")
+    ) {
+      placeholderUrl =
+        "https://images.unsplash.com/photo-1610424564335-9774d008d56c?q=80&w=600";
     } else {
-      const encodedName = encodeURIComponent(productName || "Hexomel").replace(/%20/g, "+");
+      const encodedName = encodeURIComponent(productName || "Hexomel").replace(
+        /%20/g,
+        "+",
+      );
       placeholderUrl = `https://placehold.co/600x600/1a4d2e/ffffff/png?text=${encodedName}`;
     }
 
@@ -453,19 +521,33 @@ function getCheckoutProductImages(origin, imagePath, productName, productId) {
   // 3. In Production or with Ngrok
   let finalPath = imagePath || `/images/logo_hexomel.webp`;
   const absoluteUrl = buildUrl(publicBaseUrl || origin, finalPath);
-  
+
   console.log(`[Stripe Debug] Using absolute URL: ${absoluteUrl}`);
   return [absoluteUrl];
 }
 
-function getStripeCheckoutProductImages(origin, imagePath, productName, productId) {
-  const configuredPublicBaseUrl = process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
+function getStripeCheckoutProductImages(
+  origin,
+  imagePath,
+  productName,
+  productId,
+) {
+  const configuredPublicBaseUrl =
+    process.env.CHECKOUT_PUBLIC_BASE_URL || process.env.PUBLIC_APP_URL;
   const checkoutBaseUrl = configuredPublicBaseUrl || origin;
 
-  console.log(`[Stripe Debug] Resolving public image for: "${productName}" (ID: ${productId})`);
-  console.log(`[Stripe Debug] Config: BaseUrl=${configuredPublicBaseUrl}, Origin=${origin}`);
+  console.log(
+    `[Stripe Debug] Resolving public image for: "${productName}" (ID: ${productId})`,
+  );
+  console.log(
+    `[Stripe Debug] Config: BaseUrl=${configuredPublicBaseUrl}, Origin=${origin}`,
+  );
 
-  if (imagePath && /^https?:\/\//i.test(imagePath) && !isLocalCheckoutUrl(imagePath)) {
+  if (
+    imagePath &&
+    /^https?:\/\//i.test(imagePath) &&
+    !isLocalCheckoutUrl(imagePath)
+  ) {
     console.log(`[Stripe Debug] Using product absolute URL: ${imagePath}`);
     return [imagePath];
   }
@@ -480,9 +562,12 @@ function getStripeCheckoutProductImages(origin, imagePath, productName, productI
     return [absoluteUrl];
   }
 
-  const placeholderUrl = "https://placehold.co/600x600/e5e7eb/374151.png?font=montserrat&text=IMG";
+  const placeholderUrl =
+    "https://placehold.co/600x600/e5e7eb/374151.png?font=montserrat&text=IMG";
 
-  console.log("[Stripe Debug] Public URL not available. Using public placeholder image.");
+  console.log(
+    "[Stripe Debug] Public URL not available. Using public placeholder image.",
+  );
   return [placeholderUrl];
 }
 
@@ -502,19 +587,27 @@ const runDatabaseMigrations = async () => {
       .catch(() => console.log("Is_Verified col already exists"));
 
     await db
-      .run("ALTER TABLE cliente ADD COLUMN Verification_Token VARCHAR(255) DEFAULT NULL")
+      .run(
+        "ALTER TABLE cliente ADD COLUMN Verification_Token VARCHAR(255) DEFAULT NULL",
+      )
       .catch(() => console.log("Verification_Token col already exists"));
 
     await db
-      .run("ALTER TABLE cliente ADD COLUMN Checkout_OTP VARCHAR(10) DEFAULT NULL")
+      .run(
+        "ALTER TABLE cliente ADD COLUMN Checkout_OTP VARCHAR(10) DEFAULT NULL",
+      )
       .catch(() => console.log("Checkout_OTP col already exists"));
 
     await db
-      .run("ALTER TABLE cliente ADD COLUMN Checkout_OTP_Expires DATETIME DEFAULT NULL")
+      .run(
+        "ALTER TABLE cliente ADD COLUMN Checkout_OTP_Expires DATETIME DEFAULT NULL",
+      )
       .catch(() => console.log("Checkout_OTP_Expires col already exists"));
 
     await db
-      .run("ALTER TABLE cliente ADD COLUMN Checkout_Verified BOOLEAN DEFAULT FALSE")
+      .run(
+        "ALTER TABLE cliente ADD COLUMN Checkout_Verified BOOLEAN DEFAULT FALSE",
+      )
       .catch(() => console.log("Checkout_Verified col already exists"));
 
     await db
@@ -540,7 +633,9 @@ const runDatabaseMigrations = async () => {
       .catch(() => console.log("Workshop table creation handled"));
 
     await db
-      .run("ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'")
+      .run(
+        "ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'",
+      )
       .catch(() => console.log("Workshop Status col already exists"));
 
     await db
@@ -583,10 +678,22 @@ const runDatabaseMigrations = async () => {
       .catch(() => console.log("interacao table already exists"));
 
     // New columns for Encomenda
-    await db.run("ALTER TABLE encomenda ADD COLUMN Custo_Envio DECIMAL(10,2) DEFAULT 0").catch(() => {});
-    await db.run("ALTER TABLE encomenda ADD COLUMN Tipo_Envio VARCHAR(50) DEFAULT 'ctt'").catch(() => {});
-    await db.run("ALTER TABLE encomenda ADD COLUMN Nome VARCHAR(120) DEFAULT NULL").catch(() => {});
-    await db.run("ALTER TABLE encomenda ADD COLUMN Apelido VARCHAR(120) DEFAULT NULL").catch(() => {});
+    await db
+      .run(
+        "ALTER TABLE encomenda ADD COLUMN Custo_Envio DECIMAL(10,2) DEFAULT 0",
+      )
+      .catch(() => {});
+    await db
+      .run(
+        "ALTER TABLE encomenda ADD COLUMN Tipo_Envio VARCHAR(50) DEFAULT 'ctt'",
+      )
+      .catch(() => {});
+    await db
+      .run("ALTER TABLE encomenda ADD COLUMN Nome VARCHAR(120) DEFAULT NULL")
+      .catch(() => {});
+    await db
+      .run("ALTER TABLE encomenda ADD COLUMN Apelido VARCHAR(120) DEFAULT NULL")
+      .catch(() => {});
 
     // Reserva Workshop table
     await db
@@ -656,7 +763,8 @@ const runDatabaseMigrations = async () => {
 
     // SEO Slugs: Create site_slugs table
     await db
-      .run(`
+      .run(
+        `
         CREATE TABLE IF NOT EXISTS site_slugs (
           ID_Slug int(10) NOT NULL AUTO_INCREMENT,
           Pagina VARCHAR(60) NOT NULL,
@@ -667,54 +775,111 @@ const runDatabaseMigrations = async () => {
           UNIQUE KEY uk_pagina (Pagina),
           UNIQUE KEY uk_page_slug (Slug)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-      `)
+      `,
+      )
       .catch(() => console.log("site_slugs table creation handled"));
 
     // Seed default site slugs if empty
-    const slugCount = await db.get("SELECT COUNT(*) as c FROM site_slugs").catch(() => ({ c: 1 }));
+    const slugCount = await db
+      .get("SELECT COUNT(*) as c FROM site_slugs")
+      .catch(() => ({ c: 1 }));
     if (slugCount && slugCount.c === 0) {
       const defaults = [
-        ['inicio', 'inicio', 'Hexomel — Mel Artesanal Premium', 'Mel 100% natural da Serra da Estrela. Produção artesanal com tradição desde 1984.'],
-        ['loja', 'loja', 'Loja — Hexomel', 'Descubra a nossa seleção de méis artesanais, pólen, própolis e outros produtos da colmeia.'],
-        ['sobre', 'sobre-nos', 'Sobre Nós — Hexomel', 'Conheça a história da Hexomel e a nossa paixão pela apicultura tradicional.'],
-        ['contactos', 'contactos', 'Contactos — Hexomel', 'Entre em contacto connosco. Estamos na Serra da Estrela, Portugal.'],
-        ['workshops', 'workshops', 'Workshops — Hexomel', 'Participe nas nossas experiências de apicultura e workshops.'],
-        ['curiosidades', 'curiosidades', 'Curiosidades — Hexomel', 'Descubra factos curiosos sobre mel, abelhas e apicultura.'],
-        ['comunidade', 'comunidade', 'Comunidade — Hexomel', 'Junte-se à comunidade Hexomel. Perguntas, respostas e partilha.'],
-        ['apicultores', 'apicultores', 'Apicultores — Hexomel', 'Conheça os nossos apicultores parceiros e os seus produtos.'],
+        [
+          "inicio",
+          "inicio",
+          "Hexomel — Mel Artesanal Premium",
+          "Mel 100% natural da Serra da Estrela. Produção artesanal com tradição desde 1984.",
+        ],
+        [
+          "loja",
+          "loja",
+          "Loja — Hexomel",
+          "Descubra a nossa seleção de méis artesanais, pólen, própolis e outros produtos da colmeia.",
+        ],
+        [
+          "sobre",
+          "sobre-nos",
+          "Sobre Nós — Hexomel",
+          "Conheça a história da Hexomel e a nossa paixão pela apicultura tradicional.",
+        ],
+        [
+          "contactos",
+          "contactos",
+          "Contactos — Hexomel",
+          "Entre em contacto connosco. Estamos na Serra da Estrela, Portugal.",
+        ],
+        [
+          "workshops",
+          "workshops",
+          "Workshops — Hexomel",
+          "Participe nas nossas experiências de apicultura e workshops.",
+        ],
+        [
+          "curiosidades",
+          "curiosidades",
+          "Curiosidades — Hexomel",
+          "Descubra factos curiosos sobre mel, abelhas e apicultura.",
+        ],
+        [
+          "comunidade",
+          "comunidade",
+          "Comunidade — Hexomel",
+          "Junte-se à comunidade Hexomel. Perguntas, respostas e partilha.",
+        ],
+        [
+          "apicultores",
+          "apicultores",
+          "Apicultores — Hexomel",
+          "Conheça os nossos apicultores parceiros e os seus produtos.",
+        ],
       ];
       for (const [pagina, slug, titulo, desc] of defaults) {
-        await db.run(
-          "INSERT IGNORE INTO site_slugs (Pagina, Slug, Titulo_SEO, Descricao_SEO) VALUES (?, ?, ?, ?)",
-          [pagina, slug, titulo, desc]
-        ).catch(() => {});
+        await db
+          .run(
+            "INSERT IGNORE INTO site_slugs (Pagina, Slug, Titulo_SEO, Descricao_SEO) VALUES (?, ?, ?, ?)",
+            [pagina, slug, titulo, desc],
+          )
+          .catch(() => {});
       }
     }
 
     // Backfill slugs for existing products that don't have one
-    const productsWithoutSlug = await db.all("SELECT ID_Produto, Nome FROM produto WHERE Slug IS NULL OR Slug = ''").catch(() => []);
+    const productsWithoutSlug = await db
+      .all(
+        "SELECT ID_Produto, Nome FROM produto WHERE Slug IS NULL OR Slug = ''",
+      )
+      .catch(() => []);
     for (const p of productsWithoutSlug) {
       const baseSlug = slugify(p.Nome);
       if (baseSlug) {
         const uniqueSlug = await generateUniqueSlug(baseSlug, p.ID_Produto);
-        await db.run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [uniqueSlug, p.ID_Produto]).catch(() => {});
+        await db
+          .run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [
+            uniqueSlug,
+            p.ID_Produto,
+          ])
+          .catch(() => {});
       }
     }
 
     // Site Settings (key-value store for admin preferences)
     await db
-      .run(`
+      .run(
+        `
         CREATE TABLE IF NOT EXISTS site_settings (
           setting_key VARCHAR(100) NOT NULL,
           setting_value TEXT,
           PRIMARY KEY (setting_key)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-      `)
+      `,
+      )
       .catch(() => console.log("site_settings table creation handled"));
 
     // Quiz Tables
     await db
-      .run(`
+      .run(
+        `
         CREATE TABLE IF NOT EXISTS quiz_pergunta (
           ID_Pergunta int(10) NOT NULL AUTO_INCREMENT,
           Pergunta TEXT NOT NULL,
@@ -727,11 +892,13 @@ const runDatabaseMigrations = async () => {
           Data_Criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           PRIMARY KEY (ID_Pergunta)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-      `)
+      `,
+      )
       .catch(() => console.log("quiz_pergunta table creation handled"));
 
     await db
-      .run(`
+      .run(
+        `
         CREATE TABLE IF NOT EXISTS quiz_score (
           ID_Score int(10) NOT NULL AUTO_INCREMENT,
           ID_Cliente int(10) NOT NULL,
@@ -742,32 +909,103 @@ const runDatabaseMigrations = async () => {
           KEY ID_Cliente (ID_Cliente),
           CONSTRAINT fk_quiz_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-      `)
+      `,
+      )
       .catch(() => console.log("quiz_score table creation handled"));
 
     // Seed default quiz questions if empty
-    const quizCount = await db.get("SELECT COUNT(*) as c FROM quiz_pergunta").catch(() => ({ c: 1 }));
+    const quizCount = await db
+      .get("SELECT COUNT(*) as c FROM quiz_pergunta")
+      .catch(() => ({ c: 1 }));
     if (quizCount && quizCount.c === 0) {
       const defaultQuestions = [
-        ["Quantas flores uma abelha visita para produzir 1 kg de mel?", "500 mil", "2 a 4 milhões", "100 mil", "10 milhões", 1, "Para produzir 1 kg de mel, as abelhas visitam entre 2 a 4 milhões de flores!"],
-        ["Quanto tempo vive uma abelha operária no verão?", "1 ano", "6 meses", "Cerca de 45 dias", "2 semanas", 2, "Uma abelha operária vive cerca de 45 dias no verão, trabalhando incansavelmente."],
-        ["Quantos ovos pode a abelha rainha pôr por dia?", "100", "500", "1.000", "Até 3.000", 3, "A rainha pode pôr até 3.000 ovos por dia — quase um a cada 30 segundos!"],
-        ["O mel puro tem prazo de validade?", "Sim, 2 anos", "Sim, 5 anos", "Não, nunca expira", "Depende da flor", 2, "O mel puro nunca expira! Potes de mel com 3.000 anos foram encontrados intactos em tumbas egípcias."],
-        ["Que percentagem das plantas com flor depende das abelhas para polinização?", "20%", "50%", "80%", "95%", 2, "As abelhas são responsáveis pela polinização de cerca de 80% das plantas com flor."],
-        ["Quem recebeu o Prémio Nobel pela descoberta da 'dança das abelhas'?", "Charles Darwin", "Karl von Frisch", "Albert Einstein", "Gregor Mendel", 1, "Karl von Frisch recebeu o Nobel de Fisiologia/Medicina em 1973 pela descoberta da dança das abelhas."],
-        ["O que indica a cristalização do mel?", "Mel estragado", "Mel com açúcar adicionado", "Pureza e qualidade", "Mel de fraca qualidade", 2, "A cristalização é um processo natural e forte indicador de que o mel é puro e de qualidade."],
-        ["Quantas asas tem uma abelha?", "2", "4", "6", "8", 1, "As abelhas têm 4 asas que podem bater até 200 vezes por segundo!"]
+        [
+          "Quantas flores uma abelha visita para produzir 1 kg de mel?",
+          "500 mil",
+          "2 a 4 milhões",
+          "100 mil",
+          "10 milhões",
+          1,
+          "Para produzir 1 kg de mel, as abelhas visitam entre 2 a 4 milhões de flores!",
+        ],
+        [
+          "Quanto tempo vive uma abelha operária no verão?",
+          "1 ano",
+          "6 meses",
+          "Cerca de 45 dias",
+          "2 semanas",
+          2,
+          "Uma abelha operária vive cerca de 45 dias no verão, trabalhando incansavelmente.",
+        ],
+        [
+          "Quantos ovos pode a abelha rainha pôr por dia?",
+          "100",
+          "500",
+          "1.000",
+          "Até 3.000",
+          3,
+          "A rainha pode pôr até 3.000 ovos por dia — quase um a cada 30 segundos!",
+        ],
+        [
+          "O mel puro tem prazo de validade?",
+          "Sim, 2 anos",
+          "Sim, 5 anos",
+          "Não, nunca expira",
+          "Depende da flor",
+          2,
+          "O mel puro nunca expira! Potes de mel com 3.000 anos foram encontrados intactos em tumbas egípcias.",
+        ],
+        [
+          "Que percentagem das plantas com flor depende das abelhas para polinização?",
+          "20%",
+          "50%",
+          "80%",
+          "95%",
+          2,
+          "As abelhas são responsáveis pela polinização de cerca de 80% das plantas com flor.",
+        ],
+        [
+          "Quem recebeu o Prémio Nobel pela descoberta da 'dança das abelhas'?",
+          "Charles Darwin",
+          "Karl von Frisch",
+          "Albert Einstein",
+          "Gregor Mendel",
+          1,
+          "Karl von Frisch recebeu o Nobel de Fisiologia/Medicina em 1973 pela descoberta da dança das abelhas.",
+        ],
+        [
+          "O que indica a cristalização do mel?",
+          "Mel estragado",
+          "Mel com açúcar adicionado",
+          "Pureza e qualidade",
+          "Mel de fraca qualidade",
+          2,
+          "A cristalização é um processo natural e forte indicador de que o mel é puro e de qualidade.",
+        ],
+        [
+          "Quantas asas tem uma abelha?",
+          "2",
+          "4",
+          "6",
+          "8",
+          1,
+          "As abelhas têm 4 asas que podem bater até 200 vezes por segundo!",
+        ],
       ];
       for (const q of defaultQuestions) {
-        await db.run(
-          "INSERT INTO quiz_pergunta (Pergunta, Opcao1, Opcao2, Opcao3, Opcao4, Resposta_Correta, Explicacao) VALUES (?, ?, ?, ?, ?, ?, ?)",
-          q
-        ).catch(() => {});
+        await db
+          .run(
+            "INSERT INTO quiz_pergunta (Pergunta, Opcao1, Opcao2, Opcao3, Opcao4, Resposta_Correta, Explicacao) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            q,
+          )
+          .catch(() => {});
       }
     }
 
     // --- Módulo Menu Dinâmico ---
-    await db.run(`
+    await db
+      .run(
+        `
       CREATE TABLE IF NOT EXISTS menu_nav (
         ID_Menu int(10) NOT NULL AUTO_INCREMENT,
         Label varchar(100) NOT NULL,
@@ -779,11 +1017,15 @@ const runDatabaseMigrations = async () => {
         PRIMARY KEY (ID_Menu),
         CONSTRAINT fk_menu_parent FOREIGN KEY (ID_Parent) REFERENCES menu_nav (ID_Menu) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `).catch((err) => console.error("Error creating menu_nav table:", err));
+    `,
+      )
+      .catch((err) => console.error("Error creating menu_nav table:", err));
 
     await db.run("ALTER TABLE menu_nav ADD COLUMN ID_Parent INT DEFAULT NULL").catch(() => {});
 
-    const menuCount = await db.get("SELECT COUNT(*) as c FROM menu_nav").catch(() => ({ c: 1 }));
+    const menuCount = await db
+      .get("SELECT COUNT(*) as c FROM menu_nav")
+      .catch(() => ({ c: 1 }));
     if (menuCount && menuCount.c === 0) {
       const defaultMenus = [
         [1, "Início", "index.html", 1, 1, null],
@@ -839,15 +1081,19 @@ const runDatabaseMigrations = async () => {
     for (let index = 0; index < menuRows.length; index++) {
       const normalizedOrder = index + 1;
       if (Number(menuRows[index].Ordenacao) !== normalizedOrder) {
-        await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [
-          normalizedOrder,
-          menuRows[index].ID_Menu
-        ]).catch(() => {});
+        await db
+          .run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [
+            normalizedOrder,
+            menuRows[index].ID_Menu,
+          ])
+          .catch(() => {});
       }
     }
 
     // --- Módulo Recuperação de Senha ---
-    await db.run(`
+    await db
+      .run(
+        `
       CREATE TABLE IF NOT EXISTS password_recovery (
         ID_Recovery int(10) NOT NULL AUTO_INCREMENT,
         ID_Cliente int(10) NOT NULL,
@@ -859,10 +1105,16 @@ const runDatabaseMigrations = async () => {
         UNIQUE KEY uk_recovery_token (Token),
         CONSTRAINT fk_recovery_cliente FOREIGN KEY (ID_Cliente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `).catch((err) => console.error("Error creating password_recovery table:", err));
+    `,
+      )
+      .catch((err) =>
+        console.error("Error creating password_recovery table:", err),
+      );
 
     // --- Módulo CMS Geral ---
-    await db.run(`
+    await db
+      .run(
+        `
       CREATE TABLE IF NOT EXISTS cms_content (
         ID_Content int(10) NOT NULL AUTO_INCREMENT,
         Page_Key varchar(50) NOT NULL,
@@ -872,70 +1124,130 @@ const runDatabaseMigrations = async () => {
         PRIMARY KEY (ID_Content),
         UNIQUE KEY uk_page_block (Page_Key, Block_Key)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `).catch((err) => console.error("Error creating cms_content table:", err));
+    `,
+      )
+      .catch((err) => console.error("Error creating cms_content table:", err));
 
-    const cmsCount = await db.get("SELECT COUNT(*) as c FROM cms_content").catch(() => ({ c: 1 }));
+    const cmsCount = await db
+      .get("SELECT COUNT(*) as c FROM cms_content")
+      .catch(() => ({ c: 1 }));
     if (cmsCount && cmsCount.c === 0) {
       const defaultCMS = [
         ["home", "hero_title", "text", "Mel Artesanal Premium"],
-        ["home", "hero_subtitle", "text", "O melhor mel natural do Alentejo e da Serra da Estrela, produzido com tradição, amor e pureza desde 1984. Descubra sabores autênticos diretamente das nossas colmeias."],
+        [
+          "home",
+          "hero_subtitle",
+          "text",
+          "O melhor mel natural do Alentejo e da Serra da Estrela, produzido com tradição, amor e pureza desde 1984. Descubra sabores autênticos diretamente das nossas colmeias.",
+        ],
         ["home", "featured_title", "text", "Os Nossos Méis Destaque"],
-        ["home", "featured_subtitle", "text", "Colhidos artesanalmente, preservando todas as propriedades nutritivas e medicinais da flor à colmeia."],
+        [
+          "home",
+          "featured_subtitle",
+          "text",
+          "Colhidos artesanalmente, preservando todas as propriedades nutritivas e medicinais da flor à colmeia.",
+        ],
         ["about", "hero_title", "text", "A Nossa História"],
-        ["about", "hero_subtitle", "text", "Compromisso com a natureza, com as abelhas e com a excelência do mel tradicional português."],
-        ["about", "legacy_text", "text", "Desde 1984 que a família Hexomel se dedica à preservação da apicultura tradicional na Serra da Estrela e no Alentejo. O que começou com apenas três colmeias familiares cresceu para um ecossistema sustentável que apoia a biodiversidade local e promove práticas apícolas éticas."]
+        [
+          "about",
+          "hero_subtitle",
+          "text",
+          "Compromisso com a natureza, com as abelhas e com a excelência do mel tradicional português.",
+        ],
+        [
+          "about",
+          "legacy_text",
+          "text",
+          "Desde 1984 que a família Hexomel se dedica à preservação da apicultura tradicional na Serra da Estrela e no Alentejo. O que começou com apenas três colmeias familiares cresceu para um ecossistema sustentável que apoia a biodiversidade local e promove práticas apícolas éticas.",
+        ],
       ];
       for (const c of defaultCMS) {
-        await db.run(
-          "INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value) VALUES (?, ?, ?, ?)",
-          c
-        ).catch(() => {});
+        await db
+          .run(
+            "INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value) VALUES (?, ?, ?, ?)",
+            c,
+          )
+          .catch(() => {});
       }
     }
 
     // Seed default placeholder style if not exists
     await db
-      .run("INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES ('placeholder_style', 'skeleton')")
+      .run(
+        "INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES ('placeholder_style', 'skeleton')",
+      )
       .catch(() => {});
 
     // Seed default interactions for analytics if empty
-    const interacaoCount = await db.get("SELECT COUNT(*) as c FROM interacao").catch(() => ({ c: 1 }));
+    const interacaoCount = await db
+      .get("SELECT COUNT(*) as c FROM interacao")
+      .catch(() => ({ c: 1 }));
     if (interacaoCount && interacaoCount.c === 0) {
       console.log("Seeding realistic sample interactions for analytics...");
-      const pages = ["index.html", "shop.html", "about.html", "contact.html", "aprender.html", "curiosidades.html"];
-      const searchTerms = ["mel de urze", "mel silvestre", "propólis", "mel com favo", "pólen abelha", "colmeia", "apicultura"];
-      const clickLabels = ["Adicionar ao Carrinho", "Comprar Agora", "Saber Mais", "Ver Receita de Mel", "Subscrever Newsletter", "Falar Connosco"];
-      const clickElements = ["button", "button", "a", "a", "button", "a"];
-      
-      // Get some products to reference realistically
-      const dbProducts = await db.all("SELECT ID_Produto, Nome FROM produto LIMIT 5").catch(() => []);
-      const sampleProducts = dbProducts.length > 0 ? dbProducts : [
-        { ID_Produto: 1, Nome: "Mel de Rosmaninho Premium" },
-        { ID_Produto: 2, Nome: "Mel de Urze Puro" },
-        { ID_Produto: 3, Nome: "Pólen Silvestre" },
-        { ID_Produto: 4, Nome: "Própolis Spray Bio" }
+      const pages = [
+        "index.html",
+        "shop.html",
+        "about.html",
+        "contact.html",
+        "aprender.html",
+        "curiosidades.html",
       ];
+      const searchTerms = [
+        "mel de urze",
+        "mel silvestre",
+        "propólis",
+        "mel com favo",
+        "pólen abelha",
+        "colmeia",
+        "apicultura",
+      ];
+      const clickLabels = [
+        "Adicionar ao Carrinho",
+        "Comprar Agora",
+        "Saber Mais",
+        "Ver Receita de Mel",
+        "Subscrever Newsletter",
+        "Falar Connosco",
+      ];
+      const clickElements = ["button", "button", "a", "a", "button", "a"];
+
+      // Get some products to reference realistically
+      const dbProducts = await db
+        .all("SELECT ID_Produto, Nome FROM produto LIMIT 5")
+        .catch(() => []);
+      const sampleProducts =
+        dbProducts.length > 0
+          ? dbProducts
+          : [
+              { ID_Produto: 1, Nome: "Mel de Rosmaninho Premium" },
+              { ID_Produto: 2, Nome: "Mel de Urze Puro" },
+              { ID_Produto: 3, Nome: "Pólen Silvestre" },
+              { ID_Produto: 4, Nome: "Própolis Spray Bio" },
+            ];
 
       // Get some clients to reference realistically
-      const dbClients = await db.all("SELECT ID_Cliente FROM cliente LIMIT 5").catch(() => []);
-      const sampleClients = dbClients.map(c => c.ID_Cliente);
+      const dbClients = await db
+        .all("SELECT ID_Cliente FROM cliente LIMIT 5")
+        .catch(() => []);
+      const sampleClients = dbClients.map((c) => c.ID_Cliente);
 
       // Seed 200 interactions distributed over the last 14 days
       for (let i = 0; i < 200; i++) {
         const daysAgo = Math.floor(Math.random() * 15);
         const hoursAgo = Math.floor(Math.random() * 24);
         const minsAgo = Math.floor(Math.random() * 60);
-        
+
         const date = new Date();
         date.setDate(date.getDate() - daysAgo);
         date.setHours(date.getHours() - hoursAgo);
         date.setMinutes(date.getMinutes() - minsAgo);
-        const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
+        const formattedDate = date.toISOString().slice(0, 19).replace("T", " ");
 
         const isLogged = Math.random() > 0.4;
-        const clientId = (isLogged && sampleClients.length > 0) 
-          ? sampleClients[Math.floor(Math.random() * sampleClients.length)] 
-          : null;
+        const clientId =
+          isLogged && sampleClients.length > 0
+            ? sampleClients[Math.floor(Math.random() * sampleClients.length)]
+            : null;
 
         let tipo = "page_view";
         const rand = Math.random();
@@ -948,10 +1260,13 @@ const runDatabaseMigrations = async () => {
         let dados = {};
 
         if (tipo === "product_view" || tipo === "add_to_cart") {
-          const prod = sampleProducts[Math.floor(Math.random() * sampleProducts.length)];
+          const prod =
+            sampleProducts[Math.floor(Math.random() * sampleProducts.length)];
           dados = { productId: prod.ID_Produto, productName: prod.Nome };
         } else if (tipo === "search") {
-          dados = { term: searchTerms[Math.floor(Math.random() * searchTerms.length)] };
+          dados = {
+            term: searchTerms[Math.floor(Math.random() * searchTerms.length)],
+          };
         } else if (tipo === "click") {
           const idx = Math.floor(Math.random() * clickLabels.length);
           dados = { label: clickLabels[idx], element: clickElements[idx] };
@@ -959,10 +1274,12 @@ const runDatabaseMigrations = async () => {
           dados = { pagina };
         }
 
-        await db.run(
-          "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados, Data_Interacao) VALUES (?, ?, ?, ?, ?)",
-          [clientId, tipo, pagina, JSON.stringify(dados), formattedDate]
-        ).catch((err) => console.error("Seed row error:", err));
+        await db
+          .run(
+            "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados, Data_Interacao) VALUES (?, ?, ?, ?, ?)",
+            [clientId, tipo, pagina, JSON.stringify(dados), formattedDate],
+          )
+          .catch((err) => console.error("Seed row error:", err));
       }
       console.log("Analytics seeded successfully!");
     }
@@ -997,13 +1314,19 @@ const initializeDatabase = async () => {
 };
 
 const jsonBodyParser = express.json({ limit: "10mb" });
-const urlencodedBodyParser = express.urlencoded({ limit: "10mb", extended: true });
+const urlencodedBodyParser = express.urlencoded({
+  limit: "10mb",
+  extended: true,
+});
 
 app.use(compression());
 app.use(cors());
 
 // Serve static files from frontend/public/uploads
-app.use("/uploads", express.static(path.join(__dirname, "../frontend/public/uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../frontend/public/uploads")),
+);
 
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith("/api/webhooks/stripe")) {
@@ -1096,38 +1419,109 @@ app.use((req, res, next) => {
 // ============================================================
 
 const DEFAULT_MENU_ITEMS = [
-  { ID_Menu: 1, Label: "Início", Link: "index.html", Ordenacao: 1, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
-  { ID_Menu: 2, Label: "Produtos", Link: "shop.html", Ordenacao: 2, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
-  { ID_Menu: 3, Label: "Workshops", Link: "workshops.html", Ordenacao: 3, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
-  { ID_Menu: 4, Label: "Descobrir", Link: "#", Ordenacao: 4, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
-  { ID_Menu: 5, Label: "Curiosidades", Link: "curiosidades.html", Ordenacao: 1, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: 4 },
-  { ID_Menu: 6, Label: "Aprender", Link: "aprender.html", Ordenacao: 2, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: 4 },
-  { ID_Menu: 7, Label: "Comunidade", Link: "comunidade.html", Ordenacao: 3, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: 4 },
-  { ID_Menu: 8, Label: "Sobre Nós", Link: "about.html", Ordenacao: 5, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
-  { ID_Menu: 9, Label: "Contactos", Link: "contact.html", Ordenacao: 6, Ativo: 1, Abrir_Nova_Aba: 0, ID_Parent: null },
+  {
+    ID_Menu: 1,
+    Label: "Início",
+    Link: "index.html",
+    Ordenacao: 1,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 2,
+    Label: "Produtos",
+    Link: "shop.html",
+    Ordenacao: 2,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 3,
+    Label: "Workshops",
+    Link: "workshops.html",
+    Ordenacao: 3,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 4,
+    Label: "Descobrir",
+    Link: "#",
+    Ordenacao: 4,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 5,
+    Label: "Curiosidades",
+    Link: "curiosidades.html",
+    Ordenacao: 1,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 6,
+    Label: "Aprender",
+    Link: "aprender.html",
+    Ordenacao: 2,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 7,
+    Label: "Comunidade",
+    Link: "comunidade.html",
+    Ordenacao: 3,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 8,
+    Label: "Sobre Nós",
+    Link: "about.html",
+    Ordenacao: 5,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
+  {
+    ID_Menu: 9,
+    Label: "Contactos",
+    Link: "contact.html",
+    Ordenacao: 6,
+    Ativo: 1,
+    Abrir_Nova_Aba: 0,
+  },
 ];
 
 async function reorderMenuItem(menuId, requestedPosition) {
   const rows = await db.all(
     "SELECT ID_Menu FROM menu_nav WHERE ID_Menu <> ? ORDER BY Ordenacao ASC, ID_Menu ASC",
-    [menuId]
+    [menuId],
   );
   const ids = rows.map((row) => row.ID_Menu);
-  const position = Math.max(1, Math.min(Number(requestedPosition) || ids.length + 1, ids.length + 1));
+  const position = Math.max(
+    1,
+    Math.min(Number(requestedPosition) || ids.length + 1, ids.length + 1),
+  );
 
   ids.splice(position - 1, 0, Number(menuId));
 
   for (let index = 0; index < ids.length; index++) {
-    await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [index + 1, ids[index]]);
+    await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [
+      index + 1,
+      ids[index],
+    ]);
   }
 }
 
 async function normalizeMenuOrder() {
-  const rows = await db.all("SELECT ID_Menu FROM menu_nav ORDER BY Ordenacao ASC, ID_Menu ASC");
+  const rows = await db.all(
+    "SELECT ID_Menu FROM menu_nav ORDER BY Ordenacao ASC, ID_Menu ASC",
+  );
   for (let index = 0; index < rows.length; index++) {
     await db.run("UPDATE menu_nav SET Ordenacao = ? WHERE ID_Menu = ?", [
       index + 1,
-      rows[index].ID_Menu
+      rows[index].ID_Menu,
     ]);
   }
 }
@@ -1135,7 +1529,9 @@ async function normalizeMenuOrder() {
 // Get active menu items (Public)
 app.get("/api/menu", async (req, res) => {
   try {
-    const menus = await db.all("SELECT * FROM menu_nav WHERE Ativo = 1 ORDER BY Ordenacao ASC");
+    const menus = await db.all(
+      "SELECT * FROM menu_nav WHERE Ativo = 1 ORDER BY Ordenacao ASC",
+    );
     res.json(menus && menus.length > 0 ? menus : DEFAULT_MENU_ITEMS);
   } catch (error) {
     console.error("Error fetching menus:", error);
@@ -1176,7 +1572,9 @@ app.post("/api/admin/menu", authenticateToken, isAdmin, async (req, res) => {
       [Label, Link, Ordenacao || 0, Ativo !== false ? 1 : 0, Abrir_Nova_Aba ? 1 : 0, parent]
     );
     await reorderMenuItem(result.lastID, Ordenacao);
-    res.status(201).json({ id: result.lastID, message: "Menu item created successfully" });
+    res
+      .status(201)
+      .json({ id: result.lastID, message: "Menu item created successfully" });
   } catch (error) {
     console.error("Error adding menu item:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -1217,20 +1615,27 @@ app.put("/api/admin/menu/:id", authenticateToken, isAdmin, async (req, res) => {
 });
 
 // Delete a menu item (Admin)
-app.delete("/api/admin/menu/:id", authenticateToken, isAdmin, async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.run("DELETE FROM menu_nav WHERE ID_Menu = ?", [id]);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: "Menu item not found" });
+app.delete(
+  "/api/admin/menu/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      const result = await db.run("DELETE FROM menu_nav WHERE ID_Menu = ?", [
+        id,
+      ]);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "Menu item not found" });
+      }
+      await normalizeMenuOrder();
+      res.json({ message: "Menu item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting menu item:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-    await normalizeMenuOrder();
-    res.json({ message: "Menu item deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting menu item:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // ============================================================
 // PASSWORD RECOVERY ENDPOINTS
@@ -1240,26 +1645,34 @@ app.delete("/api/admin/menu/:id", authenticateToken, isAdmin, async (req, res) =
 app.post("/api/auth/forgot-password", async (req, res) => {
   const { identity } = req.body; // Can be email or username
   if (!identity) {
-    return res.status(400).json({ error: "Email ou nome de utilizador é obrigatório." });
+    return res
+      .status(400)
+      .json({ error: "Email ou nome de utilizador é obrigatório." });
   }
 
   try {
-    const client = await db.get("SELECT * FROM cliente WHERE Email = ? OR Username = ?", [identity, identity]);
-    
+    const client = await db.get(
+      "SELECT * FROM cliente WHERE Email = ? OR Username = ?",
+      [identity, identity],
+    );
+
     // Always return 200 to avoid user enumeration
-    const genericResponse = { message: "Se o email introduzido estiver registado, receberá um link de recuperação em breve." };
-    
+    const genericResponse = {
+      message:
+        "Se o email introduzido estiver registado, receberá um link de recuperação em breve.",
+    };
+
     if (!client) {
       return res.json(genericResponse);
     }
 
     // Generate token
     const token = crypto.randomBytes(32).toString("hex");
-    
+
     // Store token in database
     await db.run(
       "INSERT INTO password_recovery (ID_Cliente, Token, Expires_At) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))",
-      [client.ID_Cliente, token]
+      [client.ID_Cliente, token],
     );
 
     const resetLink = `${req.headers.origin || "http://localhost:5173"}/recuperar.html?token=${token}`;
@@ -1287,7 +1700,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
               <hr style="border: 0; border-top: 1px solid #e8f5e9; margin: 20px 0;">
               <p style="font-size: 12px; color: #999; text-align: center;">&copy; 2026 Hexomel. Todos os direitos reservados.</p>
             </div>
-          `
+          `,
         });
       } catch (mailError) {
         console.error("Failed to send recovery email:", mailError.message);
@@ -1297,7 +1710,6 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     }
     // Always return the same generic response to avoid user enumeration
     return res.json(genericResponse);
-
   } catch (error) {
     console.error("Error in forgot-password:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -1308,22 +1720,42 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 app.post("/api/auth/reset-password", async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) {
-    return res.status(400).json({ error: "Token e nova password são obrigatórios." });
+    return res
+      .status(400)
+      .json({ error: "Token e nova password são obrigatórios." });
   }
 
   try {
-    const recovery = await db.get("SELECT * FROM password_recovery WHERE Token = ?", [token]);
+    const recovery = await db.get(
+      "SELECT * FROM password_recovery WHERE Token = ?",
+      [token],
+    );
     if (!recovery) {
-      return res.status(400).json({ error: "Token de recuperação inválido. Por favor peça um novo link." });
+      return res
+        .status(400)
+        .json({
+          error: "Token de recuperação inválido. Por favor peça um novo link.",
+        });
     }
 
     if (Number(recovery.Used) === 1) {
-      return res.status(400).json({ error: "Este link de recuperação já foi utilizado. Por favor peça um novo link." });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Este link de recuperação já foi utilizado. Por favor peça um novo link.",
+        });
     }
 
-    const expiryCheck = await db.get("SELECT ? > NOW() AS valid", [recovery.Expires_At]);
+    const expiryCheck = await db.get("SELECT ? > NOW() AS valid", [
+      recovery.Expires_At,
+    ]);
     if (!expiryCheck || Number(expiryCheck.valid) !== 1) {
-      return res.status(400).json({ error: "O token de recuperação expirou. Por favor peça um novo link." });
+      return res
+        .status(400)
+        .json({
+          error: "O token de recuperação expirou. Por favor peça um novo link.",
+        });
     }
 
     // Hash the new password
@@ -1331,19 +1763,29 @@ app.post("/api/auth/reset-password", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Update password
-    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [hashedPassword, recovery.ID_Cliente]);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashedPassword,
+      recovery.ID_Cliente,
+    ]);
 
     // Mark token as used
     const usedResult = await db.run(
       "UPDATE password_recovery SET Used = 1 WHERE ID_Recovery = ? AND Used = 0",
-      [recovery.ID_Recovery]
+      [recovery.ID_Recovery],
     );
     if (usedResult.changes === 0) {
-      return res.status(400).json({ error: "Este link de recuperação já foi utilizado. Por favor peça um novo link." });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Este link de recuperação já foi utilizado. Por favor peça um novo link.",
+        });
     }
 
-    res.json({ message: "Palavra-passe redefinida com sucesso! Pode agora iniciar sessão com a sua nova password." });
-
+    res.json({
+      message:
+        "Palavra-passe redefinida com sucesso! Pode agora iniciar sessão com a sua nova password.",
+    });
   } catch (error) {
     console.error("Error in reset-password:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -1369,7 +1811,10 @@ app.get("/api/cms", async (req, res) => {
 app.get("/api/cms/:pageKey", async (req, res) => {
   const { pageKey } = req.params;
   try {
-    const contents = await db.all("SELECT * FROM cms_content WHERE Page_Key = ?", [pageKey]);
+    const contents = await db.all(
+      "SELECT * FROM cms_content WHERE Page_Key = ?",
+      [pageKey],
+    );
     res.json(contents);
   } catch (error) {
     console.error(`Error fetching CMS contents for page ${pageKey}:`, error);
@@ -1381,14 +1826,23 @@ app.get("/api/cms/:pageKey", async (req, res) => {
 app.put("/api/admin/cms", authenticateToken, isAdmin, async (req, res) => {
   const { Page_Key, Block_Key, Type, Content_Value } = req.body;
   if (!Page_Key || !Block_Key || Content_Value === undefined) {
-    return res.status(400).json({ error: "Page_Key, Block_Key, and Content_Value are required" });
+    return res
+      .status(400)
+      .json({ error: "Page_Key, Block_Key, and Content_Value are required" });
   }
   try {
     await db.run(
       `INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value) 
        VALUES (?, ?, ?, ?) 
        ON DUPLICATE KEY UPDATE Content_Value = ?, Type = ?`,
-      [Page_Key, Block_Key, Type || 'text', Content_Value, Content_Value, Type || 'text']
+      [
+        Page_Key,
+        Block_Key,
+        Type || "text",
+        Content_Value,
+        Content_Value,
+        Type || "text",
+      ],
     );
     res.json({ message: "CMS block saved successfully" });
   } catch (error) {
@@ -1400,37 +1854,51 @@ app.put("/api/admin/cms", authenticateToken, isAdmin, async (req, res) => {
 app.post("/api/admin/cms", authenticateToken, isAdmin, async (req, res) => {
   const { Page_Key, Block_Key, Type, Content_Value } = req.body;
   if (!Page_Key || !Block_Key || Content_Value === undefined) {
-    return res.status(400).json({ error: "Page_Key, Block_Key e Content_Value são obrigatórios." });
+    return res
+      .status(400)
+      .json({ error: "Page_Key, Block_Key e Content_Value são obrigatórios." });
   }
 
   try {
     const result = await db.run(
       `INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value)
        VALUES (?, ?, ?, ?)`,
-      [Page_Key, Block_Key, Type || "text", Content_Value]
+      [Page_Key, Block_Key, Type || "text", Content_Value],
     );
-    res.status(201).json({ id: result.lastID, message: "Bloco CMS criado com sucesso." });
+    res
+      .status(201)
+      .json({ id: result.lastID, message: "Bloco CMS criado com sucesso." });
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ error: "Já existe um bloco com essa página e chave." });
+      return res
+        .status(409)
+        .json({ error: "Já existe um bloco com essa página e chave." });
     }
     console.error("Error creating CMS block:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.delete("/api/admin/cms/:id", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const result = await db.run("DELETE FROM cms_content WHERE ID_Content = ?", [req.params.id]);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: "Bloco CMS não encontrado." });
+app.delete(
+  "/api/admin/cms/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const result = await db.run(
+        "DELETE FROM cms_content WHERE ID_Content = ?",
+        [req.params.id],
+      );
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "Bloco CMS não encontrado." });
+      }
+      res.json({ message: "Bloco CMS eliminado com sucesso." });
+    } catch (error) {
+      console.error("Error deleting CMS block:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-    res.json({ message: "Bloco CMS eliminado com sucesso." });
-  } catch (error) {
-    console.error("Error deleting CMS block:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // AUTH ROUTES
 // Register
@@ -1438,7 +1906,9 @@ app.post("/api/auth/register", async (req, res) => {
   let { firstName, lastName, email, username, password } = req.body;
 
   if (!email || !password || !firstName || !username) {
-    return res.status(400).json({ error: "Nome, username, email e password são obrigatórios." });
+    return res
+      .status(400)
+      .json({ error: "Nome, username, email e password são obrigatórios." });
   }
 
   email = email.toLowerCase().trim();
@@ -1446,9 +1916,13 @@ app.post("/api/auth/register", async (req, res) => {
 
   try {
     // Check if user exists by email OR username
-    const row = await db.get("SELECT * FROM cliente WHERE Email = ? OR (Username IS NOT NULL AND Username = ?)", [email, username]);
+    const row = await db.get(
+      "SELECT * FROM cliente WHERE Email = ? OR (Username IS NOT NULL AND Username = ?)",
+      [email, username],
+    );
     if (row) {
-      const field = row.Email.toLowerCase() === email ? "Email" : "Nome de utilizador";
+      const field =
+        row.Email.toLowerCase() === email ? "Email" : "Nome de utilizador";
       return res.status(400).json({ error: `${field} já está em uso.` });
     }
 
@@ -1470,13 +1944,16 @@ app.post("/api/auth/register", async (req, res) => {
         hashedPassword,
         "client",
         false, // Needs verification
-        verificationToken
+        verificationToken,
       ],
     );
 
     // Send Verification Email
     if (mailTransporter) {
-      const frontendUrl = process.env.FRONTEND_URL || (req.get("origin") || `${req.protocol}://${req.get("host")}`);
+      const frontendUrl =
+        process.env.FRONTEND_URL ||
+        req.get("origin") ||
+        `${req.protocol}://${req.get("host")}`;
       const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
 
       try {
@@ -1495,14 +1972,13 @@ app.post("/api/auth/register", async (req, res) => {
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${verifyUrl}" style="background-color: #1a4d2e; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Verificar a minha conta</a>
                 </div>
-                <p style="font-size: 0.9em; color: #718096;">Se o botão não funcionar, copia e cola o seguinte link no teu navegador:</p>
-                <p style="font-size: 0.8em; color: #1a4d2e; word-break: break-all;">${verifyUrl}</p>
+                <p style="font-size: 0.9em; color: #718096; word-break: break-all;">${verifyUrl}</p>
               </div>
               <div style="background-color: #fcfdfc; padding: 20px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #edf2f7;">
                 Se não criaste uma conta na Hexomel, podes ignorar este email.
               </div>
             </div>
-          `
+          `,
         });
       } catch (emailErr) {
         console.error("Verification email failed to send:", emailErr);
@@ -1511,14 +1987,15 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Conta criada com sucesso! Por favor, verifica o teu email para ativares a conta.",
+      message:
+        "Conta criada com sucesso! Por favor, verifica o teu email para ativares a conta.",
       requiresVerification: true,
       user: {
         id: result.lastID,
         name: fullName,
         email,
-        UserType: "client"
-      }
+        UserType: "client",
+      },
     });
   } catch (error) {
     console.error(error);
@@ -1526,20 +2003,24 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-
 // Login
 app.post("/api/auth/login", async (req, res) => {
   let identifier = req.body.identifier || req.body.email;
   const { password } = req.body;
 
   if (!identifier || !password) {
-    return res.status(400).json({ error: "Email/username e password são obrigatórios" });
+    return res
+      .status(400)
+      .json({ error: "Email/username e password são obrigatórios" });
   }
 
   identifier = identifier.toLowerCase().trim();
 
   try {
-    let user = await db.get("SELECT * FROM cliente WHERE Email = ? OR Username = ?", [identifier, identifier]);
+    let user = await db.get(
+      "SELECT * FROM cliente WHERE Email = ? OR Username = ?",
+      [identifier, identifier],
+    );
     if (!user) {
       return res.status(400).json({ error: "Credenciais inválidas" });
     }
@@ -1550,19 +2031,23 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     if (!user.Is_Verified) {
-      return res.status(403).json({ 
-        error: "Conta não verificada", 
+      return res.status(403).json({
+        error: "Conta não verificada",
         message: "Por favor, verifique o seu email para ativar a sua conta.",
-        unverified: true 
+        unverified: true,
       });
     }
 
     const token = jwt.sign(
-      { id: user.ID_Cliente, role: user.UserType, checkoutVerified: Boolean(user.Checkout_Verified) },
+      {
+        id: user.ID_Cliente,
+        role: user.UserType,
+        checkoutVerified: Boolean(user.Checkout_Verified),
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
-    
+
     res.json({
       token,
       user: {
@@ -1581,7 +2066,6 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-
 // Verify Email
 app.get("/api/auth/verify-email", async (req, res) => {
   const { token } = req.query;
@@ -1590,13 +2074,21 @@ app.get("/api/auth/verify-email", async (req, res) => {
   }
 
   try {
-    const user = await db.get("SELECT * FROM cliente WHERE Verification_Token = ?", [token]);
+    const user = await db.get(
+      "SELECT * FROM cliente WHERE Verification_Token = ?",
+      [token],
+    );
     if (!user) {
-      return res.status(400).json({ error: "Token de verificação inválido ou expirado." });
+      return res
+        .status(400)
+        .json({ error: "Token de verificação inválido ou expirado." });
     }
 
-    await db.run("UPDATE cliente SET Is_Verified = 1, Verification_Token = NULL WHERE ID_Cliente = ?", [user.ID_Cliente]);
-    
+    await db.run(
+      "UPDATE cliente SET Is_Verified = 1, Verification_Token = NULL WHERE ID_Cliente = ?",
+      [user.ID_Cliente],
+    );
+
     res.json({ message: "Email verificado com sucesso!" });
   } catch (error) {
     console.error("Verification error:", error);
@@ -1604,27 +2096,34 @@ app.get("/api/auth/verify-email", async (req, res) => {
   }
 });
 
-
 // Checkout 2FA - Generate
-app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) => {
-  try {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
-    const expiresDate = new Date(Date.now() + 10 * 1000 * 60); // 10 minutes from now
+app.post(
+  "/api/auth/checkout-2fa/generate",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+      const expiresDate = new Date(Date.now() + 10 * 1000 * 60); // 10 minutes from now
 
-    await db.run(
-      "UPDATE cliente SET Checkout_OTP = ?, Checkout_OTP_Expires = ? WHERE ID_Cliente = ?",
-      [otp, expiresDate, req.user.id]
-    );
+      await db.run(
+        "UPDATE cliente SET Checkout_OTP = ?, Checkout_OTP_Expires = ? WHERE ID_Cliente = ?",
+        [otp, expiresDate, req.user.id],
+      );
 
-    const user = await db.get("SELECT Email, Nome FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    
-    if (mailTransporter) {
-      try {
-        await mailTransporter.sendMail({
-          from: process.env.SMTP_FROM || `Hexomel Segurança <${process.env.SMTP_USER || 'noreply@hexomel.pt'}>`,
-          to: user.Email,
-          subject: "O seu código de verificação para Checkout — Hexomel",
-          html: `
+      const user = await db.get(
+        "SELECT Email, Nome FROM cliente WHERE ID_Cliente = ?",
+        [req.user.id],
+      );
+
+      if (mailTransporter) {
+        try {
+          await mailTransporter.sendMail({
+            from:
+              process.env.SMTP_FROM ||
+              `Hexomel Segurança <${process.env.SMTP_USER || "noreply@hexomel.pt"}>`,
+            to: user.Email,
+            subject: "O seu código de verificação para Checkout — Hexomel",
+            html: `
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 550px; margin: 40px auto; padding: 40px; border-radius: 20px; background: #ffffff; border: 1px solid #f0f0f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
               <div style="text-align: center; margin-bottom: 30px;">
                 <div style="background: #1a4d2e; width: 60px; height: 60px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
@@ -1643,7 +2142,7 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
               </div>
               
               <div style="text-align: center; color: #4a5568; font-size: 15px; line-height: 1.6;">
-                <p>Olá <strong>${user.Nome || 'Cliente'}</strong>,</p>
+                <p>Olá <strong>${user.Nome || "Cliente"}</strong>,</p>
                 <p>Para concluir a tua encomenda com segurança, introduz o código acima na página de verificação.</p>
               </div>
               
@@ -1652,96 +2151,122 @@ app.post("/api/auth/checkout-2fa/generate", authenticateToken, async (req, res) 
                 <p style="margin-top: 15px; color: #1a4d2e; font-weight: 600; font-size: 14px;">Equipa Hexomel 🐝</p>
               </div>
             </div>
-          `
-        });
-      } catch (emailErr) {
-        console.error("2FA Email fail:", emailErr);
-        return res.status(500).json({ 
-          error: "Falha ao enviar o email de verificação.", 
-          details: emailErr.message 
-        });
+          `,
+          });
+        } catch (emailErr) {
+          console.error("2FA Email fail:", emailErr);
+          return res.status(500).json({
+            error: "Falha ao enviar o email de verificação.",
+            details: emailErr.message,
+          });
+        }
+      } else {
+        console.log(
+          `⚠️ Email disabled or failed. OTP para ${user.Email} é ${otp}`,
+        );
+        if (mailTransporterError) {
+          return res.status(503).json({
+            error: "O serviço de email está temporariamente indisponível.",
+            details:
+              "Erro na configuração SMTP. Por favor, contacte o suporte.",
+            debug:
+              process.env.NODE_ENV === "development"
+                ? mailTransporterError
+                : undefined,
+          });
+        }
       }
-    } else {
-      console.log(`⚠️ Email disabled or failed. OTP para ${user.Email} é ${otp}`);
-      if (mailTransporterError) {
-        return res.status(503).json({ 
-          error: "O serviço de email está temporariamente indisponível.", 
-          details: "Erro na configuração SMTP. Por favor, contacte o suporte.",
-          debug: process.env.NODE_ENV === 'development' ? mailTransporterError : undefined
-        });
-      }
-    }
 
-    res.json({ message: "Código enviado com sucesso para o seu email." });
-  } catch (error) {
-    console.error("Generate 2FA error:", error);
-    res.status(500).json({ error: "Erro interno ao gerar o código 2FA." });
-  }
-});
+      res.json({ message: "Código enviado com sucesso para o seu email." });
+    } catch (error) {
+      console.error("Generate 2FA error:", error);
+      res.status(500).json({ error: "Erro interno ao gerar o código 2FA." });
+    }
+  },
+);
 
 // Checkout 2FA - Verify
-app.post("/api/auth/checkout-2fa/verify", authenticateToken, async (req, res) => {
-  const { otp } = req.body;
-  if (!otp) {
-    return res.status(400).json({ error: "O código é obrigatório." });
-  }
-
-  try {
-    const user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
-    
-    if (!user) {
-      return res.status(400).json({ error: "Utilizador não encontrado." });
+app.post(
+  "/api/auth/checkout-2fa/verify",
+  authenticateToken,
+  async (req, res) => {
+    const { otp } = req.body;
+    if (!otp) {
+      return res.status(400).json({ error: "O código é obrigatório." });
     }
 
-    console.log(`2FA Verify: stored=${user.Checkout_OTP}, received=${otp}, expires=${user.Checkout_OTP_Expires}`);
+    try {
+      const user = await db.get("SELECT * FROM cliente WHERE ID_Cliente = ?", [
+        req.user.id,
+      ]);
 
-    if (!user.Checkout_OTP || String(user.Checkout_OTP).trim() !== String(otp).trim()) {
-      return res.status(400).json({ error: "Código incorreto." });
-    }
-
-    // Compare dates - MySQL DATETIME is returned as a Date object by mysql2
-    const expiresAt = new Date(user.Checkout_OTP_Expires);
-    const now = new Date();
-    console.log(`2FA Expiry check: now=${now.toISOString()}, expires=${expiresAt.toISOString()}`);
-    if (now > expiresAt) {
-      return res.status(400).json({ error: "Código expirado. Peça um novo." });
-    }
-
-    // Success -> Clear OTP and set as verified
-    await db.run("UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL, Checkout_Verified = 1 WHERE ID_Cliente = ?", [req.user.id]);
-
-    // Issue updated token
-    const token = jwt.sign(
-      { id: user.ID_Cliente, role: user.UserType, checkoutVerified: true },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-    
-    res.json({
-      message: "Verificação concluída com sucesso!",
-      token,
-      user: {
-        id: user.ID_Cliente,
-        name: user.Nome,
-        email: user.Email,
-        picture: user.Picture,
-        role: user.UserType || "client",
-        checkoutVerified: true
+      if (!user) {
+        return res.status(400).json({ error: "Utilizador não encontrado." });
       }
-    });
 
-  } catch (error) {
-    console.error("Verify 2FA error:", error);
-    res.status(500).json({ error: "Erro na verificação." });
-  }
-});
+      console.log(
+        `2FA Verify: stored=${user.Checkout_OTP}, received=${otp}, expires=${user.Checkout_OTP_Expires}`,
+      );
+
+      if (
+        !user.Checkout_OTP ||
+        String(user.Checkout_OTP).trim() !== String(otp).trim()
+      ) {
+        return res.status(400).json({ error: "Código incorreto." });
+      }
+
+      // Compare dates - MySQL DATETIME is returned as a Date object by mysql2
+      const expiresAt = new Date(user.Checkout_OTP_Expires);
+      const now = new Date();
+      console.log(
+        `2FA Expiry check: now=${now.toISOString()}, expires=${expiresAt.toISOString()}`,
+      );
+      if (now > expiresAt) {
+        return res
+          .status(400)
+          .json({ error: "Código expirado. Peça um novo." });
+      }
+
+      // Success -> Clear OTP and set as verified
+      await db.run(
+        "UPDATE cliente SET Checkout_OTP = NULL, Checkout_OTP_Expires = NULL, Checkout_Verified = 1 WHERE ID_Cliente = ?",
+        [req.user.id],
+      );
+
+      // Issue updated token
+      const token = jwt.sign(
+        { id: user.ID_Cliente, role: user.UserType, checkoutVerified: true },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" },
+      );
+
+      res.json({
+        message: "Verificação concluída com sucesso!",
+        token,
+        user: {
+          id: user.ID_Cliente,
+          name: user.Nome,
+          email: user.Email,
+          picture: user.Picture,
+          role: user.UserType || "client",
+          checkoutVerified: true,
+        },
+      });
+    } catch (error) {
+      console.error("Verify 2FA error:", error);
+      res.status(500).json({ error: "Erro na verificação." });
+    }
+  },
+);
 
 // Google Auth
 app.post("/api/auth/google", async (req, res) => {
   const { idToken } = req.body;
   try {
     if (!googleClient || !configuredGoogleClientId) {
-      return res.status(503).json({ error: "Google authentication is not configured" });
+      return res
+        .status(503)
+        .json({ error: "Google authentication is not configured" });
     }
 
     const ticket = await googleClient.verifyIdToken({
@@ -1778,7 +2303,11 @@ app.post("/api/auth/google", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.ID_Cliente, role: user.UserType, checkoutVerified: Boolean(user.Checkout_Verified) },
+      {
+        id: user.ID_Cliente,
+        role: user.UserType,
+        checkoutVerified: Boolean(user.Checkout_Verified),
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
@@ -1807,18 +2336,27 @@ app.post("/api/contact", async (req, res) => {
   const { name, email, subject, message } = req.body;
 
   if (!name || !email || !message) {
-    return res.status(400).json({ error: "Nome, email e mensagem são obrigatórios." });
+    return res
+      .status(400)
+      .json({ error: "Nome, email e mensagem são obrigatórios." });
   }
 
   if (!mailTransporter) {
     console.warn("⚠️ Contact form submitted but mailer is disabled.");
-    return res.status(503).json({ error: "O serviço de email está temporariamente indisponível. Por favor, tente mais tarde." });
+    return res
+      .status(503)
+      .json({
+        error:
+          "O serviço de email está temporariamente indisponível. Por favor, tente mais tarde.",
+      });
   }
 
   try {
     await mailTransporter.sendMail({
       from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
-      to: process.env.SMTP_USER ? process.env.SMTP_USER.replace("@", "+contacto@") : "hexomelpap+contacto@gmail.com", // Force to Inbox using alias
+      to: process.env.SMTP_USER
+        ? process.env.SMTP_USER.replace("@", "+contacto@")
+        : "hexomelpap+contacto@gmail.com", // Force to Inbox using alias
       replyTo: email, // Reply to the sender
       subject: `📧 Contacto: ${subject || "Nova Mensagem"} — Hexomel`,
       html: `
@@ -1840,10 +2378,18 @@ app.post("/api/contact", async (req, res) => {
       `,
     });
 
-    res.json({ message: "Mensagem enviada com sucesso! Entraremos em contacto brevemente." });
+    res.json({
+      message:
+        "Mensagem enviada com sucesso! Entraremos em contacto brevemente.",
+    });
   } catch (error) {
     console.error("Contact form email error:", error);
-    res.status(500).json({ error: "Erro ao enviar a mensagem. Por favor, tente novamente mais tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Erro ao enviar a mensagem. Por favor, tente novamente mais tarde.",
+      });
   }
 });
 
@@ -1854,7 +2400,7 @@ app.get("/api/categories", async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Categories fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -1891,7 +2437,7 @@ app.get("/api/origins", async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Origins fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -1909,7 +2455,7 @@ app.post("/api/admin/origins", authenticateToken, isAdmin, async (req, res) => {
     res.status(201).json(newOrigin);
   } catch (error) {
     console.error("Create origin error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -2011,18 +2557,23 @@ app.get("/api/products", async (req, res) => {
       p.Slug,
       COALESCE(AVG(a.Nota), 0) as Rating, 
       COUNT(a.ID_Avaliacao) as ReviewCount,
-      c.Nome as ApicultorNome
+      c.Nome as ApicultorNome,
+      c.Picture as ApicultorFoto,
+      c.Bio as ApicultorBio,
+      cat.Nome as CategoriaNome,
+      o.Nome as OrigemNome
       FROM produto p
       LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
+      LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+      LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
       WHERE p.Status = 'Aprovado' OR p.Status IS NULL
       GROUP BY p.ID_Produto
-      ORDER BY p.ID_Produto DESC
     `);
     res.json(rows);
   } catch (error) {
     console.error("Products fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -2058,7 +2609,17 @@ app.post(
       const slug = await generateUniqueSlug(slugify(nome));
       const result = await db.run(
         "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, Slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags, slug],
+        [
+          nome,
+          preco,
+          stock,
+          idCategoria,
+          idOrigem,
+          descricao,
+          imagem,
+          tags,
+          slug,
+        ],
       );
       const newProduct = await db.get(
         "SELECT * FROM produto WHERE ID_Produto = ?",
@@ -2086,12 +2647,12 @@ app.put(
       idCategoria,
       idOrigem,
       descricao,
-      imagem,
       tags,
+      imagem,
     } = req.body;
     try {
       await db.run(
-        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Imagem = ?, Tags = ? WHERE ID_Produto = ?",
+        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Tags = ?, Imagem = ?, Status = ? WHERE ID_Produto = ?",
         [
           nome,
           preco,
@@ -2099,8 +2660,9 @@ app.put(
           idCategoria,
           idOrigem,
           descricao,
-          imagem,
           tags,
+          imagem,
+          "Aprovado",
           id,
         ],
       );
@@ -2124,11 +2686,11 @@ app.patch(
   async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    
+
     if (!["Aprovado", "Pendente", "Rejeitado"].includes(status)) {
       return res.status(400).json({ error: "Invalid status." });
     }
-    
+
     try {
       await db.run("UPDATE produto SET Status = ? WHERE ID_Produto = ?", [
         status,
@@ -2180,14 +2742,16 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
     res.status(201).json(newProduct);
   } catch (error) {
     console.error("Create apicultor product error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2207,7 +2771,7 @@ app.patch("/api/apicultor/bio", authenticateToken, async (req, res) => {
     ]);
     res.json({ message: "Bio updated successfully" });
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -2216,15 +2780,24 @@ app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
     return res.status(403).json({ error: "Access denied." });
   const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
   const defaultWorkshopImage = "/images/workshop_default.webp";
-  const finalImage = imagem && imagem.trim() !== "" ? imagem : defaultWorkshopImage;
+  const finalImage =
+    imagem && imagem.trim() !== "" ? imagem : defaultWorkshopImage;
   try {
     const result = await db.run(
       "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, Status, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, 'Pendente', ?)",
-      [titulo, descricao, data_realizacao, preco, vagas, finalImage, req.user.id],
+      [
+        titulo,
+        descricao,
+        data_realizacao,
+        preco,
+        vagas,
+        finalImage,
+        req.user.id,
+      ],
     );
     res.status(201).json({ id: result.lastID });
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -2232,20 +2805,37 @@ app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
 app.post("/api/workshops/:id/reserve", authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const workshop = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ?", [id]);
-    if (!workshop) return res.status(404).json({ error: "Workshop não encontrado." });
-    
+    const workshop = await db.get(
+      "SELECT * FROM workshop WHERE ID_Workshop = ?",
+      [id],
+    );
+    if (!workshop)
+      return res.status(404).json({ error: "Workshop não encontrado." });
+
     if (workshop.Vagas <= 0) {
-      return res.status(400).json({ error: "Este workshop já não tem vagas disponíveis." });
+      return res
+        .status(400)
+        .json({ error: "Este workshop já não tem vagas disponíveis." });
     }
 
-    const existing = await db.get("SELECT * FROM reserva_workshop WHERE ID_Workshop = ? AND ID_Cliente = ?", [id, req.user.id]);
+    const existing = await db.get(
+      "SELECT * FROM reserva_workshop WHERE ID_Workshop = ? AND ID_Cliente = ?",
+      [id, req.user.id],
+    );
     if (existing) {
-      return res.status(400).json({ error: "Já tens uma reserva para este workshop." });
+      return res
+        .status(400)
+        .json({ error: "Já tens uma reserva para este workshop." });
     }
 
-    await db.run("INSERT INTO reserva_workshop (ID_Workshop, ID_Cliente) VALUES (?, ?)", [id, req.user.id]);
-    await db.run("UPDATE workshop SET Vagas = Vagas - 1 WHERE ID_Workshop = ?", [id]);
+    await db.run(
+      "INSERT INTO reserva_workshop (ID_Workshop, ID_Cliente) VALUES (?, ?)",
+      [id, req.user.id],
+    );
+    await db.run(
+      "UPDATE workshop SET Vagas = Vagas - 1 WHERE ID_Workshop = ?",
+      [id],
+    );
 
     res.json({ ok: true, message: "Reserva efetuada com sucesso!" });
   } catch (error) {
@@ -2255,57 +2845,101 @@ app.post("/api/workshops/:id/reserve", authenticateToken, async (req, res) => {
 });
 
 // APICULTOR — Edit own product
-app.patch("/api/apicultor/products/:id", authenticateToken, async (req, res) => {
-  if (req.user.role !== "apicultor" && req.user.role !== "admin")
-    return res.status(403).json({ error: "Access denied." });
+app.patch(
+  "/api/apicultor/products/:id",
+  authenticateToken,
+  async (req, res) => {
+    if (req.user.role !== "apicultor" && req.user.role !== "admin")
+      return res.status(403).json({ error: "Access denied." });
 
-  const { id } = req.params;
-  const { nome, preco, stock, idCategoria, idOrigem, descricao, tags, imagem } = req.body;
+    const { id } = req.params;
+    const {
+      nome,
+      preco,
+      stock,
+      idCategoria,
+      idOrigem,
+      descricao,
+      tags,
+      imagem,
+    } = req.body;
 
-  try {
-    // Verify ownership
-    const existing = await db.get("SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?", [id, req.user.id]);
-    if (!existing && req.user.role !== "admin")
-      return res.status(404).json({ error: "Product not found or access denied." });
+    try {
+      // Verify ownership
+      const existing = await db.get(
+        "SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?",
+        [id, req.user.id],
+      );
+      if (!existing && req.user.role !== "admin")
+        return res
+          .status(404)
+          .json({ error: "Product not found or access denied." });
 
-    // Reset to Pendente when apicultor edits (needs re-approval)
-    const newStatus = req.user.role === "admin" ? existing?.Status : "Pendente";
+      // Reset to Pendente when apicultor edits (needs re-approval)
+      const newStatus =
+        req.user.role === "admin" ? existing?.Status : "Pendente";
 
-    await db.run(
-      "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Tags = ?, Imagem = ?, Status = ? WHERE ID_Produto = ?",
-      [nome, preco, stock, idCategoria, idOrigem || null, descricao, tags || null, imagem || existing?.Imagem, newStatus, id],
-    );
-    const updated = await db.get("SELECT * FROM produto WHERE ID_Produto = ?", [id]);
-    res.json(updated);
-  } catch (err) {
-    console.error("Apicultor patch product error:", err);
-        res.status(500).json({ error: "Database error" });
-  }
-});
+      await db.run(
+        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Tags = ?, Imagem = ?, Status = ? WHERE ID_Produto = ?",
+        [
+          nome,
+          preco,
+          stock,
+          idCategoria,
+          idOrigem || null,
+          descricao,
+          tags || null,
+          imagem || existing?.Imagem,
+          newStatus,
+          id,
+        ],
+      );
+      const updated = await db.get(
+        "SELECT * FROM produto WHERE ID_Produto = ?",
+        [id],
+      );
+      res.json(updated);
+    } catch (err) {
+      console.error("Apicultor patch product error:", err);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // APICULTOR — Delete own product
-app.delete("/api/apicultor/products/:id", authenticateToken, async (req, res) => {
-  if (req.user.role !== "apicultor" && req.user.role !== "admin")
-    return res.status(403).json({ error: "Access denied." });
+app.delete(
+  "/api/apicultor/products/:id",
+  authenticateToken,
+  async (req, res) => {
+    if (req.user.role !== "apicultor" && req.user.role !== "admin")
+      return res.status(403).json({ error: "Access denied." });
 
-  const { id } = req.params;
-  try {
-    const existing = await db.get("SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?", [id, req.user.id]);
-    if (!existing && req.user.role !== "admin")
-      return res.status(404).json({ error: "Product not found or access denied." });
+    const { id } = req.params;
+    try {
+      const existing = await db.get(
+        "SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?",
+        [id, req.user.id],
+      );
+      if (!existing && req.user.role !== "admin")
+        return res
+          .status(404)
+          .json({ error: "Product not found or access denied." });
 
-    await db.run("DELETE FROM produto WHERE ID_Produto = ?", [id]);
-    res.json({ message: "Product deleted successfully" });
-  } catch (err) {
-    console.error("Apicultor delete product error:", err);
-        res.status(500).json({ error: "Database error" });
-  }
-});
+      await db.run("DELETE FROM produto WHERE ID_Produto = ?", [id]);
+      res.json({ message: "Product deleted successfully" });
+    } catch (err) {
+      console.error("Apicultor delete product error:", err);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2314,34 +2948,57 @@ app.get("/api/apicultores", async (req, res) => {
 });
 
 // APICULTOR — Edit own workshop
-app.patch("/api/apicultor/workshops/:id", authenticateToken, async (req, res) => {
-  if (req.user.role !== "apicultor" && req.user.role !== "admin")
-    return res.status(403).json({ error: "Access denied." });
+app.patch(
+  "/api/apicultor/workshops/:id",
+  authenticateToken,
+  async (req, res) => {
+    if (req.user.role !== "apicultor" && req.user.role !== "admin")
+      return res.status(403).json({ error: "Access denied." });
 
-  const { id } = req.params;
-  const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
+    const { id } = req.params;
+    const { titulo, descricao, data_realizacao, preco, vagas, imagem } =
+      req.body;
 
-  try {
-    const existing = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ? AND ID_Apicultor = ?", [id, req.user.id]);
-    if (!existing && req.user.role !== "admin")
-      return res.status(404).json({ error: "Workshop not found or access denied." });
+    try {
+      const existing = await db.get(
+        "SELECT * FROM workshop WHERE ID_Workshop = ? AND ID_Apicultor = ?",
+        [id, req.user.id],
+      );
+      if (!existing && req.user.role !== "admin")
+        return res
+          .status(404)
+          .json({ error: "Workshop not found or access denied." });
 
-    await db.run(
-      "UPDATE workshop SET Titulo = ?, Descricao = ?, Data_Realizacao = ?, Preco = ?, Vagas = ?, Imagem = ?, Status = 'Pendente' WHERE ID_Workshop = ?",
-      [titulo, descricao, data_realizacao, preco, vagas, imagem || existing?.Imagem, id],
-    );
-    const updated = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ?", [id]);
-    res.json(updated);
-  } catch (err) {
-    console.error("Apicultor patch workshop error:", err);
-        res.status(500).json({ error: "Database error" });
-  }
-});
+      await db.run(
+        "UPDATE workshop SET Titulo = ?, Descricao = ?, Data_Realizacao = ?, Preco = ?, Vagas = ?, Imagem = ?, Status = 'Pendente' WHERE ID_Workshop = ?",
+        [
+          titulo,
+          descricao,
+          data_realizacao,
+          preco,
+          vagas,
+          imagem || existing?.Imagem,
+          id,
+        ],
+      );
+      const updated = await db.get(
+        "SELECT * FROM workshop WHERE ID_Workshop = ?",
+        [id],
+      );
+      res.json(updated);
+    } catch (err) {
+      console.error("Apicultor patch workshop error:", err);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2350,28 +3007,39 @@ app.get("/api/apicultores", async (req, res) => {
 });
 
 // APICULTOR — Delete own workshop
-app.delete("/api/apicultor/workshops/:id", authenticateToken, async (req, res) => {
-  if (req.user.role !== "apicultor" && req.user.role !== "admin")
-    return res.status(403).json({ error: "Access denied." });
+app.delete(
+  "/api/apicultor/workshops/:id",
+  authenticateToken,
+  async (req, res) => {
+    if (req.user.role !== "apicultor" && req.user.role !== "admin")
+      return res.status(403).json({ error: "Access denied." });
 
-  const { id } = req.params;
-  try {
-    const existing = await db.get("SELECT * FROM workshop WHERE ID_Workshop = ? AND ID_Apicultor = ?", [id, req.user.id]);
-    if (!existing && req.user.role !== "admin")
-      return res.status(404).json({ error: "Workshop not found or access denied." });
+    const { id } = req.params;
+    try {
+      const existing = await db.get(
+        "SELECT * FROM workshop WHERE ID_Workshop = ? AND ID_Apicultor = ?",
+        [id, req.user.id],
+      );
+      if (!existing && req.user.role !== "admin")
+        return res
+          .status(404)
+          .json({ error: "Workshop not found or access denied." });
 
-    await db.run("DELETE FROM workshop WHERE ID_Workshop = ?", [id]);
-    res.json({ message: "Workshop deleted successfully" });
-  } catch (err) {
-    console.error("Apicultor delete workshop error:", err);
-        res.status(500).json({ error: "Database error" });
-  }
-});
+      await db.run("DELETE FROM workshop WHERE ID_Workshop = ?", [id]);
+      res.json({ message: "Workshop deleted successfully" });
+    } catch (err) {
+      console.error("Apicultor delete workshop error:", err);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2385,7 +3053,8 @@ app.get("/api/apicultor/orders", authenticateToken, async (req, res) => {
     return res.status(403).json({ error: "Access denied." });
 
   try {
-    const rows = await db.all(`
+    const rows = await db.all(
+      `
       SELECT DISTINCT e.*, c.Nome as ClienteNome 
       FROM encomenda e
       JOIN cliente c ON e.ID_Cliente = c.ID_Cliente
@@ -2393,18 +3062,22 @@ app.get("/api/apicultor/orders", authenticateToken, async (req, res) => {
       JOIN produto p ON ie.ID_Produto = p.ID_Produto
       WHERE p.ID_Apicultor = ?
       ORDER BY e.Data_Encomenda DESC
-    `, [req.user.id]);
+    `,
+      [req.user.id],
+    );
     res.json(rows);
   } catch (error) {
     console.error("Apicultor orders fetch error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2415,60 +3088,80 @@ app.get("/api/apicultores", async (req, res) => {
 app.get("/api/apicultor/stats", authenticateToken, async (req, res) => {
   if (req.user.role !== "apicultor" && req.user.role !== "admin")
     return res.status(403).json({ error: "Access denied." });
-  
+
   const apicultorId = req.user.id;
-  
+
   try {
     // Basic Counts
-    const productsCount = await db.get("SELECT COUNT(*) as count FROM produto WHERE ID_Apicultor = ?", [apicultorId]);
-    const workshopsCount = await db.get("SELECT COUNT(*) as count FROM workshop WHERE ID_Apicultor = ?", [apicultorId]);
-    const pendingProducts = await db.get("SELECT COUNT(*) as count FROM produto WHERE ID_Apicultor = ? AND Status = 'Pendente'", [apicultorId]);
-    
+    const productsCount = await db.get(
+      "SELECT COUNT(*) as count FROM produto WHERE ID_Apicultor = ?",
+      [apicultorId],
+    );
+    const workshopsCount = await db.get(
+      "SELECT COUNT(*) as count FROM workshop WHERE ID_Apicultor = ?",
+      [apicultorId],
+    );
+    const pendingProducts = await db.get(
+      "SELECT COUNT(*) as count FROM produto WHERE ID_Apicultor = ? AND Status = 'Pendente'",
+      [apicultorId],
+    );
+
     // Total Earnings from Orders
-    const earnings = await db.get(`
+    const earnings = await db.get(
+      `
       SELECT SUM(ie.Quantidade * ie.Preco_Unitario) as total 
       FROM item_encomenda ie
       JOIN produto p ON ie.ID_Produto = p.ID_Produto
       WHERE p.ID_Apicultor = ?
-    `, [apicultorId]);
+    `,
+      [apicultorId],
+    );
 
     // Categories Distribution
-    const categories = await db.all(`
+    const categories = await db.all(
+      `
       SELECT c.Nome as category, COUNT(p.ID_Produto) as count 
       FROM produto p
       JOIN categoria c ON p.ID_Categoria = c.ID_Categoria
       WHERE p.ID_Apicultor = ?
       GROUP BY c.Nome
-    `, [apicultorId]);
+    `,
+      [apicultorId],
+    );
 
     // Status Distribution
-    const statuses = await db.all(`
+    const statuses = await db.all(
+      `
       SELECT Status, COUNT(*) as count 
       FROM produto 
       WHERE ID_Apicultor = ?
       GROUP BY Status
-    `, [apicultorId]);
+    `,
+      [apicultorId],
+    );
 
     res.json({
       summary: {
         products: productsCount.count,
         workshops: workshopsCount.count,
         pendingProducts: pendingProducts.count,
-        totalEarnings: earnings.total || 0
+        totalEarnings: earnings.total || 0,
       },
       categories,
-      statuses
+      statuses,
     });
   } catch (err) {
     console.error("Apicultor stats error:", err);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2497,14 +3190,16 @@ app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
     const token = jwt.sign(user, SECRET_KEY, { expiresIn: "24h" });
     res.json({ message: "Role updated successfully", user, token });
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2522,14 +3217,16 @@ app.get("/api/apicultores/:id", async (req, res) => {
     if (!user) return res.status(404).json({ error: "Apicultor not found" });
     res.json(user);
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2545,14 +3242,16 @@ app.get("/api/apicultores/:id/products", async (req, res) => {
     );
     res.json(products);
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2568,14 +3267,16 @@ app.get("/api/apicultores/:id/workshops", async (req, res) => {
     );
     res.json(workshops);
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2590,7 +3291,7 @@ app.get("/api/workshops", async (req, res) => {
     );
     res.json(workshops);
   } catch (err) {
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -2601,7 +3302,8 @@ app.get("/api/workshops/:id", async (req, res) => {
       "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.ID_Workshop = ? AND w.Status = 'Aprovado'",
       [req.params.id],
     );
-    if (!workshop) return res.status(404).json({ error: "Workshop não encontrado." });
+    if (!workshop)
+      return res.status(404).json({ error: "Workshop não encontrado." });
     res.json(workshop);
   } catch (err) {
     res.status(500).json({ error: "Database error" });
@@ -2635,10 +3337,16 @@ app.delete("/api/user/workshops/:id", authenticateToken, async (req, res) => {
       "SELECT * FROM reserva_workshop WHERE ID_Reserva = ? AND ID_Cliente = ?",
       [req.params.id, req.user.id],
     );
-    if (!reservation) return res.status(404).json({ error: "Reserva não encontrada." });
+    if (!reservation)
+      return res.status(404).json({ error: "Reserva não encontrada." });
 
-    await db.run("DELETE FROM reserva_workshop WHERE ID_Reserva = ?", [req.params.id]);
-    await db.run("UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?", [reservation.ID_Workshop]);
+    await db.run("DELETE FROM reserva_workshop WHERE ID_Reserva = ?", [
+      req.params.id,
+    ]);
+    await db.run(
+      "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
+      [reservation.ID_Workshop],
+    );
     res.json({ message: "Reserva cancelada com sucesso." });
   } catch (err) {
     console.error("Cancel reservation error:", err);
@@ -2649,7 +3357,9 @@ app.delete("/api/user/workshops/:id", authenticateToken, async (req, res) => {
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2658,22 +3368,29 @@ app.get("/api/apicultores", async (req, res) => {
 });
 
 // ADMIN WORKSHOPS MANAGEMENT
-app.get("/api/admin/workshops", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const workshops = await db.all(
-      "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente ORDER BY w.ID_Workshop DESC",
-    );
-    res.json(workshops);
-  } catch (error) {
-    console.error("Admin workshops fetch error:", error);
-        res.status(500).json({ error: "Database error" });
-  }
-});
+app.get(
+  "/api/admin/workshops",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const workshops = await db.all(
+        "SELECT w.*, c.Nome as ApicultorNome FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente ORDER BY w.ID_Workshop DESC",
+      );
+      res.json(workshops);
+    } catch (error) {
+      console.error("Admin workshops fetch error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -2688,11 +3405,11 @@ app.patch(
   async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    
+
     if (!["Aprovado", "Pendente", "Rejeitado"].includes(status)) {
       return res.status(400).json({ error: "Invalid status." });
     }
-    
+
     try {
       await db.run("UPDATE workshop SET Status = ? WHERE ID_Workshop = ?", [
         status,
@@ -2724,7 +3441,9 @@ app.post("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
   let { name, email, username, password, userType } = req.body;
 
   if (!name || !email || !username || !password) {
-    return res.status(400).json({ error: "Nome, email, username e password são obrigatórios." });
+    return res
+      .status(400)
+      .json({ error: "Nome, email, username e password são obrigatórios." });
   }
 
   email = email.toLowerCase().trim();
@@ -2739,21 +3458,23 @@ app.post("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
   try {
     const existing = await db.get(
       "SELECT ID_Cliente FROM cliente WHERE Email = ? OR Username = ?",
-      [email, username]
+      [email, username],
     );
     if (existing) {
-      return res.status(409).json({ error: "Email ou username já está em utilização." });
+      return res
+        .status(409)
+        .json({ error: "Email ou username já está em utilização." });
     }
 
     const hashed = await bcrypt.hash(password, 10);
     const result = await db.run(
       "INSERT INTO cliente (Nome, Email, Username, Senha, UserType, Is_Verified, Verification_Token) VALUES (?, ?, ?, ?, ?, 1, NULL)",
-      [name.trim(), email, username, hashed, userType]
+      [name.trim(), email, username, hashed, userType],
     );
 
     res.status(201).json({
       id: result.lastID,
-      message: "Utilizador criado com sucesso."
+      message: "Utilizador criado com sucesso.",
     });
   } catch (error) {
     console.error("Admin create user error:", error);
@@ -2764,25 +3485,35 @@ app.post("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
 // -----------------------------------------------------------------------------
 // ADMIN ANALYTICS & DASHBOARD
 // -----------------------------------------------------------------------------
-app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    // Basic Stats
-    const totalRev = await db.get("SELECT SUM(Total) as val FROM encomenda WHERE Status != 'Cancelada'");
-    const avgOrder = await db.get("SELECT AVG(Total) as val FROM encomenda WHERE Status != 'Cancelada'");
-    
-    // Distribution (Categories)
-    const distribution = await db.all(`
+app.get(
+  "/api/admin/analytics",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      // Basic Stats
+      const totalRev = await db.get(
+        "SELECT SUM(Total) as val FROM encomenda WHERE Status != 'Cancelada'",
+      );
+      const avgOrder = await db.get(
+        "SELECT AVG(Total) as val FROM encomenda WHERE Status != 'Cancelada'",
+      );
+
+      // Distribution (Categories)
+      const distribution = await db.all(`
       SELECT c.Nome as category, COUNT(p.ID_Produto) as count 
       FROM produto p 
       JOIN categoria c ON p.ID_Categoria = c.ID_Categoria 
       GROUP BY c.ID_Categoria
     `);
 
-    // Orders By Status
-    const ordersByStatus = await db.all("SELECT Status as status, COUNT(*) as count FROM encomenda GROUP BY Status");
+      // Orders By Status
+      const ordersByStatus = await db.all(
+        "SELECT Status as status, COUNT(*) as count FROM encomenda GROUP BY Status",
+      );
 
-    // Top Products
-    const topProducts = await db.all(`
+      // Top Products
+      const topProducts = await db.all(`
       SELECT p.Nome as name, SUM(i.Quantidade) as quantity, SUM(i.Quantidade * i.Preco_Unitario) as revenue 
       FROM item_encomenda i 
       JOIN produto p ON i.ID_Produto = p.ID_Produto 
@@ -2790,8 +3521,8 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
       ORDER BY quantity DESC LIMIT 5
     `);
 
-    // Sales by Beekeeper
-    const salesByBeekeeper = await db.all(`
+      // Sales by Beekeeper
+      const salesByBeekeeper = await db.all(`
       SELECT c.Nome as name, SUM(i.Quantidade * i.Preco_Unitario) as revenue 
       FROM item_encomenda i 
       JOIN produto p ON i.ID_Produto = p.ID_Produto 
@@ -2800,16 +3531,16 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
       ORDER BY revenue DESC LIMIT 5
     `);
 
-    // Users Growth (Dummy/Simple grouping)
-    const usersGrowth = await db.all(`
+      // Users Growth (Dummy/Simple grouping)
+      const usersGrowth = await db.all(`
       SELECT DATE_FORMAT(Data_Resgistro, '%Y-%m') as month, COUNT(*) as count 
       FROM cliente 
       GROUP BY month 
       ORDER BY month DESC LIMIT 6
     `);
 
-    // Sales 30d (Simplified)
-    const sales30d = await db.all(`
+      // Sales 30d (Simplified)
+      const sales30d = await db.all(`
       SELECT DATE(Data_Encomenda) as date, SUM(Total) as revenue 
       FROM encomenda 
       WHERE Status != 'Cancelada' AND Data_Encomenda >= DATE_SUB(NOW(), INTERVAL 30 DAY)
@@ -2817,190 +3548,230 @@ app.get("/api/admin/analytics", authenticateToken, isAdmin, async (req, res) => 
       ORDER BY date ASC
     `);
 
-    res.json({
-      stats: { 
-        totalRevenue: totalRev.val ? parseFloat(totalRev.val).toFixed(2) : 0, 
-        avgOrderValue: avgOrder.val ? parseFloat(avgOrder.val).toFixed(2) : 0 
-      },
-      sales30d: sales30d || [],
-      distribution: distribution || [],
-      ordersByStatus: ordersByStatus || [],
-      topProducts: topProducts || [],
-      salesByBeekeeper: salesByBeekeeper || [],
-      usersGrowth: usersGrowth.reverse() || []
-    });
-  } catch (error) {
-    console.error("Admin analytics error:", error);
-    sendServerError(res, error);
-  }
-});
+      res.json({
+        stats: {
+          totalRevenue: totalRev.val ? parseFloat(totalRev.val).toFixed(2) : 0,
+          avgOrderValue: avgOrder.val ? parseFloat(avgOrder.val).toFixed(2) : 0,
+        },
+        sales30d: sales30d || [],
+        distribution: distribution || [],
+        ordersByStatus: ordersByStatus || [],
+        topProducts: topProducts || [],
+        salesByBeekeeper: salesByBeekeeper || [],
+        usersGrowth: usersGrowth.reverse() || [],
+      });
+    } catch (error) {
+      console.error("Admin analytics error:", error);
+      sendServerError(res, error);
+    }
+  },
+);
 
-app.get("/api/admin/analytics/interactions", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const rows = await db.all(`
+app.get(
+  "/api/admin/analytics/interactions",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const rows = await db.all(`
       SELECT ID_Cliente, Tipo, Pagina, Dados, Data_Interacao 
       FROM interacao 
       WHERE Data_Interacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       ORDER BY Data_Interacao DESC
     `);
 
-    // Aggregate in Javascript
-    const totals = { total: 0, logged_in: 0, anonymous: 0 };
-    const typeCounts = {};
-    const pageCounts = {};
-    const dayCounts = {};
-    const productViews = {};
-    const productCarts = {};
-    const searchTerms = {};
-    const clickCounts = {};
+      // Aggregate in Javascript
+      const totals = { total: 0, logged_in: 0, anonymous: 0 };
+      const typeCounts = {};
+      const pageCounts = {};
+      const dayCounts = {};
+      const productViews = {};
+      const productCarts = {};
+      const searchTerms = {};
+      const clickCounts = {};
 
-    for (const r of rows) {
-      totals.total++;
-      if (r.ID_Cliente) {
-        totals.logged_in++;
-      } else {
-        totals.anonymous++;
-      }
-
-      const tipo = r.Tipo;
-      typeCounts[tipo] = (typeCounts[tipo] || 0) + 1;
-      
-      const pagina = r.Pagina || "index.html";
-      pageCounts[pagina] = (pageCounts[pagina] || 0) + 1;
-
-      // Day format: YYYY-MM-DD
-      const date = new Date(r.Data_Interacao);
-      const day = date.toISOString().split("T")[0];
-      dayCounts[day] = (dayCounts[day] || 0) + 1;
-
-      // Parse JSON Dados
-      let dados = {};
-      if (r.Dados) {
-        try {
-          dados = typeof r.Dados === "string" ? JSON.parse(r.Dados) : r.Dados;
-        } catch (e) {
-          // ignore
+      for (const r of rows) {
+        totals.total++;
+        if (r.ID_Cliente) {
+          totals.logged_in++;
+        } else {
+          totals.anonymous++;
         }
-      }
 
-      if (tipo === "product_view") {
-        const prodId = dados.productId;
-        const prodName = dados.productName || `Produto #${prodId}`;
-        if (prodId) {
-          if (!productViews[prodId]) {
-            productViews[prodId] = { id: prodId, nome: prodName, views: 0 };
+        const tipo = r.Tipo;
+        typeCounts[tipo] = (typeCounts[tipo] || 0) + 1;
+
+        const pagina = r.Pagina || "index.html";
+        pageCounts[pagina] = (pageCounts[pagina] || 0) + 1;
+
+        // Day format: YYYY-MM-DD
+        const date = new Date(r.Data_Interacao);
+        const day = date.toISOString().split("T")[0];
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+
+        // Parse JSON Dados
+        let dados = {};
+        if (r.Dados) {
+          try {
+            dados = typeof r.Dados === "string" ? JSON.parse(r.Dados) : r.Dados;
+          } catch (e) {
+            // ignore
           }
-          productViews[prodId].views++;
         }
-      } else if (tipo === "add_to_cart") {
-        const prodId = dados.productId;
-        const prodName = dados.productName || `Produto #${prodId}`;
-        if (prodId) {
-          if (!productCarts[prodId]) {
-            productCarts[prodId] = { id: prodId, nome: prodName, adds: 0 };
+
+        if (tipo === "product_view") {
+          const prodId = dados.productId;
+          const prodName = dados.productName || `Produto #${prodId}`;
+          if (prodId) {
+            if (!productViews[prodId]) {
+              productViews[prodId] = { id: prodId, nome: prodName, views: 0 };
+            }
+            productViews[prodId].views++;
           }
-          productCarts[prodId].adds++;
+        } else if (tipo === "add_to_cart") {
+          const prodId = dados.productId;
+          const prodName = dados.productName || `Produto #${prodId}`;
+          if (prodId) {
+            if (!productCarts[prodId]) {
+              productCarts[prodId] = { id: prodId, nome: prodName, adds: 0 };
+            }
+            productCarts[prodId].adds++;
+          }
+        } else if (tipo === "search") {
+          const term = dados.term;
+          if (term) {
+            const lowerTerm = term.trim().toLowerCase();
+            searchTerms[lowerTerm] = (searchTerms[lowerTerm] || 0) + 1;
+          }
+        } else if (tipo === "click") {
+          const label = dados.label || "Elemento sem texto";
+          const element = dados.element || "element";
+          const key = `${label}||${element}`;
+          if (!clickCounts[key]) {
+            clickCounts[key] = { label, element, clicks: 0 };
+          }
+          clickCounts[key].clicks++;
         }
-      } else if (tipo === "search") {
-        const term = dados.term;
-        if (term) {
-          const lowerTerm = term.trim().toLowerCase();
-          searchTerms[lowerTerm] = (searchTerms[lowerTerm] || 0) + 1;
-        }
-      } else if (tipo === "click") {
-        const label = dados.label || "Elemento sem texto";
-        const element = dados.element || "element";
-        const key = `${label}||${element}`;
-        if (!clickCounts[key]) {
-          clickCounts[key] = { label, element, clicks: 0 };
-        }
-        clickCounts[key].clicks++;
       }
+
+      // Convert objects to sorted arrays
+      const byType = Object.entries(typeCounts).map(([tipo, count]) => ({
+        tipo,
+        count,
+      }));
+      const byPage = Object.entries(pageCounts)
+        .map(([pagina, count]) => ({ pagina, count }))
+        .sort((a, b) => b.count - a.count);
+
+      // perDay: last 7 or 30 days
+      // Sort perDay ascending by date
+      const perDay = Object.entries(dayCounts)
+        .map(([dia, total]) => ({ dia, total }))
+        .sort((a, b) => a.dia.localeCompare(b.dia));
+
+      const topViewed = Object.values(productViews)
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 5);
+      const topCart = Object.values(productCarts)
+        .sort((a, b) => b.adds - a.adds)
+        .slice(0, 5);
+
+      const topSearches = Object.entries(searchTerms)
+        .map(([termo, count]) => ({ termo, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      const topClicks = Object.values(clickCounts)
+        .sort((a, b) => b.clicks - a.clicks)
+        .slice(0, 5);
+
+      res.json({
+        totals,
+        byType,
+        byPage,
+        topViewed,
+        topCart,
+        perDay,
+        topSearches,
+        topClicks,
+      });
+    } catch (error) {
+      console.error("Interactions aggregate error:", error);
+      res.status(500).json({ error: "Database error" });
     }
-
-    // Convert objects to sorted arrays
-    const byType = Object.entries(typeCounts).map(([tipo, count]) => ({ tipo, count }));
-    const byPage = Object.entries(pageCounts).map(([pagina, count]) => ({ pagina, count })).sort((a,b) => b.count - a.count);
-    
-    // perDay: last 7 or 30 days
-    // Sort perDay ascending by date
-    const perDay = Object.entries(dayCounts).map(([dia, total]) => ({ dia, total })).sort((a,b) => a.dia.localeCompare(b.dia));
-
-    const topViewed = Object.values(productViews).sort((a,b) => b.views - a.views).slice(0, 5);
-    const topCart = Object.values(productCarts).sort((a,b) => b.adds - a.adds).slice(0, 5);
-    
-    const topSearches = Object.entries(searchTerms).map(([termo, count]) => ({ termo, count })).sort((a,b) => b.count - a.count).slice(0, 5);
-    const topClicks = Object.values(clickCounts).sort((a,b) => b.clicks - a.clicks).slice(0, 5);
-
-    res.json({
-      totals,
-      byType,
-      byPage,
-      topViewed,
-      topCart,
-      perDay,
-      topSearches,
-      topClicks
-    });
-  } catch (error) {
-    console.error("Interactions aggregate error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
+  },
+);
 
 // -----------------------------------------------------------------------------
 // ADMIN UPGRADE REQUESTS
 // -----------------------------------------------------------------------------
-app.get("/api/admin/upgrade-requests", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const rows = await db.all(`
+app.get(
+  "/api/admin/upgrade-requests",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const rows = await db.all(`
       SELECT u.ID_Request, u.Descricao, u.Documento, u.Status, u.Data_Pedido, u.Data_Processamento, 
              c.Nome as ClienteNome, c.Email as ClienteEmail
       FROM upgrade_requests u
       JOIN cliente c ON u.ID_Cliente = c.ID_Cliente
       ORDER BY u.Data_Pedido DESC
     `);
-    res.json(rows);
-  } catch (error) {
-    console.error("Upgrade requests fetch error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-app.put("/api/admin/upgrade-requests/:id", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const { status } = req.body; // 'Aprovado' ou 'Rejeitado'
-    if (!["Aprovado", "Rejeitado"].includes(status)) {
-      return res.status(400).json({ error: "Status inválido" });
+      res.json(rows);
+    } catch (error) {
+      console.error("Upgrade requests fetch error:", error);
+      res.status(500).json({ error: "Database error" });
     }
+  },
+);
 
-    const { id } = req.params;
-    
-    // Update the request
-    await db.run(
-      "UPDATE upgrade_requests SET Status = ?, Data_Processamento = CURRENT_TIMESTAMP WHERE ID_Request = ?", 
-      [status, id]
-    );
-
-    // If approved, update user role
-    if (status === "Aprovado") {
-      const request = await db.get("SELECT ID_Cliente FROM upgrade_requests WHERE ID_Request = ?", [id]);
-      if (request) {
-        await db.run("UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?", [request.ID_Cliente]);
+app.put(
+  "/api/admin/upgrade-requests/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const { status } = req.body; // 'Aprovado' ou 'Rejeitado'
+      if (!["Aprovado", "Rejeitado"].includes(status)) {
+        return res.status(400).json({ error: "Status inválido" });
       }
-    }
 
-    res.json({ success: true, message: "Pedido processado com sucesso" });
-  } catch (error) {
-    console.error("Upgrade process error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
+      const { id } = req.params;
+
+      // Update the request
+      await db.run(
+        "UPDATE upgrade_requests SET Status = ?, Data_Processamento = CURRENT_TIMESTAMP WHERE ID_Request = ?",
+        [status, id],
+      );
+
+      // If approved, update user role
+      if (status === "Aprovado") {
+        const request = await db.get(
+          "SELECT ID_Cliente FROM upgrade_requests WHERE ID_Request = ?",
+          [id],
+        );
+        if (request) {
+          await db.run(
+            "UPDATE cliente SET UserType = 'apicultor' WHERE ID_Cliente = ?",
+            [request.ID_Cliente],
+          );
+        }
+      }
+
+      res.json({ success: true, message: "Pedido processado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade process error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -3069,7 +3840,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
       "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id]
+      [req.user.id],
     );
 
     if (!user) {
@@ -3078,7 +3849,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
 
     const orders = await db.all(
       "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
-      [req.user.id]
+      [req.user.id],
     );
 
     res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
@@ -3093,20 +3864,39 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
     const { name, email, phone, address, bio } = req.body;
     let updates = [];
     let params = [];
-    if (name !== undefined) { updates.push("Nome = ?"); params.push(name); }
-    if (email !== undefined) { updates.push("Email = ?"); params.push(email); }
-    if (phone !== undefined) { updates.push("Telefone = ?"); params.push(phone); }
-    if (address !== undefined) { updates.push("Morada = ?"); params.push(address); }
-    if (bio !== undefined) { updates.push("Bio = ?"); params.push(bio); }
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
 
-    if (updates.length === 0) return res.status(400).json({ error: "No fields to update" });
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
 
     params.push(req.user.id);
-    await db.run(`UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`, params);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
 
     const user = await db.get(
-      "SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified FROM cliente WHERE ID_Cliente = ?",
-      [req.user.id]
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
     );
 
     res.json({ message: "Profile updated successfully", user });
@@ -3119,14 +3909,21 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
 app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = await db.get("SELECT Senha FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const valid = await bcrypt.compare(currentPassword, user.Senha);
-    if (!valid) return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [hashed, req.user.id]);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
 
     res.json({ message: "Palavra-passe alterada com sucesso" });
   } catch (error) {
@@ -3140,12 +3937,15 @@ app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
 // -----------------------------------------------------------------------------
 app.get("/api/user/favorites", authenticateToken, async (req, res) => {
   try {
-    const rows = await db.all(`
+    const rows = await db.all(
+      `
       SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
       FROM favoritos f
       JOIN produto p ON f.ID_Produto = p.ID_Produto
       WHERE f.ID_Cliente = ?
-    `, [req.user.id]);
+    `,
+      [req.user.id],
+    );
     res.json(rows);
   } catch (error) {
     console.error("Favorites fetch error:", error);
@@ -3157,7 +3957,10 @@ app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
   const { productId } = req.body;
   if (!productId) return res.status(400).json({ error: "Missing product ID" });
   try {
-    await db.run("INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)", [req.user.id, productId]);
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
     res.json({ success: true, message: "Added to favorites" });
   } catch (error) {
     console.error("Favorites add error:", error);
@@ -3165,53 +3968,74 @@ app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
   }
 });
 
-app.delete("/api/user/favorites/remove/:id", authenticateToken, async (req, res) => {
-  try {
-    await db.run("DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?", [req.user.id, req.params.id]);
-    res.json({ success: true, message: "Removed from favorites" });
-  } catch (error) {
-    console.error("Favorites remove error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // -----------------------------------------------------------------------------
 // UPGRADE REQUESTS
 // -----------------------------------------------------------------------------
-app.get("/api/user/upgrade-request-status", authenticateToken, async (req, res) => {
-  try {
-    const reqInfo = await db.get(
-      "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
-      [req.user.id]
-    );
-    if (!reqInfo) {
-      return res.json({ status: "none" });
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
     }
-    res.json(reqInfo);
-  } catch (error) {
-    console.error("Upgrade status error:", error);
-    res.status(500).json({ error: "Database error", details: error.message });
-  }
-});
+  },
+);
 
-app.post("/api/user/upgrade-request", authenticateToken, upload.single("document"), async (req, res) => {
-  try {
-    const descricao = req.body.descricao || "N/A";
-    const docPath = req.file ? req.file.path : "N/A";
-    
-    const existing = await db.get("SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'", [req.user.id]);
-    if (existing) return res.status(400).json({ error: "Já tens um pedido pendente." });
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
 
-    await db.run("INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)", [
-      req.user.id, descricao, docPath, "Pendente"
-    ]);
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
 
-    res.json({ message: "Pedido enviado com sucesso" });
-  } catch (error) {
-    console.error("Upgrade request error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
 // Update own user role (Profile view)
 app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
@@ -3223,13 +4047,13 @@ app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
     if (req.user.role === "client" && userType === "apicultor") {
       return res
         .status(403)
-        .json({ error: "Upgrade to Apicultor requires a verification request." });
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
     }
 
     if (userType !== "client" && userType !== "apicultor") {
-      return res
-        .status(400)
-        .json({ error: "Invalid role target." });
+      return res.status(400).json({ error: "Invalid role target." });
     }
 
     if (req.user.role === userType) {
@@ -3262,14 +4086,16 @@ app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Profile role update error:", error);
-        res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
   try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
     res.json(rows);
   } catch (error) {
     console.error("Fetch beekeepers error:", error);
@@ -3277,1225 +4103,3744 @@ app.get("/api/apicultores", async (req, res) => {
   }
 });
 
-// ADMIN ORDER MANAGEMENT
-// Get all orders (Admin view)
-app.get("/api/admin/orders", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const rows = await db.all(`
-      SELECT e.*, c.Nome as ClienteNome 
-      FROM encomenda e
-      JOIN cliente c ON e.ID_Cliente = c.ID_Cliente
-      ORDER BY e.Data_Encomenda DESC
-    `);
-    res.json(rows);
-  } catch (error) {
-    console.error("Admin orders fetch error:", error);
-    sendServerError(res, error);
-  }
-});
-
-// Public list of beekeepers
-app.get("/api/apicultores", async (req, res) => {
-  try {
-    const rows = await db.all("SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'");
-    res.json(rows);
-  } catch (error) {
-    console.error("Fetch beekeepers error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Update order status
-app.patch(
-  "/api/admin/orders/:id/status",
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
   authenticateToken,
   isAdmin,
   async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
     try {
-      await db.run("UPDATE encomenda SET Status = ? WHERE ID_Encomenda = ?", [
-        status,
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
         id,
       ]);
-      res.json({ message: "Order status updated" });
+      res.json({ message: "User role updated successfully" });
     } catch (error) {
-      console.error("Update order status error:", error);
+      console.error("Update user role error:", error);
       res.status(500).json({ error: "Database error" });
     }
   },
 );
 
-// Get specific order details (Client view)
-app.get("/api/user/orders/:id", authenticateToken, async (req, res) => {
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
-    const order = await db.get(
-      "SELECT ID_Encomenda, ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [req.params.id, req.user.id]
-    );
-    if (!order) return res.status(404).json({ error: "Order not found" });
-    res.json(order);
-  } catch (error) {
-    console.error("Fetch order details error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Get order items
-app.get("/api/user/orders/:id/items", authenticateToken, async (req, res) => {
-  try {
-    const items = await db.all(
-      `SELECT ie.*, p.Nome, p.Imagem, a.Nome as ApicultorNome
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-       LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
-       WHERE ie.ID_Encomenda = ?`,
-      [req.params.id],
-    );
-    res.json(items);
-  } catch (error) {
-    console.error("Fetch order items error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Get order receipt (HTML for print/download)
-app.get("/api/user/orders/:id/receipt", authenticateToken, async (req, res) => {
-  try {
-    const orderId = req.params.id;
-    const order = await db.get(
-      "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [orderId, req.user.id],
-    );
-    if (!order) return res.status(404).json({ error: "Order not found" });
-
-    const items = await db.all(
-      `SELECT ie.*, p.Nome, a.Nome as ApicultorNome
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-       LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
-       WHERE ie.ID_Encomenda = ?`,
-      [orderId],
-    );
-
-    const customer = await db.get(
-      "SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?",
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
 
-    // Use absolute URL for the logo so it loads correctly in the browser
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const host = req.headers.host;
-    const logoUrl = `${protocol}://${host}/images/logo_hexomel.webp`;
-
-    const html = generateReceiptHTML(
-      order,
-      items,
-      customer.Nome,
-      customer.Email,
-      logoUrl,
-      { autoPrint: true },
-    );
-    res.send(html);
-  } catch (error) {
-    console.error("Generate receipt error:", error);
-    res.status(500).json({ error: "Failed to generate receipt" });
-  }
-});
-
-// Resend order receipt (Send email notification)
-app.post("/api/user/orders/:id/resend-receipt", authenticateToken, async (req, res) => {
-  try {
-    const orderId = req.params.id;
-    const order = await db.get(
-      "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-      [orderId, req.user.id],
-    );
-    if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-
-    if (!mailTransporter) {
-      return res.status(503).json({ error: "O serviço de email está temporariamente indisponível. Por favor, tente mais tarde." });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    await sendReceiptEmail(orderId);
-    res.json({ success: true, message: "Recibo enviado com sucesso." });
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
   } catch (error) {
-    console.error("Resend receipt error:", error);
-    res.status(500).json({ error: "Falha ao reenviar o recibo" });
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
   }
 });
 
-// Delete product (keeping existing)
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 app.delete(
-  "/api/admin/products/:id",
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
   authenticateToken,
   isAdmin,
   async (req, res) => {
     const { id } = req.params;
     try {
-      await db.run("DELETE FROM produto WHERE ID_Produto = ?", [id]);
-      res.json({ message: "Product deleted successfully" });
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
     } catch (error) {
-      console.error("Delete product error:", error);
+      console.error("Delete user error:", error);
       res.status(500).json({ error: "Database error" });
     }
   },
 );
 
-// CART ROUTES
-// Get user cart
-app.get("/api/cart", authenticateToken, async (req, res) => {
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
-    const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
-    if (!cart) return res.json([]);
-
-    const items = await db.all(
-      `SELECT ic.*, p.Nome, p.Preco, p.Stock, p.Imagem
-       FROM item_carrinho ic 
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
-    res.json(items);
-  } catch (error) {
-    console.error("Cart fetch error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Add to cart
-app.post("/api/cart/add", authenticateToken, async (req, res) => {
-  const { productId, quantity } = req.body;
-
-  try {
-    // 1. Ensure cart exists
-    let cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-      req.user.id,
-    ]);
-    let cartId;
-
-    if (!cart) {
-      const result = await db.run(
-        "INSERT INTO carrinho (ID_Cliente) VALUES (?)",
-        [req.user.id],
-      );
-      cartId = result.lastID;
-    } else {
-      cartId = cart.ID_Carrinho;
-    }
-
-    // 2. Add or update item
-    const existing = await db.get(
-      "SELECT * FROM item_carrinho WHERE ID_Carrinho = ? AND ID_Produto = ?",
-      [cartId, productId],
-    );
-
-    if (existing) {
-      await db.run(
-        "UPDATE item_carrinho SET Quantidade = Quantidade + ? WHERE ID_itemCarrinho = ?",
-        [quantity || 1, existing.ID_itemCarrinho],
-      );
-    } else {
-      await db.run(
-        "INSERT INTO item_carrinho (ID_Carrinho, ID_Produto, Quantidade) VALUES (?, ?, ?)",
-        [cartId, productId, quantity || 1],
-      );
-    }
-
-    res.json({ message: "Item added to cart" });
-  } catch (error) {
-    console.error("Add to cart error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Update cart item quantity
-app.post("/api/cart/update", authenticateToken, async (req, res) => {
-  const { itemId, quantity } = req.body;
-  try {
-    if (quantity < 1) {
-      return res.status(400).json({ error: "Quantity must be at least 1" });
-    }
-    await db.run(
-      "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
-      [quantity, itemId],
-    );
-    res.json({ message: "Cart updated" });
-  } catch (error) {
-    console.error("Cart update error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// 7. Initialize Checkout Order (Draft/Pending)
-app.post("/api/checkout/init", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
-
-  try {
-    let items = [];
-    let subtotal = 0;
-
-    if (orderId) {
-      // If we have an orderId, we are updating an existing order
-      const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [orderId, req.user.id]);
-      if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-      
-      // Get items from that order
-      items = await db.all("SELECT * FROM item_encomenda WHERE ID_Encomenda = ?", [orderId]);
-      subtotal = items.reduce((sum, item) => sum + item.Preco_Unitario * item.Quantidade, 0);
-    } else {
-      // If no orderId, we must have a cart
-      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
-
-      items = await db.all(
-        `SELECT ic.*, p.Preco 
-         FROM item_carrinho ic 
-         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-         WHERE ic.ID_Carrinho = ?`,
-        [cart.ID_Carrinho],
-      );
-
-      if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
-      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-    }
-
-    const total = subtotal + Number(shippingCost || 0);
-    let currentOrderId = orderId;
-
-    if (currentOrderId) {
-      // Update existing draft
-      await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-        [total, address, phone, nome, apelido, shippingCost, shippingType, currentOrderId, req.user.id]
-      );
-      
-      // If it was a cart checkout that became an orderId, we might not need to refresh items 
-      // but usually we refresh them to match the cart if it's a "draft" being finalized.
-      // HOWEVER, if the cart is EMPTY, we MUST NOT refresh items from cart.
-      // Let's only refresh items if they came from the cart.
-      if (!orderId) {
-        await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [currentOrderId]);
-        for (const item of items) {
-          await db.run(
-            "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-            [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-          );
-        }
-      }
-    } else {
-      // Create new draft
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
-        [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
-      );
-      currentOrderId = result.lastID;
-
-      // Save items
-      for (const item of items) {
-        await db.run(
-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-          [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-        );
-      }
-    }
-
-    res.json({ orderId: currentOrderId });
-  } catch (error) {
-    console.error("Checkout init error:", error);
-    res.status(500).json({ error: "Falha ao inicializar encomenda" });
-  }
-});
-
-// Stripe Checkout Session Creation
-app.post("/api/checkout/create-session", authenticateToken, async (req, res) => {
-  console.log(`[Stripe Debug] Creating session for user ${req.user.id}`);
-  const {
-    address,
-    phone,
-    nome,
-    apelido,
-    shippingCost,
-    shippingType,
-    orderId,
-    paymentType,
-  } = req.body;
-
-  try {
-    let items = [];
-    let subtotal = 0;
-    let finalOrderId = orderId;
-    const requestedPaymentType = paymentType === "mbway" ? "mb_way" : "card";
-
-    if (finalOrderId) {
-      console.log(`[Stripe Debug] Using existing order ${finalOrderId}`);
-      // Validate existing order
-      const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [finalOrderId, req.user.id]);
-      if (!order) {
-        console.error(`[Stripe Debug] Order ${finalOrderId} not found for user ${req.user.id}`);
-        return res.status(404).json({ error: "Encomenda não encontrada" });
-      }
-
-      // Check if order is already paid
-      if (order.Status === 'Pago') {
-        console.warn(`[Stripe Debug] Order ${finalOrderId} is already paid`);
-        return res.status(400).json({ error: "Esta encomenda já foi paga." });
-      }
-
-      items = await db.all(
-        `SELECT ie.*, p.Nome, p.Imagem 
-         FROM item_encomenda ie 
-         JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-         WHERE ie.ID_Encomenda = ?`,
-        [finalOrderId]
-      );
-      // Map properties to match expected format below
-      items = items.map(it => ({ ...it, Preco: it.Preco_Unitario }));
-      
-      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-      const total = subtotal + Number(shippingCost || 0);
-
-      // Update order details
-      await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ? WHERE ID_Encomenda = ?",
-        [total, address, phone, nome, apelido, shippingCost, shippingType, finalOrderId]
-      );
-    } else {
-      console.log(`[Stripe Debug] Creating new order from cart`);
-      // Create from cart
-      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-      if (!cart) {
-        console.error(`[Stripe Debug] Cart not found for user ${req.user.id}`);
-        return res.status(400).json({ error: "Carrinho vazio" });
-      }
-
-      items = await db.all(
-        `SELECT ic.*, p.Nome, p.Preco, p.Imagem 
-         FROM item_carrinho ic 
-         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-         WHERE ic.ID_Carrinho = ?`,
-        [cart.ID_Carrinho],
-      );
-
-      if (items.length === 0) {
-        console.error(`[Stripe Debug] Cart empty for user ${req.user.id}`);
-        return res.status(400).json({ error: "Carrinho vazio" });
-      }
-
-      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-      const total = subtotal + Number(shippingCost || 0);
-
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
-        [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
-      );
-      finalOrderId = result.lastID;
-      console.log(`[Stripe Debug] Created order ${finalOrderId}`);
-
-      for (const item of items) {
-        await db.run(
-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-          [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-        );
-      }
-    }
-    
-    /* 
-       REMOVED: Clear cart only on SUCCESSFUL payment in fulfillPaidOrder
-       to allow retrying the checkout if canceled.
-    */
-    /*
-    await db.run(
-      "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
-      [req.user.id]
-    );
-    */
-
-
-    // 5. MOCK MODE LOGIC
-    if (!stripe) {
-      console.log("⚠️ STRIPE_SECRET_KEY missing. Entering MOCK MODE.");
-      
-      // Update Stock (Simulated)
-      for (const item of items) {
-        await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [item.Quantidade, item.ID_Produto]);
-      }
-
-      // Clear Cart (if applicable)
-      await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);
-
-      await fulfillPaidOrder(finalOrderId);
-      return res.json({ 
-        url: `/success.html?orderId=${finalOrderId}&mock=true`,
-        isMock: true 
-      });
-    }
-
-    await syncCustomerCheckoutDetails(req.user.id, {
-      nome,
-      apelido,
-      address,
-      phone,
-    });
-
-    // 6. REAL STRIPE SESSION
-    const lineItems = items.map(item => {
-      const productImages = getStripeCheckoutProductImages(req.headers.origin, item.Imagem, item.Nome, item.ID_Produto);
-      return {
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: item.Nome,
-            ...(productImages.length > 0 ? { images: productImages } : {}),
-          },
-          unit_amount: Math.round(item.Preco * 100), // Stripe uses cents
-        },
-        quantity: item.Quantidade,
-      };
-    });
-
-    if (Number(shippingCost || 0) > 0) {
-      lineItems.push({
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: 'Envio (CTT Expresso)',
-            images: ["https://placehold.co/600x600/fef3c7/92400e.png?font=montserrat&text=CTT"],
-          },
-          unit_amount: Math.round(Number(shippingCost || 0) * 100),
-        },
-        quantity: 1,
-      });
-    }
-
-    const customer = await db.get(
-      "SELECT Email FROM cliente WHERE ID_Cliente = ?",
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types:
-        requestedPaymentType === "mb_way"
-          ? ["mb_way", "card"]
-          : ["card", "mb_way"],
-      line_items: lineItems,
-      mode: 'payment',
-      locale: 'pt',
-      submit_type: 'pay',
-      billing_address_collection: 'auto',
-      success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${finalOrderId}`,
-      cancel_url: `${req.headers.origin}/cancel.html?orderId=${finalOrderId}`,
-      metadata: {
-        orderId: finalOrderId.toString(),
-        paymentPreference: requestedPaymentType,
-      },
-      customer_email: customer?.Email || undefined,
-    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    res.json({ url: session.url });
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
 
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
   } catch (error) {
-    console.error("[Stripe Debug] Error creating session:", error);
-    res.status(500).json({ 
-      error: "Falha ao criar sessão de pagamento",
-      details: error.message 
-    });
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
   }
 });
 
-app.get("/api/checkout/session-status", async (req, res) => {
-  const sessionId = req.query.session_id;
-
-  if (!stripe) {
-    return res.status(400).json({ error: "Stripe nao configurado" });
-  }
-
-  if (!sessionId) {
-    return res.status(400).json({ error: "session_id em falta" });
-  }
-
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const orderId = Number(session.metadata?.orderId);
-
-    if (!orderId) {
-      return res.status(400).json({ error: "Sessao sem orderId valido" });
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
     }
 
-    if (session.payment_status === "paid") {
-      await fulfillPaidOrder(orderId);
-    }
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
 
-    res.json({
-      orderId,
-      paymentStatus: session.payment_status,
-      status: session.status,
-    });
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
   } catch (error) {
-    console.error("Stripe session status error:", error);
-    res.status(500).json({ error: "Falha ao validar sessao Stripe" });
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-// Stripe Webhook (Placeholder)
-app.post("/api/webhooks/stripe", express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
   try {
-    if (stripe && process.env.STRIPE_WEBHOOK_SECRET) {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    } else {
-      const payload = Buffer.isBuffer(req.body)
-        ? req.body.toString("utf8")
-        : JSON.stringify(req.body);
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-      event = JSON.parse(payload);
-    }
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
 
-    if (
-      event.type === 'checkout.session.completed' ||
-      event.type === 'checkout.session.async_payment_succeeded'
-    ) {
-      const session = event.data.object;
-      const orderId = session.metadata?.orderId;
-
-      if (orderId && session.payment_status === 'paid') {
-        const result = await fulfillPaidOrder(orderId);
-        console.log(
-          `Order #${orderId} fulfilled via webhook (${result.alreadyPaid ? "already paid" : "new payment"}).`,
-        );
-      }
-    }
-
-    res.json({ received: true });
-  } catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-});
-
-// Checkout Route (Legacy/Manual for MBWay or fallback)
-app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
-  if (!req.user.checkoutVerified) {
-    return res.status(401).json({ error: "2FA_REQUIRED" });
-  }
-
-  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } = req.body;
-
-  try {
-    let items = [];
-    let subtotal = 0;
-    let finalOrderId = orderId;
-
-    if (finalOrderId) {
-      // Validate existing order
-      const order = await db.get("SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [finalOrderId, req.user.id]);
-      if (!order) return res.status(404).json({ error: "Encomenda não encontrada" });
-
-      items = await db.all("SELECT * FROM item_encomenda WHERE ID_Encomenda = ?", [finalOrderId]);
-      // Use price from item_encomenda
-      items = items.map(it => ({ ...it, Preco: it.Preco_Unitario }));
-      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-
-      const total = subtotal + Number(shippingCost || 0);
-
-      await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ? WHERE ID_Encomenda = ?",
-        [total, address, phone, nome, apelido, shippingCost, shippingType, finalOrderId]
-      );
-    } else {
-      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
-
-      items = await db.all(
-        `SELECT ic.*, p.Nome, p.Preco
-         FROM item_carrinho ic
-         JOIN produto p ON ic.ID_Produto = p.ID_Produto
-         WHERE ic.ID_Carrinho = ?`,
-        [cart.ID_Carrinho],
-      );
-
-      if (items.length === 0) return res.status(400).json({ error: "Carrinho vazio" });
-
-      subtotal = items.reduce((sum, item) => sum + item.Preco * item.Quantidade, 0);
-      const total = subtotal + Number(shippingCost || 0);
-
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
-        [req.user.id, total, address, phone, nome, apelido, shippingCost, shippingType],
-      );
-      finalOrderId = result.lastID;
-
-      for (const item of items) {
-        await db.run(
-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-          [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-        );
-      }
-    }
-
-    await syncCustomerCheckoutDetails(req.user.id, {
-      nome,
-      apelido,
-      address,
-      phone,
-    });
-
-    for (const item of items) {
-      await db.run(
-        "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
-        [item.Quantidade, item.ID_Produto],
-      );
-    }
-
-    await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
-      finalOrderId,
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
     ]);
 
-    // Clear cart for the user
-    await db.run("DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)", [req.user.id]);
-
-    res.json({ success: true, orderId: finalOrderId });
+    res.json({ message: "Palavra-passe alterada com sucesso" });
   } catch (error) {
-    console.error("Checkout error:", error);
-    res.status(500).json({ error: "Erro ao processar encomenda" });
-  }
-});
-
-// ============================================================
-// COMMUNITY Q&A ROUTES
-// ============================================================
-
-// ============================================================
-// MODERATION - Inline profanity filter
-// ============================================================
-const BAD_WORDS_LIST = [
-  "nigger","nigga","faggot","fag","chink","spic","kike","retard","cunt",
-  "fuck","shit","bitch","asshole","bastard","dick","cock","pussy","whore",
-  "slut","motherfucker","crap","prick","twat",
-  "merda","caralho","puta","foda","cona","fdp","porra","paneleiro",
-  "cabrao","corno","carago","pila","picha","cuzinho","foder"
-];
-function censorText(text) {
-  let result = text;
-  for (const word of BAD_WORDS_LIST) {
-    const escaped = word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp('\\b' + escaped + '\\b', 'gi');
-    result = result.replace(regex, function(m) { return '*'.repeat(m.length); });
-  }
-  return result;
-}
-// Get all questions (with answers and author info), sorted by votes desc
-app.get("/api/comunidade/perguntas", async (req, res) => {
-  try {
-    const perguntas = await db.all(`
-      SELECT p.*, c.Nome AS AutorNome, c.Picture AS AutorPicture, c.UserType AS AutorTipo
-      FROM pergunta_comunidade p
-      JOIN cliente c ON p.ID_Cliente = c.ID_Cliente
-      ORDER BY p.Votos DESC, p.Data_Criacao DESC
-    `);
-
-    for (const pergunta of perguntas) {
-      pergunta.respostas = await db.all(`
-        SELECT r.*, c.Nome AS AutorNome, c.Picture AS AutorPicture, c.UserType AS AutorTipo
-        FROM resposta_comunidade r
-        JOIN cliente c ON r.ID_Cliente = c.ID_Cliente
-        WHERE r.ID_Pergunta = ?
-        ORDER BY r.Melhor_Resposta DESC, r.Votos DESC, r.Data_Criacao ASC
-      `, [pergunta.ID_Pergunta]);
-    }
-
-    res.json(perguntas);
-  } catch (error) {
-    console.error("Q&A fetch error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Post a new question (authenticated)
-app.post("/api/comunidade/perguntas", authenticateToken, async (req, res) => {
-  const { texto } = req.body;
-  if (!texto || texto.trim().length < 10) {
-    return res.status(400).json({ error: "A pergunta deve ter pelo menos 10 caracteres." });
-  }
-
-  try {
-    const safeText = censorText(texto.trim());
-    const result = await db.run(
-      "INSERT INTO pergunta_comunidade (ID_Cliente, Texto) VALUES (?, ?)",
-      [req.user.id, safeText]
-    );
-    res.status(201).json({ id: result.lastID, message: "Pergunta publicada!" });
-  } catch (error) {
-    console.error("Q&A question create error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Delete a question (admin or author)
-app.delete("/api/comunidade/perguntas/:id", authenticateToken, async (req, res) => {
-  try {
-    const pergunta = await db.get("SELECT * FROM pergunta_comunidade WHERE ID_Pergunta = ?", [req.params.id]);
-    if (!pergunta) return res.status(404).json({ error: "Pergunta não encontrada." });
-    if (pergunta.ID_Cliente !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: "Sem permissão." });
-    
-    await db.run("DELETE FROM pergunta_comunidade WHERE ID_Pergunta = ?", [req.params.id]);
-    res.json({ message: "Pergunta removida." });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Post an answer to a question (authenticated)
-app.post("/api/comunidade/perguntas/:id/respostas", authenticateToken, async (req, res) => {
-  const { texto } = req.body;
-  const perguntaId = req.params.id;
-
-  if (!texto || texto.trim().length < 2) {
-    return res.status(400).json({ error: "A resposta deve ter pelo menos 2 caracteres." });
-  }
-
-  try {
-    const pergunta = await db.get("SELECT * FROM pergunta_comunidade WHERE ID_Pergunta = ?", [perguntaId]);
-    if (!pergunta) {
-      return res.status(404).json({ error: "Pergunta não encontrada." });
-    }
-
-    const safeText = censorText(texto.trim());
-    const result = await db.run(
-      "INSERT INTO resposta_comunidade (ID_Pergunta, ID_Cliente, Texto) VALUES (?, ?, ?)",
-      [perguntaId, req.user.id, safeText]
-    );
-    res.status(201).json({ id: result.lastID, message: "Resposta publicada!" });
-  } catch (error) {
-    console.error("Q&A answer create error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Vote on a question
-app.post("/api/comunidade/perguntas/:id/votar", authenticateToken, async (req, res) => {
-  try {
-    if (req.body && req.body.action === 'remove') {
-      await db.run("UPDATE pergunta_comunidade SET Votos = GREATEST(0, Votos - 1) WHERE ID_Pergunta = ?", [req.params.id]);
-      res.json({ message: "Voto removido!" });
-    } else {
-      await db.run("UPDATE pergunta_comunidade SET Votos = Votos + 1 WHERE ID_Pergunta = ?", [req.params.id]);
-      res.json({ message: "Voto registado!" });
-    }
-  } catch (error) {
-    console.error("Vote error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Vote on an answer
-app.post("/api/comunidade/respostas/:id/votar", authenticateToken, async (req, res) => {
-  try {
-    if (req.body && req.body.action === 'remove') {
-      await db.run("UPDATE resposta_comunidade SET Votos = GREATEST(0, Votos - 1) WHERE ID_Resposta = ?", [req.params.id]);
-      res.json({ message: "Voto removido!" });
-    } else {
-      await db.run("UPDATE resposta_comunidade SET Votos = Votos + 1 WHERE ID_Resposta = ?", [req.params.id]);
-      res.json({ message: "Voto registado!" });
-    }
-  } catch (error) {
-    console.error("Vote error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-app.post("/api/logs/interaction", async (req, res) => {
-  try {
-    const { tipo, pagina, dados } = req.body;
-    let userId = null;
-
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        userId = decoded.id;
-      } catch (err) {
-        // Silently ignore token verification errors for analytics logs
-      }
-    }
-
-    const dadosJson = dados ? JSON.stringify(dados) : null;
-
-    await db.run(
-      "INSERT INTO interacao (ID_Cliente, Tipo, Pagina, Dados) VALUES (?, ?, ?, ?)",
-      [userId, tipo, pagina, dadosJson]
-    );
-
-    res.status(204).send();
-  } catch (error) {
-    console.error("Log interaction error:", error);
-    res.status(204).send();
-  }
-});
-
-// ============================================================
-// SEO SLUG ROUTES
-// ============================================================
-
-// Get product by slug (public)
-app.get("/api/products/by-slug/:slug", async (req, res) => {
-  try {
-    const row = await db.get(`
-      SELECT p.*, 
-      p.Slug,
-      COALESCE(AVG(a.Nota), 0) as Rating, 
-      COUNT(a.ID_Avaliacao) as ReviewCount,
-      c.Nome as ApicultorNome,
-      c.Picture as ApicultorFoto,
-      c.Bio as ApicultorBio,
-      cat.Nome as CategoriaNome,
-      o.Nome as OrigemNome
-      FROM produto p
-      LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
-      LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
-      LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
-      LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
-      WHERE p.Slug = ? AND (p.Status = 'Aprovado' OR p.Status IS NULL)
-      GROUP BY p.ID_Produto
-    `, [req.params.slug]);
-    if (!row) return res.status(404).json({ error: "Produto não encontrado." });
-    res.json(row);
-  } catch (error) {
-    console.error("Product by slug error:", error);
+    console.error("Password update error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// Admin: Edit slug of any product
-app.patch("/api/admin/products/:id/slug", authenticateToken, isAdmin, async (req, res) => {
-  const { id } = req.params;
-  let { slug } = req.body;
-  if (!slug || !slug.trim()) {
-    return res.status(400).json({ error: "O slug é obrigatório." });
-  }
-  slug = slugify(slug);
-  if (!slug) {
-    return res.status(400).json({ error: "Slug inválido." });
-  }
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
   try {
-    // Check uniqueness
-    const existing = await db.get("SELECT ID_Produto FROM produto WHERE Slug = ? AND ID_Produto != ?", [slug, id]);
-    if (existing) {
-      return res.status(409).json({ error: "Este slug já está em uso por outro produto." });
-    }
-    await db.run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [slug, id]);
-    res.json({ message: "Slug atualizado com sucesso.", slug });
-  } catch (error) {
-    console.error("Admin update slug error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Apicultor: Edit slug of own product
-app.patch("/api/apicultor/products/:id/slug", authenticateToken, async (req, res) => {
-  if (req.user.role !== "apicultor" && req.user.role !== "admin") {
-    return res.status(403).json({ error: "Access denied." });
-  }
-  const { id } = req.params;
-  let { slug } = req.body;
-  if (!slug || !slug.trim()) {
-    return res.status(400).json({ error: "O slug é obrigatório." });
-  }
-  slug = slugify(slug);
-  if (!slug) {
-    return res.status(400).json({ error: "Slug inválido." });
-  }
-  try {
-    // Verify ownership
-    const product = await db.get("SELECT * FROM produto WHERE ID_Produto = ? AND ID_Apicultor = ?", [id, req.user.id]);
-    if (!product && req.user.role !== "admin") {
-      return res.status(404).json({ error: "Produto não encontrado ou acesso negado." });
-    }
-    // Check uniqueness
-    const existing = await db.get("SELECT ID_Produto FROM produto WHERE Slug = ? AND ID_Produto != ?", [slug, id]);
-    if (existing) {
-      return res.status(409).json({ error: "Este slug já está em uso por outro produto." });
-    }
-    await db.run("UPDATE produto SET Slug = ? WHERE ID_Produto = ?", [slug, id]);
-    res.json({ message: "Slug atualizado com sucesso.", slug });
-  } catch (error) {
-    console.error("Apicultor update slug error:", error);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// Get all site slugs (public)
-app.get("/api/site-slugs", async (req, res) => {
-  try {
-    const rows = await db.all("SELECT * FROM site_slugs ORDER BY Pagina ASC");
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
     res.json(rows);
   } catch (error) {
-    console.error("Site slugs fetch error:", error);
+    console.error("Favorites fetch error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// Admin: Update site slugs
-app.put("/api/admin/site-slugs", authenticateToken, isAdmin, async (req, res) => {
-  const { slugs } = req.body;
-  if (!Array.isArray(slugs)) {
-    return res.status(400).json({ error: "Lista de slugs inválida." });
-  }
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
   try {
-    for (const item of slugs) {
-      const cleanSlug = slugify(item.slug || item.Slug);
-      if (!cleanSlug) continue;
-      await db.run(
-        "UPDATE site_slugs SET Slug = ?, Titulo_SEO = ?, Descricao_SEO = ? WHERE Pagina = ?",
-        [cleanSlug, item.titulo_seo || item.Titulo_SEO || null, item.descricao_seo || item.Descricao_SEO || null, item.pagina || item.Pagina]
-      );
-    }
-    res.json({ message: "Slugs do site atualizados com sucesso." });
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
   } catch (error) {
-    console.error("Update site slugs error:", error);
+    console.error("Favorites add error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// Dynamic sitemap generation
-app.get("/sitemap.xml", async (req, res) => {
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
   try {
-    const [sitePages, products] = await Promise.all([
-      db.all("SELECT Pagina, Slug FROM site_slugs"),
-      db.all("SELECT Slug FROM produto WHERE Slug IS NOT NULL")
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
     ]);
 
-    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
-    const date = new Date().toISOString().split("T")[0];
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-
-    sitePages.forEach(p => {
-      const publicPath = p.Pagina === "inicio" ? "" : (p.Slug || p.Pagina);
-      xml += `  <url>\n`;
-      xml += `    <loc>${baseUrl}/${publicPath}</loc>\n`;
-      xml += `    <lastmod>${date}</lastmod>\n`;
-      xml += `    <priority>${p.Pagina === "inicio" ? "1.0" : "0.8"}</priority>\n`;
-      xml += `  </url>\n`;
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
     });
-
-    products.forEach(p => {
-      xml += `  <url>\n`;
-      xml += `    <loc>${baseUrl}/produto.html?slug=${p.Slug}</loc>\n`;
-      xml += `    <lastmod>${date}</lastmod>\n`;
-      xml += `    <priority>0.6</priority>\n`;
-      xml += `  </url>\n`;
-    });
-
-    xml += `</urlset>`;
-
-    res.header("Content-Type", "application/xml");
-    res.send(xml);
   } catch (error) {
-    console.error("Sitemap generation error:", error);
-    res.status(500).send("Error generating sitemap");
-  }
-});
-
-// ============================================================
-// SITE SETTINGS (key-value store for admin preferences)
-// ============================================================
-
-// Public: Read all site settings
-app.get("/api/site-settings", async (req, res) => {
-  try {
-    const rows = await db.all("SELECT setting_key, setting_value FROM site_settings");
-    const settings = {};
-    for (const row of rows) {
-      settings[row.setting_key] = row.setting_value;
-    }
-    res.json(settings);
-  } catch (error) {
-    console.error("Site settings fetch error:", error);
+    console.error("Profile role update error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// Admin: Update site settings
-app.put("/api/admin/site-settings", authenticateToken, isAdmin, async (req, res) => {
-  const { settings } = req.body;
-  if (!settings || typeof settings !== "object") {
-    return res.status(400).json({ error: "Formato inválido. Esperado: { settings: { key: value } }" });
-  }
-
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
   try {
-    for (const [key, value] of Object.entries(settings)) {
-      await db.run(
-        "INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
-        [key, value]
-      );
-    }
-    res.json({ message: "Definições atualizadas com sucesso." });
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
   } catch (error) {
-    console.error("Update site settings error:", error);
+    console.error("Fetch beekeepers error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// ============================================================
-// QUIZ API ROUTES
-// ============================================================
-
-// Get all quiz questions
-app.get("/api/quiz/perguntas", async (req, res) => {
-  try {
-    const questions = await db.all("SELECT * FROM quiz_pergunta ORDER BY ID_Pergunta ASC");
-    res.json(questions);
-  } catch (error) {
-    console.error("Error fetching quiz questions:", error);
-    res.status(500).json({ error: "Failed to fetch questions." });
-  }
-});
-
-// Admin: Add a new quiz question
-app.post("/api/quiz/perguntas", authenticateToken, isAdmin, async (req, res) => {
-  const { pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao } = req.body;
-  if (!pergunta || !opcao1 || !opcao2 || !opcao3 || !opcao4 || resposta_correta === undefined || !explicacao) {
-    return res.status(400).json({ error: "Missing required fields." });
-  }
-
-  try {
-    const result = await db.run(
-      "INSERT INTO quiz_pergunta (Pergunta, Opcao1, Opcao2, Opcao3, Opcao4, Resposta_Correta, Explicacao) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao]
-    );
-    res.status(201).json({ message: "Question added successfully.", id: result.insertId });
-  } catch (error) {
-    console.error("Error adding question:", error);
-    res.status(500).json({ error: "Failed to add question." });
-  }
-});
-
-// Admin: Update a quiz question
-app.put("/api/quiz/perguntas/:id", authenticateToken, isAdmin, async (req, res) => {
-  const { pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao } = req.body;
-  if (!pergunta || !opcao1 || !opcao2 || !opcao3 || !opcao4 || resposta_correta === undefined || !explicacao) {
-    return res.status(400).json({ error: "Missing required fields." });
-  }
-
-  try {
-    await db.run(
-      "UPDATE quiz_pergunta SET Pergunta = ?, Opcao1 = ?, Opcao2 = ?, Opcao3 = ?, Opcao4 = ?, Resposta_Correta = ?, Explicacao = ? WHERE ID_Pergunta = ?",
-      [pergunta, opcao1, opcao2, opcao3, opcao4, resposta_correta, explicacao, req.params.id]
-    );
-    res.json({ message: "Question updated successfully." });
-  } catch (error) {
-    console.error("Error updating question:", error);
-    res.status(500).json({ error: "Failed to update question." });
-  }
-});
-
-// Admin: Delete a quiz question
-app.delete("/api/quiz/perguntas/:id", authenticateToken, isAdmin, async (req, res) => {
-  try {
-    await db.run("DELETE FROM quiz_pergunta WHERE ID_Pergunta = ?", [req.params.id]);
-    res.json({ message: "Question deleted successfully." });
-  } catch (error) {
-    console.error("Error deleting question:", error);
-    res.status(500).json({ error: "Failed to delete question." });
-  }
-});
-
-// Submit a quiz score
-app.post("/api/quiz/score", authenticateToken, async (req, res) => {
-  const { score, maxScore } = req.body;
-  if (score === undefined || maxScore === undefined) {
-    return res.status(400).json({ error: "Missing score data." });
-  }
-
-  try {
-    await db.run(
-      "INSERT INTO quiz_score (ID_Cliente, Score, Max_Score) VALUES (?, ?, ?)",
-      [req.user.id, score, maxScore]
-    );
-    res.status(201).json({ message: "Score saved successfully." });
-  } catch (error) {
-    console.error("Error saving score:", error);
-    res.status(500).json({ error: "Failed to save score." });
-  }
-});
-
-// Get leaderboard
-app.get("/api/quiz/leaderboard", async (req, res) => {
-  try {
-    // Get global top score
-    const globalBest = await db.get(`
-      SELECT qs.Score, qs.Max_Score, c.Nome, c.Apelido, c.Username 
-      FROM quiz_score qs 
-      JOIN cliente c ON qs.ID_Cliente = c.ID_Cliente 
-      ORDER BY (qs.Score * 1.0 / qs.Max_Score) DESC, qs.Score DESC, qs.Data_Score ASC 
-      LIMIT 1
-    `);
-
-    let userBest = null;
-    
-    // Attempt to extract token manually if Authorization header is provided
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret_key");
-        if (decoded && decoded.id) {
-          userBest = await db.get(`
-            SELECT Score, Max_Score 
-            FROM quiz_score 
-            WHERE ID_Cliente = ? 
-            ORDER BY (Score * 1.0 / Max_Score) DESC, Score DESC 
-            LIMIT 1
-          `, [decoded.id]);
-        }
-      } catch(e) {
-        // invalid token, ignore user best
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
       }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
     }
+  },
+);
 
-    res.json({ globalBest, userBest });
-  } catch (error) {
-    console.error("Error fetching leaderboard:", error);
-    res.status(500).json({ error: "Failed to fetch leaderboard." });
-  }
-});
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
 
-startServer();
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
 
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
 
-// ============================================================
-// AUTOMATIC CLEANUP: Delete 'Pendente' orders older than 24h
-// ============================================================
-async function cleanupPendingOrders() {
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
-    console.log("🧹 Running cleanup for expired pending orders...");
-    const result = await db.run(`
-      DELETE FROM encomenda 
-      WHERE Status = 'Pendente' 
-      AND Data_Encomenda < DATE_SUB(NOW(), INTERVAL 1 DAY)
-    `);
-    if (result.changes > 0) {
-      console.log(`✅ Cleaned up ${result.changes} expired orders.`);
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
   } catch (error) {
-    if (error.code !== "ECONNREFUSED" && error.message !== "Database pool not initialized. Call initDB() first.") {
-        console.error("Cleanup error:", error);
-    }
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
   }
-}
-
-// Run cleanup every hour
-setInterval(cleanupPendingOrders, 60 * 60 * 1000);
-// Also run once on startup (with a small delay to ensure DB is ready)
-setTimeout(cleanupPendingOrders, 10000);
-
-initializeDatabase().catch((error) => {
-  console.error("Unexpected database bootstrap error:", error);
 });
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing product ID" });
+  try {
+    await db.run(
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      [req.user.id, productId],
+    );
+    res.json({ success: true, message: "Added to favorites" });
+  } catch (error) {
+    console.error("Favorites add error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete(
+  "/api/user/favorites/remove/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      await db.run(
+        "DELETE FROM favoritos WHERE ID_Cliente = ? AND ID_Produto = ?",
+        [req.user.id, req.params.id],
+      );
+      res.json({ success: true, message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Favorites remove error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// -----------------------------------------------------------------------------
+// UPGRADE REQUESTS
+// -----------------------------------------------------------------------------
+app.get(
+  "/api/user/upgrade-request-status",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const reqInfo = await db.get(
+        "SELECT Status as status, Descricao as message FROM upgrade_requests WHERE ID_Cliente = ? ORDER BY Data_Pedido DESC LIMIT 1",
+        [req.user.id],
+      );
+      if (!reqInfo) {
+        return res.json({ status: "none" });
+      }
+      res.json(reqInfo);
+    } catch (error) {
+      console.error("Upgrade status error:", error);
+      res.status(500).json({ error: "Database error", details: error.message });
+    }
+  },
+);
+
+app.post(
+  "/api/user/upgrade-request",
+  authenticateToken,
+  upload.single("document"),
+  async (req, res) => {
+    try {
+      const descricao = req.body.descricao || "N/A";
+      const docPath = req.file ? req.file.path : "N/A";
+
+      const existing = await db.get(
+        "SELECT ID_Request FROM upgrade_requests WHERE ID_Cliente = ? AND Status = 'Pendente'",
+        [req.user.id],
+      );
+      if (existing)
+        return res.status(400).json({ error: "Já tens um pedido pendente." });
+
+      await db.run(
+        "INSERT INTO upgrade_requests (ID_Cliente, Descricao, Documento, Status) VALUES (?, ?, ?, ?)",
+        [req.user.id, descricao, docPath, "Pendente"],
+      );
+
+      res.json({ message: "Pedido enviado com sucesso" });
+    } catch (error) {
+      console.error("Upgrade request error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update own user role (Profile view)
+app.patch("/api/user/profile/role", authenticateToken, async (req, res) => {
+  const { userType } = req.body;
+
+  try {
+    // Only allow downgrading from 'apicultor' to 'client'
+    // Users cannot upgrade themselves to 'apicultor' or 'admin' without a request
+    if (req.user.role === "client" && userType === "apicultor") {
+      return res
+        .status(403)
+        .json({
+          error: "Upgrade to Apicultor requires a verification request.",
+        });
+    }
+
+    if (userType !== "client" && userType !== "apicultor") {
+      return res.status(400).json({ error: "Invalid role target." });
+    }
+
+    if (req.user.role === userType) {
+      return res.status(400).json({ error: "User already has this role." });
+    }
+
+    // Do not allow admins to change their own role here
+    if (req.user.role === "admin") {
+      return res
+        .status(400)
+        .json({ error: "Admins cannot change their role here." });
+    }
+
+    await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+      userType,
+      req.user.id,
+    ]);
+
+    // Generate new token with updated role
+    const token = jwt.sign(
+      { id: req.user.id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({
+      message: "Role updated successfully",
+      token,
+      newRole: userType,
+    });
+  } catch (error) {
+    console.error("Profile role update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public list of beekeepers
+app.get("/api/apicultores", async (req, res) => {
+  try {
+    const rows = await db.all(
+      "SELECT ID_Cliente, Nome, Email, Picture, Bio FROM cliente WHERE UserType = 'apicultor'",
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch beekeepers error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Delete/Block user
+app.delete(
+  "/api/admin/users/:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === req.user.id) {
+        return res
+          .status(400)
+          .json({ error: "Cannot delete your own admin account" });
+      }
+      await db.run("DELETE FROM cliente WHERE ID_Cliente = ?", [id]);
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Update user role (Admin view)
+app.patch(
+  "/api/admin/users/:id/role",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    try {
+      if (parseInt(id) === req.user.id && userType !== "admin") {
+        return res
+          .status(400)
+          .json({ error: "Cannot downgrade your own admin account." });
+      }
+
+      // Make sure we only accept valid types
+      const validTypes = ["admin", "client", "apicultor"];
+      if (!validTypes.includes(userType)) {
+        return res.status(400).json({ error: "Invalid role specified." });
+      }
+
+      await db.run("UPDATE cliente SET UserType = ? WHERE ID_Cliente = ?", [
+        userType,
+        id,
+      ]);
+      res.json({ message: "User role updated successfully" });
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// USER PROFILE ROUTES
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await db.all(
+      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      [req.user.id],
+    );
+
+    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Database error", details: error.message });
+  }
+});
+
+app.put("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, address, bio } = req.body;
+    let updates = [];
+    let params = [];
+    if (name !== undefined) {
+      updates.push("Nome = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("Email = ?");
+      params.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push("Telefone = ?");
+      params.push(phone);
+    }
+    if (address !== undefined) {
+      updates.push("Morada = ?");
+      params.push(address);
+    }
+    if (bio !== undefined) {
+      updates.push("Bio = ?");
+      params.push(bio);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ error: "No fields to update" });
+
+    params.push(req.user.id);
+    await db.run(
+      `UPDATE cliente SET ${updates.join(", ")} WHERE ID_Cliente = ?`,
+      params,
+    );
+
+    const user = await db.get(
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await db.get(
+      "SELECT Senha FROM cliente WHERE ID_Cliente = ?",
+      [req.user.id],
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.Senha);
+    if (!valid)
+      return res.status(400).json({ error: "Palavra-passe atual incorreta." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.run("UPDATE cliente SET Senha = ? WHERE ID_Cliente = ?", [
+      hashed,
+      req.user.id,
+    ]);
+
+    res.json({ message: "Palavra-passe alterada com sucesso" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// FAVORITOS
+// -----------------------------------------------------------------------------
+app.get("/api/user/favorites", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(
+      `
+      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      FROM favoritos f
+      JOIN produto p ON f.ID_Produto = p.ID_Produto
+      WHERE f.ID_Cliente = ?
+    `,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Favorites fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) return res.status(400).json({ error: "Missing
