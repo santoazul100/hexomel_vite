@@ -179,56 +179,50 @@
             ></div>
           </div>
 
-          <div class="row g-4" id="featured-products">
-            <!-- Dynamically populated or static placeholders for now -->
-            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.1s">
-              <div class="product-card-premium">
-                <div class="product-img-container">
-                  <img src="/images/lavender.png" alt="Mel de Rosmaninho" />
-                </div>
-                <div class="p-4 text-center">
-                  <h4 class="fw-bold" data-i18n="home.honey1.name">Mel de Rosmaninho</h4>
-                  <p class="text-muted small" data-i18n="home.honey1.desc">
-                    Suave e aromático, colhido nas encostas ensolaradas.
-                  </p>
-                  <p class="price-text mb-3">€12.50</p>
-                  <a href="shop.html" class="btn btn-auth-enhanced login w-100" data-i18n="home.details"
-                    >Ver Detalhes</a
-                  >
-                </div>
+          <div class="product-carousel-shell position-relative animate-fade-up">
+            <!-- Header layout with navigation controls on the right -->
+            <div class="d-flex justify-content-between align-items-center mb-4 carousel-heading">
+              <span class="text-uppercase small fw-bold text-muted tracking-wider" style="visibility: hidden; width: 0;"></span>
+              <div class="carousel-nav-buttons d-flex gap-2 ms-auto">
+                <button class="carousel-btn prev-btn" id="featured-prev" aria-label="Anterior">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-btn next-btn" id="featured-next" aria-label="Seguinte">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
               </div>
             </div>
-            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.2s">
-              <div class="product-card-premium">
-                <div class="product-img-container">
-                  <img src="/images/acacia.png" alt="Mel de Urze" />
-                </div>
-                <div class="p-4 text-center">
-                  <h4 class="fw-bold" data-i18n="home.honey2.name">Mel de Urze</h4>
-                  <p class="text-muted small" data-i18n="home.honey2.desc">
-                    Intenso e rico em propriedades antioxidantes.
-                  </p>
-                  <p class="price-text mb-3">€14.00</p>
-                  <a href="shop.html" class="btn btn-auth-enhanced login w-100" data-i18n="home.details"
-                    >Ver Detalhes</a
-                  >
+
+            <div class="product-carousel" id="featured-products">
+              <!-- Dynamically populated or fallback static items -->
+              <div class="carousel-product-card">
+                <img src="/images/lavender.png" alt="Mel de Rosmaninho" onerror="this.src='/images/logo_hexomel.webp'">
+                <span>Suave</span>
+                <h4>Mel de Rosmaninho</h4>
+                <p>€12.50</p>
+                <div class="carousel-card-actions">
+                  <button class="add-to-cart-home" data-id="fallback-1"><i class="fas fa-cart-plus"></i></button>
+                  <a href="shop.html">Ver Detalhes</a>
                 </div>
               </div>
-            </div>
-            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.3s">
-              <div class="product-card-premium">
-                <div class="product-img-container">
-                  <img src="/images/wildflower.png" alt="Mel de Castanheiro" />
+              <div class="carousel-product-card">
+                <img src="/images/acacia.png" alt="Mel de Urze" onerror="this.src='/images/logo_hexomel.webp'">
+                <span>Antioxidante</span>
+                <h4>Mel de Urze</h4>
+                <p>€14.00</p>
+                <div class="carousel-card-actions">
+                  <button class="add-to-cart-home" data-id="fallback-2"><i class="fas fa-cart-plus"></i></button>
+                  <a href="shop.html">Ver Detalhes</a>
                 </div>
-                <div class="p-4 text-center">
-                  <h4 class="fw-bold" data-i18n="home.honey3.name">Mel de Castanheiro</h4>
-                  <p class="text-muted small" data-i18n="home.honey3.desc">
-                    Sabor robusto com notas amadeiradas profundas.
-                  </p>
-                  <p class="price-text mb-3">€15.50</p>
-                  <a href="shop.html" class="btn btn-auth-enhanced login w-100" data-i18n="home.details"
-                    >Ver Detalhes</a
-                  >
+              </div>
+              <div class="carousel-product-card">
+                <img src="/images/wildflower.png" alt="Mel de Castanheiro" onerror="this.src='/images/logo_hexomel.webp'">
+                <span>Robusto</span>
+                <h4>Mel de Castanheiro</h4>
+                <p>€15.50</p>
+                <div class="carousel-card-actions">
+                  <button class="add-to-cart-home" data-id="fallback-3"><i class="fas fa-cart-plus"></i></button>
+                  <a href="shop.html">Ver Detalhes</a>
                 </div>
               </div>
             </div>

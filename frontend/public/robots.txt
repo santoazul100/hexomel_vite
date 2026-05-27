@@ -1,30 +1,8 @@
-# ────────────────────────────────────────────────────────────
-# ROBOTS.TXT - HEXOMEL (PORTUGUESE HONEY PREMIUM APP)
-# ────────────────────────────────────────────────────────────
-# Configuração de indexação para motores de busca (Google, Bing, etc.)
-# Website: http://localhost:5173 (Em desenvolvimento) / http://seu-dominio.com (Em produção)
-
 User-agent: *
-
-# Páginas Públicas Permitidas (Indexar conteúdo institucional e comercial)
 Allow: /
-Allow: /index.html
-Allow: /shop.html
-Allow: /about.html
-Allow: /contact.html
-Allow: /workshops.html
-Allow: /curiosidades.html
-Allow: /comunidade.html
-Allow: /apicultores.html
-Allow: /produto.html
-Allow: /assets/
-Allow: /images/
 
-# Área Restrita / Segurança (Bloquear rastreio de páginas administrativas e privadas)
 Disallow: /admin.html
-Disallow: /admin/
 Disallow: /dashboard-apicultor.html
-Disallow: /apicultor/
 Disallow: /profile.html
 Disallow: /checkout.html
 Disallow: /success.html
@@ -32,7 +10,7 @@ Disallow: /cancel.html
 Disallow: /verify-email.html
 Disallow: /login.html
 Disallow: /register.html
+Disallow: /recuperar.html
 Disallow: /uploads/private/
 
-# Link para o Sitemap Dinâmico do site (Substituir pelo URL real em produção)
-Sitemap: http://localhost:3000/sitemap.xml
+Sitemap: https://hexomel.pt/sitemap.xml

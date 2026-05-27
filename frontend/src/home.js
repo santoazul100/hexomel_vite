@@ -4,6 +4,7 @@ import { API_URL } from "./api.js";
 const homePage = {
   async init() {
     await this.loadFeaturedProducts();
+    this.initCarouselControls();
   },
 
   async loadFeaturedProducts() {
@@ -14,39 +15,93 @@ const homePage = {
       const response = await fetch(`${API_URL}/products`);
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
-      const products = data.slice(0, 3);
 
-      if (products.length === 0) return; // Keep static HTML placeholders
+      // Filter products that are marked as featured
+      let products = data.filter((p) => Number(p.Em_Destaque) === 1);
+
+      // Fallback: If no products are marked as featured, show the first 8 products
+      if (products.length === 0) {
+        products = data.slice(0, 8);
+      }
+
+      if (products.length === 0) return; // Keep static placeholders if no products exist at all
 
       grid.innerHTML = products
-        .map(
-          (p, i) => `
-                <div class="col-md-4 animate-fade-up" style="animation-delay: ${0.1 + i * 0.1}s">
-                    <div class="product-card-premium">
-                        <div class="product-img-container">
-                            <img src="/img/${p.Imagem || "erro.png"}" alt="${p.Nome || "Mel Hexomel"}" onerror="this.src='/images/logo_hexomel.webp'" />
-                        </div>
-                        <div class="p-4 text-center">
-                            <h4 class="fw-bold">${p.Nome || "Mel Hexomel"}</h4>
-                            <p class="text-muted small">${
-                              p.Descricao || "A pureza da natureza em cada gota."
-                            }</p>
-                            <p class="price-text mb-3">€${Number(p.Preco).toFixed(2)}</p>
-                            <button class="btn btn-auth-enhanced login w-100 add-to-cart-home" data-id="${p.ID_Produto}">
-                                <i class="bi bi-cart-plus me-2"></i>Adicionar ao Carrinho
-                            </button>
-                        </div>
-                    </div>
+        .map((p) => {
+          const category = p.CategoriaNome || "Mel Puro";
+          const rating = p.Rating || 5;
+          const reviewCount = p.ReviewCount || 0;
+          const weight = "500g";
+          const origin = p.OrigemNome || "N/A";
+          const tags = p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [];
+          
+          const starsHtml = this.generateStars(rating);
+
+          const tagsHtml = tags
+            .map(
+              (tag) => `
+            <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+          `,
+            )
+            .join("");
+
+          const beekeeperHtml = p.ID_Apicultor
+            ? `<p class="smaller mb-0" style="color:var(--primary-gold); font-size: 0.78rem;">
+                <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                <span class="fw-bold">${p.ApicultorNome}</span>
+              </p>`
+            : `<p class="smaller mb-0 text-muted" style="font-size: 0.78rem;"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`;
+
+          return `
+            <div class="product-card-premium d-flex flex-column" style="flex: 0 0 300px; scroll-snap-align: start; min-height: 440px;">
+              <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='produto.html?slug=${p.Slug || ""}'">
+                <div class="product-tags-container">
+                  ${tagsHtml}
                 </div>
-            `
-        )
+                <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" onerror="this.src='/images/logo_hexomel.webp'">
+              </div>
+              <div class="p-4 d-flex flex-column flex-grow-1">
+                <div onclick="window.location.href='produto.html?slug=${p.Slug || ""}'" style="cursor: pointer" class="mb-3">
+                  <h5 class="fw-bold mb-1" style="min-height: 2.5rem; font-size: 1.15rem; color: var(--primary-green); font-family: 'Outfit', sans-serif;">${p.Nome}</h5>
+                  <div class="star-rating mb-1" style="font-size: 0.85rem;">
+                    ${starsHtml} 
+                    <span class="text-muted small">(${reviewCount})</span>
+                  </div>
+                  <p class="text-muted small mb-0">${category} • ${weight}</p>
+                  <p class="text-muted smaller mb-1" style="font-size: 0.8rem;"><i class="fas fa-map-marker-alt me-1"></i>${origin}</p>
+                  ${beekeeperHtml}
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
+                  <span class="h5 fw-bold mb-0" style="color: var(--primary-green); font-size: 1.25rem;">€${Number(p.Preco).toFixed(2)}</span>
+                  
+                  <div class="d-flex gap-2">
+                    ${p.Slug ? `
+                      <a href="produto.html?slug=${p.Slug}" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                         style="width: 34px; height: 34px; min-width: 34px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0; text-decoration: none; border-color: rgba(26, 77, 46, 0.2); color: var(--primary-green);" 
+                         title="Ver Produto">
+                        <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
+                      </a>
+                    ` : ""}
+                    <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect add-to-cart-home" 
+                            style="width: 34px; height: 34px; min-width: 34px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0; background: var(--primary-green); border: 0;" 
+                            data-id="${p.ID_Produto}"
+                            title="Adicionar ao Carrinho">
+                      <i class="fas fa-shopping-cart" style="font-size: 0.75rem; color: white;"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        })
         .join("");
 
       // Bind click events for add-to-cart
       grid.querySelectorAll(".add-to-cart-home").forEach((btn) => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
           const id = parseInt(btn.dataset.id);
-          const product = products.find((p) => p.ID_Produto === id);
+          const product = data.find((p) => p.ID_Produto === id);
           if (product && app && typeof app.addToCart === "function") {
             app.addToCart(product);
           }
@@ -54,8 +109,35 @@ const homePage = {
       });
     } catch (error) {
       console.warn("Home featured products: using static HTML fallback.", error);
-      // Keep the existing static HTML products as fallback
     }
+  },
+
+  generateStars(rating) {
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+    const emptyStars = 5 - fullStars - halfStar;
+    
+    return `
+      ${'<i class="fas fa-star text-warning"></i>'.repeat(fullStars)}
+      ${halfStar ? '<i class="fas fa-star-half-alt text-warning"></i>' : ""}
+      ${'<i class="far fa-star text-muted"></i>'.repeat(emptyStars)}
+    `;
+  },
+
+  initCarouselControls() {
+    const prevBtn = document.getElementById("featured-prev");
+    const nextBtn = document.getElementById("featured-next");
+    const carousel = document.getElementById("featured-products");
+
+    if (!prevBtn || !nextBtn || !carousel) return;
+
+    prevBtn.addEventListener("click", () => {
+      carousel.scrollBy({ left: -324, behavior: "smooth" });
+    });
+
+    nextBtn.addEventListener("click", () => {
+      carousel.scrollBy({ left: 324, behavior: "smooth" });
+    });
   },
 };
 

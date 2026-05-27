@@ -222,7 +222,10 @@
 
           <!-- Products Feed -->
           <div class="col-lg-9">
-            <div class="shop-search-container mb-4">
+            <div class="shop-toolbar mb-5 animate-fade-up">
+              
+              <div class="shop-toolbar-actions">
+                <div class="shop-search-container">
               <div class="premium-search-wrapper">
                 <i class="fas fa-search search-icon"></i>
                 <input 
@@ -233,15 +236,11 @@
                   autocomplete="off"
                 >
                 <button id="clear-search" class="clear-search-btn d-none">&times;</button>
+                <div id="search-suggestions" class="search-suggestions-panel d-none"></div>
               </div>
             </div>
             
-            <div
-              class="d-flex justify-content-between align-items-center mb-5 animate-fade-up"
-            >
-              <h2 class="display-6 fw-bold mb-0" data-i18n="shop.title">Nossos Produtos</h2>
-              <div class="d-flex align-items-center">
-                <span class="text-muted small me-2">Ordenar:</span>
+              <div class="shop-sort-wrap">
                 <select
                   id="sort-select"
                   class="form-select border-0 bg-transparent fw-bold"
@@ -253,10 +252,12 @@
                 </select>
               </div>
             </div>
+            </div>
 
             <div class="row g-4" id="products-grid">
               <!-- Products will be dynamically injected here using main.js/shop.js -->
             </div>
+            <div id="products-pagination" class="products-pagination d-none"></div>
           </div>
         </div>
       </div>

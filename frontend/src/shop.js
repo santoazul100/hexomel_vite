@@ -7,8 +7,17 @@ import Swal from "sweetalert2";
 import { logInteraction, trackPageView } from "./analytics.js";
 import { Skeleton } from "./skeleton.js";
 
-// Fallback images if files don't exist
-const fallbackImage = "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey";
+// Easy-to-edit config
+const SHOP_CONFIG = {
+  fallbackImage: "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey",
+  productsPerPage: 9,
+  maxSuggestions: 6,
+  minSearchCharsForSuggestions: 2,
+  minSearchCharsForAnalytics: 3,
+  searchAnalyticsDebounceMs: 1000,
+  defaultPriceFallback: 100,
+  skeletonProductCount: 6,
+};
 
 // State
 let products = [];
@@ -16,6 +25,208 @@ let filteredProducts = [];
 let categories = [];
 let origins = [];
 let userFavorites = [];
+let activeSuggestionIndex = -1;
+let currentSuggestions = [];
+let currentPage = 1;
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function getSearchSuggestionPool() {
+  const suggestions = new Map();
+
+  products.forEach((product) => {
+    [
+      product.name,
+      product.category,
+      product.origin,
+      product.apicultorName,
+      ...(product.tags || []),
+    ]
+      .filter(Boolean)
+      .forEach((value) => {
+        const normalized = value.trim();
+        const key = normalized.toLowerCase();
+        if (key && !suggestions.has(key)) {
+          suggestions.set(key, normalized);
+        }
+      });
+  });
+
+  return Array.from(suggestions.values());
+}
+
+function setActiveSuggestion(index) {
+  const items = document.querySelectorAll(".search-suggestion-item");
+  items.forEach((item, itemIndex) => {
+    item.classList.toggle("active", itemIndex === index);
+  });
+  activeSuggestionIndex = index;
+}
+
+function hideSuggestions() {
+  const suggestionsBox = document.getElementById("search-suggestions");
+  if (!suggestionsBox) return;
+
+  suggestionsBox.innerHTML = "";
+  suggestionsBox.classList.add("d-none");
+  currentSuggestions = [];
+  activeSuggestionIndex = -1;
+}
+
+function applySuggestion(value) {
+  const searchInput = document.getElementById("product-search");
+  if (!searchInput) return;
+
+  searchInput.value = value;
+  syncSearchUi(value.trim());
+  hideSuggestions();
+  applyFilters();
+  searchInput.focus();
+}
+
+function renderSuggestions(searchTerm) {
+  const suggestionsBox = document.getElementById("search-suggestions");
+  if (!suggestionsBox) return;
+
+  const normalizedTerm = searchTerm.toLowerCase().trim();
+  if (normalizedTerm.length < SHOP_CONFIG.minSearchCharsForSuggestions) {
+    hideSuggestions();
+    return;
+  }
+
+  currentSuggestions = getSearchSuggestionPool()
+    .filter((value) => value.toLowerCase().includes(normalizedTerm))
+    .slice(0, SHOP_CONFIG.maxSuggestions);
+
+  if (currentSuggestions.length === 0) {
+    hideSuggestions();
+    return;
+  }
+
+  suggestionsBox.innerHTML = currentSuggestions
+    .map(
+      (value, index) => `
+        <button
+          type="button"
+          class="search-suggestion-item"
+          data-suggestion-index="${index}"
+          data-suggestion-value="${escapeHtml(value)}"
+        >
+          <i class="fas fa-search"></i>
+          <span>${escapeHtml(value)}</span>
+        </button>
+      `,
+    )
+    .join("");
+
+  suggestionsBox.classList.remove("d-none");
+  activeSuggestionIndex = -1;
+
+  suggestionsBox.querySelectorAll(".search-suggestion-item").forEach((button) => {
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      applySuggestion(button.dataset.suggestionValue || "");
+    });
+  });
+}
+
+function syncSearchUi(searchTerm = "") {
+  const clearButton = document.getElementById("clear-search");
+  if (!clearButton) return;
+
+  clearButton.classList.toggle("d-none", !searchTerm);
+}
+
+function initSearchControls() {
+  const searchInput = document.getElementById("product-search");
+  const clearButton = document.getElementById("clear-search");
+  if (!searchInput) return;
+
+  searchInput.addEventListener("input", () => {
+    const term = searchInput.value.trim();
+    syncSearchUi(term);
+    renderSuggestions(term);
+    applyFilters();
+  });
+
+  searchInput.addEventListener("search", () => {
+    const term = searchInput.value.trim();
+    syncSearchUi(term);
+    renderSuggestions(term);
+    applyFilters();
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (currentSuggestions.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex =
+        activeSuggestionIndex < currentSuggestions.length - 1
+          ? activeSuggestionIndex + 1
+          : 0;
+      setActiveSuggestion(nextIndex);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const nextIndex =
+        activeSuggestionIndex > 0
+          ? activeSuggestionIndex - 1
+          : currentSuggestions.length - 1;
+      setActiveSuggestion(nextIndex);
+      return;
+    }
+
+    if (event.key === "Enter" && activeSuggestionIndex >= 0) {
+      event.preventDefault();
+      applySuggestion(currentSuggestions[activeSuggestionIndex]);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      hideSuggestions();
+    }
+  });
+
+  searchInput.addEventListener("blur", () => {
+    window.setTimeout(hideSuggestions, 120);
+  });
+
+  searchInput.addEventListener("focus", () => {
+    const term = searchInput.value.trim();
+    if (term.length >= SHOP_CONFIG.minSearchCharsForSuggestions) {
+      renderSuggestions(term);
+    }
+  });
+
+  if (clearButton) {
+    clearButton.addEventListener("click", () => {
+      searchInput.value = "";
+      syncSearchUi();
+      hideSuggestions();
+      applyFilters();
+      searchInput.focus();
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    const wrapper = event.target.closest(".premium-search-wrapper");
+    if (!wrapper) {
+      hideSuggestions();
+    }
+  });
+
+  syncSearchUi(searchInput.value.trim());
+}
 
 // Fetch products from API and categories
 async function fetchProducts() {
@@ -26,7 +237,7 @@ async function fetchProducts() {
 
   // Mostrar skeleton placeholders enquanto carrega
   if (grid) {
-    grid.innerHTML = Skeleton.productGrid(6);
+    grid.innerHTML = Skeleton.productGrid(SHOP_CONFIG.skeletonProductCount);
   }
 
   try {
@@ -160,18 +371,82 @@ function initPriceSlider(max) {
   priceVal.textContent = max + "€";
 }
 
+function renderPagination() {
+  const pagination = document.getElementById("products-pagination");
+  if (!pagination) return;
+
+  const totalPages = Math.ceil(filteredProducts.length / SHOP_CONFIG.productsPerPage);
+  if (totalPages <= 1) {
+    pagination.innerHTML = "";
+    pagination.classList.add("d-none");
+    return;
+  }
+
+  pagination.classList.remove("d-none");
+
+  const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+    const page = index + 1;
+    return `
+      <button
+        type="button"
+        class="pagination-pill ${page === currentPage ? "active" : ""}"
+        onclick="window.goToProductsPage(${page})"
+      >
+        ${page}
+      </button>
+    `;
+  }).join("");
+
+  pagination.innerHTML = `
+    <button
+      type="button"
+      class="pagination-pill pagination-nav"
+      onclick="window.goToProductsPage(${currentPage - 1})"
+      ${currentPage === 1 ? "disabled" : ""}
+    >
+      Anterior
+    </button>
+    <div class="pagination-pages">${pageButtons}</div>
+    <button
+      type="button"
+      class="pagination-pill pagination-nav"
+      onclick="window.goToProductsPage(${currentPage + 1})"
+      ${currentPage === totalPages ? "disabled" : ""}
+    >
+      Seguinte
+    </button>
+  `;
+}
+
 // Render products (Nike Style)
 function renderProducts() {
   const grid = document.getElementById("products-grid");
+  const pagination = document.getElementById("products-pagination");
 
   if (!grid) return;
 
   if (filteredProducts.length === 0) {
     grid.innerHTML = Skeleton.stateEmpty('Nenhum produto encontrado com os filtros selecionados.', 'fa-search');
+    if (pagination) {
+      pagination.innerHTML = "";
+      pagination.classList.add("d-none");
+    }
     return;
   }
 
-  grid.innerHTML = filteredProducts
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / SHOP_CONFIG.productsPerPage),
+  );
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const startIndex = (currentPage - 1) * SHOP_CONFIG.productsPerPage;
+  const paginatedProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + SHOP_CONFIG.productsPerPage,
+  );
+
+  grid.innerHTML = paginatedProducts
     .map(
       (product) => `
     <div class="col-md-6 col-lg-4 mb-4">
@@ -186,7 +461,7 @@ function renderProducts() {
               )
               .join("")}
           </div>
-          <img src="${product.image}" alt="${product.name}" onerror="this.src='${fallbackImage}'">
+          <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
         </div>
         <div class="p-4 d-flex flex-column flex-grow-1">
           <div onclick="window.openProductDetails(${product.id})" style="cursor: pointer" class="mb-3">
@@ -238,7 +513,23 @@ function renderProducts() {
   `,
     )
     .join("");
+
+  renderPagination();
 }
+
+window.goToProductsPage = function (page) {
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / SHOP_CONFIG.productsPerPage),
+  );
+  if (page < 1 || page > totalPages) return;
+
+  currentPage = page;
+  renderProducts();
+
+  const toolbar = document.querySelector(".shop-toolbar");
+  toolbar?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+};
 
 // Filtering Logic
 function applyFilters() {
@@ -256,7 +547,9 @@ function applyFilters() {
   ).map((cb) => cb.value);
 
   // 2. Get price range
-  const maxPrice = Number(document.getElementById("priceRange")?.value || 100);
+  const maxPrice = Number(
+    document.getElementById("priceRange")?.value || SHOP_CONFIG.defaultPriceFallback,
+  );
 
   // 3. Get search term
   const searchInput = document.getElementById("product-search");
@@ -293,8 +586,17 @@ function applyFilters() {
     if (searchTerm) {
       const nameMatch = p.name.toLowerCase().includes(searchTerm);
       const descMatch = p.description?.toLowerCase().includes(searchTerm);
-      const tagMatch = p.tags?.some(t => t.toLowerCase().includes(searchTerm));
-      searchMatch = nameMatch || descMatch || tagMatch;
+      const tagMatch = p.tags?.some((t) => t.toLowerCase().includes(searchTerm));
+      const originMatch = p.origin?.toLowerCase().includes(searchTerm);
+      const categoryMatch = p.category?.toLowerCase().includes(searchTerm);
+      const sellerMatch = p.apicultorName?.toLowerCase().includes(searchTerm);
+      searchMatch =
+        nameMatch ||
+        descMatch ||
+        tagMatch ||
+        originMatch ||
+        categoryMatch ||
+        sellerMatch;
     }
 
     let priceMatch = p.price <= maxPrice;
@@ -303,11 +605,11 @@ function applyFilters() {
   });
 
   // Track Search (Debounced logic or only if searchTerm has length)
-  if (searchTerm.length >= 3) {
+  if (searchTerm.length >= SHOP_CONFIG.minSearchCharsForAnalytics) {
     if (window.searchLogTimeout) clearTimeout(window.searchLogTimeout);
     window.searchLogTimeout = setTimeout(() => {
         logInteraction("search", { term: searchTerm, resultsCount: filteredProducts.length });
-    }, 1000); // 1s debounce
+    }, SHOP_CONFIG.searchAnalyticsDebounceMs);
   }
 
   // 3. Apply Multi-Directional Sorting
@@ -323,6 +625,7 @@ function applyFilters() {
     filteredProducts.sort((a, b) => b.id - a.id);
   }
 
+  currentPage = 1;
   renderProducts();
 }
 
@@ -340,7 +643,7 @@ window.openProductDetails = async function (productId) {
         <button class="details-close-minimal" onclick="window.closeProductDetails()">×</button>
         
         <div class="details-image-section">
-          <img src="${product.image}" onerror="this.src='${fallbackImage}'" alt="${product.name}">
+          <img src="${product.image}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'" alt="${product.name}">
         </div>
         
         <div class="details-info-section">
@@ -725,6 +1028,7 @@ window.submitReview = async (productId) => {
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
   trackPageView(); // Log page view
+  initSearchControls();
   await fetchProducts();
   await fetchFavorites(); // Get latest from DB
 

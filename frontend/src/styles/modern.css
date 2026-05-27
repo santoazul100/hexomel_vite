@@ -3204,3 +3204,168 @@ aside {
     text-align: center;
   }
 }
+
+/* --- Premium Homepage Product Carousel --- */
+.product-carousel-shell {
+  background: radial-gradient(circle at bottom right, rgba(26, 77, 46, 0.02), transparent 70%);
+  border-radius: 32px;
+  padding: 1rem 0.5rem 1.5rem;
+}
+
+.carousel-heading {
+  margin-bottom: 0.5rem;
+}
+
+.carousel-btn {
+  background: white;
+  border: 1px solid rgba(26, 77, 46, 0.12);
+  color: var(--primary-green);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+
+.carousel-btn:hover {
+  background: var(--primary-green);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(26, 77, 46, 0.15);
+}
+
+.product-carousel {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 0.5rem 0.2rem 1.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 77, 46, 0.2) transparent;
+}
+
+.product-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+
+.product-carousel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.product-carousel::-webkit-scrollbar-thumb {
+  background: rgba(26, 77, 46, 0.15);
+  border-radius: 10px;
+}
+
+/* Smaller Carousel Cards */
+.carousel-product-card {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  background: white;
+  border: 1px solid rgba(26, 77, 46, 0.06);
+  border-radius: 20px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-sm);
+}
+
+.carousel-product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-premium);
+  border-color: rgba(26, 77, 46, 0.12);
+}
+
+.carousel-product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  border-radius: 14px;
+  background: #fdfdfd;
+  padding: 0.5rem;
+  transition: transform 0.5s ease;
+}
+
+.carousel-product-card:hover img {
+  transform: scale(1.05);
+}
+
+.carousel-product-card span {
+  font-size: 0.75rem;
+  color: var(--secondary-gold);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+
+.carousel-product-card h4 {
+  font-size: 1.15rem;
+  color: var(--primary-green);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.carousel-product-card p {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  margin-bottom: 1rem;
+}
+
+.carousel-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.carousel-card-actions button {
+  background: rgba(26, 77, 46, 0.06);
+  border: none;
+  color: var(--primary-green);
+  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: var(--transition-smooth);
+}
+
+.carousel-card-actions button:hover {
+  background: var(--primary-green);
+  color: white;
+}
+
+.carousel-card-actions a {
+  flex-grow: 1;
+  background: var(--primary-green);
+  color: white;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  height: 44px;
+  transition: var(--transition-smooth);
+}
+
+.carousel-card-actions a:hover {
+  background: var(--primary-green-dark);
+  box-shadow: 0 4px 10px rgba(26, 77, 46, 0.15);
+}
+
+@media (max-width: 991px) {
+  .product-carousel {
+    gap: 1rem;
+  }
+}

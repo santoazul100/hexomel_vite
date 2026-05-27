@@ -1655,6 +1655,9 @@ class AdminUI {
                     </span>
                 </td>
                 <td class="text-end">
+                    <button class="btn-action-premium me-1" onclick="adminUI.toggleProductFeatured('${p.ID_Produto}', ${p.Em_Destaque ? 0 : 1})" title="${p.Em_Destaque ? 'Remover Destaque' : 'Destacar'}">
+                        <i class="${p.Em_Destaque ? "fas fa-star text-warning" : "far fa-star text-muted"}" style="font-size: 0.85rem;"></i>
+                    </button>
                     ${
                       p.Status === "Pendente"
                         ? `
@@ -1833,6 +1836,29 @@ class AdminUI {
       Swal.fire({
         icon: "success",
         title: `Produto ${status}`,
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      await this.loadProducts();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async toggleProductFeatured(id, emDestaque) {
+    try {
+      const response = await fetch(`${API_URL}/admin/products/${id}/featured`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ emDestaque }),
+      });
+      if (!response.ok) throw new Error("Falha ao atualizar destaque do produto");
+      Swal.fire({
+        icon: "success",
+        title: emDestaque ? "Produto Destacado" : "Destaque Removido",
         timer: 1000,
         showConfirmButton: false,
       });
@@ -2165,6 +2191,8 @@ class AdminUI {
     document.getElementById("prod-imagem").value = ""; // Clear hidden path
     document.getElementById("prod-image-preview").style.display = "none";
     document.getElementById("prod-image-placeholder").style.display = "block";
+    const destaqueInput = document.getElementById("prod-destaque");
+    if (destaqueInput) destaqueInput.checked = false;
 
     document.getElementById("modalTitle").innerText = "Novo Produto";
     this.currentTags.clear(); // Clear tags on form reset
@@ -2189,6 +2217,9 @@ class AdminUI {
 
     const slugInput = document.getElementById("prod-slug");
     if (slugInput) slugInput.value = p.Slug || "";
+
+    const destaqueInput = document.getElementById("prod-destaque");
+    if (destaqueInput) destaqueInput.checked = Boolean(p.Em_Destaque);
 
     // Handle Image
     document.getElementById("prod-imagem").value = p.Imagem || "";
@@ -2228,6 +2259,7 @@ class AdminUI {
     const descricao = document.getElementById("prod-descricao").value;
     let imagem = document.getElementById("prod-imagem").value; // Default to existing
     const tags = Array.from(this.currentTags).join(", ");
+    const emDestaque = document.getElementById("prod-destaque")?.checked ? 1 : 0;
 
     // Handle File Upload
     const fileInput = document.getElementById("prod-image-file");
@@ -2276,6 +2308,7 @@ class AdminUI {
           descricao,
           imagem,
           tags,
+          emDestaque,
         }),
       });
       if (!response.ok) throw new Error("Erro ao guardar produto");

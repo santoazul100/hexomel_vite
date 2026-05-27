@@ -1019,6 +1019,8 @@ const runDatabaseMigrations = async () => {
       )
       .catch((err) => console.error("Error creating menu_nav table:", err));
 
+    await db.run("ALTER TABLE produto ADD COLUMN Em_Destaque tinyint(1) DEFAULT 0").catch(() => {});
+
     const menuCount = await db
       .get("SELECT COUNT(*) as c FROM menu_nav")
       .catch(() => ({ c: 1 }));
@@ -2548,11 +2550,12 @@ app.post(
       descricao,
       imagem,
       tags,
+      emDestaque,
     } = req.body;
     try {
       const slug = await generateUniqueSlug(slugify(nome));
       const result = await db.run(
-        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, Slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, Slug, Em_Destaque) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           nome,
           preco,
@@ -2563,6 +2566,7 @@ app.post(
           imagem,
           tags,
           slug,
+          emDestaque ? 1 : 0,
         ],
       );
       const newProduct = await db.get(
@@ -2593,10 +2597,11 @@ app.put(
       descricao,
       imagem,
       tags,
+      emDestaque,
     } = req.body;
     try {
       await db.run(
-        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Imagem = ?, Tags = ? WHERE ID_Produto = ?",
+        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Imagem = ?, Tags = ?, Em_Destaque = ? WHERE ID_Produto = ?",
         [
           nome,
           preco,
@@ -2606,6 +2611,7 @@ app.put(
           descricao,
           imagem,
           tags,
+          emDestaque ? 1 : 0,
           id,
         ],
       );
@@ -2642,6 +2648,30 @@ app.patch(
       res.json({ message: "Product status updated successfully", status });
     } catch (error) {
       console.error("Update product status error:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  },
+);
+
+// Toggle product featured status (Admin only)
+app.patch(
+  "/api/admin/products/:id/featured",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { emDestaque } = req.body;
+    try {
+      await db.run("UPDATE produto SET Em_Destaque = ? WHERE ID_Produto = ?", [
+        emDestaque ? 1 : 0,
+        id,
+      ]);
+      res.json({
+        message: "Product featured status updated successfully",
+        emDestaque: emDestaque ? 1 : 0,
+      });
+    } catch (error) {
+      console.error("Update product featured status error:", error);
       res.status(500).json({ error: "Database error" });
     }
   },
