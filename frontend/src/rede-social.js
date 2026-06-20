@@ -1181,8 +1181,7 @@ class SocialNetworkUI {
     }, 3000);
 
     const chatMsgInput = document.getElementById("chat-message-input");
-    if (chatMsgInput && prefill) {
-      chatMsgInput.value = prefill;
+    if (chatMsgInput) {
       chatMsgInput.focus();
     }
   }
