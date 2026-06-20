@@ -43,10 +43,10 @@ Para garantir que a secção da comunidade se mantém num ambiente familiar e se
 O frontend utiliza a API DOM moderna para construir a interface de utilizador em tempo real, sem necessidade de recarregar a página (Single Page Application UX):
 
 - **Renderização Dinâmica**: Os templates HTML são gerados com `template literals`, permitindo injeção segura (via escape de HTML para prevenção de XSS) de dados variáveis.
-- **Destaque Visual para Apicultores**: O algoritmo verifica se `AutorTipo` é `apicultor` (ou `admin`). Se for, a resposta é formatada com classes CSS premium (`qa-answer-beekeeper`), recebendo um fundo diferenciado, o badge "Apicultor Verificado" e avatares com as cores da marca (Verde Floresta e Ouro).
+- **Destaque Visual para Apicultores**: O algoritmo verifica se `AutorTipo` é `apicultor` (ou `admin`). Se for, a resposta é formatada com classes CSS (`qa-answer-beekeeper`), recebendo um fundo diferenciado, o badge "Apicultor Verificado" e avatares com as cores da marca (Verde Floresta e Ouro).
 - **Gestão de Mensagens**: Quando a página processa cada pergunta ou resposta, compara o ID do autor com o do utilizador autenticado (`this.user`). Se for o próprio ou um Admin, é renderizado dinamicamente um botão de "lixo" (`.qa-delete-btn`) acompanhado de um SweetAlert2 de confirmação que impede eliminações acidentais.
 - **Gestão de Sessão (JWT)**: O script `comunidade.js` interceta retornos HTTP `401 Unauthorized`. Se a sessão (token JWT no `localStorage`) expirar, o frontend limpa o armazenamento local e apresenta um alerta moderno utilizando a biblioteca **SweetAlert2**, redirecionando o utilizador para o fluxo de autenticação.
 
 ## 6. Experiência de Utilizador (UX/UI)
-- **Glassmorphism & Animações**: Elementos visuais flutuantes (abelhas) e transições suaves (`animate-fade-up`) garantem uma estética orgânica e "premium".
+- **Glassmorphism & Animações**: Elementos visuais flutuantes (abelhas) e transições suaves (`animate-fade-up`) garantem uma estética orgânica.
 - **SweetAlert2**: Substituição total das caixas de diálogo nativas do browser por popups estilizados e responsivos (SweetAlert2) para confirmações de eliminação, alertas de erro, sucesso ou expiração de sessão.

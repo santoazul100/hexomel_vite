@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS `cliente` (
   `UserType` varchar(20) DEFAULT 'client',
   `Bio` TEXT DEFAULT NULL,
   `Data_Resgistro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `Restrito_Postar` BOOLEAN DEFAULT FALSE,
+  `Favoritos_Publicos` BOOLEAN DEFAULT FALSE,
+  `Encomendas_Publicas` BOOLEAN DEFAULT FALSE,
   PRIMARY KEY (`ID_Cliente`),
   UNIQUE KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -242,4 +245,52 @@ CREATE TABLE IF NOT EXISTS `resposta_comunidade` (
   CONSTRAINT `fk_resposta_pergunta` FOREIGN KEY (`ID_Pergunta`) REFERENCES `pergunta_comunidade` (`ID_Pergunta`) ON DELETE CASCADE,
   CONSTRAINT `fk_resposta_cliente` FOREIGN KEY (`ID_Cliente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: mensagem_privada
+CREATE TABLE IF NOT EXISTS `mensagem_privada` (
+  `ID_Mensagem` int(10) NOT NULL AUTO_INCREMENT,
+  `ID_Remetente` int(10) NOT NULL,
+  `ID_Destinatario` int(10) NOT NULL,
+  `Texto` TEXT NOT NULL,
+  `Data_Envio` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `Lida` BOOLEAN DEFAULT FALSE,
+  PRIMARY KEY (`ID_Mensagem`),
+  KEY `ID_Remetente` (`ID_Remetente`),
+  KEY `ID_Destinatario` (`ID_Destinatario`),
+  CONSTRAINT `fk_msg_remetente` FOREIGN KEY (`ID_Remetente`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE,
+  CONSTRAINT `fk_msg_destinatario` FOREIGN KEY (`ID_Destinatario`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: bloqueio
+CREATE TABLE IF NOT EXISTS `bloqueio` (
+  `ID_Bloqueador` int(10) NOT NULL,
+  `ID_Bloqueado` int(10) NOT NULL,
+  `Data_Bloqueio` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`ID_Bloqueador`, `ID_Bloqueado`),
+  CONSTRAINT `fk_block_bloqueador` FOREIGN KEY (`ID_Bloqueador`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE,
+  CONSTRAINT `fk_block_bloqueado` FOREIGN KEY (`ID_Bloqueado`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- Table: denuncia
+CREATE TABLE IF NOT EXISTS `denuncia` (
+  `ID_Denuncia` int(10) NOT NULL AUTO_INCREMENT,
+  `ID_Denunciante` int(10) NOT NULL,
+  `ID_Denunciado` int(10) NOT NULL,
+  `Tipo_Item` VARCHAR(50) NOT NULL, -- 'pergunta', 'resposta', 'mensagem', 'perfil'
+  `ID_Item` int(10) DEFAULT NULL,
+  `Texto_Item` TEXT DEFAULT NULL,
+  `Motivo` TEXT DEFAULT NULL,
+  `Data_Denuncia` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `Status` VARCHAR(20) DEFAULT 'Pendente', -- 'Pendente', 'Resolvido'
+  PRIMARY KEY (`ID_Denuncia`),
+  CONSTRAINT `fk_denuncia_denunciante` FOREIGN KEY (`ID_Denunciante`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE,
+  CONSTRAINT `fk_denuncia_denunciado` FOREIGN KEY (`ID_Denunciado`) REFERENCES `cliente` (`ID_Cliente`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 

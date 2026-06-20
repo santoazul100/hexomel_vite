@@ -46,23 +46,23 @@ const homePage = {
             .join("");
 
           const beekeeperHtml = p.ID_Apicultor
-            ? `<p class="smaller mb-0" style="color:var(--primary-gold); font-size: 0.78rem;">
-                <i class="fas fa-user-tie me-1"></i>Vendido por: 
+            ? `<p class="smaller mb-0" style="color: #f4b400; font-size: 0.78rem;">
+                <i class="fas fa-user me-1"></i>Vendido por: 
                 <span class="fw-bold">${p.ApicultorNome}</span>
               </p>`
             : `<p class="smaller mb-0 text-muted" style="font-size: 0.78rem;"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`;
 
           return `
             <div class="product-card-premium d-flex flex-column" style="flex: 0 0 300px; scroll-snap-align: start; min-height: 440px;">
-              <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='produto.html?slug=${p.Slug || ""}'">
+              <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${p.Slug || ""}'">
                 <div class="product-tags-container">
                   ${tagsHtml}
                 </div>
-                <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" onerror="this.src='/images/logo_hexomel.webp'">
+                <img src="${p.Imagem || "/images/default-product.png"}" alt="${p.Nome}" onerror="this.src='/images/default-product.png'">
               </div>
               <div class="p-4 d-flex flex-column flex-grow-1">
-                <div onclick="window.location.href='produto.html?slug=${p.Slug || ""}'" style="cursor: pointer" class="mb-3">
-                  <h5 class="fw-bold mb-1" style="min-height: 2.5rem; font-size: 1.15rem; color: var(--primary-green); font-family: 'Outfit', sans-serif;">${p.Nome}</h5>
+                <div onclick="window.location.href='/produto/${p.Slug || ""}'" style="cursor: pointer" class="mb-3">
+                  <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${p.Nome}</h5>
                   <div class="star-rating mb-1" style="font-size: 0.85rem;">
                     ${starsHtml} 
                     <span class="text-muted small">(${reviewCount})</span>
@@ -76,7 +76,7 @@ const homePage = {
                   
                   <div class="d-flex gap-2">
                     ${p.Slug ? `
-                      <a href="produto.html?slug=${p.Slug}" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                      <a href="/produto/${p.Slug}" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
                          style="width: 34px; height: 34px; min-width: 34px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0; text-decoration: none; border-color: rgba(26, 77, 46, 0.2); color: var(--primary-green);" 
                          title="Ver Produto">
                         <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
@@ -95,7 +95,7 @@ const homePage = {
           `;
         })
         .join("");
-
+      
       // Bind click events for add-to-cart
       grid.querySelectorAll(".add-to-cart-home").forEach((btn) => {
         btn.addEventListener("click", (e) => {
@@ -107,21 +107,48 @@ const homePage = {
           }
         });
       });
+
+      // Render dots
+      this.renderCarouselDots(products.length);
     } catch (error) {
       console.warn("Home featured products: using static HTML fallback.", error);
     }
   },
 
+  renderCarouselDots(count) {
+    const dotsContainer = document.getElementById("featured-carousel-dots");
+    if (!dotsContainer) return;
+
+    if (count <= 1) {
+      dotsContainer.innerHTML = "";
+      return;
+    }
+
+    let dotsHtml = "";
+    for (let i = 0; i < count; i++) {
+      dotsHtml += `
+        <button class="carousel-dot ${i === 0 ? 'active' : ''}" 
+                data-index="${i}" 
+                aria-label="Slide ${i + 1}"
+                onclick="document.getElementById('featured-products').scrollTo({ left: ${i * 324}, behavior: 'smooth' })">
+        </button>
+      `;
+    }
+    dotsContainer.innerHTML = dotsHtml;
+  },
+
   generateStars(rating) {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
-    const emptyStars = 5 - fullStars - halfStar;
-    
-    return `
-      ${'<i class="fas fa-star text-warning"></i>'.repeat(fullStars)}
-      ${halfStar ? '<i class="fas fa-star-half-alt text-warning"></i>' : ""}
-      ${'<i class="far fa-star text-muted"></i>'.repeat(emptyStars)}
-    `;
+    let starsHtml = "";
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating) {
+        starsHtml += '<i class="fas fa-star filled" style="color: #f4b400"></i>';
+      } else if (i - 0.5 <= rating) {
+        starsHtml += '<i class="fas fa-star-half-alt filled" style="color: #f4b400"></i>';
+      } else {
+        starsHtml += '<i class="far fa-star" style="color: #ddd"></i>';
+      }
+    }
+    return starsHtml;
   },
 
   initCarouselControls() {
@@ -137,6 +164,19 @@ const homePage = {
 
     nextBtn.addEventListener("click", () => {
       carousel.scrollBy({ left: 324, behavior: "smooth" });
+    });
+
+    // Synchronize dots on scroll
+    carousel.addEventListener("scroll", () => {
+      const scrollIndex = Math.round(carousel.scrollLeft / 324);
+      const dots = document.querySelectorAll("#featured-carousel-dots .carousel-dot");
+      dots.forEach((dot, idx) => {
+        if (idx === scrollIndex) {
+          dot.classList.add("active");
+        } else {
+          dot.classList.remove("active");
+        }
+      });
     });
   },
 };

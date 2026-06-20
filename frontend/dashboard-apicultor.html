@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hexomel - Apicultor Dashboard</title>
     <!-- Favicon -->
@@ -17,6 +18,7 @@
     />
     <link rel="stylesheet" href="src/styles/index.css" />
     <link rel="stylesheet" href="src/styles/modern.css" />
+    <link rel="stylesheet" href="src/styles/i18n.css" />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Flatpickr -->
@@ -34,23 +36,30 @@
 
       /* ── Navbar sidebar-toggle (inline in nav) ── */
       #navbar-sidebar-toggle {
-        background: transparent;
-        border: none;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
         width: 40px;
         height: 40px;
         border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--text-dark);
-        font-size: 1.1rem;
+        color: #475569;
+        font-size: 1.05rem;
         cursor: pointer;
-        transition: all 0.2s ease;
-        margin-right: 0.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-right: 0.75rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
       }
       #navbar-sidebar-toggle:hover {
-        background: rgba(26, 77, 46, 0.06);
-        color: var(--primary-green);
+        background: var(--primary-green);
+        color: #ffffff;
+        border-color: var(--primary-green);
+        transform: scale(1.06) rotate(90deg);
+        box-shadow: 0 4px 12px rgba(26, 77, 46, 0.2);
+      }
+      #navbar-sidebar-toggle:active {
+        transform: scale(0.92);
       }
 
       /* ── Layout ── */
@@ -138,31 +147,51 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 0.75rem 1.5rem;
+        padding: 0.75rem 1.25rem;
         color: #64748b;
         text-decoration: none;
         font-weight: 500;
         font-size: 0.9rem;
-        transition: all 0.2s ease;
-        border-left: 3px solid transparent;
-        margin: 0 0 2px 0;
-        border-radius: 0 12px 12px 0;
-        width: 94%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: 0 12px 4px 12px;
+        border-radius: 12px;
+        width: calc(100% - 24px);
+        position: relative;
       }
       .admin-nav-link i {
         width: 18px;
         text-align: center;
         font-size: 0.9rem;
+        transition: transform 0.3s ease;
+      }
+      .admin-nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 25%;
+        height: 50%;
+        width: 3.5px;
+        background: var(--primary-green);
+        border-radius: 0 4px 4px 0;
+        transform: scaleY(0);
+        transition: transform 0.25s ease;
       }
       .admin-nav-link:hover {
         background: rgba(26, 77, 46, 0.04);
         color: var(--primary-green);
+        transform: translateX(4px);
+      }
+      .admin-nav-link:hover i {
+        transform: scale(1.1);
       }
       .admin-nav-link.active {
-        background: rgba(26, 77, 46, 0.07);
+        background: rgba(26, 77, 46, 0.08);
         color: var(--primary-green);
-        border-left: 3px solid var(--primary-green);
         font-weight: 600;
+        box-shadow: 0 2px 8px rgba(26, 77, 46, 0.04);
+      }
+      .admin-nav-link.active::before {
+        transform: scaleY(1);
       }
       .admin-nav-link.active i {
         color: var(--primary-green);
@@ -328,10 +357,7 @@
       .table-premium tr td:last-child { border-radius: 0 12px 12px 0; }
       .table-premium tr:hover td {
         background: #f8fafc;
-        transform: scale(1.005);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
       }
-      .table-premium tr:hover td:first-child { border-left: 3px solid var(--primary-green); }
 
       .product-img-small {
         width: 48px;
@@ -452,6 +478,114 @@
       }
       .search-box-premium input::placeholder { color: #c0ccda; }
 
+      /* ── Layout Switcher Buttons ── */
+      .layout-toggle-btn {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        color: #64748b;
+        height: 38px;
+        width: 38px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+      }
+      .layout-toggle-btn:hover {
+        background: rgba(26, 77, 46, 0.05);
+        color: var(--primary-green);
+        border-color: rgba(26, 77, 46, 0.1);
+      }
+      .layout-toggle-btn.active {
+        background: var(--primary-green);
+        color: #ffffff;
+        border-color: var(--primary-green);
+        box-shadow: 0 4px 10px rgba(26, 77, 46, 0.2);
+      }
+
+      /* ── Dashboard Grid Cards ── */
+      .dash-product-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      }
+      .dash-product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(26, 77, 46, 0.08);
+        border-color: rgba(26, 77, 46, 0.15);
+      }
+      .dash-product-img-container {
+        position: relative;
+        aspect-ratio: 4/3;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .dash-product-img-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        padding: 0.75rem;
+        transition: transform 0.5s ease;
+      }
+      .dash-product-card:hover .dash-product-img-container img {
+        transform: scale(1.06);
+      }
+      .dash-product-badge-status {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 5;
+      }
+      .dash-product-actions {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 6px;
+        z-index: 5;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(4px);
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      .dash-product-body {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+      .dash-product-title {
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+      }
+      .dash-product-meta {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+      }
+      .dash-product-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f1f5f9;
+      }
+
       .admin-main,
       .admin-card,
       .admin-section {
@@ -553,7 +687,7 @@
           <i class="fas fa-bars"></i>
         </button>
 
-        <a class="navbar-brand ms-1" href="index.html">
+        <a class="navbar-brand" href="index.html">
           <img
             src="/images/logo_hexomel.webp"
             alt="Hexomel Logo"
@@ -561,7 +695,7 @@
           />
         </a>
         <button
-          class="navbar-toggler border-0 ms-auto"
+          class="navbar-toggler border-0"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
@@ -571,24 +705,31 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto gap-4">
             <li class="nav-item">
-              <a class="nav-link" href="index.html">Início</a>
+              <a class="nav-link active" href="index.html" data-i18n="nav.home">Início</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="shop.html">Produtos</a>
+              <a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="workshops.html">Workshops</a>
+              <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
             </li>
-
-            <li class="nav-item">
-              <a class="nav-link" href="about.html">Sobre</a>
+            <li class="nav-item dropdown">
+              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
+              <ul class="dropdown-menu dropdown-menu-hexomel">
+                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
+                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
+                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
+              </ul>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="contact.html">Contactos</a>
+              <a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
             </li>
           </ul>
 
-          <div class="d-flex align-items-center">
+          <div class="d-flex align-items-center navbar-right-fixed">
             <div class="cart-navbar-separate me-3">
               <button
                 id="cart-btn"
@@ -777,6 +918,14 @@
               </p>
             </div>
             <div class="d-flex gap-2 align-items-center">
+              <div class="d-flex gap-1 me-2" role="group" aria-label="Layout Switcher">
+                <button type="button" class="layout-toggle-btn active" id="btn-view-table" title="Vista em Tabela">
+                  <i class="fas fa-list"></i>
+                </button>
+                <button type="button" class="layout-toggle-btn" id="btn-view-grid" title="Vista em Grelha">
+                  <i class="fas fa-th-large"></i>
+                </button>
+              </div>
               <div class="search-box-premium me-2">
                 <i class="fas fa-search"></i>
                 <input type="text" id="product-search" placeholder="Pesquisar produto...">
@@ -793,7 +942,7 @@
           </header>
 
           <div class="admin-card">
-            <div class="table-responsive">
+            <div class="table-responsive" id="product-table-wrapper">
               <table class="table-premium w-100">
                 <thead>
                   <tr>
@@ -808,6 +957,11 @@
                 </thead>
                 <tbody id="product-list-body"></tbody>
               </table>
+            </div>
+
+            <!-- Vista em Grelha (tipo loja) -->
+            <div id="product-grid-wrapper" class="d-none">
+              <div class="row g-3" id="product-grid-body"></div>
             </div>
           </div>
         </section>

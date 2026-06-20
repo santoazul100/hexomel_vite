@@ -16,7 +16,7 @@ Imagina que estás num restaurante. Enquanto o prato não chega, o empregado col
 |---|---|
 | Página em branco durante 2-3 segundos | O utilizador vê a estrutura da página de imediato |
 | O utilizador pensa que a página está avariada | O utilizador percebe que os dados estão a caminho |
-| Experiência de utilização pobre | Sensação de rapidez e qualidade premium |
+| Experiência de utilização pobre | Sensação de rapidez e qualidade |
 | Saltos de layout quando o conteúdo aparece | Transição suave do placeholder para o conteúdo real |
 
 ### Estudos UX reais

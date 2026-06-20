@@ -34,7 +34,7 @@ Principais melhorias:
 - protecao contra overflow horizontal
 - media embebida mais fluida (`img`, `svg`, `video`, `iframe`)
 - `navbar` mobile com collapse mais estavel e legivel
-- melhor comportamento do `auth`, `footer` e componentes premium em larguras pequenas
+- melhor comportamento do `auth`, `footer` e componentes em larguras pequenas
 - escalonamento mais consistente para logos, botoes e espacos verticais
 
 ### Paginas e componentes ajustados

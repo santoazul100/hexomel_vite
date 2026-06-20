@@ -1,82 +1,9 @@
 // Hexomel Admin Logic
 const API_URL = "/api";
-const ADMIN_LANG_KEY = "hexomel-admin-lang";
+import { initI18n, createLangToggle } from "./i18n.js";
+import { loadSiteSlugsCache, loadDynamicMenu } from "./main.js";
 
-const ADMIN_I18N = {
-  pt: {
-    "admin.panel": "Painel Admin",
-    "admin.nav.main": "Principal",
-    "admin.nav.dashboard": "Dashboard",
-    "admin.nav.products": "Produtos",
-    "admin.nav.categories": "Categorias",
-    "admin.nav.origins": "Origens",
-    "admin.nav.users": "Utilizadores",
-    "admin.nav.customers": "Clientes",
-    "admin.nav.upgrades": "Pedidos Apicultor",
-    "admin.nav.operations": "Operações",
-    "admin.nav.orders": "Encomendas",
-    "admin.nav.workshops": "Workshops",
-    "admin.nav.quiz": "Quiz",
-    "admin.nav.analysis": "Análise",
-    "admin.nav.interactions": "Interações",
-    "admin.nav.settings": "Configurações",
-    "admin.nav.appearance": "Aparência",
-    "admin.nav.menu": "Menu Dinâmico",
-    "admin.nav.cms": "Conteúdo (CMS)",
-    "admin.users.title": "Gestão de Utilizadores",
-    "admin.users.subtitle":
-      "Visualize, crie e gira os utilizadores registados no sistema.",
-    "admin.users.new": "Novo Utilizador",
-    "admin.cms.title": "Gestão de Conteúdo (CMS)",
-    "admin.cms.subtitle": "Altere os textos ou imagens do site de forma simples e direta, sem mexer em código ou programação.",
-    "admin.cms.new": "Novo Bloco de Conteúdo",
-    "admin.cms.page": "Selecionar Página do Frontoffice",
-    "cms.empty": "Nenhum bloco de conteúdo cadastrado para a página selecionada.",
-    "cms.value": "O que deve aparecer no site?",
-    "cms.save": "Guardar Texto",
-    "cms.delete": "Eliminar",
-    "user.empty": "Nenhum utilizador registado.",
-    "user.client": "Cliente",
-    "user.beekeeper": "Apicultor",
-    "user.admin": "Admin",
-  },
-  en: {
-    "admin.panel": "Admin Panel",
-    "admin.nav.main": "Main",
-    "admin.nav.dashboard": "Dashboard",
-    "admin.nav.products": "Products",
-    "admin.nav.categories": "Categories",
-    "admin.nav.origins": "Origins",
-    "admin.nav.users": "Users",
-    "admin.nav.customers": "Customers",
-    "admin.nav.upgrades": "Beekeeper Requests",
-    "admin.nav.operations": "Operations",
-    "admin.nav.orders": "Orders",
-    "admin.nav.workshops": "Workshops",
-    "admin.nav.quiz": "Quiz",
-    "admin.nav.analysis": "Analytics",
-    "admin.nav.interactions": "Interactions",
-    "admin.nav.settings": "Settings",
-    "admin.nav.appearance": "Appearance",
-    "admin.nav.menu": "Dynamic Menu",
-    "admin.nav.cms": "Content (CMS)",
-    "admin.users.title": "User Management",
-    "admin.users.subtitle": "View, create, and manage registered users.",
-    "admin.users.new": "New User",
-    "admin.cms.title": "Content Management (CMS)",
-    "admin.cms.subtitle":
-      "Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.",
-    "admin.cms.page": "Select Frontoffice Page",
-    "cms.empty": "No content blocks registered for the selected page.",
-    "cms.value": "Valor / Conteúdo",
-    "cms.save": "Guardar Alterações",
-    "cms.delete": "Delete",
-    "user.empty": "No users registered.",
-    "user.client": "Customer",
-    "user.beekeeper": "Beekeeper",
-    "user.admin": "Admin",
-  },
-};
+
 
 class AdminUI {
   constructor() {
@@ -87,28 +14,52 @@ class AdminUI {
     this.quizQuestions = []; // newly added for quiz
     this.menus = []; // dynamic navigation menus
     this.cmsBlocks = []; // CMS content blocks
+    this.carouselProducts = []; // products for carousel management
     this.showCmsTechnical = false; // toggle for showing technical details
-    this.lang = localStorage.getItem(ADMIN_LANG_KEY) || "pt";
+    this.facts = []; // dynamic cards for Aprender page
+    this.glossaryTerms = []; // terms for Aprender page
     this.token = localStorage.getItem("token");
     this.userData = JSON.parse(localStorage.getItem("user"));
     this.currentTags = new Set(); // Stores active tags for the modal
+    this.layoutAnimationStyle = "fade";
     this.init();
   }
 
   async init() {
     // Security Check
-    const role =
-      this.userData.role || this.userData.userType || this.userData.UserType;
+    if (!this.token || !this.userData) {
+      window.location.replace("/login");
+      return;
+    }
 
-    if (!this.token || !this.userData || role?.toLowerCase() !== "admin") {
+    const clientRole = this.userData.role || this.userData.userType || this.userData.UserType;
+    if (clientRole?.toLowerCase() !== "admin") {
+      document.documentElement.classList.add("admin-access-denied");
       const layoutEl = document.getElementById("admin-layout");
       if (layoutEl) layoutEl.style.display = "none";
-      window.location.href = "index.html";
+      return;
+    }
+
+    // Server-side validation of token & role
+    try {
+      const verifyRes = await fetch("/api/auth/verify-admin", {
+        headers: {
+          "Authorization": `Bearer ${this.token}`
+        }
+      });
+      
+      if (!verifyRes.ok) {
+        throw new Error("Server-side authorization failed");
+      }
+    } catch (e) {
+      console.error("Admin verification failed:", e);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.replace("/login");
       return;
     }
 
     this.setupEventListeners();
-    this.setupAdminLanguage();
     // Navbar is now static, just init auth
     this.initAuth();
 
@@ -125,8 +76,18 @@ class AdminUI {
 
     this.initTagInput();
     this.initSidebar(); // Collapsed preference
-    this.loadAdminNavbar();
+
+    initI18n();
+
+    loadDynamicMenu();
     this.initTooltips();
+    
+    try {
+      await loadSiteSlugsCache();
+    } catch (e) {
+      console.warn("Could not load friendly URLs cache in admin:", e);
+    }
+
     this.switchSection("dashboard"); // Default view
   }
 
@@ -214,40 +175,6 @@ class AdminUI {
 
   // injectNavbar removed - static in HTML
 
-  t(key) {
-    return ADMIN_I18N[this.lang]?.[key] || ADMIN_I18N.pt[key] || key;
-  }
-
-  setupAdminLanguage() {
-    const apply = () => {
-      document.documentElement.lang = this.lang;
-      document.querySelectorAll("[data-admin-i18n]").forEach((el) => {
-        const key = el.getAttribute("data-admin-i18n");
-        el.textContent = this.t(key);
-      });
-      const label = document.getElementById("admin-lang-label");
-      if (label) label.textContent = this.lang.toUpperCase();
-    };
-
-    const toggle = document.getElementById("admin-lang-toggle");
-    if (toggle) {
-      toggle.addEventListener("click", () => {
-        this.lang = this.lang === "pt" ? "en" : "pt";
-        localStorage.setItem(ADMIN_LANG_KEY, this.lang);
-        apply();
-        const active = document
-          .querySelector(".admin-section.active")
-          ?.id?.replace("-section", "");
-        if (active === "customers") this.renderUsers();
-        if (active === "cms")
-          this.renderCMSBlocks(
-            document.getElementById("cms-page-selector")?.value || "home",
-          );
-      });
-    }
-
-    apply();
-  }
 
   setupEventListeners() {
     // Nav switching
@@ -280,6 +207,7 @@ class AdminUI {
     });
 
     this.setupImagePreview();
+    this.setupLayoutToggle();
   }
 
   setupImagePreview() {
@@ -371,68 +299,7 @@ class AdminUI {
     }
   }
 
-  async loadAdminNavbar() {
-    const navList = document.querySelector("#navbarNav ul.navbar-nav");
-    if (!navList) return;
 
-    try {
-      const response = await fetch("/api/menu");
-      if (!response.ok) throw new Error("Failed to fetch menu");
-      const menus = await response.json();
-      
-      if (menus && menus.length > 0) {
-        const topLevel = menus.filter(m => !m.ID_Parent);
-        
-        navList.innerHTML = topLevel
-          .map((m) => {
-            const children = menus.filter(child => child.ID_Parent === m.ID_Menu);
-            
-            let i18nAttr = "";
-            if (m.Link === "index.html") i18nAttr = 'data-i18n="nav.home"';
-            else if (m.Link === "shop.html") i18nAttr = 'data-i18n="nav.products"';
-            else if (m.Link === "workshops.html") i18nAttr = 'data-i18n="nav.workshops"';
-            else if (m.Link === "about.html") i18nAttr = 'data-i18n="nav.about"';
-            else if (m.Link === "contact.html") i18nAttr = 'data-i18n="nav.contacts"';
-            else if (m.Label.toLowerCase() === "descobrir") i18nAttr = 'data-i18n="nav.discover"';
-
-            if (children.length > 0) {
-              const childrenHtml = children.map(c => {
-                const cTarget = c.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
-                let cI18n = "";
-                if (c.Link === "curiosidades.html") cI18n = 'data-i18n="nav.curiosities"';
-                else if (c.Link === "aprender.html") cI18n = 'data-i18n="nav.learn"';
-                else if (c.Link === "comunidade.html") cI18n = 'data-i18n="nav.community"';
-                
-                return `<li><a class="dropdown-item" href="${c.Link || '#'}" ${cTarget} ${cI18n}>${c.Label}</a></li>`;
-              }).join("");
-
-              return `
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="${m.Link || '#'}" role="button" data-bs-toggle="dropdown" aria-expanded="false" ${i18nAttr}>${m.Label}</a>
-                  <ul class="dropdown-menu dropdown-menu-hexomel">
-                    ${childrenHtml}
-                  </ul>
-                </li>
-              `;
-            } else {
-              const target = m.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
-              return `
-                <li class="nav-item">
-                  <a class="nav-link" href="${m.Link || '#'}" ${target} ${i18nAttr}>${m.Label}</a>
-                </li>
-              `;
-            }
-          })
-          .join("");
-        
-        if (typeof initI18n === "function") {
-          initI18n();
-        }
-      }
-    } catch (error) {
-      console.warn("Could not load dynamic admin navbar:", error);
-    }
-  }
 
   switchSection(sectionId) {
     // Update Nav UI
@@ -470,9 +337,19 @@ class AdminUI {
     if (sectionId === "interactions") this.loadInteractions();
     if (sectionId === "seo") this.loadSEO();
     if (sectionId === "quiz") this.loadQuizQuestions();
+    if (sectionId === "comunidade") this.loadComunidade();
+    if (sectionId === "reviews") this.loadReviews();
     if (sectionId === "appearance") this.loadAppearanceSettings();
     if (sectionId === "menus") this.loadMenus();
-    if (sectionId === "cms") this.loadCMSBlocks();
+    if (sectionId === "cms") {
+      this.loadCMSBlocks();
+      this.loadCarouselProducts();
+    }
+    if (sectionId === "moderacao") {
+      this.loadModerationData();
+    }
+    if (sectionId === "aprender-factos") this.loadFacts();
+    if (sectionId === "aprender-glossario") this.loadGlossaryTerms();
   }
 
   // ============================================================
@@ -487,7 +364,7 @@ class AdminUI {
       if (!response.ok) throw new Error("Falha ao carregar menus");
       this.menus = await response.json();
       this.renderMenusTable();
-      this.loadAdminNavbar();
+      loadDynamicMenu();
     } catch (error) {
       console.error("Error loading menus:", error);
       Swal.fire("Erro", "Não foi possível carregar os itens de menu.", "error");
@@ -954,88 +831,51 @@ class AdminUI {
       listContainer.innerHTML = `
         <div class="text-center py-5 text-muted">
           <i class="fas fa-info-circle fa-2x mb-3 text-secondary"></i>
-          <p class="m-0">${this.t("cms.empty")}</p>
+          <p class="m-0">Nenhum bloco de conteúdo cadastrado para a página selecionada.</p>
         </div>
       `;
       return;
     }
 
     const blockDescriptions = {
-      pt: {
-        hero_title: {
-          title: "Título de Boas-vindas (Topo da Página)",
-          desc: "O grande título chamativo exibido no topo da página.",
-          icon: "fas fa-heading",
-          badge: "Título Principal"
-        },
-        hero_subtitle: {
-          title: "Mensagem de Apresentação (Subtítulo do Topo)",
-          desc: "O texto explicativo por baixo do título principal do cabeçalho.",
-          icon: "fas fa-align-left",
-          badge: "Subtítulo / Introdução"
-        },
-        featured_title: {
-          title: "Título da Secção de Destaques",
-          desc: "O título que introduz a vitrine de produtos em destaque.",
-          icon: "fas fa-star",
-          badge: "Título Secundário"
-        },
-        featured_subtitle: {
-          title: "Subtítulo da Secção de Destaques",
-          desc: "A frase de apoio colocada por baixo do título de destaques.",
-          icon: "fas fa-comment-alt",
-          badge: "Subtítulo"
-        },
-        legacy_text: {
-          title: "História Hexomel (Nosso Legado)",
-          desc: "O texto completo que narra a nossa história e o legado tradicional.",
-          icon: "fas fa-book-open",
-          badge: "Texto Narrativo Longo"
-        }
+      hero_title: {
+        title: "Título de Boas-vindas (Topo da Página)",
+        desc: "O grande título chamativo exibido no topo da página.",
+        icon: "fas fa-heading",
+        badge: "Título Principal"
       },
-      en: {
-        hero_title: {
-          title: "Main Welcome Title (Page Top)",
-          desc: "The big, prominent title displayed at the very top of the page.",
-          icon: "fas fa-heading",
-          badge: "Header Title"
-        },
-        hero_subtitle: {
-          title: "Header Subtitle / Tagline",
-          desc: "The explanatory paragraph beneath the main welcome title.",
-          icon: "fas fa-align-left",
-          badge: "Intro Text"
-        },
-        featured_title: {
-          title: "Featured Section Title",
-          desc: "The title introducing the section of our selected honeys.",
-          icon: "fas fa-star",
-          badge: "Section Title"
-        },
-        featured_subtitle: {
-          title: "Featured Section Subtitle",
-          desc: "A brief supportive phrase below the featured products title.",
-          icon: "fas fa-comment-alt",
-          badge: "Section Subtitle"
-        },
-        legacy_text: {
-          title: "Our Legacy Story Text",
-          desc: "The detailed historical text recounting our traditional apiculture values.",
-          icon: "fas fa-book-open",
-          badge: "Long Narrative Text"
-        }
+      hero_subtitle: {
+        title: "Mensagem de Apresentação (Subtítulo do Topo)",
+        desc: "O texto explicativo por baixo do título principal do cabeçalho.",
+        icon: "fas fa-align-left",
+        badge: "Subtítulo / Introdução"
+      },
+      featured_title: {
+        title: "Título da Secção de Destaques",
+        desc: "O título que introduz a vitrine de produtos em destaque.",
+        icon: "fas fa-star",
+        badge: "Título Secundário"
+      },
+      featured_subtitle: {
+        title: "Subtítulo da Secção de Destaques",
+        desc: "A frase de apoio colocada por baixo do título de destaques.",
+        icon: "fas fa-comment-alt",
+        badge: "Subtítulo"
+      },
+      legacy_text: {
+        title: "História Hexomel (Nosso Legado)",
+        desc: "O texto completo que narra a nossa história e o legado tradicional.",
+        icon: "fas fa-book-open",
+        badge: "Texto Narrativo Longo"
       }
     };
 
     listContainer.innerHTML = this.cmsBlocks
       .map((b) => {
         // Fallback or custom friendly details if key is not predefined
-        const langData = blockDescriptions[this.lang] || blockDescriptions.pt;
-        const info = langData[b.Block_Key] || {
+        const info = blockDescriptions[b.Block_Key] || {
           title: b.Block_Key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          desc: this.lang === "en" 
-            ? "Custom website text block." 
-            : "Bloco de texto personalizado do site.",
+          desc: "Bloco de texto personalizado do site.",
           icon: "fas fa-edit",
           badge: b.Type.toUpperCase()
         };
@@ -1074,7 +914,7 @@ class AdminUI {
             <div class="card-body px-4 pb-4 pt-2">
               <div class="mb-3">
                 <label class="form-label small fw-bold text-uppercase text-muted" style="letter-spacing: 0.5px;">
-                  ${this.t("cms.value")}
+                  O que deve aparecer no site?
                 </label>
                 ${inputField}
               </div>
@@ -1082,19 +922,19 @@ class AdminUI {
                 <div>
                   <small class="text-muted d-flex align-items-center gap-1">
                     <i class="fas fa-history text-secondary"></i>
-                    ${this.lang === "en" ? "Changes will reflect instantly on the website." : "As alterações são refletidas no site de imediato."}
+                    As alterações são refletidas no site de imediato.
                   </small>
                 </div>
                 <div class="d-flex gap-2">
                   ${
                     this.showCmsTechnical 
                       ? `<button type="button" class="btn btn-outline-danger px-4 py-2 fw-bold btn-sm rounded-pill" onclick="adminUI.deleteCMSBlock(${b.ID_Content})">
-                           <i class="fas fa-trash me-2"></i>${this.t("cms.delete")}
+                           <i class="fas fa-trash me-2"></i>Eliminar
                          </button>`
                       : ""
                   }
                   <button type="button" class="btn btn-add-product px-4 py-2 fw-bold btn-sm rounded-pill" onclick="adminUI.saveCMSBlock(${b.ID_Content}, '${b.Page_Key}', '${b.Block_Key}', '${b.Type}')" style="box-shadow: 0 4px 6px rgba(26, 77, 46, 0.15);">
-                    <i class="fas fa-save me-2"></i>${this.t("cms.save")}
+                    <i class="fas fa-save me-2"></i>Guardar Texto
                   </button>
                 </div>
               </div>
@@ -1163,48 +1003,46 @@ class AdminUI {
     const currentPage =
       document.getElementById("cms-page-selector")?.value || "home";
     const result = await Swal.fire({
-      title: this.lang === "en" ? "New CMS Block" : "Novo Bloco CMS",
+      title: "Novo Bloco CMS",
       width: 620,
       html: `
         <div class="text-start">
           <div class="alert alert-warning d-flex align-items-start py-2.5 small mb-3 border-0 rounded-3" style="background-color: rgba(255, 193, 7, 0.08); color: #856404;">
             <i class="fas fa-exclamation-triangle mt-1 me-2 text-warning" style="font-size: 1rem;"></i>
             <span>
-              <strong>${this.lang === "en" ? "Developer Area" : "Nota para Administradores"}:</strong> 
-              ${this.lang === "en" 
-                ? "Creating new custom blocks is recommended for developers. A block requires matching frontend code to display on the site."
-                : "A criação de novos blocos personalizados é recomendada para programadores, pois cada bloco precisa de uma chave correspondente no código do site para poder ser exibido."}
+              <strong>Nota para Administradores:</strong> 
+              A criação de novos blocos personalizados é recomendada para programadores, pois cada bloco precisa de uma chave correspondente no código do site para poder ser exibido.
             </span>
           </div>
           
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Page" : "Página"}</label>
+          <label class="form-label small fw-bold text-uppercase text-muted">Página</label>
           <select id="swal-cms-page" class="form-select mb-3 form-control-v2" style="border-radius: 8px;">
-            <option value="home" ${currentPage === "home" ? "selected" : ""}>${this.lang === "en" ? "Homepage (Home)" : "Página Inicial (Home)"}</option>
-            <option value="about" ${currentPage === "about" ? "selected" : ""}>${this.lang === "en" ? "About Page (About)" : "Página Sobre Nós (About)"}</option>
-            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>${this.lang === "en" ? "Contact Page (Contact)" : "Página Contactos (Contact)"}</option>
+            <option value="home" ${currentPage === "home" ? "selected" : ""}>Página Inicial (Home)</option>
+            <option value="about" ${currentPage === "about" ? "selected" : ""}>Página Sobre Nós (About)</option>
+            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>Página Contactos (Contact)</option>
           </select>
           
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Block Key (Technical Identifier)" : "Chave Técnica (Identificador no Código)"}</label>
+          <label class="form-label small fw-bold text-uppercase text-muted">Chave Técnica (Identificador no Código)</label>
           <input id="swal-cms-key" class="form-control mb-3 form-control-v2" placeholder="ex: intro_text" style="border-radius: 8px;">
           <small class="text-muted d-block mb-3" style="font-size: 0.75rem; margin-top: -10px;">
-            ${this.lang === "en" ? "Must be unique, lowercase, using underscores instead of spaces." : "Deve ser único, apenas letras minúsculas e underscores (ex: titulo_topo)."}
+            Deve ser único, apenas letras minúsculas e underscores (ex: titulo_topo).
           </small>
           
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Content Type" : "Tipo de Conteúdo"}</label>
+          <label class="form-label small fw-bold text-uppercase text-muted">Tipo de Conteúdo</label>
           <select id="swal-cms-type" class="form-select mb-3 form-control-v2" style="border-radius: 8px;">
-            <option value="text">${this.lang === "en" ? "Simple Text" : "Texto Curto / Linha Única"}</option>
-            <option value="html">${this.lang === "en" ? "Large Paragraph / HTML" : "Parágrafo Longo / HTML"}</option>
-            <option value="image_url">${this.lang === "en" ? "Image Link (URL)" : "Link da Imagem (URL)"}</option>
+            <option value="text">Texto Curto / Linha Única</option>
+            <option value="html">Parágrafo Longo / HTML</option>
+            <option value="image_url">Link da Imagem (URL)</option>
           </select>
           
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Initial Content" : "Conteúdo Inicial"}</label>
-          <textarea id="swal-cms-value" class="form-control form-control-v2" rows="4" placeholder="${this.lang === "en" ? "Enter content..." : "Escreve aqui o texto inicial..."}" style="border-radius: 8px;"></textarea>
+          <label class="form-label small fw-bold text-uppercase text-muted">Conteúdo Inicial</label>
+          <textarea id="swal-cms-value" class="form-control form-control-v2" rows="4" placeholder="Escreve aqui o texto inicial..." style="border-radius: 8px;"></textarea>
         </div>
       `,
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: this.lang === "en" ? "Create" : "Criar Bloco",
-      cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+      confirmButtonText: "Criar Bloco",
+      cancelButtonText: "Cancelar",
       customClass: {
         confirmButton: 'btn btn-add-product px-4 py-2 rounded-pill fw-bold border-0',
         cancelButton: 'btn btn-light px-4 py-2 rounded-pill fw-bold border-0 text-muted'
@@ -1218,11 +1056,11 @@ class AdminUI {
           Content_Value: document.getElementById("swal-cms-value").value.trim(),
         };
         if (!payload.Page_Key || !payload.Block_Key || !payload.Content_Value) {
-          Swal.showValidationMessage(this.lang === "en" ? "Fill in all fields." : "Preenche todos os campos obrigatórios.");
+          Swal.showValidationMessage("Preenche todos os campos obrigatórios.");
           return false;
         }
         if (!/^[a-z0-9_]+$/.test(payload.Block_Key)) {
-          Swal.showValidationMessage(this.lang === "en" ? "Key must only contain lowercase letters, numbers, or underscores." : "A chave só pode conter letras minúsculas, números ou underscores.");
+          Swal.showValidationMessage("A chave só pode conter letras minúsculas, números ou underscores.");
           return false;
         }
         return payload;
@@ -1248,7 +1086,7 @@ class AdminUI {
       if (selector) selector.value = result.value.Page_Key;
       Swal.fire({
         icon: "success",
-        title: this.lang === "en" ? "Block created!" : "Bloco criado!",
+        title: "Bloco criado!",
         timer: 1400,
         showConfirmButton: false,
       });
@@ -1260,16 +1098,13 @@ class AdminUI {
 
   async deleteCMSBlock(id) {
     const result = await Swal.fire({
-      title: this.lang === "en" ? "Delete block?" : "Eliminar bloco?",
-      text:
-        this.lang === "en"
-          ? "This content block will be removed from the CMS."
-          : "Este bloco de conteúdo será removido do CMS.",
+      title: "Eliminar bloco?",
+      text: "Este bloco de conteúdo será removido do CMS.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      confirmButtonText: this.lang === "en" ? "Delete" : "Eliminar",
-      cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
     });
 
     if (!result.isConfirmed) return;
@@ -1285,7 +1120,7 @@ class AdminUI {
 
       Swal.fire({
         icon: "success",
-        title: this.lang === "en" ? "Block deleted!" : "Bloco eliminado!",
+        title: "Bloco eliminado!",
         timer: 1200,
         showConfirmButton: false,
       });
@@ -1293,6 +1128,118 @@ class AdminUI {
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
     }
+  }
+
+  // --- CAROUSEL MANAGEMENT ---
+  async loadCarouselProducts() {
+    try {
+      const response = await fetch(`${API_URL}/admin/products`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar produtos para carrossel");
+      this.carouselProducts = await response.json();
+      this.renderCarouselProducts();
+    } catch (error) {
+      console.error("Error loading products for carousel:", error);
+    }
+  }
+
+  renderCarouselProducts() {
+    const featuredList = document.getElementById("carousel-featured-list");
+    const othersList = document.getElementById("carousel-others-list");
+    if (!featuredList || !othersList) return;
+
+    if (!this.carouselProducts || this.carouselProducts.length === 0) {
+      featuredList.innerHTML = `<div class="col-12 text-center py-3 text-muted small">Nenhum produto destacado.</div>`;
+      othersList.innerHTML = `<div class="col-12 text-center py-3 text-muted small">Nenhum produto disponível.</div>`;
+      return;
+    }
+
+    const searchQuery = document.getElementById("carousel-search")?.value?.toLowerCase() || "";
+
+    const filtered = this.carouselProducts.filter(p => 
+      (p.Nome.toLowerCase().includes(searchQuery) ||
+      (p.Tags && p.Tags.toLowerCase().includes(searchQuery))) &&
+      p.Status !== 'Pendente'
+    );
+
+    const featuredProds = filtered.filter(p => Number(p.Em_Destaque) === 1);
+    const otherProds = filtered.filter(p => Number(p.Em_Destaque) !== 1);
+
+    // Render Featured
+    if (featuredProds.length === 0) {
+      featuredList.innerHTML = `<div class="col-12 text-center py-4 text-muted small border border-dashed rounded-3" style="background: rgba(0,0,0,0.01);">Nenhum produto destacado no carrossel de momento.</div>`;
+    } else {
+      featuredList.innerHTML = featuredProds.map(p => this.renderCarouselProductCard(p, true)).join("");
+    }
+
+    // Render Others
+    if (otherProds.length === 0) {
+      othersList.innerHTML = `<div class="col-12 text-center py-4 text-muted small">Nenhum outro produto disponível.</div>`;
+    } else {
+      othersList.innerHTML = otherProds.map(p => this.renderCarouselProductCard(p, false)).join("");
+    }
+  }
+
+  renderCarouselProductCard(p, isFeatured) {
+    const category = this.categories?.find(c => c.ID_Categoria === p.ID_Categoria)?.Nome || `Categoria ${p.ID_Categoria}`;
+    return `
+      <div class="col-md-6 col-lg-4">
+        <div class="admin-card border p-3 d-flex align-items-center justify-content-between gap-3 h-100" style="border-radius: 12px; background: ${isFeatured ? 'rgba(26, 77, 46, 0.02)' : 'white'}; border-color: ${isFeatured ? 'rgba(26, 77, 46, 0.15) !important' : 'rgba(0,0,0,0.08) !important'};">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" style="width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: #f8f9fa; padding: 4px; border: 1px solid rgba(0,0,0,0.05);">
+            <div class="overflow-hidden">
+              <h6 class="mb-0 text-dark fw-bold text-truncate" style="font-size: 0.9rem;">${p.Nome}</h6>
+              <span class="text-muted smaller">${category}</span>
+            </div>
+          </div>
+          <button class="btn btn-sm ${isFeatured ? 'btn-danger' : 'btn-outline-success'} d-flex align-items-center gap-1 fw-bold rounded-pill px-3" onclick="adminUI.toggleProductFeaturedCarousel('${p.ID_Produto}', ${isFeatured ? 0 : 1})" style="font-size: 0.75rem; white-space: nowrap;">
+            <i class="${isFeatured ? 'fas fa-times' : 'fas fa-plus'}"></i>
+            ${isFeatured ? 'Remover' : 'Adicionar'}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  async toggleProductFeaturedCarousel(id, emDestaque) {
+    try {
+      const response = await fetch(`${API_URL}/admin/products/${id}/featured`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ emDestaque }),
+      });
+      if (!response.ok) throw new Error("Falha ao atualizar destaque do produto");
+      
+      // Update local product state if it exists
+      if (this.carouselProducts) {
+        const prod = this.carouselProducts.find(p => String(p.ID_Produto) === String(id));
+        if (prod) prod.Em_Destaque = emDestaque ? 1 : 0;
+      }
+      if (this.products) {
+        const prod = this.products.find(p => String(p.ID_Produto) === String(id));
+        if (prod) prod.Em_Destaque = emDestaque ? 1 : 0;
+      }
+
+      this.renderCarouselProducts();
+      this.renderProducts();
+      
+      Swal.fire({
+        icon: "success",
+        title: emDestaque ? "Adicionado ao Carrossel" : "Removido do Carrossel",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  filterCarouselProducts() {
+    this.renderCarouselProducts();
   }
 
   async loadDashboardStats() {
@@ -1611,76 +1558,190 @@ class AdminUI {
   }
 
   renderProducts() {
-    const container = document.getElementById("product-list-body");
+    const tableBody = document.getElementById("product-list-body");
+    const gridBody = document.getElementById("product-grid-body");
+    if (!tableBody || !gridBody) return;
+
+    const currentView = localStorage.getItem("adminProductView") || "table";
 
     if (this.products.length === 0) {
-      container.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Nenhum produto cadastrado.</td></tr>`;
+      const emptyHtml = `<div class="col-12 text-center py-4 text-muted"><i class="fas fa-box-open fa-3x mb-3 d-block opacity-25"></i>Nenhum produto cadastrado.</div>`;
+      tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Nenhum produto cadastrado.</td></tr>`;
+      gridBody.innerHTML = emptyHtml;
       return;
     }
 
-    container.innerHTML = this.products
-      .map((p) => {
-        const category =
-          this.categories?.find((c) => c.ID_Categoria === p.ID_Categoria)
-            ?.Nome || `CAT ${p.ID_Categoria}`;
-        return `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}">
-                        <div>
-                            <div class="fw-bold text-dark">${p.Nome}</div>
-                            <div class="text-muted smaller">ID: #${p.ID_Produto}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="fw-bold text-dark">${parseFloat(p.Preco).toFixed(2)}€</td>
-                <td>
-                    <span class="badge-premium ${p.Stock < 10 ? "badge-stock-low" : "badge-stock-ok"}">
-                        ${p.Stock} UN
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-light text-dark border">${category}</span>
-                </td>
-                <td>
-                    <span class="badge bg-light text-dark border">${
-                      this.origins?.find((o) => o.ID_Origem === p.ID_Origem)
-                        ?.Nome || "N/A"
-                    }</span>
-                </td>
-                <td>
-                    <span class="badge-premium ${p.Status === "Pendente" ? "pendente" : p.Status === "Rejeitado" ? "rejeitado" : "aprovado"}">
-                        ${p.Status || "Aprovado"}
-                    </span>
-                </td>
-                <td class="text-end">
-                    <button class="btn-action-premium me-1" onclick="adminUI.toggleProductFeatured('${p.ID_Produto}', ${p.Em_Destaque ? 0 : 1})" title="${p.Em_Destaque ? 'Remover Destaque' : 'Destacar'}">
-                        <i class="${p.Em_Destaque ? "fas fa-star text-warning" : "far fa-star text-muted"}" style="font-size: 0.85rem;"></i>
-                    </button>
-                    ${
-                      p.Status === "Pendente"
-                        ? `
-                      <button class="btn-action-premium success me-1" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Aprovado')" title="Aprovar">
-                          <i class="fas fa-check" style="font-size: 0.8rem;"></i>
+    if (currentView === "table") {
+      tableBody.innerHTML = this.products
+        .map((p) => {
+          const category =
+            this.categories?.find((c) => c.ID_Categoria === p.ID_Categoria)
+              ?.Nome || `CAT ${p.ID_Categoria}`;
+          return `
+              <tr>
+                  <td>
+                      <div class="d-flex align-items-center gap-3">
+                          <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}" style="width:48px; height:48px; object-fit:cover; border-radius:10px;">
+                          <div>
+                              <div class="fw-bold text-dark">${p.Nome}</div>
+                              <div class="text-muted smaller">ID: #${p.ID_Produto}</div>
+                          </div>
+                      </div>
+                  </td>
+                  <td class="fw-bold text-dark">${parseFloat(p.Preco).toFixed(2)}€</td>
+                  <td>
+                      <span class="badge-premium ${p.Stock < 10 ? "badge-stock-low" : "badge-stock-ok"}" style="white-space: nowrap;">${p.Stock} UN</span>
+                  </td>
+                  <td>
+                      <span class="badge bg-light text-dark border">${category}</span>
+                  </td>
+                  <td>
+                      <span class="badge bg-light text-dark border">${
+                        this.origins?.find((o) => o.ID_Origem === p.ID_Origem)
+                          ?.Nome || "N/A"
+                      }</span>
+                  </td>
+                  <td>
+                      <span class="badge-premium ${p.Status === "Pendente" ? "pendente" : p.Status === "Rejeitado" ? "rejeitado" : "aprovado"}" style="white-space: nowrap;">${p.Status || "Aprovado"}</span>
+                  </td>
+                  <td class="text-end">
+                       <div class="d-flex gap-1 justify-content-end">
+                           ${p.Status === "Pendente" ? `
+                             <button class="btn-action-premium success" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Aprovado')" title="Aprovar">
+                                 <i class="fas fa-check" style="font-size: 0.8rem;"></i>
+                             </button>
+                             <button class="btn-action-premium delete" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Rejeitado')" title="Rejeitar">
+                                 <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+                             </button>
+                           ` : `
+                             <button class="btn-action-premium" onclick="adminUI.toggleProductFeatured('${p.ID_Produto}', ${p.Em_Destaque ? 0 : 1})" title="${p.Em_Destaque ? 'Remover Destaque' : 'Destacar'}">
+                                 <i class="${p.Em_Destaque ? "fas fa-star text-warning" : "far fa-star text-muted"}" style="font-size: 0.85rem;"></i>
+                             </button>
+                             <button class="btn-action-premium" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
+                                 <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                             </button>
+                             <button class="btn-action-premium delete" onclick="adminUI.deleteProduct('${p.ID_Produto}')" title="Eliminar">
+                                 <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                             </button>
+                           `}
+                       </div>
+                   </td>
+              </tr>
+          `;
+        })
+        .join("");
+    } else {
+      gridBody.innerHTML = this.products
+        .map((p) => {
+          const category =
+            this.categories?.find((c) => c.ID_Categoria === p.ID_Categoria)
+              ?.Nome || `CAT ${p.ID_Categoria}`;
+          const origin =
+            this.origins?.find((o) => o.ID_Origem === p.ID_Origem)
+              ?.Nome || "N/A";
+          let statusClass = "aprovado";
+          if (p.Status === "Pendente") statusClass = "pendente";
+          if (p.Status === "Rejeitado") statusClass = "rejeitado";
+
+          return `
+            <div class="col-sm-6 col-md-4">
+              <div class="dash-product-card">
+                <div class="dash-product-img-container">
+                  <span class="badge-premium ${statusClass} dash-product-badge-status">${p.Status || "Aprovado"}</span>
+                  <div class="dash-product-actions">
+                    ${p.Status === "Pendente" ? `
+                      <button class="btn-action-premium success" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Aprovado')" title="Aprovar" style="width:28px; height:28px;">
+                          <i class="fas fa-check" style="font-size: 0.7rem;"></i>
                       </button>
-                      <button class="btn-action-premium delete me-1" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Rejeitado')" title="Rejeitar">
-                          <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+                      <button class="btn-action-premium delete" onclick="adminUI.updateProductStatus('${p.ID_Produto}', 'Rejeitado')" title="Rejeitar" style="width:28px; height:28px;">
+                          <i class="fas fa-times" style="font-size: 0.7rem;"></i>
                       </button>
-                    `
-                        : ""
-                    }
-                    <button class="btn-action-premium me-1" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar">
-                        <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
-                    </button>
-                    <button class="btn-action-premium delete" onclick="adminUI.deleteProduct('${p.ID_Produto}')" title="Eliminar">
-                        <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-      })
-      .join("");
+                    ` : `
+                      <button class="btn-action-premium" onclick="adminUI.toggleProductFeatured('${p.ID_Produto}', ${p.Em_Destaque ? 0 : 1})" title="${p.Em_Destaque ? 'Remover Destaque' : 'Destacar'}" style="width:28px; height:28px;">
+                          <i class="${p.Em_Destaque ? "fas fa-star text-warning" : "far fa-star text-muted"}" style="font-size: 0.75rem;"></i>
+                      </button>
+                      <button class="btn-action-premium" onclick="adminUI.editProduct('${p.ID_Produto}')" title="Editar" style="width:28px; height:28px;">
+                          <i class="fas fa-pen" style="font-size: 0.75rem;"></i>
+                      </button>
+                      <button class="btn-action-premium delete" onclick="adminUI.deleteProduct('${p.ID_Produto}')" title="Eliminar" style="width:28px; height:28px;">
+                          <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                      </button>
+                    `}
+                  </div>
+                  <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" class="img-fluid" style="max-height:160px; object-fit:contain;">
+                </div>
+                <div class="dash-product-body">
+                  <div class="dash-product-title">${p.Nome}</div>
+                  <div class="dash-product-meta">${category} • ${origin}</div>
+                  <div class="dash-product-footer">
+                    <span class="fw-bold text-success">${parseFloat(p.Preco).toFixed(2)}€</span>
+                    <span class="badge bg-light text-dark border small fw-600">${p.Stock} UN</span>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        })
+        .join("");
+    }
+  }
+
+  setupLayoutToggle() {
+    const btnTable = document.getElementById("btn-view-table");
+    const btnGrid = document.getElementById("btn-view-grid");
+
+    if (!btnTable || !btnGrid) return;
+
+    // Check local storage for preference
+    const viewPreference = localStorage.getItem("adminProductView") || "table";
+    this.setProductView(viewPreference);
+
+    btnTable.addEventListener("click", () => {
+      this.setProductView("table");
+    });
+
+    btnGrid.addEventListener("click", () => {
+      this.setProductView("grid");
+    });
+  }
+
+  setProductView(view) {
+    const btnTable = document.getElementById("btn-view-table");
+    const btnGrid = document.getElementById("btn-view-grid");
+    const tableWrapper = document.getElementById("product-table-wrapper");
+    const gridWrapper = document.getElementById("product-grid-wrapper");
+
+    if (!btnTable || !btnGrid || !tableWrapper || !gridWrapper) return;
+
+    const previousView = localStorage.getItem("adminProductView");
+    localStorage.setItem("adminProductView", view);
+
+    if (view === "table") {
+      btnTable.classList.add("active");
+      btnGrid.classList.remove("active");
+      tableWrapper.classList.remove("d-none");
+      gridWrapper.classList.add("d-none");
+
+      // Apply transition layout animation if layout view was changed by the user
+      if (previousView && previousView !== view) {
+        tableWrapper.classList.remove("layout-anim-fade", "layout-anim-roda");
+        void tableWrapper.offsetWidth; // Force layout recalculation/reflow
+        tableWrapper.classList.add(`layout-anim-${this.layoutAnimationStyle || "fade"}`);
+      }
+    } else {
+      btnTable.classList.remove("active");
+      btnGrid.classList.add("active");
+      tableWrapper.classList.add("d-none");
+      gridWrapper.classList.remove("d-none");
+
+      // Apply transition layout animation if layout view was changed by the user
+      if (previousView && previousView !== view) {
+        gridWrapper.classList.remove("layout-anim-fade", "layout-anim-roda");
+        void gridWrapper.offsetWidth; // Force layout recalculation/reflow
+        gridWrapper.classList.add(`layout-anim-${this.layoutAnimationStyle || "fade"}`);
+      }
+    }
+
+    this.renderProducts();
   }
 
   // --- CUSTOMERS ---
@@ -1701,7 +1762,7 @@ class AdminUI {
     const container = document.getElementById("customer-list-body");
 
     if (this.users.length === 0) {
-      container.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">${this.t("user.empty")}</td></tr>`;
+      container.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum utilizador registado.</td></tr>`;
       return;
     }
 
@@ -1714,6 +1775,40 @@ class AdminUI {
               .toUpperCase()
               .substring(0, 2)
           : "??";
+
+        // Email Verification Badge
+        const emailVerified = Boolean(u.Is_Verified);
+        const emailBadge = emailVerified
+          ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'isVerified', ${emailVerified ? 1 : 0})" title="Clique para alterar"><i class="fas fa-check-circle me-1"></i>Verificado</span>`
+          : `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'isVerified', ${emailVerified ? 1 : 0})" title="Clique para alterar"><i class="fas fa-envelope-open-text me-1"></i>Pendente</span>`;
+
+        // Checkout 2FA Status Badge
+        const checkoutVerified = Boolean(u.Checkout_Verified);
+        let checkout2faBadge = "";
+        
+        if (checkoutVerified) {
+          checkout2faBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 1)" title="Clique para alterar"><i class="fas fa-shield-alt me-1"></i>2FA Verificado</span>`;
+        } else if (u.Checkout_OTP) {
+          // Check if expired
+          const expiresAt = new Date(u.Checkout_OTP_Expires);
+          const isExpired = new Date() > expiresAt;
+          const formattedTime = expiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          if (isExpired) {
+            checkout2faBadge = `<span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer d-inline-flex flex-column align-items-start gap-0.5" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 0)" title="Clique para forçar verificação"><span class="d-flex align-items-center"><i class="fas fa-hourglass-end me-1"></i>Código Expirado</span><span class="smaller opacity-75">Expirou às ${formattedTime}</span></span>`;
+          } else {
+            checkout2faBadge = `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer d-inline-flex flex-column align-items-start gap-0.5" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 0)" title="Clique para forçar verificação"><span class="d-flex align-items-center"><i class="fas fa-key me-1"></i>Código: <strong class="ms-1 font-monospace text-dark">${u.Checkout_OTP}</strong></span><span class="smaller opacity-75">Expira às ${formattedTime}</span></span>`;
+          }
+        } else {
+          checkout2faBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 0)" title="Clique para forçar verificação"><i class="fas fa-exclamation-triangle me-1"></i>Requer 2FA</span>`;
+        }
+
+        // Restrito_Postar Status Badge
+        const isRestricted = Boolean(u.Restrito_Postar);
+        const restrictionBadge = isRestricted
+          ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserRestriction('${u.ID_Cliente}', true)" title="Clique para reverter restrição"><i class="fas fa-ban me-1"></i>Restrito</span>`
+          : `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserRestriction('${u.ID_Cliente}', false)" title="Clique para privar de postar/enviar mensagens"><i class="fas fa-check me-1"></i>Ativo</span>`;
+
         return `
             <tr>
                 <td>
@@ -1727,13 +1822,16 @@ class AdminUI {
                 </td>
                 <td><div class="small text-dark">${u.Email}</div></td>
                 <td>
-                    <select class="form-select form-select-sm d-inline-block w-auto bg-light border p-1 rounded-3" onchange="adminUI.updateUserRole('${u.ID_Cliente}', this.value)">
-                        <option value="client" ${u.UserType === "client" ? "selected" : ""}>${this.t("user.client")}</option>
-                        <option value="apicultor" ${u.UserType === "apicultor" ? "selected" : ""}>${this.t("user.beekeeper")}</option>
-                        <option value="admin" ${u.UserType === "admin" ? "selected" : ""}>${this.t("user.admin")}</option>
+                    <select class="role-select role-select--${u.UserType || 'client'}" onchange="adminUI.updateUserRole('${u.ID_Cliente}', this.value)">
+                        <option value="client" ${u.UserType === 'client' ? 'selected' : ''}>Cliente</option>
+                        <option value="apicultor" ${u.UserType === 'apicultor' ? 'selected' : ''}>Apicultor</option>
+                        <option value="admin" ${u.UserType === 'admin' ? 'selected' : ''}>Admin</option>
                     </select>
                 </td>
                 <td class="small text-muted">${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
+                <td>${emailBadge}</td>
+                <td>${checkout2faBadge}</td>
+                <td>${restrictionBadge}</td>
                 <td class="text-end">
                     <button class="btn-action-premium delete" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""} title="Eliminar utilizador">
                         <i class="fas fa-user-minus" style="font-size: 0.75rem;"></i>
@@ -1870,30 +1968,30 @@ class AdminUI {
 
   async openCreateUserModal() {
     const result = await Swal.fire({
-      title: this.lang === "en" ? "Create User" : "Criar Utilizador",
+      title: "Criar Utilizador",
       width: 620,
       html: `
         <div class="text-start">
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Name" : "Nome"}</label>
-          <input id="swal-user-name" class="form-control mb-3" placeholder="${this.lang === "en" ? "Full name" : "Nome completo"}">
+          <label class="form-label small fw-bold text-uppercase text-muted">Nome</label>
+          <input id="swal-user-name" class="form-control mb-3" placeholder="Nome completo">
           <label class="form-label small fw-bold text-uppercase text-muted">Email</label>
           <input id="swal-user-email" type="email" class="form-control mb-3" placeholder="email@exemplo.com">
           <label class="form-label small fw-bold text-uppercase text-muted">Username</label>
           <input id="swal-user-username" class="form-control mb-3" placeholder="utilizador">
           <label class="form-label small fw-bold text-uppercase text-muted">Password</label>
-          <input id="swal-user-password" type="password" class="form-control mb-3" placeholder="${this.lang === "en" ? "Temporary password" : "Password temporária"}">
-          <label class="form-label small fw-bold text-uppercase text-muted">${this.lang === "en" ? "Type" : "Tipo"}</label>
+          <input id="swal-user-password" type="password" class="form-control mb-3" placeholder="Password temporária">
+          <label class="form-label small fw-bold text-uppercase text-muted">Tipo</label>
           <select id="swal-user-type" class="form-select">
-            <option value="client">${this.t("user.client")}</option>
-            <option value="apicultor">${this.t("user.beekeeper")}</option>
-            <option value="admin">${this.t("user.admin")}</option>
+            <option value="client">Cliente</option>
+            <option value="apicultor">Apicultor</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
       `,
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: this.lang === "en" ? "Create" : "Criar",
-      cancelButtonText: this.lang === "en" ? "Cancel" : "Cancelar",
+      confirmButtonText: "Criar",
+      cancelButtonText: "Cancelar",
       preConfirm: () => {
         const payload = {
           name: document.getElementById("swal-user-name").value.trim(),
@@ -1908,11 +2006,7 @@ class AdminUI {
           !payload.username ||
           !payload.password
         ) {
-          Swal.showValidationMessage(
-            this.lang === "en"
-              ? "Fill in all fields."
-              : "Preenche todos os campos.",
-          );
+          Swal.showValidationMessage("Preenche todos os campos.");
           return false;
         }
         return payload;
@@ -1936,7 +2030,7 @@ class AdminUI {
 
       Swal.fire({
         icon: "success",
-        title: this.lang === "en" ? "User created!" : "Utilizador criado!",
+        title: "Utilizador criado!",
         timer: 1400,
         showConfirmButton: false,
       });
@@ -1947,6 +2041,20 @@ class AdminUI {
   }
 
   async deleteUser(id) {
+    // If users lists aren't preloaded, fetch them first to do safety checks
+    if (!this.users || this.users.length === 0) {
+      try {
+        const response = await fetch(`${API_URL}/admin/users`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (response.ok) {
+          this.users = await response.json();
+        }
+      } catch (e) {
+        console.error("Failed to preload users for delete safety check:", e);
+      }
+    }
+
     const userToDel = this.users.find(
       (u) => String(u.ID_Cliente) === String(id),
     );
@@ -1977,6 +2085,12 @@ class AdminUI {
         if (!response.ok) throw new Error("Erro ao remover utilizador");
         Swal.fire("Removido", "O cliente foi removido do sistema.", "success");
         await this.loadUsers();
+
+        // Refresh moderation panel if active
+        const moderacaoSection = document.getElementById("moderacao-section");
+        if (moderacaoSection && moderacaoSection.classList.contains("active")) {
+          await this.loadModerationData();
+        }
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }
@@ -1984,6 +2098,13 @@ class AdminUI {
   }
 
   async updateUserRole(id, userType) {
+    // Immediately update the color class for instant visual feedback
+    const selectEl = document.querySelector(
+      `.role-select[onchange*="updateUserRole('${id}'"]`
+    );
+    if (selectEl) {
+      selectEl.className = `role-select role-select--${userType}`;
+    }
     try {
       const response = await fetch(`${API_URL}/admin/users/${id}/role`, {
         method: "PATCH",
@@ -2019,6 +2140,211 @@ class AdminUI {
     } catch (error) {
       Swal.fire("Erro", error.message, "error");
       await this.loadUsers(); // revert UI change
+    }
+  }
+
+  async loadModerationData() {
+    try {
+      const [reportsRes, blocksRes] = await Promise.all([
+        fetch(`${API_URL}/admin/reports`, { headers: { Authorization: `Bearer ${this.token}` } }),
+        fetch(`${API_URL}/admin/blocks`, { headers: { Authorization: `Bearer ${this.token}` } })
+      ]);
+
+      if (!reportsRes.ok || !blocksRes.ok) throw new Error("Falha ao carregar dados de moderação");
+
+      const reports = await reportsRes.json();
+      const blocks = await blocksRes.json();
+
+      this.renderReports(reports);
+      this.renderBlocks(blocks);
+    } catch (error) {
+      console.error("Error loading moderation data:", error);
+      Swal.fire("Erro", "Não foi possível carregar os dados de moderação.", "error");
+    }
+  }
+
+  renderReports(reports) {
+    const body = document.getElementById("moderacao-denuncias-body");
+    if (!body) return;
+
+    if (reports.length === 0) {
+      body.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Nenhuma denúncia registada.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = reports.map(r => {
+      const date = new Date(r.Data_Denuncia).toLocaleString();
+      const isResolved = r.Status === "Resolvido";
+      const statusBadge = isResolved
+        ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-check-circle me-1"></i>Resolvido</span>`
+        : `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-exclamation-triangle me-1"></i>Pendente</span>`;
+
+      const restrictBtn = r.DenunciadoRestrito
+        ? `<button class="btn btn-sm btn-outline-success me-1" onclick="adminUI.toggleUserRestriction('${r.ID_Denunciado}', true)" title="Permitir Postagem"><i class="fas fa-check"></i> Permitir</button>`
+        : `<button class="btn btn-sm btn-outline-warning me-1" onclick="adminUI.toggleUserRestriction('${r.ID_Denunciado}', false)" title="Privar de Postar"><i class="fas fa-ban"></i> Restringir</button>`;
+
+      const resolveBtn = isResolved
+        ? ""
+        : `<button class="btn btn-sm btn-outline-primary me-1" onclick="adminUI.resolveReport('${r.ID_Denuncia}')" title="Resolver"><i class="fas fa-check-double"></i> Resolver</button>`;
+
+      const deleteBtn = `<button class="btn btn-sm btn-outline-danger" onclick="adminUI.deleteUser('${r.ID_Denunciado}')" title="Remover Conta"><i class="fas fa-user-minus"></i> Remover</button>`;
+
+      return `
+        <tr>
+          <td>
+            <div class="fw-bold text-dark">${r.DenuncianteNome}</div>
+            <div class="small text-muted">${r.DenuncianteEmail}</div>
+          </td>
+          <td>
+            <div class="fw-bold text-dark">${r.DenunciadoNome}</div>
+            <div class="small text-muted">${r.DenunciadoEmail}</div>
+            ${r.DenunciadoRestrito ? '<span class="badge bg-danger-subtle text-danger px-2 py-0.5 mt-1 small" style="font-size:0.7rem">Restrito</span>' : ''}
+          </td>
+          <td><span class="badge bg-secondary text-white">${r.Tipo_Item}</span></td>
+          <td>
+            <div class="small text-dark text-wrap" style="max-width: 250px; word-break: break-word;">
+              ${r.Texto_Item || '<span class="text-muted italic">(sem conteúdo textual)</span>'}
+            </div>
+            <div class="smaller text-muted mt-1">ID Item: #${r.ID_Item}</div>
+          </td>
+          <td><div class="small text-dark text-wrap" style="max-width: 150px; word-break: break-word;">${r.Motivo}</div></td>
+          <td class="small text-muted">${date}</td>
+          <td>${statusBadge}</td>
+          <td class="text-end">
+            <div class="d-flex justify-content-end gap-1">
+              ${resolveBtn}
+              ${restrictBtn}
+              ${deleteBtn}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  renderBlocks(blocks) {
+    const body = document.getElementById("moderacao-bloqueios-body");
+    if (!body) return;
+
+    if (blocks.length === 0) {
+      body.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Nenhum bloqueio registado.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = blocks.map(b => {
+      const date = new Date(b.Data_Bloqueio).toLocaleString();
+      return `
+        <tr>
+          <td>
+            <div class="fw-bold text-dark">${b.BloqueadorNome}</div>
+            <div class="small text-muted">${b.BloqueadorEmail} (ID: #${b.ID_Bloqueador})</div>
+          </td>
+          <td>
+            <div class="fw-bold text-dark">${b.BloqueadoNome}</div>
+            <div class="small text-muted">${b.BloqueadoEmail} (ID: #${b.ID_Bloqueado})</div>
+          </td>
+          <td class="small text-muted">${date}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  async resolveReport(reportId) {
+    try {
+      const response = await fetch(`${API_URL}/admin/reports/${reportId}/resolve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${this.token}` }
+      });
+
+      if (!response.ok) throw new Error("Erro ao resolver denúncia.");
+      const result = await response.json();
+      Swal.fire({
+        icon: "success",
+        title: "Sucesso",
+        text: result.message,
+        timer: 1500,
+        showConfirmButton: false
+      });
+      await this.loadModerationData();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async toggleUserRestriction(id, isCurrentlyRestricted) {
+    const newValue = isCurrentlyRestricted ? 0 : 1;
+    const statusName = newValue ? "Restrito (não pode postar/enviar mensagens)" : "Ativo (pode postar/enviar mensagens)";
+
+    try {
+      const response = await fetch(`${API_URL}/admin/users/${id}/restrict`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ restrict: newValue === 1 }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Erro ao atualizar restrição.");
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Estado Atualizado",
+        text: `Utilizador agora está ${statusName}.`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      // Reload both/either to sync
+      const customersSection = document.getElementById("customers-section");
+      if (customersSection && customersSection.classList.contains("active")) {
+        await this.loadUsers();
+      }
+      const moderacaoSection = document.getElementById("moderacao-section");
+      if (moderacaoSection && moderacaoSection.classList.contains("active")) {
+        await this.loadModerationData();
+      }
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async toggleUserVerification(id, field, currentValue) {
+    const newValue = currentValue ? 0 : 1;
+    const fieldName = field === "isVerified" ? "E-mail" : "Checkout 2FA";
+    const statusName = newValue ? "verificado" : "não verificado";
+
+    try {
+      const body = {};
+      body[field] = newValue;
+
+      const response = await fetch(`${API_URL}/admin/users/${id}/verification`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Erro ao atualizar estado de verificação.");
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: `${fieldName} marcado como ${statusName}!`,
+        timer: 1200,
+        showConfirmButton: false,
+      });
+
+      await this.loadUsers();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
     }
   }
 
@@ -3342,6 +3668,10 @@ class AdminUI {
         timer: 1500,
         showConfirmButton: false,
       });
+      this.loadSiteSlugs();
+      if (typeof window.loadSiteSlugsCache === "function") {
+        window.loadSiteSlugsCache();
+      }
     } catch (err) {
       Swal.fire("Erro", err.message, "error");
     }
@@ -3392,7 +3722,7 @@ class AdminUI {
       products.forEach((p) => {
         if (p.Slug) {
           xml += `  <url>\n`;
-          xml += `    <loc>${baseUrl}/produto.html?slug=${p.Slug}</loc>\n`;
+          xml += `    <loc>${baseUrl}/produto/${p.Slug}</loc>\n`;
           xml += `    <lastmod>${date}</lastmod>\n`;
           xml += `    <priority>0.6</priority>\n`;
           xml += `  </url>\n`;
@@ -3460,8 +3790,8 @@ class AdminUI {
           <td>
             ${
               p.Slug
-                ? `<a href="produto.html?slug=${p.Slug}" target="_blank" class="small text-decoration-none" style="color:var(--primary-green);">
-              <i class="fas fa-external-link-alt me-1"></i>/produto.html?slug=${p.Slug}
+                ? `<a href="/produto/${p.Slug}" target="_blank" class="small text-decoration-none" style="color:var(--primary-green);">
+              <i class="fas fa-external-link-alt me-1"></i>/produto/${p.Slug}
             </a>`
                 : '<span class="text-muted small">—</span>'
             }
@@ -3550,6 +3880,24 @@ class AdminUI {
     }
   }
 
+  selectAnimationStyle(animStyle) {
+    const hiddenInput = document.getElementById("app-layout-animation-style");
+    if (hiddenInput) {
+      hiddenInput.value = animStyle;
+    }
+
+    const optFade = document.getElementById("opt-anim-fade");
+    const optRoda = document.getElementById("opt-anim-roda");
+
+    if (animStyle === "roda") {
+      optFade?.classList.remove("active");
+      optRoda?.classList.add("active");
+    } else {
+      optRoda?.classList.remove("active");
+      optFade?.classList.add("active");
+    }
+  }
+
   async loadAppearanceSettings() {
     try {
       const res = await fetch(`${API_URL}/site-settings`);
@@ -3564,6 +3912,14 @@ class AdminUI {
 
       // Update active UI cards state
       this.selectLoadingStyle(style);
+
+      // Animation style
+      const animStyle = settings.layout_animation_style || "fade";
+      const animStyleEl = document.getElementById("app-layout-animation-style");
+      if (animStyleEl) animStyleEl.value = animStyle;
+      this.selectAnimationStyle(animStyle);
+
+      this.layoutAnimationStyle = animStyle;
     } catch (error) {
       console.error(error);
       Swal.fire(
@@ -3579,6 +3935,8 @@ class AdminUI {
       const settings = {
         placeholder_style:
           document.getElementById("app-placeholder-style")?.value || "skeleton",
+        layout_animation_style:
+          document.getElementById("app-layout-animation-style")?.value || "fade",
       };
 
       const res = await fetch(`${API_URL}/admin/site-settings`, {
@@ -3591,6 +3949,9 @@ class AdminUI {
       });
 
       if (!res.ok) throw new Error("Falha ao salvar definições de aparência");
+
+      // Update local state
+      this.layoutAnimationStyle = settings.layout_animation_style;
 
       Swal.fire({
         icon: "success",
@@ -3779,6 +4140,580 @@ class AdminUI {
           showConfirmButton: false,
         });
         this.loadQuizQuestions();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  // --- APRENDER FACTS MANAGEMENT ---
+  async loadFacts() {
+    try {
+      const response = await fetch(`${API_URL}/aprender/factos`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar os factos da página Aprender.");
+      this.facts = await response.json();
+      this.renderFacts();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar os factos.", "error");
+    }
+  }
+
+  renderFacts() {
+    const container = document.getElementById("factos-list-body");
+    if (!container) return;
+
+    if (!this.facts || this.facts.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum facto registado.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = this.facts
+      .map((f) => {
+        return `
+        <tr>
+            <td class="fw-bold text-muted">#${f.ID_Facto}</td>
+            <td class="fw-bold text-dark">${f.Titulo}</td>
+            <td><span class="badge bg-light text-dark"><i class="${f.Icon_Frente} me-1"></i> ${f.Icon_Frente}</span></td>
+            <td><span class="badge bg-light text-dark"><i class="${f.Icon_Verso} me-1"></i> ${f.Icon_Verso}</span></td>
+            <td><div class="small text-muted" style="max-height: 60px; overflow-y: auto;">${f.Conteudo_Verso}</div></td>
+            <td class="text-end">
+                <button class="btn-action-premium me-1" onclick="adminUI.editFact(${f.ID_Facto})" title="Editar">
+                    <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                </button>
+                <button class="btn-action-premium delete" onclick="adminUI.deleteFact(${f.ID_Facto})" title="Eliminar">
+                    <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                </button>
+            </td>
+        </tr>
+      `;
+      })
+      .join("");
+  }
+
+  resetFactForm() {
+    const form = document.getElementById("factForm");
+    if (form) form.reset();
+    const idField = document.getElementById("factId");
+    if (idField) idField.value = "";
+    const labelField = document.getElementById("factModalLabel");
+    if (labelField) labelField.innerText = "Adicionar Novo Facto";
+  }
+
+  editFact(id) {
+    const f = this.facts.find((x) => x.ID_Facto === id);
+    if (!f) return;
+
+    const idField = document.getElementById("factId");
+    if (idField) idField.value = f.ID_Facto;
+    const titleField = document.getElementById("factTitle");
+    if (titleField) titleField.value = f.Titulo;
+    const iconFrontField = document.getElementById("factIconFront");
+    if (iconFrontField) iconFrontField.value = f.Icon_Frente;
+    const iconBackField = document.getElementById("factIconBack");
+    if (iconBackField) iconBackField.value = f.Icon_Verso;
+    const contentBackField = document.getElementById("factContentBack");
+    if (contentBackField) contentBackField.value = f.Conteudo_Verso;
+    const labelField = document.getElementById("factModalLabel");
+    if (labelField) labelField.innerText = "Editar Facto #" + id;
+
+    const modal = new bootstrap.Modal(document.getElementById("factModal"));
+    modal.show();
+  }
+
+  async saveFact() {
+    const id = document.getElementById("factId").value;
+    const body = {
+      titulo: document.getElementById("factTitle").value,
+      icon_frente: document.getElementById("factIconFront").value,
+      icon_verso: document.getElementById("factIconBack").value,
+      conteudo_verso: document.getElementById("factContentBack").value,
+    };
+
+    if (!body.titulo || !body.icon_frente || !body.icon_verso || !body.conteudo_verso) {
+      Swal.fire("Erro", "Preencha todos os campos obrigatórios.", "warning");
+      return;
+    }
+
+    const isEditing = !!id;
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing
+      ? `${API_URL}/aprender/factos/${id}`
+      : `${API_URL}/aprender/factos`;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error("Falha ao guardar facto.");
+
+      const modalEl = document.getElementById("factModal");
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modal) modal.hide();
+
+      Swal.fire({
+        icon: "success",
+        title: "Facto Guardado",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      this.loadFacts();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async deleteFact(id) {
+    const result = await Swal.fire({
+      title: "Remover Facto?",
+      text: "Esta ação não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, apagar!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/aprender/factos/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (!response.ok) throw new Error("Erro ao apagar o facto.");
+        Swal.fire({
+          icon: "success",
+          title: "Apagado",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+        this.loadFacts();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  // --- APRENDER GLOSSARY MANAGEMENT ---
+  async loadGlossaryTerms() {
+    try {
+      const response = await fetch(`${API_URL}/aprender/glossario`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar o glossário.");
+      this.glossaryTerms = await response.json();
+      this.renderGlossaryTerms();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar o glossário.", "error");
+    }
+  }
+
+  renderGlossaryTerms() {
+    const container = document.getElementById("glossario-list-body");
+    if (!container) return;
+
+    if (!this.glossaryTerms || this.glossaryTerms.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum termo registado.</td></tr>`;
+      return;
+    }
+
+    const catLabels = {
+      substance: "Substâncias",
+      hive: "A Colmeia",
+      process: "Processos",
+      equipment: "Equipamentos"
+    };
+
+    container.innerHTML = this.glossaryTerms
+      .map((g) => {
+        const categoryLabel = catLabels[g.Categoria] || g.Categoria;
+        return `
+        <tr>
+            <td class="fw-bold text-muted">#${g.ID_Glossario}</td>
+            <td class="fw-bold text-dark">${g.Termo}</td>
+            <td><div class="small text-muted" style="max-height: 60px; overflow-y: auto;">${g.Definicao}</div></td>
+            <td><span class="badge bg-light text-dark"><i class="${g.Icon} me-1"></i> ${g.Icon}</span></td>
+            <td><span class="badge bg-secondary text-uppercase" style="font-size:0.7rem;">${categoryLabel}</span></td>
+            <td class="text-end">
+                <button class="btn-action-premium me-1" onclick="adminUI.editGlossaryTerm(${g.ID_Glossario})" title="Editar">
+                    <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+                </button>
+                <button class="btn-action-premium delete" onclick="adminUI.deleteGlossaryTerm(${g.ID_Glossario})" title="Eliminar">
+                    <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                </button>
+            </td>
+        </tr>
+      `;
+      })
+      .join("");
+  }
+
+  resetGlossaryForm() {
+    const form = document.getElementById("glossaryForm");
+    if (form) form.reset();
+    const idField = document.getElementById("glossaryId");
+    if (idField) idField.value = "";
+    const labelField = document.getElementById("glossaryModalLabel");
+    if (labelField) labelField.innerText = "Adicionar Novo Termo";
+  }
+
+  editGlossaryTerm(id) {
+    const g = this.glossaryTerms.find((x) => x.ID_Glossario === id);
+    if (!g) return;
+
+    const idField = document.getElementById("glossaryId");
+    if (idField) idField.value = g.ID_Glossario;
+    const termField = document.getElementById("glossaryTerm");
+    if (termField) termField.value = g.Termo;
+    const iconField = document.getElementById("glossaryIcon");
+    if (iconField) iconField.value = g.Icon;
+    const categoryField = document.getElementById("glossaryCategory");
+    if (categoryField) categoryField.value = g.Categoria;
+    const definitionField = document.getElementById("glossaryDefinition");
+    if (definitionField) definitionField.value = g.Definicao;
+    const labelField = document.getElementById("glossaryModalLabel");
+    if (labelField) labelField.innerText = "Editar Termo #" + id;
+
+    const modal = new bootstrap.Modal(document.getElementById("glossaryModal"));
+    modal.show();
+  }
+
+  async saveGlossaryTerm() {
+    const id = document.getElementById("glossaryId").value;
+    const body = {
+      termo: document.getElementById("glossaryTerm").value,
+      icon: document.getElementById("glossaryIcon").value,
+      categoria: document.getElementById("glossaryCategory").value,
+      definicao: document.getElementById("glossaryDefinition").value,
+    };
+
+    if (!body.termo || !body.icon || !body.categoria || !body.definicao) {
+      Swal.fire("Erro", "Preencha todos os campos obrigatórios.", "warning");
+      return;
+    }
+
+    const isEditing = !!id;
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing
+      ? `${API_URL}/aprender/glossario/${id}`
+      : `${API_URL}/aprender/glossario`;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error("Falha ao guardar termo do glossário.");
+
+      const modalEl = document.getElementById("glossaryModal");
+      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modal) modal.hide();
+
+      Swal.fire({
+        icon: "success",
+        title: "Termo Guardado",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      this.loadGlossaryTerms();
+    } catch (error) {
+      Swal.fire("Erro", error.message, "error");
+    }
+  }
+
+  async deleteGlossaryTerm(id) {
+    const result = await Swal.fire({
+      title: "Remover Termo?",
+      text: "Esta ação não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, apagar!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/aprender/glossario/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (!response.ok) throw new Error("Erro ao apagar o termo.");
+        Swal.fire({
+          icon: "success",
+          title: "Apagado",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+        this.loadGlossaryTerms();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  // --- COMMUNITY (Q&A) MODERATION ---
+  async loadComunidade() {
+    try {
+      const response = await fetch(`${API_URL}/comunidade/perguntas`);
+      if (!response.ok) throw new Error("Falha ao carregar publicações da comunidade");
+      this.comunidadePosts = await response.json();
+      this.renderComunidade();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar os posts da comunidade.", "error");
+    }
+  }
+
+  renderComunidade() {
+    const container = document.getElementById("comunidade-list-body");
+    if (!container) return;
+
+    if (!this.comunidadePosts || this.comunidadePosts.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhuma publicação registada na comunidade.</td></tr>`;
+      return;
+    }
+
+    const rows = [];
+    this.comunidadePosts.forEach((p) => {
+      // Add Question row
+      rows.push(`
+        <tr class="table-light">
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <img src="${p.AutorPicture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.AutorNome || 'U') + '&background=1a4d2e&color=fff'}" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;">
+              <div>
+                <span class="fw-bold small text-dark d-block">${p.AutorNome || "Anónimo"}</span>
+                <span class="badge bg-secondary" style="font-size:0.6rem;">${p.AutorTipo || "cliente"}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="fw-medium text-dark" style="max-width:350px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.Texto}">
+              ${p.Texto}
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-primary"><i class="fas fa-question-circle me-1"></i>Pergunta #${p.ID_Pergunta}</span>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border"><i class="fas fa-thumbs-up text-primary me-1"></i>${p.Votos || 0}</span>
+          </td>
+          <td class="small text-muted">
+            ${new Date(p.Data_Criacao).toLocaleDateString("pt-PT")}
+          </td>
+          <td class="text-end">
+            <button class="btn-action-premium delete" onclick="adminUI.deleteComunidadePost('pergunta', ${p.ID_Pergunta})" title="Eliminar Pergunta">
+              <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+            </button>
+          </td>
+        </tr>
+      `);
+
+      // Add Answers rows
+      if (p.respostas && p.respostas.length > 0) {
+        p.respostas.forEach((r) => {
+          rows.push(`
+            <tr>
+              <td style="padding-left: 2rem !important;">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fas fa-reply text-muted fa-rotate-180 small"></i>
+                  <img src="${r.AutorPicture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(r.AutorNome || 'U') + '&background=1a4d2e&color=fff'}" class="rounded-circle" style="width:24px;height:24px;object-fit:cover;">
+                  <div>
+                    <span class="fw-medium small text-muted d-block">${r.AutorNome || "Anónimo"}</span>
+                    <span class="badge bg-light text-muted border" style="font-size:0.55rem;">${r.AutorTipo || "cliente"}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-muted small" style="max-width:350px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.Texto}">
+                  ↳ ${r.Texto}
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-success bg-opacity-75"><i class="fas fa-comment me-1"></i>Resposta #${r.ID_Resposta}</span>
+                ${r.Melhor_Resposta ? '<span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i>Melhor</span>' : ''}
+              </td>
+              <td>
+                <span class="badge bg-light text-muted border"><i class="fas fa-thumbs-up me-1"></i>${r.Votos || 0}</span>
+              </td>
+              <td class="small text-muted">
+                ${new Date(r.Data_Criacao).toLocaleDateString("pt-PT")}
+              </td>
+              <td class="text-end">
+                <button class="btn-action-premium delete" onclick="adminUI.deleteComunidadePost('resposta', ${r.ID_Resposta})" title="Eliminar Resposta">
+                  <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                </button>
+              </td>
+            </tr>
+          `);
+        });
+      }
+    });
+
+    container.innerHTML = rows.join("");
+  }
+
+  async deleteComunidadePost(type, id) {
+    const typeLabel = type === "pergunta" ? "Pergunta" : "Resposta";
+    const result = await Swal.fire({
+      title: `Remover ${typeLabel}?`,
+      text: "Esta ação apagará permanentemente esta publicação e não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, apagar!",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const url = type === "pergunta"
+          ? `${API_URL}/comunidade/perguntas/${id}`
+          : `${API_URL}/comunidade/respostas/${id}`;
+
+        const response = await fetch(url, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+
+        if (!response.ok) throw new Error("Erro ao apagar");
+        
+        Swal.fire({
+          icon: "success",
+          title: "Apagado com sucesso",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+        
+        this.loadComunidade();
+      } catch (error) {
+        Swal.fire("Erro", error.message, "error");
+      }
+    }
+  }
+
+  // ============================================================
+  // GESTÃO DE AVALIAÇÕES (REVIEWS)
+  // ============================================================
+
+  async loadReviews() {
+    try {
+      const response = await fetch(`${API_URL}/admin/reviews`, {
+        headers: { Authorization: `Bearer ${this.token}` }
+      });
+      if (!response.ok) throw new Error("Falha ao carregar as avaliações");
+      this.reviews = await response.json();
+      this.renderReviews();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Erro", "Não foi possível carregar as avaliações.", "error");
+    }
+  }
+
+  renderReviews() {
+    const container = document.getElementById("reviews-list-body");
+    if (!container) return;
+
+    if (!this.reviews || this.reviews.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhuma avaliação registada nos produtos.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = "";
+    this.reviews.forEach((r) => {
+      const date = new Date(r.Data_Avaliacao).toLocaleDateString("pt-PT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      });
+
+      let stars = "";
+      for (let i = 1; i <= 5; i++) {
+        stars += `<i class="${i <= r.Nota ? "fas" : "far"} fa-star text-warning small"></i>`;
+      }
+
+      const avatarSrc = r.ClienteFoto ? r.ClienteFoto : "https://cdn-icons-png.flaticon.com/512/6596/6596121.png";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="d-flex align-items-center gap-2">
+            <img src="${avatarSrc}" alt="Avatar" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover;">
+            <div>
+              <div class="fw-bold small">${r.ClienteNome || "Cliente Hexomel"}</div>
+              <div class="text-muted text-truncate" style="max-width: 150px; font-size: 0.75rem;">${r.ClienteEmail || ""}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="fw-medium small text-truncate" style="max-width: 200px;">
+            ${r.ProdutoNome || "Produto Indisponível"}
+          </div>
+          <div class="text-muted" style="font-size: 0.75rem;">ID Produto: ${r.ID_Produto}</div>
+        </td>
+        <td>
+          <div class="d-flex gap-1 align-items-center">
+            ${stars}
+            <span class="badge bg-light text-dark ms-1 small" style="font-size: 0.7rem">${r.Nota}/5</span>
+          </div>
+        </td>
+        <td>
+          <div class="text-wrap small text-muted" style="max-width: 250px; word-break: break-word;">
+            ${r.Comentario ? r.Comentario : '<span class="fst-italic text-muted">Sem comentário</span>'}
+          </div>
+        </td>
+        <td class="small text-muted">${date}</td>
+        <td class="text-end">
+          <button class="btn-action-premium delete" onclick="adminUI.deleteReview(${r.ID_Avaliacao})" title="Eliminar Avaliação">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      `;
+      container.appendChild(tr);
+    });
+  }
+
+  async deleteReview(id) {
+    const result = await Swal.fire({
+      title: "Tem a certeza?",
+      text: "Esta ação apagará permanentemente esta avaliação e não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sim, apagar!",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${API_URL}/admin/reviews/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+
+        if (!response.ok) throw new Error("Erro ao apagar a avaliação");
+
+        Swal.fire({
+          icon: "success",
+          title: "Avaliação apagada com sucesso",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+
+        this.loadReviews();
       } catch (error) {
         Swal.fire("Erro", error.message, "error");
       }

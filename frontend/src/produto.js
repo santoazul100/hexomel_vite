@@ -3,9 +3,10 @@ import "./styles/index.css";
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { trackPageView } from "./analytics.js";
+import { getLoggedUser } from "./auth.js";
 
 const API_URL = "/api";
-const fallbackImage = "https://placehold.co/600x600/f6f6f6/e0e0e0?text=Hexomel";
+const fallbackImage = "/images/default-product.png";
 
 let currentProduct = null;
 
@@ -25,10 +26,18 @@ function generateStars(rating) {
 
 async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
-  const slug = params.get("slug");
+  let slug = params.get("slug");
 
   if (!slug) {
-    window.location.href = "shop.html";
+    const pathParts = window.location.pathname.split("/");
+    const prodIndex = pathParts.indexOf("produto");
+    if (prodIndex !== -1 && pathParts[prodIndex + 1]) {
+      slug = decodeURIComponent(pathParts[prodIndex + 1]);
+    }
+  }
+
+  if (!slug) {
+    window.location.href = "/loja";
     return;
   }
 
@@ -125,7 +134,7 @@ function renderProduct(p) {
       </div>
 
       ${p.ID_Apicultor ? `
-        <a href="apicultor.html?id=${p.ID_Apicultor}" class="apicultor-badge mb-4 d-inline-flex">
+        <a href="profile.html?id=${p.ID_Apicultor}" class="apicultor-badge mb-4 d-inline-flex">
           <img src="${p.ApicultorFoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.ApicultorNome || 'A')}&background=random`}" 
                alt="${p.ApicultorNome}" 
                referrerpolicy="no-referrer" 
@@ -136,9 +145,14 @@ function renderProduct(p) {
           </div>
         </a>
       ` : `
-        <div class="d-flex align-items-center gap-2 mb-4" style="color: var(--primary-green);">
-          <i class="fas fa-check-circle"></i>
-          <span class="fw-bold">Original Hexomel</span>
+        <div class="apicultor-badge hexomel-badge mb-4 d-inline-flex">
+          <div class="hexomel-badge-icon d-flex align-items-center justify-content-center">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div>
+            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7;">Garantia</div>
+            <div class="fw-bold">Original Hexomel</div>
+          </div>
         </div>
       `}
 
@@ -155,9 +169,15 @@ function renderProduct(p) {
         </button>
       </div>
 
-      <div class="slug-url-display mt-3">
-        <i class="fas fa-link me-1"></i> URL: <code>/produto.html?slug=${p.Slug}</code>
-      </div>
+      ${p.ID_Apicultor ? `
+        <button class="btn btn-outline-success rounded-pill fw-bold px-4 py-2.5 mt-3 w-100" id="btn-ask-seller" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease;">
+          <i class="fas fa-comment-dots me-2"></i>Perguntar ao Vendedor
+        </button>
+      ` : `
+        <a href="contact.html" class="btn btn-outline-success rounded-pill fw-bold px-4 py-2.5 mt-3 w-100 d-flex align-items-center justify-content-center" id="btn-contact-support" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease; text-decoration: none;">
+          <i class="fas fa-envelope me-2"></i>Contactar Apoio ao Cliente
+        </a>
+      `}
     </div>
   `;
 
@@ -188,6 +208,44 @@ function renderProduct(p) {
       showConfirmButton: false,
     });
   });
+
+  // Bind ask seller button
+  const askSellerBtn = document.getElementById("btn-ask-seller");
+  if (askSellerBtn) {
+    askSellerBtn.addEventListener("click", () => {
+      const currentUser = getLoggedUser();
+      if (!currentUser) {
+        Swal.fire({
+          icon: "warning",
+          title: "Inicie sessão",
+          text: "Precisa de iniciar sessão para enviar mensagens ao vendedor.",
+          showCancelButton: true,
+          confirmButtonText: "Iniciar Sessão",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "var(--primary-green)"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.openAuthModal("login");
+          }
+        });
+        return;
+      }
+
+      // Check if trying to message oneself
+      if (currentUser.id === p.ID_Apicultor) {
+        Swal.fire({
+          icon: "info",
+          title: "Este produto é seu",
+          text: "Não pode enviar uma mensagem a si mesmo sobre o seu próprio produto.",
+          confirmButtonColor: "var(--primary-green)"
+        });
+        return;
+      }
+
+      const prefillMsg = `Olá! Tenho interesse no seu produto "${p.Nome}". Gostaria de obter mais informações.`;
+      window.location.href = `rede-social.html?chatWith=${p.ID_Apicultor}&prefill=${encodeURIComponent(prefillMsg)}&product=${p.Slug}`;
+    });
+  }
 }
 
 async function loadReviews(productId) {
@@ -202,7 +260,11 @@ async function loadReviews(productId) {
       return;
     }
 
-    container.innerHTML = reviews.map(r => `
+    container.innerHTML = reviews.map(r => {
+      const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+      const canDelete = currentUser && (currentUser.id === r.ID_Cliente || currentUser.role === "admin");
+
+      return `
       <div class="col-md-6 col-lg-4">
         <div class="review-card-product">
           <div class="d-flex align-items-center gap-3 mb-3">
@@ -215,10 +277,64 @@ async function loadReviews(productId) {
             </div>
           </div>
           <p class="text-muted mb-2" style="font-size:0.9rem;">${r.Comentario || ""}</p>
-          <small class="text-muted">${new Date(r.Data_Avaliacao).toLocaleDateString("pt-PT")}</small>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <small class="text-muted">${new Date(r.Data_Avaliacao).toLocaleDateString("pt-PT")}</small>
+            ${canDelete ? `
+              <button class="btn btn-sm btn-link text-danger text-decoration-none p-0 delete-review-btn" 
+                      data-id="${r.ID_Avaliacao}" 
+                      style="font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-trash-alt me-1"></i> Eliminar
+              </button>
+            ` : ""}
+          </div>
         </div>
       </div>
-    `).join("");
+      `;
+    }).join("");
+
+    // Bind delete review buttons
+    container.querySelectorAll(".delete-review-btn").forEach(btn => {
+      btn.addEventListener("click", async function() {
+        const reviewId = this.getAttribute("data-id");
+        const token = localStorage.getItem("token");
+
+        const result = await Swal.fire({
+          title: "Tem a certeza?",
+          text: "Esta ação apagará permanentemente a sua avaliação.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          confirmButtonText: "Sim, apagar!",
+          cancelButtonText: "Cancelar"
+        });
+
+        if (result.isConfirmed) {
+          try {
+            const deleteRes = await fetch(`${API_URL}/admin/reviews/${reviewId}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const data = await deleteRes.json();
+            if (deleteRes.ok) {
+              Swal.fire({
+                icon: "success",
+                title: "Avaliação apagada com sucesso",
+                timer: 1200,
+                showConfirmButton: false
+              });
+              loadReviews(productId);
+            } else {
+              Swal.fire("Erro", data.error || "Erro ao apagar avaliação", "error");
+            }
+          } catch (err) {
+            console.error(err);
+            Swal.fire("Erro", "Erro ao comunicar com o servidor", "error");
+          }
+        }
+      });
+    });
+
   } catch (err) {
     console.error(err);
     container.innerHTML = '<p class="text-danger">Erro ao carregar avaliações.</p>';

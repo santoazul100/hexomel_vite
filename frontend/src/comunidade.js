@@ -18,7 +18,28 @@ class ComunidadeQA {
 
   async init() {
     this.setupForm();
+    await this.loadMeusVotos();
     await this.loadPerguntas();
+  }
+
+  async loadMeusVotos() {
+    if (!this.token) {
+      localStorage.removeItem("qa_voted");
+      return;
+    }
+    try {
+      const res = await fetch("/api/comunidade/meus-votos", {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("qa_voted", JSON.stringify(data));
+      }
+    } catch (err) {
+      console.error("Error loading user votes:", err);
+    }
   }
 
   setupForm() {
@@ -135,7 +156,7 @@ class ComunidadeQA {
   }
 
   getAvatarUrl(picture, nome) {
-    if (picture) return picture;
+    if (picture && picture.trim() !== "" && picture !== "null" && picture !== "undefined") return picture;
     const encoded = encodeURIComponent(nome || "U");
     return `https://ui-avatars.com/api/?name=${encoded}&background=1a4d2e&color=fff&size=80`;
   }
@@ -161,11 +182,19 @@ class ComunidadeQA {
 
   renderPergunta(p, idx) {
     const isAuthorBeekeeper = this.isBeekeeper(p.AutorTipo);
+    const isAuthorAdmin = p.AutorTipo === "admin";
     const avatarUrl = this.getAvatarUrl(p.AutorPicture, p.AutorNome);
-    const roleClass = isAuthorBeekeeper ? "qa-role-beekeeper" : "qa-role-client";
-    const roleLabel = isAuthorBeekeeper
+    
+    let roleClass = isAuthorBeekeeper ? "qa-role-beekeeper" : "qa-role-client";
+    let roleLabel = isAuthorBeekeeper
       ? '<i class="fas fa-check-circle me-1"></i>Apicultor Verificado'
       : "Cliente";
+      
+    if (isAuthorAdmin) {
+      roleClass = "badge bg-danger text-white border-0 py-1 px-2";
+      roleLabel = '<i class="fas fa-shield-alt me-1"></i>Equipa Hexomel';
+    }
+    
     const avatarClass = isAuthorBeekeeper ? "qa-avatar-beekeeper" : "qa-avatar-client";
 
     const respostasHTML = (p.respostas || [])
@@ -191,18 +220,37 @@ class ComunidadeQA {
     const isAuthor = this.user && this.user.id === p.ID_Cliente;
     const authorBadge = isAuthor ? '<span class="badge ms-2" style="font-size: 0.65rem; background-color: var(--primary-green);">A Tua Pergunta</span>' : '';
 
+    let socialActionsHtml = "";
+    if (this.token && this.user && this.user.id !== p.ID_Cliente && !isAuthorAdmin) {
+      socialActionsHtml = `
+        <div class="qa-social-actions ms-2 d-inline-flex gap-2">
+          <a href="rede-social.html?chatWith=${p.ID_Cliente}" class="btn btn-sm btn-link p-0 text-success" style="font-size: 0.9rem;" title="Enviar Mensagem Privada"><i class="fas fa-comment-dots"></i></a>
+          <button class="btn btn-sm btn-link p-0 text-danger qa-report-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${p.ID_Cliente}" data-item-type="pergunta" data-item-id="${p.ID_Pergunta}" data-item-text="${this.escapeHTML(p.Texto)}" title="Denunciar"><i class="fas fa-flag"></i></button>
+          <button class="btn btn-sm btn-link p-0 text-secondary qa-block-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${p.ID_Cliente}" title="Bloquear"><i class="fas fa-ban"></i></button>
+        </div>
+      `;
+    }
+
     const voted = JSON.parse(localStorage.getItem('qa_voted') || '{"perguntas":[],"respostas":[]}');
     const isVoted = voted.perguntas.includes(p.ID_Pergunta) ? "qa-voted" : "";
+
+    const authorLinkStart = isAuthorAdmin ? "" : `<a href="profile.html?id=${p.ID_Cliente}">`;
+    const authorLinkEnd = isAuthorAdmin ? "" : `</a>`;
 
     return `
       <div class="qa-item animate-fade-up" style="animation-delay: ${0.1 + idx * 0.08}s">
         <div class="qa-question">
-          <img src="${avatarUrl}" alt="${p.AutorNome}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" />
+          ${authorLinkStart}
+            <img src="${avatarUrl}" alt="${p.AutorNome || 'U'}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${p.AutorNome || 'U'}') + '&background=1a4d2e&color=fff&size=80';" />
+          ${authorLinkEnd}
           <div class="qa-content">
             <div class="qa-meta d-flex w-100 align-items-center">
-              <span class="qa-author">${p.AutorNome || "Anónimo"}</span>
+              ${isAuthorAdmin 
+                ? `<span class="qa-author fw-bold text-dark me-2">${p.AutorNome || "Anónimo"}</span>` 
+                : `<a href="profile.html?id=${p.ID_Cliente}" class="qa-author text-decoration-none fw-bold text-dark me-2">${p.AutorNome || "Anónimo"}</a>`}
               <span class="qa-role ${roleClass}">${roleLabel}</span>
               ${authorBadge}
+              ${socialActionsHtml}
               ${deleteBtn}
             </div>
             <p class="qa-text">${this.escapeHTML(p.Texto)}</p>
@@ -222,11 +270,19 @@ class ComunidadeQA {
 
   renderResposta(r, perguntaId) {
     const isAuthorBeekeeper = this.isBeekeeper(r.AutorTipo);
+    const isAuthorAdmin = r.AutorTipo === "admin";
     const avatarUrl = this.getAvatarUrl(r.AutorPicture, r.AutorNome);
-    const roleClass = isAuthorBeekeeper ? "qa-role-beekeeper" : "qa-role-client";
-    const roleLabel = isAuthorBeekeeper
+    
+    let roleClass = isAuthorBeekeeper ? "qa-role-beekeeper" : "qa-role-client";
+    let roleLabel = isAuthorBeekeeper
       ? '<i class="fas fa-check-circle me-1"></i>Apicultor Verificado'
       : "Cliente";
+      
+    if (isAuthorAdmin) {
+      roleClass = "badge bg-danger text-white border-0 py-1 px-2";
+      roleLabel = '<i class="fas fa-shield-alt me-1"></i>Equipa Hexomel';
+    }
+    
     const avatarClass = isAuthorBeekeeper ? "qa-avatar-beekeeper" : "qa-avatar-client";
     const bestBadge = r.Melhor_Resposta
       ? '<span class="qa-badge-best"><i class="fas fa-star me-1"></i>Melhor Resposta</span>'
@@ -240,18 +296,37 @@ class ComunidadeQA {
     const isAuthor = this.user && this.user.id === r.ID_Cliente;
     const authorBadge = isAuthor ? '<span class="badge ms-2" style="font-size: 0.65rem; background-color: var(--primary-green);">A Tua Resposta</span>' : '';
 
+    let socialActionsHtml = "";
+    if (this.token && this.user && this.user.id !== r.ID_Cliente && !isAuthorAdmin) {
+      socialActionsHtml = `
+        <div class="qa-social-actions ms-2 d-inline-flex gap-2">
+          <a href="rede-social.html?chatWith=${r.ID_Cliente}" class="btn btn-sm btn-link p-0 text-success" style="font-size: 0.9rem;" title="Enviar Mensagem Privada"><i class="fas fa-comment-dots"></i></a>
+          <button class="btn btn-sm btn-link p-0 text-danger qa-report-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${r.ID_Cliente}" data-item-type="resposta" data-item-id="${r.ID_Resposta}" data-item-text="${this.escapeHTML(r.Texto)}" title="Denunciar"><i class="fas fa-flag"></i></button>
+          <button class="btn btn-sm btn-link p-0 text-secondary qa-block-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${r.ID_Cliente}" title="Bloquear"><i class="fas fa-ban"></i></button>
+        </div>
+      `;
+    }
+
     const voted = JSON.parse(localStorage.getItem('qa_voted') || '{"perguntas":[],"respostas":[]}');
     const isVoted = voted.respostas.includes(r.ID_Resposta) ? "qa-voted" : "";
+
+    const authorLinkStart = isAuthorAdmin ? "" : `<a href="profile.html?id=${r.ID_Cliente}">`;
+    const authorLinkEnd = isAuthorAdmin ? "" : `</a>`;
 
     return `
       <div class="qa-answer ${isAuthorBeekeeper ? "qa-answer-beekeeper" : ""}">
         <div class="qa-answer-line"></div>
-        <img src="${avatarUrl}" alt="${r.AutorNome}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" />
+        ${authorLinkStart}
+          <img src="${avatarUrl}" alt="${r.AutorNome || 'U'}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${r.AutorNome || 'U'}') + '&background=1a4d2e&color=fff&size=80';" />
+        ${authorLinkEnd}
         <div class="qa-content">
           <div class="qa-meta d-flex w-100 align-items-center">
-            <span class="qa-author">${r.AutorNome || "Anónimo"}</span>
+            ${isAuthorAdmin 
+              ? `<span class="qa-author fw-bold text-dark me-2">${r.AutorNome || "Anónimo"}</span>` 
+              : `<a href="profile.html?id=${r.ID_Cliente}" class="qa-author text-decoration-none fw-bold text-dark me-2">${r.AutorNome || "Anónimo"}</a>`}
             <span class="qa-role ${roleClass}">${roleLabel}</span>
             ${authorBadge}
+            ${socialActionsHtml}
             ${deleteBtn}
           </div>
           <p class="qa-text">${this.escapeHTML(r.Texto)}</p>
@@ -448,6 +523,112 @@ class ComunidadeQA {
             }
           } catch (err) {
             console.error("Delete error:", err);
+            Swal.fire("Erro", "Falha na ligação", "error");
+          }
+        }
+      });
+    });
+
+    // Report buttons
+    this.container.querySelectorAll(".qa-report-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const reportedUserId = btn.dataset.userId;
+        const itemType = btn.dataset.itemType;
+        const itemId = btn.dataset.itemId;
+        const itemText = btn.dataset.itemText;
+
+        const { value: reason } = await Swal.fire({
+          title: 'Denunciar Conteúdo',
+          input: 'textarea',
+          inputLabel: 'Qual é o motivo da denúncia?',
+          inputPlaceholder: 'Escreve aqui o motivo...',
+          inputAttributes: {
+            'aria-label': 'Escreve o teu motivo'
+          },
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Enviar Denúncia',
+          cancelButtonText: 'Cancelar'
+        });
+
+        if (reason) {
+          try {
+            const res = await fetch("/api/reports/create", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.token}`,
+              },
+              body: JSON.stringify({
+                reportedUserId,
+                itemType,
+                itemId,
+                reason,
+                itemText
+              }),
+            });
+
+            if (res.ok) {
+              Swal.fire({
+                icon: "success",
+                title: "Denúncia Enviada!",
+                text: "A tua denúncia foi registada e será analisada pela moderação.",
+                confirmButtonColor: "#1a4d2e"
+              });
+            } else {
+              const data = await res.json();
+              Swal.fire("Erro", data.error || "Erro ao enviar denúncia", "error");
+            }
+          } catch (err) {
+            console.error("Report submit error:", err);
+            Swal.fire("Erro", "Falha de ligação", "error");
+          }
+        }
+      });
+    });
+
+    // Block buttons
+    this.container.querySelectorAll(".qa-block-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const targetUserId = btn.dataset.userId;
+
+        const result = await Swal.fire({
+          title: "Bloquear Utilizador?",
+          text: "Não poderás enviar ou receber mensagens privadas deste utilizador.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#dc3545",
+          cancelButtonColor: "#6c757d",
+          confirmButtonText: "Sim, bloquear",
+          cancelButtonText: "Cancelar"
+        });
+
+        if (result.isConfirmed) {
+          try {
+            const res = await fetch(`/api/users/block/${targetUserId}`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            });
+
+            if (res.ok) {
+              Swal.fire({
+                icon: "success",
+                title: "Bloqueado!",
+                text: "O utilizador foi bloqueado com sucesso.",
+                confirmButtonColor: "#1a4d2e",
+                timer: 1500,
+                showConfirmButton: false
+              });
+              await this.loadPerguntas();
+            } else {
+              const data = await res.json();
+              Swal.fire("Erro", data.error || "Erro ao bloquear utilizador", "error");
+            }
+          } catch (err) {
+            console.error("Block error:", err);
             Swal.fire("Erro", "Falha na ligação", "error");
           }
         }

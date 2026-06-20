@@ -16,6 +16,23 @@ const translations = {
   'nav.community':   { pt: 'Comunidade',   en: 'Community' },
   'nav.about':       { pt: 'Sobre',        en: 'About' },
   'nav.contacts':    { pt: 'Contactos',    en: 'Contacts' },
+  'nav.social':      { pt: 'HexoHive',     en: 'HexoHive' },
+  'nav.messages':    { pt: 'Mensagens',    en: 'Messages' },
+  'nav.profile':     { pt: 'Perfil',       en: 'Profile' },
+
+  // ── Rede Social ──
+  'social.title':      { pt: 'Membros & HexoHive',    en: 'Members & HexoHive' },
+  'social.subtitle':   { pt: 'Explore e conecte-se com todos os membros e apicultores na nossa plataforma.', en: 'Explore and connect with all members and beekeepers on our platform.' },
+  'social.search.ph':  { pt: 'Pesquisar membros por nome...', en: 'Search members by name...' },
+  'social.filter.all': { pt: 'Todos', en: 'All' },
+  'social.filter.clients': { pt: 'Clientes', en: 'Clients' },
+  'social.filter.apicultores': { pt: 'Apicultores', en: 'Beekeepers' },
+  'social.msg.btn':    { pt: 'Enviar Mensagem', en: 'Send Message' },
+  'social.block.btn':  { pt: 'Bloquear', en: 'Block' },
+  'social.unblock.btn':{ pt: 'Desbloquear', en: 'Unblock' },
+  'social.report.btn': { pt: 'Denunciar', en: 'Report' },
+  'social.empty.title':{ pt: 'Nenhum Membro Encontrado', en: 'No Members Found' },
+  'social.empty.desc': { pt: 'Não encontrámos nenhum membro com o nome pesquisado. Tente outro nome.', en: 'We did not find any member with the searched name. Try another name.' },
 
   // ── Footer ──
   'footer.desc':       { pt: 'Dedicados à produção de mel 100% natural, preservando a pureza e a tradição apícola em cada gota.', en: 'Dedicated to the production of 100% natural honey, preserving the purity and beekeeping tradition in every drop.' },
@@ -288,6 +305,14 @@ export function initI18n() {
     applyTranslations(lang);
   }
   document.documentElement.lang = lang;
+}
+
+export function updateTranslation(key, lang, value) {
+  if (translations[key]) {
+    translations[key][lang] = value;
+  } else {
+    translations[key] = { [lang]: value };
+  }
 }
 
 /** Create the language toggle button HTML */

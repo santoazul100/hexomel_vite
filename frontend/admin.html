@@ -2,11 +2,29 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hexomel</title>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.webp" type="image/x-icon" />
     <script src="src/pre-load.js"></script>
+    <script>
+      (function() {
+        const token = localStorage.getItem("token");
+        let user = null;
+        try {
+          user = JSON.parse(localStorage.getItem("user"));
+        } catch(e){}
+        if (!token || !user) {
+          window.location.replace("/login");
+        } else {
+          const role = user.role || user.userType || user.UserType;
+          if (role?.toLowerCase() !== "admin") {
+            document.documentElement.classList.add("admin-access-denied");
+          }
+        }
+      })();
+    </script>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -18,6 +36,7 @@
     <link rel="stylesheet" href="src/styles/index.css" />
     <link rel="stylesheet" href="src/styles/modern.css" />
     <link rel="stylesheet" href="src/styles/skeleton.css" />
+    <link rel="stylesheet" href="src/styles/i18n.css" />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -351,6 +370,45 @@
         flex-shrink: 0;
       }
 
+      /* Premium role dropdown */
+      .role-select {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 1.5px solid transparent;
+        border-radius: 20px;
+        padding: 5px 28px 5px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.2s ease;
+        background-repeat: no-repeat;
+        background-position: right 9px center;
+        background-size: 10px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+      }
+      .role-select:hover { filter: brightness(0.95); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+      .role-select:focus { box-shadow: 0 0 0 3px rgba(26,77,46,0.12); }
+
+      .role-select--client {
+        background-color: #f1f5f9;
+        color: #475569;
+        border-color: #e2e8f0;
+      }
+      .role-select--apicultor {
+        background-color: #fffbeb;
+        color: #92400e;
+        border-color: #fde68a;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2392400e' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+      }
+      .role-select--admin {
+        background-color: #f0fdf4;
+        color: #166534;
+        border-color: #bbf7d0;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23166534' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+      }
+
       .badge-premium {
         font-size: 0.7rem;
         font-weight: 700;
@@ -668,10 +726,174 @@
         font-size: 0.85rem;
         letter-spacing: 0.2px;
       }
+
+      /* Access Denied Styles */
+      html.admin-access-denied #admin-layout,
+      html.admin-access-denied nav.navbar-enhanced {
+        display: none !important;
+      }
+      html.admin-access-denied body {
+        background: #f8fafc !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 20px !important;
+      }
+      .access-denied-container {
+        display: none;
+      }
+      html.admin-access-denied .access-denied-container {
+        display: block !important;
+        max-width: 500px;
+        width: 100%;
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+      }
+
+      /* ── Layout Switcher Buttons ── */
+      .layout-toggle-btn {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        color: #64748b;
+        height: 38px;
+        width: 38px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+      }
+      .layout-toggle-btn:hover {
+        background: rgba(26, 77, 46, 0.05);
+        color: var(--primary-green);
+        border-color: rgba(26, 77, 46, 0.1);
+      }
+      .layout-toggle-btn.active {
+        background: var(--primary-green);
+        color: #ffffff;
+        border-color: var(--primary-green);
+        box-shadow: 0 4px 10px rgba(26, 77, 46, 0.2);
+      }
+
+      /* ── Dashboard Grid Cards ── */
+      .dash-product-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      }
+      .dash-product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(26, 77, 46, 0.08);
+        border-color: rgba(26, 77, 46, 0.15);
+      }
+      .dash-product-img-container {
+        position: relative;
+        aspect-ratio: 4/3;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .dash-product-img-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        padding: 0.75rem;
+        transition: transform 0.5s ease;
+      }
+      .dash-product-card:hover .dash-product-img-container img {
+        transform: scale(1.06);
+      }
+      .dash-product-badge-status {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 5;
+      }
+      .dash-product-actions {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 6px;
+        z-index: 5;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(4px);
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      .dash-product-body {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+      .dash-product-title {
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+      }
+      .dash-product-meta {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+      }
+      .dash-product-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f1f5f9;
+      }
     </style>
       <meta name="view-transition" content="same-origin" />
   </head>
   <body>
+    <!-- Ecrã de Acesso Negado -->
+    <div class="access-denied-container animate-fade-up">
+      <div class="card border-0 shadow-lg p-5 text-center" style="border-radius: 24px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+        <div class="mb-4 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(239, 68, 68, 0.1); color: #ef4444; margin: 0 auto;">
+          <i class="fas fa-shield-halved fa-3x" style="animation: pulse 2s infinite;"></i>
+        </div>
+        <h2 class="fw-bold mb-3" style="color: #1e293b; font-size: 1.8rem;">Acesso Restrito</h2>
+        <p class="text-muted mb-4" style="font-size: 0.95rem; line-height: 1.6;">
+          Lamentamos, mas esta área é reservada exclusivamente para administradores do sistema <strong>Hexomel</strong>. O seu utilizador não possui permissões para aceder a esta página.
+        </p>
+        <div class="d-flex flex-column gap-2">
+          <a href="/" class="btn py-2.5 px-4 fw-bold text-white" style="background: #1a4d2e; border-radius: 30px; transition: all 0.3s ease; text-decoration: none;">
+            <i class="fas fa-home me-2"></i>Voltar ao Início
+          </a>
+          <button id="access-denied-logout" class="btn btn-outline-danger py-2.5 px-4 fw-bold" style="border-radius: 30px; transition: all 0.3s ease;">
+            <i class="fas fa-sign-out-alt me-2"></i>Iniciar Sessão com Outra Conta
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("access-denied-logout")?.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.replace("/login");
+      });
+    </script>
+
     <!-- Navbar (Premium Overhaul) -->
     <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
       <div class="container-fluid px-4">
@@ -680,7 +902,7 @@
           <i class="fas fa-bars"></i>
         </button>
 
-        <a class="navbar-brand ms-1" href="index.html">
+        <a class="navbar-brand" href="index.html">
           <img
             src="/images/logo_hexomel.webp"
             alt="Hexomel Logo"
@@ -688,7 +910,7 @@
           />
         </a>
         <button
-          class="navbar-toggler border-0 ms-auto"
+          class="navbar-toggler border-0"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
@@ -698,27 +920,27 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto gap-4">
             <li class="nav-item">
-              <a class="nav-link" href="index.html">Início</a>
+              <a class="nav-link active" href="index.html" data-i18n="nav.home">Início</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="shop.html">Produtos</a>
+              <a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="workshops.html">Workshops</a>
+              <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Descobrir</a>
+              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
               <ul class="dropdown-menu dropdown-menu-hexomel">
-                <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
-                <li><a class="dropdown-item" href="aprender.html">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html">Comunidade</a></li>
+                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
+                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
+                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="about.html">Sobre</a>
+              <a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="contact.html">Contactos</a>
+              <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
             </li>
           </ul>
 
@@ -750,67 +972,77 @@
       <!-- Sidebar -->
       <aside class="admin-sidebar">
         <div class="sidebar-branding">
-          <span class="sidebar-label" data-admin-i18n="admin.panel">Painel Admin</span>
+          <span class="sidebar-label">Painel Admin</span>
           <button class="btn-toggle-sidebar" id="sidebar-hide" title="Esconder Menu">
             <i class="fas fa-chevron-left"></i>
           </button>
         </div>
-        <div class="px-3 pb-3">
-          <button type="button" class="btn btn-light w-100 fw-bold small" id="admin-lang-toggle" style="border-radius: 10px;">
-            <i class="fas fa-language me-2"></i><span id="admin-lang-label">PT</span>
-          </button>
-        </div>
         <nav id="admin-nav" class="flex-grow-1">
-          <p class="sidebar-section-title" data-admin-i18n="admin.nav.main">Principal</p>
+          <p class="sidebar-section-title">Principal</p>
           <a class="admin-nav-link active" data-section="dashboard">
-            <i class="fas fa-chart-pie"></i> <span data-admin-i18n="admin.nav.dashboard">Dashboard</span>
+            <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
           </a>
           <a class="admin-nav-link" data-section="products">
-            <i class="fas fa-box"></i> <span data-admin-i18n="admin.nav.products">Produtos</span>
+            <i class="fas fa-box"></i> <span>Produtos</span>
           </a>
           <a class="admin-nav-link" data-section="categories">
-            <i class="fas fa-tags"></i> <span data-admin-i18n="admin.nav.categories">Categorias</span>
+            <i class="fas fa-tags"></i> <span>Categorias</span>
           </a>
           <a class="admin-nav-link" data-section="origins">
-            <i class="fas fa-map-marker-alt"></i> <span data-admin-i18n="admin.nav.origins">Origens</span>
+            <i class="fas fa-map-marker-alt"></i> <span>Origens</span>
           </a>
 
-          <p class="sidebar-section-title" data-admin-i18n="admin.nav.users">Utilizadores</p>
+          <p class="sidebar-section-title">Utilizadores</p>
           <a class="admin-nav-link" data-section="customers">
-            <i class="fas fa-users"></i> <span data-admin-i18n="admin.nav.customers">Clientes</span>
+            <i class="fas fa-users"></i> <span>Clientes</span>
           </a>
           <a class="admin-nav-link" data-section="upgrade-requests">
-            <i class="fas fa-user-shield"></i> <span data-admin-i18n="admin.nav.upgrades">Pedidos Apicultor</span>
+            <i class="fas fa-user-shield"></i> <span>Pedidos Apicultor</span>
+          </a>
+          <a class="admin-nav-link" data-section="moderacao">
+            <i class="fas fa-gavel"></i> <span>Moderação</span>
           </a>
 
-          <p class="sidebar-section-title" data-admin-i18n="admin.nav.operations">Operações</p>
+          <p class="sidebar-section-title">Operações</p>
           <a class="admin-nav-link" data-section="orders">
-            <i class="fas fa-shopping-bag"></i> <span data-admin-i18n="admin.nav.orders">Encomendas</span>
+            <i class="fas fa-shopping-bag"></i> <span>Encomendas</span>
           </a>
           <a class="admin-nav-link" data-section="workshops">
-            <i class="fas fa-chalkboard-teacher"></i> <span data-admin-i18n="admin.nav.workshops">Workshops</span>
+            <i class="fas fa-chalkboard-teacher"></i> <span>Workshops</span>
           </a>
           <a class="admin-nav-link" data-section="quiz">
-            <i class="fas fa-question-circle"></i> <span data-admin-i18n="admin.nav.quiz">Quiz</span>
+            <i class="fas fa-question-circle"></i> <span>Quiz</span>
+          </a>
+          <a class="admin-nav-link" data-section="aprender-factos">
+            <i class="fas fa-lightbulb"></i> <span>Factos Aprender</span>
+          </a>
+          <a class="admin-nav-link" data-section="aprender-glossario">
+            <i class="fas fa-book"></i> <span>Glossário Aprender</span>
+          </a>
+          <a class="admin-nav-link" data-section="comunidade">
+            <i class="fas fa-comments"></i> <span>Comunidade</span>
+          </a>
+          <a class="admin-nav-link" data-section="reviews">
+            <i class="fas fa-star"></i> <span>Avaliações</span>
           </a>
 
-          <p class="sidebar-section-title" data-admin-i18n="admin.nav.analysis">Análise</p>
+          <p class="sidebar-section-title">Análise</p>
           <a class="admin-nav-link" data-section="interactions">
-            <i class="fas fa-mouse-pointer"></i> <span data-admin-i18n="admin.nav.interactions">Interações</span>
+            <i class="fas fa-mouse-pointer"></i> <span>Interações</span>
           </a>
           <a class="admin-nav-link" data-section="seo">
             <i class="fas fa-globe"></i> <span>SEO & URLs</span>
           </a>
 
-          <p class="sidebar-section-title" data-admin-i18n="admin.nav.settings">Configurações</p>
+          <p class="sidebar-section-title">Configurações</p>
           <a class="admin-nav-link" data-section="appearance">
-            <i class="fas fa-palette"></i> <span data-admin-i18n="admin.nav.appearance">Aparência</span>
+            <i class="fas fa-palette"></i> <span>Aparência</span>
           </a>
           <a class="admin-nav-link" data-section="menus">
-            <i class="fas fa-bars"></i> <span data-admin-i18n="admin.nav.menu">Menu Dinâmico</span>
+            <i class="fas fa-bars"></i> <span>Menu Dinâmico</span>
           </a>
           <a class="admin-nav-link" data-section="cms">
-            <i class="fas fa-edit"></i> <span data-admin-i18n="admin.nav.cms">Conteúdo (CMS)</span>
+            <i class="fas fa-edit"></i> <span>Conteúdo (CMS)</span>
           </a>
         </nav>
       </aside>
@@ -970,18 +1202,28 @@
                 Adicione, edite ou remova produtos da loja virtual.
               </p>
             </div>
-            <button
-              class="btn btn-add-product"
-              data-bs-toggle="modal"
-              data-bs-target="#productModal"
-              onclick="adminUI.resetForm()"
-            >
-              <i class="fas fa-plus me-2"></i> Novo Produto
-            </button>
+            <div class="d-flex gap-2 align-items-center">
+              <div class="d-flex gap-1 me-2" role="group" aria-label="Layout Switcher">
+                <button type="button" class="layout-toggle-btn active" id="btn-view-table" title="Vista em Tabela">
+                  <i class="fas fa-list"></i>
+                </button>
+                <button type="button" class="layout-toggle-btn" id="btn-view-grid" title="Vista em Grelha">
+                  <i class="fas fa-th-large"></i>
+                </button>
+              </div>
+              <button
+                class="btn btn-add-product"
+                data-bs-toggle="modal"
+                data-bs-target="#productModal"
+                onclick="adminUI.resetForm()"
+              >
+                <i class="fas fa-plus me-2"></i> Novo Produto
+              </button>
+            </div>
           </header>
 
           <div class="admin-card">
-            <div class="table-responsive">
+            <div class="table-responsive" id="product-table-wrapper">
               <table class="table-premium">
                 <thead>
                   <tr>
@@ -996,6 +1238,11 @@
                 </thead>
                 <tbody id="product-list-body"></tbody>
               </table>
+            </div>
+
+            <!-- Grid Preview -->
+            <div id="product-grid-wrapper" class="d-none">
+              <div class="row g-3" id="product-grid-body"></div>
             </div>
           </div>
         </section>
@@ -1067,13 +1314,13 @@
         <section id="customers-section" class="admin-section">
           <header class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
-              <h2 class="fw-bold mb-1" data-admin-i18n="admin.users.title">Gestão de Utilizadores</h2>
-              <p class="text-muted small mb-0" data-admin-i18n="admin.users.subtitle">
+              <h2 class="fw-bold mb-1">Gestão de Utilizadores</h2>
+              <p class="text-muted small mb-0">
                 Visualize, crie e gira os utilizadores registados no sistema.
               </p>
             </div>
             <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.openCreateUserModal()">
-              <i class="fas fa-user-plus me-2"></i><span data-admin-i18n="admin.users.new">Novo Utilizador</span>
+              <i class="fas fa-user-plus me-2"></i><span>Novo Utilizador</span>
             </button>
           </header>
           <div class="admin-card">
@@ -1085,6 +1332,9 @@
                     <th>Email</th>
                     <th>Tipo</th>
                     <th>Data Registo</th>
+                    <th>E-mail Verif.</th>
+                    <th>Checkout 2FA</th>
+                    <th>Restrição</th>
                     <th class="text-end">Ações</th>
                   </tr>
                 </thead>
@@ -1422,6 +1672,191 @@
           </div>
         </section>
 
+        <!-- APRENDER FACTOS SECTION -->
+        <section id="aprender-factos-section" class="admin-section">
+          <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Factos Aprender</h2>
+              <p class="text-muted small">Crie e edite os factos dinâmicos exibidos em cartões 3D na página de educação.</p>
+            </div>
+            <button class="btn btn-add-product" data-bs-toggle="modal" data-bs-target="#factModal" onclick="adminUI.resetFactForm()">
+              <i class="fas fa-plus me-2"></i> Novo Facto
+            </button>
+          </header>
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Ícone Frente</th>
+                    <th>Ícone Verso</th>
+                    <th style="width: 50%">Conteúdo</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="factos-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- APRENDER GLOSSARIO SECTION -->
+        <section id="aprender-glossario-section" class="admin-section">
+          <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Glossário Aprender</h2>
+              <p class="text-muted small">Crie e edite termos e definições de apicultura exibidos na página de educação.</p>
+            </div>
+            <button class="btn btn-add-product" data-bs-toggle="modal" data-bs-target="#glossaryModal" onclick="adminUI.resetGlossaryForm()">
+              <i class="fas fa-plus me-2"></i> Novo Termo
+            </button>
+          </header>
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Termo</th>
+                    <th>Definição</th>
+                    <th>Ícone</th>
+                    <th>Categoria</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="glossario-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- COMUNIDADE SECTION -->
+        <section id="comunidade-section" class="admin-section">
+          <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Moderação da Comunidade (Q&A)</h2>
+              <p class="text-muted small">
+                Gira todas as perguntas e respostas publicadas na comunidade.
+              </p>
+            </div>
+          </header>
+
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th style="width: 25%">Autor</th>
+                    <th style="width: 35%">Publicação</th>
+                    <th style="width: 15%">Tipo</th>
+                    <th style="width: 10%">Likes</th>
+                    <th style="width: 10%">Data</th>
+                    <th style="width: 5%" class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="comunidade-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- MODERAÇÃO SECTION -->
+        <section id="moderacao-section" class="admin-section">
+          <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Painel de Moderação</h2>
+              <p class="text-muted small">
+                Gira denúncias de conteúdo e consulte os bloqueios de utilizadores registados no sistema.
+              </p>
+            </div>
+          </header>
+
+          <!-- Denúncias Card -->
+          <div class="admin-card mb-4">
+            <div class="card-header bg-transparent border-0 pt-3 pb-0">
+              <h5 class="fw-bold text-dark mb-0"><i class="fas fa-flag text-danger me-2"></i>Denúncias Recentes</h5>
+              <p class="text-muted small mb-0">Lista de reports efetuados por utilizadores na rede social e comunidade.</p>
+            </div>
+            <div class="table-responsive p-3">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>Denunciante</th>
+                    <th>Denunciado</th>
+                    <th>Tipo</th>
+                    <th>Conteúdo / Detalhes</th>
+                    <th>Motivo</th>
+                    <th>Data</th>
+                    <th>Estado</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="moderacao-denuncias-body">
+                  <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">Carregando denúncias...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Bloqueios Card -->
+          <div class="admin-card">
+            <div class="card-header bg-transparent border-0 pt-3 pb-0">
+              <h5 class="fw-bold text-dark mb-0"><i class="fas fa-ban text-secondary me-2"></i>Relações de Bloqueio</h5>
+              <p class="text-muted small mb-0">Consulte quem bloqueou quem no sistema.</p>
+            </div>
+            <div class="table-responsive p-3">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th>Bloqueador (Cliente A)</th>
+                    <th>Bloqueado (Cliente B)</th>
+                    <th>Data do Bloqueio</th>
+                  </tr>
+                </thead>
+                <tbody id="moderacao-bloqueios-body">
+                  <tr>
+                    <td colspan="3" class="text-center py-4 text-muted">Carregando bloqueios...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- REVIEWS SECTION -->
+        <section id="reviews-section" class="admin-section">
+          <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="fw-bold mb-1" style="font-size: 1.05rem;">Gestão de Avaliações</h2>
+              <p class="text-muted small">
+                Visualiza, modera e elimina avaliações feitas pelos clientes nos produtos.
+              </p>
+            </div>
+          </header>
+
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="table align-middle product-table">
+                <thead>
+                  <tr>
+                    <th style="width: 25%">Cliente</th>
+                    <th style="width: 25%">Produto</th>
+                    <th style="width: 15%">Classificação</th>
+                    <th style="width: 20%">Comentário</th>
+                    <th style="width: 10%">Data</th>
+                    <th style="width: 5%" class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-list-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- APPEARANCE SECTION -->
         <section id="appearance-section" class="admin-section">
           <div class="row justify-content-center">
@@ -1490,6 +1925,48 @@
                     
                     <input type="hidden" id="app-placeholder-style" value="skeleton">
                     <small class="text-muted d-block mt-3">Clique numa das opções acima para selecionar a forma como os dados serão exibidos enquanto são descarregados do servidor.</small>
+                    
+                    <div class="mb-4 mt-5">
+                      <label class="form-label small fw-bold text-uppercase text-muted mb-3 d-block">Animação de Transição de Layout</label>
+                      
+                      <div class="row g-4">
+                        <div class="col-md-6">
+                          <div class="card loading-option-card border-2 p-3 text-center cursor-pointer position-relative h-100" id="opt-anim-fade" onclick="adminUI.selectAnimationStyle('fade')">
+                            <div class="loading-preview-wrapper mb-3 p-3 bg-light d-flex align-items-center justify-content-center" style="height: 120px; border-radius: 12px; overflow: hidden; position: relative;">
+                              <!-- Fade Animation Preview -->
+                              <div class="d-flex gap-2 w-100 justify-content-center align-items-center" style="transform-origin: center; animation: layoutFadeIn 2.5s infinite alternate;">
+                                <div class="bg-success rounded-3" style="width: 40px; height: 40px; opacity: 0.85;"></div>
+                                <div class="bg-warning rounded-3" style="width: 40px; height: 40px; opacity: 0.85;"></div>
+                              </div>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-dark">Desvanecer / Fade</h6>
+                            <p class="text-muted small mb-0">Ecrã de transição suave com desvanecimento e escala sutil.</p>
+                            <div class="position-absolute top-0 end-0 m-3 check-badge d-none">
+                              <i class="fas fa-check text-white"></i>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="card loading-option-card border-2 p-3 text-center cursor-pointer position-relative h-100" id="opt-anim-roda" onclick="adminUI.selectAnimationStyle('roda')">
+                            <div class="loading-preview-wrapper mb-3 p-3 bg-light d-flex align-items-center justify-content-center" style="height: 120px; border-radius: 12px; overflow: hidden; position: relative;">
+                              <!-- Roda Animation Preview -->
+                              <div class="d-flex gap-2 w-100 justify-content-center align-items-center" style="transform-origin: center; animation: layoutRodaIn 2.5s infinite alternate;">
+                                <div class="bg-success rounded-3" style="width: 40px; height: 40px; opacity: 0.85;"></div>
+                                <div class="bg-warning rounded-3" style="width: 40px; height: 40px; opacity: 0.85;"></div>
+                              </div>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-dark">Rotação / Roda</h6>
+                            <p class="text-muted small mb-0">Efeito dinâmico com rotação suave e salto amortecido (spin bouncy).</p>
+                            <div class="position-absolute top-0 end-0 m-3 check-badge d-none">
+                              <i class="fas fa-check text-white"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <input type="hidden" id="app-layout-animation-style" value="fade">
+                      <small class="text-muted d-block mt-3">Clique numa das opções acima para definir a animação de transição aplicada ao alternar o layout da lista de produtos.</small>
+                    </div>
                   </div>
 
                   <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
@@ -1554,20 +2031,20 @@
             <div class="col-lg-10">
               <header class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
-                  <h2 class="fw-bold mb-1" style="font-size: 1.05rem;"><i class="fas fa-edit text-success me-2"></i><span data-admin-i18n="admin.cms.title">Gestão de Conteúdo (CMS)</span></h2>
-                  <p class="text-muted small mb-0" data-admin-i18n="admin.cms.subtitle">
+                  <h2 class="fw-bold mb-1" style="font-size: 1.05rem;"><i class="fas fa-edit text-success me-2"></i><span>Gestão de Conteúdo (CMS)</span></h2>
+                  <p class="text-muted small mb-0">
                     Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.
                   </p>
                 </div>
                 <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.openCMSBlockModal()">
-                  <i class="fas fa-plus me-2"></i><span data-admin-i18n="admin.cms.new">Novo Bloco</span>
+                  <i class="fas fa-plus me-2"></i><span>Novo Bloco</span>
                 </button>
               </header>
 
               <div class="admin-card border-0 shadow-sm p-4">
                 <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-4">
                   <div style="min-width: 250px; max-width: 350px;">
-                    <label class="form-label fw-bold small text-muted text-uppercase mb-2" data-admin-i18n="admin.cms.page">Selecionar Página do Frontoffice</label>
+                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Selecionar Página do Frontoffice</label>
                     <select class="form-select" id="cms-page-selector" onchange="adminUI.loadCMSBlocks()" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500;">
                       <option value="home">Página Inicial (Home)</option>
                       <option value="about">Página Sobre Nós (About)</option>
@@ -1586,6 +2063,44 @@
 
                 <div class="cms-blocks-container" id="cms-blocks-list">
                   <!-- Rendered dynamically -->
+                </div>
+              </div>
+
+              <!-- Gestão de Destaques / Carrossel -->
+              <div class="admin-card border-0 shadow-sm p-4 mt-4">
+                <header class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                  <div>
+                    <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.1rem;">
+                      <i class="fas fa-images text-success me-2"></i>Gestão de Carrosseis (Produtos em Destaque)
+                    </h3>
+                    <p class="text-muted small mb-0">
+                      Adicione ou remova produtos que aparecem no carrossel "Os Nossos Méis em Destaque" na Página Inicial.
+                    </p>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                      <input type="text" id="carousel-search" class="form-control border-start-0" placeholder="Procurar produto..." oninput="adminUI.filterCarouselProducts()" style="border-radius: 0 8px 8px 0; width: 180px;" />
+                    </div>
+                  </div>
+                </header>
+
+                <hr class="my-3" style="border-color: rgba(0,0,0,0.05)">
+
+                <!-- Featured currently in carousel -->
+                <div class="mb-4">
+                  <h5 class="fw-bold small text-uppercase text-success mb-3"><i class="fas fa-star text-warning me-2"></i>Destaques no Carrossel</h5>
+                  <div class="row g-3" id="carousel-featured-list">
+                    <!-- Rendered dynamically -->
+                  </div>
+                </div>
+
+                <!-- Other products available -->
+                <div>
+                  <h5 class="fw-bold small text-uppercase text-muted mb-3"><i class="far fa-star text-muted me-2"></i>Outros Produtos Disponíveis</h5>
+                  <div class="row g-3" id="carousel-others-list">
+                    <!-- Rendered dynamically -->
+                  </div>
                 </div>
               </div>
             </div>
@@ -1933,6 +2448,97 @@
               <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
                 <button type="button" class="btn btn-light px-4 fw-bold text-muted" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Pergunta</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fact Modal (Add/Edit) -->
+    <div class="modal fade" id="factModal" tabindex="-1" aria-labelledby="factModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden">
+          <div class="modal-header border-0 pb-0 ps-4 pe-4 pt-4">
+            <h5 class="modal-title fw-bold text-dark fs-4" id="factModalLabel">Adicionar Novo Facto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="factForm" onsubmit="event.preventDefault(); adminUI.saveFact();">
+              <input type="hidden" id="factId" />
+              
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Título do Facto</label>
+                <input type="text" id="factTitle" class="form-control form-control-v2" placeholder="Ex: Conservação Milenar" required />
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone da Frente (FontAwesome)</label>
+                  <input type="text" id="factIconFront" class="form-control form-control-v2" placeholder="Ex: fas fa-calendar-alt" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone do Verso (FontAwesome)</label>
+                  <input type="text" id="factIconBack" class="form-control form-control-v2" placeholder="Ex: fas fa-infinity" required />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Conteúdo do Verso (Suporta tags HTML como strong)</label>
+                <textarea id="factContentBack" class="form-control form-control-v2" rows="3" placeholder="Insira o texto explicativo..." required></textarea>
+              </div>
+
+              <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-light px-4 fw-bold text-muted" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Facto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Glossary Modal (Add/Edit) -->
+    <div class="modal fade" id="glossaryModal" tabindex="-1" aria-labelledby="glossaryModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden">
+          <div class="modal-header border-0 pb-0 ps-4 pe-4 pt-4">
+            <h5 class="modal-title fw-bold text-dark fs-4" id="glossaryModalLabel">Adicionar Novo Termo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="glossaryForm" onsubmit="event.preventDefault(); adminUI.saveGlossaryTerm();">
+              <input type="hidden" id="glossaryId" />
+              
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Termo</label>
+                <input type="text" id="glossaryTerm" class="form-control form-control-v2" placeholder="Ex: Néctar" required />
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone (FontAwesome)</label>
+                  <input type="text" id="glossaryIcon" class="form-control form-control-v2" placeholder="Ex: fas fa-droplet" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-uppercase text-muted">Categoria</label>
+                  <select id="glossaryCategory" class="form-select form-control-v2" required>
+                    <option value="substance">Substâncias</option>
+                    <option value="hive">A Colmeia</option>
+                    <option value="process">Processos</option>
+                    <option value="equipment">Equipamentos</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase text-muted">Definição</label>
+                <textarea id="glossaryDefinition" class="form-control form-control-v2" rows="3" placeholder="Insira a definição do termo..." required></textarea>
+              </div>
+
+              <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-light px-4 fw-bold text-muted" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Termo</button>
               </div>
             </form>
           </div>

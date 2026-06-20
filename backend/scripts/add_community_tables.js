@@ -35,6 +35,22 @@ CREATE TABLE IF NOT EXISTS \`resposta_comunidade\` (
   CONSTRAINT \`fk_resposta_pergunta\` FOREIGN KEY (\`ID_Pergunta\`) REFERENCES \`pergunta_comunidade\` (\`ID_Pergunta\`) ON DELETE CASCADE,
   CONSTRAINT \`fk_resposta_cliente\` FOREIGN KEY (\`ID_Cliente\`) REFERENCES \`cliente\` (\`ID_Cliente\`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS \`voto_pergunta\` (
+  \`ID_Cliente\` int(10) NOT NULL,
+  \`ID_Pergunta\` int(10) NOT NULL,
+  PRIMARY KEY (\`ID_Cliente\`, \`ID_Pergunta\`),
+  CONSTRAINT \`fk_voto_pergunta_cliente\` FOREIGN KEY (\`ID_Cliente\`) REFERENCES \`cliente\` (\`ID_Cliente\`) ON DELETE CASCADE,
+  CONSTRAINT \`fk_voto_pergunta_pergunta\` FOREIGN KEY (\`ID_Pergunta\`) REFERENCES \`pergunta_comunidade\` (\`ID_Pergunta\`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS \`voto_resposta\` (
+  \`ID_Cliente\` int(10) NOT NULL,
+  \`ID_Resposta\` int(10) NOT NULL,
+  PRIMARY KEY (\`ID_Cliente\`, \`ID_Resposta\`),
+  CONSTRAINT \`fk_voto_resposta_cliente\` FOREIGN KEY (\`ID_Cliente\`) REFERENCES \`cliente\` (\`ID_Cliente\`) ON DELETE CASCADE,
+  CONSTRAINT \`fk_voto_resposta_resposta\` FOREIGN KEY (\`ID_Resposta\`) REFERENCES \`resposta_comunidade\` (\`ID_Resposta\`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `;
 
     console.log("Adding community tables...");

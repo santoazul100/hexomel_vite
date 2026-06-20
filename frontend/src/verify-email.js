@@ -7,8 +7,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!token) {
     contentDiv.innerHTML = `
-      <i class="error-icon" style="font-style: normal;">⚠️</i>
-      <p class="auth-subtitle" style="color: #d32f2f;">Erro: Token de verificação não fornecido no endereço.</p>
+      <div class="mb-4">
+        <i class="fas fa-exclamation-triangle text-warning animate-pulse" style="font-size: 5rem; filter: drop-shadow(0 4px 10px rgba(255, 193, 7, 0.15));"></i>
+      </div>
+      <h4 class="fw-bold mb-3" style="color: #c89300; font-size: 1.5rem;">Token em Falta</h4>
+      <p class="text-muted mb-4" style="font-size: 1rem;">O endereço eletrónico não contém um token de verificação de email válido.</p>
     `;
     return;
   }
@@ -25,42 +28,72 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await parseJsonSafely(response);
 
     if (response.ok) {
-      // If user is already logged in, update their local status
-      const localUserStr = localStorage.getItem("user");
-      if (localUserStr) {
-        try {
-          const localUser = JSON.parse(localUserStr);
-          localUser.isVerified = true;
-          localUser.Is_Verified = true; // Support both cases
-          localStorage.setItem("user", JSON.stringify(localUser));
-          console.log("Local user status updated to verified.");
-        } catch (e) {
-          console.error("Error updating local user status:", e);
-        }
-      }
+      const footer = document.getElementById("verify-footer");
+      if (footer) footer.style.display = "none";
 
-      contentDiv.innerHTML = `
-        <i class="success-icon" style="font-style: normal;">✅</i>
-        <p class="auth-subtitle" style="color: #1a4d2e; font-weight: bold; font-size: 1.2rem;">${data.message}</p>
-        <p class="auth-subtitle" style="margin-top: 10px;">A sua conta foi ativada! Vamos completar o seu perfil.</p>
-        <button onclick="window.location.href='/login.html'" class="auth-submit btn" style="margin-top: 2rem; width: auto; padding: 12px 30px; cursor: pointer;">
-          Iniciar Sessão
-        </button>
-      `;
+      // Auto-login: If backend returned token and user info, save immediately!
+      if (data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        console.log("Auto-login active following email verification.");
+
+        contentDiv.innerHTML = `
+          <div class="mb-4 animate-fade-up">
+            <i class="fas fa-check-circle text-success" style="font-size: 5rem; filter: drop-shadow(0 4px 12px rgba(26, 77, 46, 0.15)); animation: pulse 2s infinite;"></i>
+          </div>
+          <h4 class="fw-bold mb-3" style="color: var(--primary-green); font-size: 1.5rem;">${data.message || "Email verificado com sucesso!"}</h4>
+          <p class="text-muted mb-4" style="font-size: 0.95rem; max-width: 380px; margin: auto;">A sua conta foi ativada e a sua sessão foi iniciada automaticamente. Explore a nossa coleção de méis artesanais!</p>
+          <button onclick="window.location.href='index.html'" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm" style="font-size: 1rem; cursor: pointer; transition: all 0.3s; background: var(--primary-green); border: none;">
+            <i class="fas fa-home me-2"></i> Ir para a Página Inicial
+          </button>
+        `;
+      } else {
+        // Fallback if token or user wasn't supplied: If already logged in, update status
+        const localUserStr = localStorage.getItem("user");
+        if (localUserStr) {
+          try {
+            const localUser = JSON.parse(localUserStr);
+            localUser.isVerified = true;
+            localUser.Is_Verified = true;
+            localStorage.setItem("user", JSON.stringify(localUser));
+          } catch (e) {
+            console.error("Error updating local user status:", e);
+          }
+        }
+
+        contentDiv.innerHTML = `
+          <div class="mb-4 animate-fade-up">
+            <i class="fas fa-check-circle text-success" style="font-size: 5rem; filter: drop-shadow(0 4px 12px rgba(26, 77, 46, 0.15)); animation: pulse 2s infinite;"></i>
+          </div>
+          <h4 class="fw-bold mb-3" style="color: var(--primary-green); font-size: 1.5rem;">${data.message || "Email verificado com sucesso!"}</h4>
+          <p class="text-muted mb-4" style="font-size: 0.95rem; max-width: 380px; margin: auto;">A sua conta foi ativada! Já pode iniciar sessão e explorar a nossa coleção de méis artesanais.</p>
+          <button onclick="window.location.href='index.html?openAuth=login'" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm" style="font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-sign-in-alt me-2"></i> Iniciar Sessão
+          </button>
+        `;
+      }
     } else {
       contentDiv.innerHTML = `
-        <i class="error-icon" style="font-style: normal;">❌</i>
-        <p class="auth-subtitle" style="color: #d32f2f; font-weight: bold;">${data.error || "Ocorreu um erro ao verificar o token."}</p>
-        <p class="auth-subtitle" style="font-size: 0.9em; margin-top: 5px;">O link de confirmação pode ter expirado ou já foi utilizado.</p>
+        <div class="mb-4">
+          <i class="fas fa-times-circle text-danger" style="font-size: 5rem; filter: drop-shadow(0 4px 12px rgba(220, 53, 69, 0.15));"></i>
+        </div>
+        <h4 class="fw-bold mb-3" style="color: #dc3545; font-size: 1.5rem;">Verificação Falhou</h4>
+        <p class="text-muted mb-2" style="font-size: 1rem; font-weight: 500;">${data.error || "Ocorreu um erro ao verificar o token."}</p>
+        <p class="text-muted small mb-4" style="max-width: 320px; margin: auto;">O link de confirmação pode ter expirado ou já foi utilizado anteriormente.</p>
       `;
     }
   } catch (error) {
     console.error("Verification error:", error);
     contentDiv.innerHTML = `
-      <i class="error-icon" style="font-style: normal;">📶</i>
-      <p class="auth-subtitle" style="color: #d32f2f; font-weight: bold;">Erro de ligação ao servidor.</p>
-      <p class="auth-subtitle" style="font-size: 0.9em;">Por favor, verifique a sua ligação à internet ou tente mais tarde.</p>
-      <button onclick="window.location.reload()" class="auth-submit mt-3" style="margin-top: 1rem; width: auto; padding: 10px 20px; cursor: pointer;">Tentar Novamente</button>
+      <div class="mb-4">
+        <i class="fas fa-wifi text-warning" style="font-size: 5rem; filter: drop-shadow(0 4px 12px rgba(255, 193, 7, 0.15));"></i>
+      </div>
+      <h4 class="fw-bold mb-3" style="color: #ffb300; font-size: 1.5rem;">Erro de Ligação</h4>
+      <p class="text-muted mb-2" style="font-size: 1rem;">Não foi possível ligar ao servidor da Hexomel.</p>
+      <p class="text-muted small mb-4">Verifique a sua ligação à internet ou tente novamente mais tarde.</p>
+      <button onclick="window.location.reload()" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm" style="font-size: 1rem; cursor: pointer;">
+        <i class="fas fa-sync-alt me-2"></i> Tentar Novamente
+      </button>
     `;
   }
 });

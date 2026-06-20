@@ -11,11 +11,107 @@ import Swal from "sweetalert2";
 
 let currentUserData = null;
 let selectedRole = null;
+let isGuestMode = false;
+let guestProfileId = null;
+
+let userFavorites = [];
+async function loadUserFavorites() {
+  const token = getAuthToken();
+  if (!token) return;
+  try {
+    const res = await fetch("/api/user/favorites", {
+      headers: buildAuthHeaders()
+    });
+    if (res.ok) {
+      userFavorites = await res.json();
+    }
+  } catch (err) {
+    console.error("Error loading user favorites:", err);
+  }
+}
+
+function isFavorited(productId) {
+  return userFavorites.some((f) => f.id === productId || f.ID_Produto === productId);
+}
+
+window.toggleFavorite = async function (productId) {
+  const token = getAuthToken();
+  if (!token) {
+    Swal.fire({
+      title: "Iniciar Sessão",
+      text: "Precisas de estar logado para guardar favoritos.",
+      icon: "info",
+      confirmButtonText: "Entrar",
+      confirmButtonColor: "var(--primary-green)"
+    });
+    return;
+  }
+
+  const isCurrentlyFav = isFavorited(productId);
+
+  try {
+    const res = await fetch(
+      `/api/user/favorites/${isCurrentlyFav ? "remove/" + productId : "add"}`,
+      {
+        method: isCurrentlyFav ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: isCurrentlyFav ? null : JSON.stringify({ productId }),
+      },
+    );
+
+    if (res.ok) {
+      if (isCurrentlyFav) {
+        userFavorites = userFavorites.filter((f) => f.id !== productId && f.ID_Produto !== productId);
+      } else {
+        userFavorites.push({ id: productId });
+      }
+      
+      // Update UI of heart buttons
+      document.querySelectorAll(`#btn-fav-${productId}`).forEach(btn => {
+        if (isCurrentlyFav) {
+          btn.classList.remove("active");
+        } else {
+          btn.classList.add("active");
+        }
+      });
+      
+      // If we are on the owner's favorites view, refresh the grid
+      const isOwnerView = !isGuestMode;
+      const activeTab = document.querySelector(".btn-profile-tab.active");
+      if (isOwnerView && activeTab && activeTab.getAttribute("data-tab") === "favorites") {
+        fetchFavorites();
+      }
+    }
+  } catch (error) {
+    console.error("Toggle favorite error:", error);
+  }
+};
+
+function generateStars(rating) {
+  let html = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) {
+      html += '<i class="fas fa-star" style="color: #f4b400"></i>';
+    } else if (i - 0.5 <= rating) {
+      html += '<i class="fas fa-star-half-alt" style="color: #f4b400"></i>';
+    } else {
+      html += '<i class="far fa-star" style="color: #ddd"></i>';
+    }
+  }
+  return html;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   // Check for tab parameter in URL
   const urlParams = new URLSearchParams(window.location.search);
   const tab = urlParams.get("tab");
+  if (tab === "messages" || tab === "chat") {
+    window.location.href = "rede-social.html?tab=chat";
+    return;
+  }
   if (tab) {
     const tabBtn = document.querySelector(`.btn-profile-tab[data-tab="${tab}"]`);
     if (tabBtn) {
@@ -34,12 +130,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+  loadUserFavorites();
   fetchProfileData();
   const user = getLoggedUser();
   if (user) updateNav(user);
 
   initializeTabs();
   initialize2FA();
+
+
 
   // Welcome onboarding flow for new accounts
   const isWelcome = urlParams.get("welcome");
@@ -88,6 +187,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Initialize Privacy Auto-Save Switches
+  const favSwitch = document.getElementById("view-favorites-public-switch");
+  if (favSwitch) {
+    favSwitch.addEventListener("change", autoSavePrivacySetting);
+  }
+  const ordersSwitch = document.getElementById("view-orders-public-switch");
+  if (ordersSwitch) {
+    ordersSwitch.addEventListener("change", autoSavePrivacySetting);
+  }
+
   // Initialize Delivery Data Form
   const deliveryForm = document.getElementById("delivery-edit-form");
   if (deliveryForm) {
@@ -131,6 +240,8 @@ function initializeTabs() {
     tab.addEventListener("click", () => {
       const target = tab.getAttribute("data-tab");
 
+
+
       // Update buttons
       tabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
@@ -146,10 +257,12 @@ function initializeTabs() {
         content.style.display = "block";
         content.classList.add("active");
         
-        // Trigger data refreshes for specific tabs
-        if (target === "workshops") fetchUserWorkshops();
-        if (target === "favorites") fetchFavorites();
-        if (target === "orders") fetchProfileData(); // Refresh full profile for orders
+        // Trigger data refreshes for specific tabs (only in owner mode)
+        if (!isGuestMode) {
+          if (target === "workshops") fetchUserWorkshops();
+          if (target === "favorites") fetchFavorites();
+          if (target === "orders") fetchProfileData(); // Refresh full profile for orders
+        }
       }
     });
   });
@@ -260,6 +373,8 @@ async function handleUserDataSave(section) {
     payload = {
       name: document.getElementById("input-name").value,
       email: document.getElementById("input-email").value,
+      favoritesPublic: currentUserData ? !!currentUserData.favoritesPublic : false,
+      ordersPublic: currentUserData ? !!currentUserData.ordersPublic : false,
     };
   } else if (section === "delivery") {
     const street = document.getElementById("input-address").value;
@@ -326,6 +441,80 @@ async function handleUserDataSave(section) {
   }
 }
 
+async function autoSavePrivacySetting() {
+  const token = getAuthToken();
+  if (!token) {
+    await handleSessionExpired(
+      "Precisas de iniciar sessao novamente para alterar as definicoes de privacidade.",
+    );
+    return;
+  }
+
+  const favSwitch = document.getElementById("view-favorites-public-switch");
+  const ordersSwitch = document.getElementById("view-orders-public-switch");
+
+  const favoritesPublic = favSwitch ? favSwitch.checked : false;
+  const ordersPublic = ordersSwitch ? ordersSwitch.checked : false;
+
+  showInlineStatus("saving");
+
+  const payload = {
+    name: currentUserData ? currentUserData.name : "",
+    email: currentUserData ? currentUserData.email : "",
+    favoritesPublic,
+    ordersPublic
+  };
+
+  try {
+    const res = await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...buildAuthHeaders(),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await handleProtectedResponse(
+      res,
+      "Falha ao guardar definicoes de privacidade.",
+      "A tua sessao expirou. Inicia sessao novamente para alterar as definicoes.",
+    );
+    if (result.handled) return;
+
+    if (res.ok) {
+      showInlineStatus("saved");
+
+      // Update Local State
+      currentUserData = result.data?.user
+        ? { ...currentUserData, ...result.data.user }
+        : { ...currentUserData, ...payload };
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = {
+        ...localUser,
+        ...currentUserData,
+        name: currentUserData.name,
+        email: currentUserData.email,
+        picture: currentUserData.picture,
+        role: currentUserData.role,
+      };
+      localStorage.setItem(
+        "user",
+        JSON.stringify(updatedUser),
+      );
+
+      // Refresh UI Components
+      renderProfile(currentUserData);
+      updateNav(updatedUser);
+    } else {
+      showInlineStatus("error", result.data?.error);
+    }
+  } catch (error) {
+    console.error("Save error:", error);
+    showInlineStatus("error", error.message);
+  }
+}
+
 function showInlineStatus(type, msg) {
   const el = document.getElementById("inline-save-status");
   if (!el) return;
@@ -347,46 +536,579 @@ function showInlineStatus(type, msg) {
 
 async function fetchProfileData() {
   const token = getAuthToken();
-  if (!token) {
-    const mainEl = document.querySelector("main");
-    if (mainEl) mainEl.style.display = "none";
-    window.location.href = "index.html";
-    return;
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetId = urlParams.get("id");
+  const loggedUser = getLoggedUser();
+  const loggedUserId = loggedUser ? loggedUser.id : null;
+
+  if (targetId && parseInt(targetId) !== loggedUserId) {
+    isGuestMode = true;
+    guestProfileId = parseInt(targetId);
+  } else {
+    isGuestMode = false;
+    guestProfileId = null;
   }
 
-  try {
-    const res = await fetch("/api/user/profile", {
-      headers: buildAuthHeaders(),
-    });
-
-    const result = await handleProtectedResponse(
-      res,
-      "Nao foi possivel carregar o perfil.",
-      "A tua sessao deixou de ser valida. Inicia sessao novamente para abrir o perfil.",
-    );
-    if (result.handled) return;
-
-    const data = result.data;
-    currentUserData = data;
-
-    // Update localStorage with fresh data to ensure persistence across refreshes
-    const localUser = getLoggedUser();
-    if (localUser) {
-      const updatedUser = { ...localUser, ...data };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+  if (isGuestMode) {
+    try {
+      const res = await fetch(`/api/members/${guestProfileId}/profile`);
+      if (!res.ok) throw new Error("Membro não encontrado");
+      const data = await res.json();
+      renderPublicProfile(data);
+    } catch (error) {
+      console.error("Public profile fetch error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erro ao carregar perfil",
+        text: error.message || "Não foi possível carregar os dados deste membro.",
+        confirmButtonColor: "#f4b400",
+      }).then(() => {
+        window.location.href = "rede-social.html";
+      });
+    }
+  } else {
+    if (!token) {
+      const mainEl = document.querySelector("main");
+      if (mainEl) mainEl.style.display = "none";
+      window.location.href = "login.html";
+      return;
     }
 
-    renderProfile(data);
-  } catch (error) {
-    console.error("Profile fetch error:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Erro ao carregar perfil",
-      text: error.message || "Não foi possível carregar os teus dados.",
-      confirmButtonColor: "#f4b400",
-    });
+    try {
+      const res = await fetch("/api/user/profile", {
+        headers: buildAuthHeaders(),
+      });
+
+      const result = await handleProtectedResponse(
+        res,
+        "Nao foi possivel carregar o perfil.",
+        "A tua sessao deixou de ser valida. Inicia sessao novamente para abrir o perfil.",
+      );
+      if (result.handled) return;
+
+      const data = result.data;
+      currentUserData = data;
+
+      // Update localStorage with fresh data to ensure persistence across refreshes
+      const localUser = getLoggedUser();
+      if (localUser) {
+        const updatedUser = { ...localUser, ...data };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+
+      renderProfile(data);
+    } catch (error) {
+      console.error("Profile fetch error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erro ao carregar perfil",
+        text: error.message || "Não foi possível carregar os teus dados.",
+        confirmButtonColor: "#f4b400",
+      });
+    }
   }
 }
+
+function renderPublicProfile(data) {
+  const member = data.member;
+  
+  // Header Elements
+  document.getElementById("profile-name").innerText = member.name || "Utilizador";
+  document.getElementById("profile-email").style.display = "none";
+
+  // Dynamic Tab Titles & Buttons for Guest Mode
+  const ordersTitle = document.getElementById("orders-tab-title");
+  if (ordersTitle) {
+    ordersTitle.innerText = `Encomendas de ${member.name || "Membro"}`;
+  }
+
+  const favoritesTitle = document.getElementById("favorites-tab-title");
+  if (favoritesTitle) {
+    favoritesTitle.innerText = `Favoritos de ${member.name || "Membro"}`;
+  }
+
+  const workshopsTitle = document.getElementById("workshops-tab-title");
+  if (workshopsTitle) {
+    workshopsTitle.innerText = `Workshops de ${member.name || "Membro"}`;
+  }
+
+  const browseWorkshopsBtn = document.getElementById("btn-browse-workshops");
+  if (browseWorkshopsBtn) {
+    browseWorkshopsBtn.style.display = "none";
+  }
+  
+  const addressEl = document.getElementById("profile-address");
+  if (addressEl) {
+    addressEl.innerHTML = member.location && member.location !== "Não definida"
+      ? `<i class="fas fa-map-marker-alt me-1"></i> ${member.location}`
+      : `<i class="fas fa-map-marker-alt me-1"></i> Localização não definida`;
+  }
+
+  // Account Verification Badge
+  const badgeVerify = document.getElementById("account-verify-badge");
+  if (badgeVerify) {
+    badgeVerify.style.cssText = "";
+    const applyBadgeStyles = (el) => {
+      el.style.display = "inline-flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.gap = "6px";
+      el.style.height = "28px";
+      el.style.minHeight = "28px";
+      el.style.padding = "4px 14px";
+      el.style.borderRadius = "50px";
+      el.style.fontSize = "0.78rem";
+      el.style.fontWeight = "700";
+      el.style.lineHeight = "1";
+      el.style.textTransform = "none";
+      el.style.letterSpacing = "0";
+      el.style.whiteSpace = "nowrap";
+      el.style.verticalAlign = "middle";
+      el.style.overflow = "visible";
+    };
+    
+    badgeVerify.className = "verify-badge-premium verified";
+    if (member.role === "apicultor") {
+      badgeVerify.innerHTML = '<i class="fas fa-certificate" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Apicultor</span>';
+    } else if (member.role === "admin") {
+      badgeVerify.innerHTML = '<i class="fas fa-shield-alt" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Admin</span>';
+    } else {
+      badgeVerify.innerHTML = '<i class="fas fa-check-circle" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Cliente</span>';
+    }
+    applyBadgeStyles(badgeVerify);
+  }
+
+  // Avatar Handling
+  const avatarEl = document.getElementById("profile-avatar-large");
+  if (member.picture && member.picture.trim() !== "" && member.picture !== "null") {
+    avatarEl.src = member.picture;
+  } else {
+    avatarEl.src = "/images/default-user.png";
+  }
+  avatarEl.onerror = function () {
+    this.onerror = null;
+    this.src = "/images/default-user.png";
+  };
+
+  // Hide avatar upload button
+  const uploadBtn = document.getElementById("upload-avatar-btn");
+  if (uploadBtn) uploadBtn.style.display = "none";
+
+  // Hide edit buttons
+  document.querySelectorAll(".edit-toggle-btn").forEach(btn => btn.style.display = "none");
+
+  // Hide privacy section for guests
+  const privacySec = document.getElementById("personal-privacy-section");
+  if (privacySec) privacySec.style.display = "none";
+
+  // Sidebar Tab Buttons Control
+  const tabOrders = document.querySelector('.btn-profile-tab[data-tab="orders"]');
+  const tabDelivery = document.querySelector('.btn-profile-tab[data-tab="delivery"]');
+  const tabFavorites = document.querySelector('.btn-profile-tab[data-tab="favorites"]');
+  const tabProducts = document.getElementById("nav-tab-products");
+  const tabWorkshops = document.querySelector('.btn-profile-tab[data-tab="workshops"]');
+  const tabSecurity = document.querySelector('.btn-profile-tab[data-tab="security"]');
+  const tabUpgrade = document.getElementById("nav-tab-upgrade");
+  const tabApicultor = document.getElementById("nav-tab-apicultor");
+  const deleteBtn = document.getElementById("delete-account-btn");
+
+  if (tabDelivery) tabDelivery.style.display = "none";
+  if (tabSecurity) tabSecurity.style.display = "none";
+  if (tabUpgrade) tabUpgrade.style.display = "none";
+  if (tabApicultor) tabApicultor.style.display = "none";
+  if (deleteBtn) deleteBtn.style.display = "none";
+
+  // Public/Private visibility toggling
+  if (member.ordersPublic) {
+    if (tabOrders) {
+      tabOrders.style.display = "block";
+      tabOrders.classList.remove("d-none");
+    }
+  } else {
+    if (tabOrders) tabOrders.style.display = "none";
+  }
+
+  if (member.favoritesPublic) {
+    if (tabFavorites) {
+      tabFavorites.style.display = "block";
+      tabFavorites.classList.remove("d-none");
+    }
+  } else {
+    if (tabFavorites) tabFavorites.style.display = "none";
+  }
+
+  if (member.role === "apicultor") {
+    if (tabProducts) {
+      tabProducts.style.display = "block";
+      tabProducts.classList.remove("d-none");
+    }
+    if (tabWorkshops) {
+      tabWorkshops.style.display = "block";
+      tabWorkshops.classList.remove("d-none");
+    }
+  } else {
+    if (tabProducts) tabProducts.style.display = "none";
+    if (tabWorkshops) tabWorkshops.style.display = "none";
+  }
+
+  // Inject Guest Social Actions
+  const guestActions = document.getElementById("profile-guest-actions");
+  const activeUser = getLoggedUser();
+  if (guestActions && activeUser && String(activeUser.id) !== String(member.id)) {
+    guestActions.innerHTML = `
+      <a href="rede-social.html?chatWith=${member.id}" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm fw-bold animate-fade-in" style="background-color: var(--primary-green,#1a4d2e); border: none; padding: 6px 16px;">
+        <i class="fas fa-comment-dots me-2"></i> Enviar Mensagem
+      </a>
+      <button onclick="window.profileReportUser(${member.id})" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold animate-fade-in" style="padding: 6px 16px;">
+        <i class="fas fa-flag me-2"></i> Denunciar
+      </button>
+      <button id="btn-block-user" onclick="window.profileBlockUser(${member.id})" class="btn btn-sm btn-secondary rounded-pill px-3 shadow-sm fw-bold animate-fade-in" style="padding: 6px 16px;">
+        <i class="fas fa-ban me-2"></i> Bloquear
+      </button>
+    `;
+    
+    // Check if blocked
+    const token = getAuthToken();
+    if (token) {
+      fetch("/api/users/blocks", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(r => r.ok ? r.json() : [])
+      .then(blocks => {
+        const isBlocked = blocks.some(u => String(u.id) === String(member.id));
+        if (isBlocked) {
+          const btnBlock = document.getElementById("btn-block-user");
+          if (btnBlock) {
+            btnBlock.innerHTML = `<i class="fas fa-check me-2"></i> Desbloquear`;
+            btnBlock.className = "btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm fw-bold";
+            btnBlock.setAttribute("onclick", `window.profileUnblockUser(${member.id})`);
+          }
+        }
+      })
+      .catch(err => console.error("Error loading blocks:", err));
+    }
+  } else if (guestActions) {
+    guestActions.innerHTML = "";
+  }
+
+  // Render Lists
+  // 1. Products list
+  const productsGrid = document.getElementById("products-grid");
+  if (productsGrid) {
+    if (data.products && data.products.length > 0) {
+      productsGrid.innerHTML = data.products.map(prod => {
+        const tags = prod.tags ? prod.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+        return `
+        <div class="col-md-6 col-xl-4 mb-4 animate-fade-up">
+          <div class="product-card-premium h-100 position-relative d-flex flex-column">
+            <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${prod.slug || prod.id}'">
+              ${tags.length > 0 ? `<div class="product-tags-container">
+                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('')}
+              </div>` : ''}
+              <img src="${prod.image || '/images/default-product.png'}" alt="${prod.name}" onerror="this.src='/images/default-product.png'">
+            </div>
+            <div class="p-4 d-flex flex-column flex-grow-1">
+              <div onclick="window.location.href='/produto/${prod.slug || prod.id}'" style="cursor: pointer" class="mb-3">
+                <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${prod.name}</h5>
+                <div class="star-rating">
+                  ${generateStars(prod.rating || 0)}
+                  <span class="text-muted small">(${prod.reviewCount || 0})</span>
+                </div>
+                <p class="text-muted small mb-0">${prod.category || 'Sem Categoria'} • 500g</p>
+                ${prod.origin ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${prod.origin}</p>` : ''}
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
+                <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${(parseFloat(prod.price) || 0).toFixed(2)}</span>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                          style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
+                          onclick="event.stopPropagation(); window.addToCart(${prod.id})"
+                          title="Adicionar ao Carrinho">
+                      <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
+                  </button>
+                  <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(prod.id) ? "active" : ""}" 
+                          style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                          id="btn-fav-${prod.id}"
+                          onclick="event.stopPropagation(); window.toggleFavorite(${prod.id})">
+                      <i class="fas fa-heart"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join("");
+    } else {
+      productsGrid.innerHTML = `
+        <div class="col-12 text-center py-5 opacity-50 bg-light rounded-4 border">
+            <i class="fas fa-box-open fs-1 mb-3"></i>
+            <p>Este membro ainda não anunciou nenhum produto.</p>
+        </div>
+      `;
+    }
+  }
+ 
+  // 2. Public Favorites grid
+  const favGrid = document.getElementById("favorites-grid");
+  if (favGrid) {
+    if (member.favoritesPublic && data.favorites && data.favorites.length > 0) {
+      favGrid.innerHTML = data.favorites.map(fav => {
+        const tags = fav.tags ? fav.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+        return `
+        <div class="col-md-6 col-xl-4 mb-4 animate-fade-up">
+          <div class="product-card-premium h-100 position-relative d-flex flex-column">
+            <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${fav.slug || fav.id}'">
+              ${tags.length > 0 ? `<div class="product-tags-container">
+                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('')}
+              </div>` : ''}
+              <img src="${fav.image || '/images/default-product.png'}" alt="${fav.name}" onerror="this.src='/images/default-product.png'">
+            </div>
+            <div class="p-4 d-flex flex-column flex-grow-1">
+              <div onclick="window.location.href='/produto/${fav.slug || fav.id}'" style="cursor: pointer" class="mb-3">
+                <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${fav.name}</h5>
+                <div class="star-rating">
+                  ${generateStars(fav.rating || 0)}
+                  <span class="text-muted small">(${fav.reviewCount || 0})</span>
+                </div>
+                <p class="text-muted small mb-0">${fav.category || 'Sem Categoria'} • 500g</p>
+                ${fav.origin ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${fav.origin}</p>` : ''}
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
+                <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${(parseFloat(fav.price) || 0).toFixed(2)}</span>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                          style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
+                          onclick="event.stopPropagation(); window.addToCart(${fav.id})"
+                          title="Adicionar ao Carrinho">
+                      <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
+                  </button>
+                  <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(fav.id) ? "active" : ""}" 
+                          style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                          id="btn-fav-${fav.id}"
+                          onclick="event.stopPropagation(); window.toggleFavorite(${fav.id})">
+                      <i class="fas fa-heart"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join("");
+    } else {
+      favGrid.innerHTML = `
+        <div class="col-12 text-center py-5 opacity-50 bg-light rounded-4 border">
+            <i class="fas fa-heart fs-1 mb-3"></i>
+            <p>Favoritos privados ou indisponíveis.</p>
+        </div>
+      `;
+    }
+  }
+
+  // 3. Public Orders list
+  const ordersList = document.getElementById("orders-list");
+  if (ordersList) {
+    if (member.ordersPublic && data.orders && data.orders.length > 0) {
+      ordersList.innerHTML = data.orders.map(order => {
+        const sc = { Pendente: {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"}, Pago: {bg:"#f0fdf4",color:"#166534",icon:"fa-check-circle"}, Enviado: {bg:"#eff6ff",color:"#1d4ed8",icon:"fa-truck"}, Entregue: {bg:"#f0fdf4",color:"#15803d",icon:"fa-gift"}, Cancelado: {bg:"#fef2f2",color:"#991b1b",icon:"fa-times-circle"} }[order.status] || {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"};
+        return `<div class="order-card-premium animate-fade-up">
+          <div class="order-card-header" style="border-bottom: none;">
+            <div class="d-flex align-items-center gap-3">
+              <div class="order-id-badge">#${order.id}</div>
+              <div><div class="fw-bold">Encomenda #${order.id}</div><div class="text-muted small">${new Date(order.date).toLocaleDateString("pt-PT",{year:"numeric",month:"long",day:"numeric"})}</div></div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">€${(parseFloat(order.total)||0).toFixed(2)}</div>
+              <span class="order-status-pill" style="background:${sc.bg};color:${sc.color}"><i class="fas ${sc.icon} me-1"></i>${order.status}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join("");
+    } else {
+      ordersList.innerHTML = `
+        <div class="col-12 text-center py-5 opacity-50 bg-light rounded-4 border">
+            <i class="fas fa-shopping-basket fs-1 mb-3"></i>
+            <p>Encomendas privadas ou indisponíveis.</p>
+        </div>
+      `;
+    }
+  }
+
+  // 4. Workshops list
+  const workshopsList = document.getElementById("my-workshops-list");
+  if (workshopsList) {
+    if (member.role === "apicultor" && data.hostedWorkshops && data.hostedWorkshops.length > 0) {
+      workshopsList.innerHTML = data.hostedWorkshops.map(ws => {
+        const date = new Date(ws.date).toLocaleDateString("pt-PT", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric"
+        });
+        return `
+          <div class="col-md-6 col-xl-4 animate-fade-up">
+            <div class="premium-card p-3 h-100 d-flex flex-column gap-3">
+                <div class="text-center">
+                  <img src="${ws.image || '/images/default-workshop.png'}" alt="${ws.title}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold small text-truncate">${ws.title}</div>
+                    <div class="text-muted" style="font-size: 0.85rem;"><i class="far fa-calendar-alt me-1"></i> ${date}</div>
+                    <div class="text-muted" style="font-size: 0.85rem;">€${(parseFloat(ws.price) || 0).toFixed(2)}</div>
+                </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    } else {
+      workshopsList.innerHTML = `
+        <div class="col-12 text-center py-5 opacity-50 bg-light rounded-4 border">
+            <i class="fas fa-chalkboard-teacher fs-1 mb-3"></i>
+            <p>Nenhum workshop disponível.</p>
+        </div>
+      `;
+    }
+  }
+
+  // Determine Active Tab
+  let activeTab = "";
+  if (member.role === "apicultor" && data.products && data.products.length > 0) {
+    activeTab = "products";
+  } else if (member.favoritesPublic && data.favorites && data.favorites.length > 0) {
+    activeTab = "favorites";
+  } else if (member.ordersPublic && data.orders && data.orders.length > 0) {
+    activeTab = "orders";
+  } else {
+    // Pick first visible tab button
+    if (member.role === "apicultor") activeTab = "products";
+    else if (member.favoritesPublic) activeTab = "favorites";
+    else if (member.ordersPublic) activeTab = "orders";
+  }
+
+  // Switch to the default active tab
+  document.querySelectorAll(".btn-profile-tab").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".profile-tab-content").forEach(pane => {
+    pane.classList.remove("active");
+    pane.style.display = "none";
+  });
+
+  if (activeTab) {
+    const activeBtn = document.querySelector(`.btn-profile-tab[data-tab="${activeTab}"]`);
+    const activePane = document.getElementById(`tab-${activeTab}`);
+    if (activeBtn && activePane) {
+      activeBtn.classList.add("active");
+      activePane.classList.add("active");
+      activePane.style.display = "block";
+    }
+  }
+}
+
+// Guest Social Action Handlers
+window.profileBlockUser = async (id) => {
+  const activeUser = getLoggedUser();
+  if (!activeUser) {
+    Swal.fire("Aviso", "Inicie sessão para gerir bloqueios.", "warning");
+    return;
+  }
+  const result = await Swal.fire({
+    title: "Bloquear Membro?",
+    text: "Não poderás enviar ou receber mensagens privadas deste membro.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#dc3545",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Sim, bloquear",
+    cancelButtonText: "Cancelar"
+  });
+  if (result.isConfirmed) {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`/api/users/block/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        Swal.fire("Sucesso!", "Membro bloqueado com sucesso.", "success").then(() => location.reload());
+      } else {
+        const data = await res.json();
+        Swal.fire("Erro", data.error || "Erro ao bloquear membro.", "error");
+      }
+    } catch (err) {
+      Swal.fire("Erro", "Erro ao ligar ao servidor.", "error");
+    }
+  }
+};
+
+window.profileUnblockUser = async (id) => {
+  try {
+    const token = getAuthToken();
+    const res = await fetch(`/api/users/unblock/${id}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      Swal.fire("Sucesso!", "Membro desbloqueado com sucesso.", "success").then(() => location.reload());
+    } else {
+      const data = await res.json();
+      Swal.fire("Erro", data.error || "Erro ao desbloquear membro.", "error");
+    }
+  } catch (err) {
+    Swal.fire("Erro", "Erro ao ligar ao servidor.", "error");
+  }
+};
+
+window.profileReportUser = async (id) => {
+  const activeUser = getLoggedUser();
+  if (!activeUser) {
+    Swal.fire("Aviso", "Inicie sessão para enviar denúncias.", "warning");
+    return;
+  }
+  const { value: reason } = await Swal.fire({
+    title: 'Denunciar Membro',
+    input: 'textarea',
+    inputLabel: 'Qual é o motivo da denúncia?',
+    inputPlaceholder: 'Escreve aqui o motivo...',
+    showCancelButton: true,
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Enviar Denúncia',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (reason) {
+    try {
+      const token = getAuthToken();
+      const res = await fetch("/api/reports/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reportedUserId: id,
+          itemType: "perfil",
+          itemId: id,
+          reason,
+          itemText: "Denúncia de perfil de utilizador"
+        }),
+      });
+
+      if (res.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Denúncia Enviada!",
+          text: "A tua denúncia foi registada e será analisada pela moderação.",
+          confirmButtonColor: "#1a4d2e"
+        });
+      } else {
+        const data = await res.json();
+        Swal.fire("Erro", data.error || "Erro ao enviar denúncia", "error");
+      }
+    } catch (err) {
+      Swal.fire("Erro", "Erro ao ligar ao servidor.", "error");
+    }
+  }
+};
 
 function initialize2FA() {
   const btnRequest = document.getElementById("btn-request-2fa");
@@ -564,6 +1286,16 @@ function renderProfile(data) {
   document.getElementById("profile-name").innerText = name;
   document.getElementById("profile-email").innerText = email;
 
+  // Restore owner tab titles & buttons
+  const ordersTitle = document.getElementById("orders-tab-title");
+  if (ordersTitle) ordersTitle.innerText = "As Minhas Encomendas";
+  const favoritesTitle = document.getElementById("favorites-tab-title");
+  if (favoritesTitle) favoritesTitle.innerText = "Os Meus Favoritos";
+  const workshopsTitle = document.getElementById("workshops-tab-title");
+  if (workshopsTitle) workshopsTitle.innerText = "As Minhas Reservas";
+  const browseWorkshopsBtn = document.getElementById("btn-browse-workshops");
+  if (browseWorkshopsBtn) browseWorkshopsBtn.style.display = "inline-flex";
+
   // Bio for Apicultores
   const bioInput = document.getElementById("apicultor-bio-input");
   if (bioInput) {
@@ -588,13 +1320,36 @@ function renderProfile(data) {
   // Account Verification Badge
   const badgeVerify = document.getElementById("account-verify-badge");
   if (badgeVerify) {
+    badgeVerify.style.cssText = "";
+    
+    const applyBadgeStyles = (el) => {
+      el.style.display = "inline-flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.gap = "6px";
+      el.style.height = "28px";
+      el.style.minHeight = "28px";
+      el.style.padding = "4px 14px";
+      el.style.borderRadius = "50px";
+      el.style.fontSize = "0.78rem";
+      el.style.fontWeight = "700";
+      el.style.lineHeight = "1";
+      el.style.textTransform = "none";
+      el.style.letterSpacing = "0";
+      el.style.whiteSpace = "nowrap";
+      el.style.verticalAlign = "middle";
+      el.style.overflow = "visible";
+    };
+
     if (data.isVerified) {
       badgeVerify.className = "verify-badge-premium verified";
-      badgeVerify.innerHTML = '<i class="fas fa-check-circle"></i><span>Conta Verificada</span>';
+      badgeVerify.innerHTML = '<i class="fas fa-check-circle" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Conta Verificada</span>';
+      applyBadgeStyles(badgeVerify);
     } else {
       badgeVerify.className = "verify-badge-premium pending";
-      badgeVerify.innerHTML = '<i class="fas fa-clock"></i><span>Verificação Pendente</span>';
+      badgeVerify.innerHTML = '<i class="fas fa-clock" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Verificação Pendente</span>';
       badgeVerify.title = "Por favor, verifique o seu email.";
+      applyBadgeStyles(badgeVerify);
     }
   }
 
@@ -621,6 +1376,20 @@ function renderProfile(data) {
 
   const viewEmail = document.getElementById("view-email");
   if (viewEmail) viewEmail.innerText = email;
+
+  // Ensure privacy section is visible for the owner
+  const privacySec = document.getElementById("personal-privacy-section");
+  if (privacySec) privacySec.style.display = "block";
+
+  const favSwitch = document.getElementById("view-favorites-public-switch");
+  if (favSwitch) {
+    favSwitch.checked = !!data.favoritesPublic;
+  }
+
+  const ordersSwitch = document.getElementById("view-orders-public-switch");
+  if (ordersSwitch) {
+    ordersSwitch.checked = !!data.ordersPublic;
+  }
 
   const viewPhone = document.getElementById("view-phone");
   if (viewPhone) viewPhone.innerText = data.phone || "Não definido";
@@ -736,25 +1505,50 @@ function renderFavorites(favorites) {
   const favGrid = document.getElementById("favorites-grid");
   if (favorites && favorites.length > 0) {
     favGrid.innerHTML = favorites
-      .map(
-        (fav) => `
-            <div class="col-md-6 col-xl-4">
-              <div class="premium-card p-3 h-100 d-flex flex-column gap-3">
-                  <div class="text-center">
-                    <img src="/img/produtos/${fav.ID_Produto}.webp" alt="${fav.Nome}" style="width: 100%; height: 120px; object-fit: contain;" onerror="this.src='/images/logo_hexomel.webp'">
-                  </div>
-                  <div class="flex-grow-1">
-                      <div class="fw-bold small text-truncate">${fav.Nome}</div>
-                      <div class="text-muted" style="font-size: 0.85rem;">â‚¬${(parseFloat(fav.Preco) || 0).toFixed(2)}</div>
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button onclick="window.location.href='product.html?id=${fav.ID_Produto}'" class="btn btn-sm btn-auth-enhanced login flex-grow-1 py-1">Ver</button>
-                    <button onclick="window.removeFromFavorites(${fav.ID_Produto})" class="btn btn-sm btn-outline-danger py-1"><i class="fas fa-trash"></i></button>
-                  </div>
+      .map((fav) => {
+        const tags = fav.tags ? fav.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+        const imageSrc = fav.image || `/img/produtos/${fav.id}.webp`;
+        return `
+        <div class="col-md-6 col-xl-4 mb-4 animate-fade-up">
+          <div class="product-card-premium h-100 position-relative d-flex flex-column">
+            <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${fav.slug || fav.id}'">
+              ${tags.length > 0 ? `<div class="product-tags-container">
+                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('')}
+              </div>` : ''}
+              <img src="${imageSrc}" alt="${fav.name}" onerror="this.src='/images/default-product.png'">
+            </div>
+            <div class="p-4 d-flex flex-column flex-grow-1">
+              <div onclick="window.location.href='/produto/${fav.slug || fav.id}'" style="cursor: pointer" class="mb-3">
+                <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${fav.name}</h5>
+                <div class="star-rating">
+                  ${generateStars(fav.rating || 0)}
+                  <span class="text-muted small">(${fav.reviewCount || 0})</span>
+                </div>
+                <p class="text-muted small mb-0">${fav.category || 'Sem Categoria'} • 500g</p>
+                ${fav.origin ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${fav.origin}</p>` : ''}
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
+                <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${(parseFloat(fav.price) || 0).toFixed(2)}</span>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                          style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
+                          onclick="event.stopPropagation(); window.addToCart(${fav.id})"
+                          title="Adicionar ao Carrinho">
+                      <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
+                  </button>
+                  <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect active" 
+                          style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                          id="btn-fav-${fav.id}"
+                          onclick="event.stopPropagation(); window.toggleFavorite(${fav.id})">
+                      <i class="fas fa-heart"></i>
+                  </button>
+                </div>
               </div>
             </div>
-        `,
-      )
+          </div>
+        </div>
+      `;
+      })
       .join("");
   } else {
     favGrid.innerHTML = `
@@ -1576,3 +2370,6 @@ window.cancelWorkshop = async function (reservationId) {
     Swal.fire("Erro", err.message || "Erro de ligação ao servidor.", "error");
   }
 };
+
+
+

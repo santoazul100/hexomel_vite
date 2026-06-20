@@ -961,6 +961,11 @@ p {
   border-radius: 24px !important;
 }
 
+.profile-header-offset {
+  position: relative;
+  z-index: 2;
+}
+
 /* Profile Header Enhancements */
 .profile-avatar-wrapper {
   position: relative;
@@ -1133,6 +1138,10 @@ canvas {
 
 .glass-nav .navbar-brand {
   font-weight: 700;
+}
+
+.profile-form-card {
+  height: auto !important;
 }
 
 @media (max-width: 991px) {

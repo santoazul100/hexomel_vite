@@ -11,6 +11,7 @@ const API_URL = "/api";
 const fallbackImage = "/images/workshop_default.webp";
 
 let workshops = [];
+let userReservations = [];
 
 // Fetch all approved workshops
 async function fetchWorkshops() {
@@ -22,6 +23,24 @@ async function fetchWorkshops() {
   // Mostrar skeleton placeholders enquanto carrega
   if (gridEl) {
     gridEl.innerHTML = Skeleton.genericGrid(6, 'col-md-6 col-lg-4 mb-4');
+  }
+
+  userReservations = [];
+  const user = getLoggedUser();
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  if (user && token) {
+    try {
+      const res = await fetch(`${API_URL}/user/workshops`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        userReservations = await res.json();
+      }
+    } catch (e) {
+      console.error("Error fetching user reservations:", e);
+    }
   }
 
   try {
@@ -55,6 +74,23 @@ function renderWorkshops() {
       const hasVagas = w.Vagas > 0;
       const isPast = new Date(w.Data_Realizacao) < new Date();
       const price = parseFloat(w.Preco).toFixed(2);
+      const isReserved = userReservations.some(r => r.ID_Workshop === w.ID_Workshop);
+
+      let buttonHtml = '';
+      if (isPast) {
+        buttonHtml = `<button class="btn btn-workshop-reserve disabled" disabled>Terminado</button>`;
+      } else if (isReserved) {
+        buttonHtml = `<button class="btn btn-success disabled w-auto" disabled><i class="fas fa-check-circle me-1"></i>Inscrito</button>`;
+      } else if (!hasVagas) {
+        buttonHtml = `<button class="btn btn-workshop-reserve disabled" disabled>Esgotado</button>`;
+      } else {
+        buttonHtml = `
+          <button class="btn btn-workshop-reserve" 
+                  onclick="event.stopPropagation(); window.reserveWorkshop(${w.ID_Workshop})">
+            <i class="fas fa-ticket-alt me-2"></i>Reservar
+          </button>
+        `;
+      }
 
       return `
       <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: ${i * 0.1}s">
@@ -66,6 +102,7 @@ function renderWorkshops() {
             </div>
             ${isPast ? '<div class="workshop-past-badge">Terminado</div>' : ''}
             ${!hasVagas && !isPast ? '<div class="workshop-sold-badge">Esgotado</div>' : ''}
+            ${isReserved && !isPast ? '<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> Inscrito</div>' : ''}
           </div>
           <div class="workshop-card-body p-4 d-flex flex-column flex-grow-1">
             <div class="d-flex align-items-center gap-2 mb-3">
@@ -84,11 +121,7 @@ function renderWorkshops() {
                 <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">${price}€</span>
                 <span class="small text-muted d-block">${hasVagas ? w.Vagas + ' vagas' : 'Sem vagas'}</span>
               </div>
-              <button class="btn btn-workshop-reserve ${!hasVagas || isPast ? 'disabled' : ''}" 
-                      onclick="event.stopPropagation(); window.reserveWorkshop(${w.ID_Workshop})"
-                      ${!hasVagas || isPast ? 'disabled' : ''}>
-                ${isPast ? 'Terminado' : (hasVagas ? '<i class="fas fa-ticket-alt me-2"></i>Reservar' : 'Esgotado')}
-              </button>
+              ${buttonHtml}
             </div>
           </div>
         </div>
@@ -117,6 +150,7 @@ window.openWorkshopDetail = function (id) {
   const hasVagas = w.Vagas > 0;
   const isPast = new Date(w.Data_Realizacao) < new Date();
   const price = parseFloat(w.Preco).toFixed(2);
+  const isReserved = userReservations.some((r) => r.ID_Workshop === id);
 
   const content = document.getElementById("workshop-detail-content");
   content.innerHTML = `
@@ -157,11 +191,12 @@ window.openWorkshopDetail = function (id) {
         </div>
 
         <div class="d-flex gap-3">
-          <button class="btn btn-workshop-reserve flex-grow-1 py-3 ${!hasVagas || isPast ? 'disabled' : ''}"
-                  onclick="window.reserveWorkshop(${w.ID_Workshop})"
-                  ${!hasVagas || isPast ? 'disabled' : ''}>
-            ${isPast ? '<i class="fas fa-clock me-2"></i>Workshop Terminado' : (hasVagas ? '<i class="fas fa-ticket-alt me-2"></i>Reservar Vaga' : '<i class="fas fa-ban me-2"></i>Esgotado')}
-          </button>
+          ${isPast 
+            ? `<button class="btn btn-workshop-reserve flex-grow-1 py-3 disabled" disabled><i class="fas fa-clock me-2"></i>Workshop Terminado</button>`
+            : isReserved 
+              ? `<button class="btn btn-success flex-grow-1 py-3 disabled" disabled><i class="fas fa-check-circle me-2"></i>Inscrito</button>`
+              : `<button class="btn btn-workshop-reserve flex-grow-1 py-3 ${!hasVagas ? 'disabled' : ''}" onclick="window.reserveWorkshop(${w.ID_Workshop})" ${!hasVagas ? 'disabled' : ''}><i class="fas fa-ticket-alt me-2"></i>Reservar Vaga</button>`
+          }
           <button class="btn btn-auth-enhanced login py-3" data-bs-dismiss="modal">Fechar</button>
         </div>
       </div>

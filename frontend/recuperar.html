@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recuperar Palavra-passe — Hexomel</title>
     <meta name="description" content="Recupere a sua palavra-passe da conta Hexomel de forma segura." />
@@ -17,6 +18,10 @@
     <script src="src/pre-load.js"></script>
     <meta name="view-transition" content="same-origin" />
     <style>
+      main {
+        padding-top: 120px !important;
+        margin-top: 0 !important;
+      }
       .password-toggle-btn {
         background: none !important;
         border: none !important;
@@ -215,16 +220,7 @@
                 </form>
               </div>
 
-              <!-- Footer Links -->
-              <div class="text-center mt-4 pt-3 border-top">
-                <a href="/?openAuth=login" id="auth-login-link" class="text-muted text-decoration-none me-3 hover-success">
-                  <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sessão
-                </a>
-                <span class="text-muted opacity-25">|</span>
-                <a href="/" class="text-muted text-decoration-none ms-3 hover-success">
-                  <i class="fas fa-home me-1"></i> Página Inicial
-                </a>
-              </div>
+
 
             </div>
           </div>

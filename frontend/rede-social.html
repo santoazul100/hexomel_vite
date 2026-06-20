@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8" />
+    <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hexomel — HexoHive</title>
+  <meta name="description"
+    content="Explore e conecte-se com os membros e apicultores na rede social Hexomel. Envie mensagens privadas e participe ativamente." />
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="src/styles/index.css" />
+  <link rel="stylesheet" href="src/styles/modern.css" />
+  <link rel="stylesheet" href="src/styles/skeleton.css" />
+  <link rel="stylesheet" href="src/styles/rede-social.css" />
+  <!-- Google Auth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+  <!-- Pre-load state detection -->
+  <script src="src/pre-load.js"></script>
+  <meta name="view-transition" content="same-origin" />
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" />
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto gap-4">
+          <!-- Dynamic menus loaded from server.js -->
+        </ul>
+
+        <div class="d-flex align-items-center navbar-right-fixed">
+          <div class="cart-navbar-separate me-3">
+            <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+              <i class="fas fa-shopping-cart fs-5"></i>
+              <span id="cart-badge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+            </button>
+          </div>
+
+          <div class="d-flex align-items-center gap-3" id="authSection">
+            <!-- Injected by main.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main style="padding-top: 80px;">
+    <!-- Social Header Clean -->
+    <section class="social-header py-4 bg-white border-bottom">
+      <div class="container" style="max-width: 1280px;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-wrap d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle" style="width: 48px; height: 48px; background-color: #e8f5e9;">
+            <i class="fas fa-users fs-5" style="color: #1a4d2e;"></i>
+          </div>
+          <div>
+            <h1 class="h3 fw-bold mb-1" style="color: var(--primary-green); font-family: 'Outfit', sans-serif;" data-i18n="social.title">Membros & HexoHive</h1>
+            <p class="text-muted small mb-0" data-i18n="social.subtitle">Explore e conecte-se com todos os membros e apicultores na nossa plataforma.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Two-Column Layout -->
+    <section class="py-4" style="background-color: #fafbfc; min-height: 75vh;">
+      <div class="container" style="max-width: 1280px;">
+        <!-- HexoHive Switcher Buttons -->
+        <div class="d-flex justify-content-center gap-3 mb-4 border-bottom pb-3">
+          <button id="btn-show-membros" class="btn rounded-pill px-4 fw-bold hive-switch-btn-active">
+            <i class="fas fa-users me-2"></i>Explorar Membros
+          </button>
+          <button id="btn-show-chat" class="btn rounded-pill px-4 fw-bold hive-switch-btn-inactive">
+            <i class="fas fa-comments me-2"></i>Mensagens Diretas
+          </button>
+        </div>
+
+        <div class="row g-4" id="view-membros-container">
+          <!-- Left Column: Main Directory -->
+          <div class="col-lg-8 col-12">
+            <!-- Filter toolbar -->
+            <div class="d-flex flex-column gap-3 mb-4">
+              <!-- Search bar -->
+              <div class="search-box-container w-100">
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 py-2.5 px-3" style="border-color: #e2e8f0;"><i class="fas fa-search text-muted"></i></span>
+                  <input type="text" id="member-search-input" class="form-control border-start-0 py-2.5 ps-0" style="border-color: #e2e8f0; font-size: 0.95rem;" placeholder="Pesquisar membros por nome..." data-i18n-ph="social.search.ph">
+                </div>
+              </div>
+              <!-- Filter pills -->
+              <div class="filter-pills-container d-flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: none;">
+                <button class="btn btn-filter-pill active" data-filter="all" data-i18n="social.filter.all">Todos</button>
+                <button class="btn btn-filter-pill" data-filter="client" data-i18n="social.filter.clients">Clientes</button>
+                <button class="btn btn-filter-pill" data-filter="apicultor" data-i18n="social.filter.apicultores">Apicultores</button>
+              </div>
+            </div>
+
+            <!-- Members List -->
+            <div class="d-flex flex-column gap-3" id="members-grid-container">
+              <!-- Populated dynamically by rede-social.js -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="social-empty-state" class="text-center py-5 d-none animate-fade-in">
+              <div class="empty-icon-bubble mb-3"><i class="fas fa-user-slash text-muted" style="font-size: 2rem;"></i></div>
+              <h4 class="fw-bold text-dark" data-i18n="social.empty.title">Nenhum Membro Encontrado</h4>
+              <p class="text-muted" data-i18n="social.empty.desc">Não encontrámos nenhum membro com o nome pesquisado. Tente outro nome.</p>
+            </div>
+          </div>
+
+          <!-- Right Column: Sidebar (Instagram Style Suggestions) -->
+          <div class="col-lg-4 d-none d-lg-block">
+            <div class="social-sidebar-sticky">
+              <!-- Currently Logged User Profile Widget -->
+              <div id="sidebar-current-user-container">
+                <!-- Dynamically populated by JS -->
+              </div>
+
+              <!-- Suggestions Header -->
+              <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+                <span class="text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px; font-size: 0.8rem;">Sugestões para si</span>
+                <a href="#" class="text-dark fw-bold small text-decoration-none" id="see-all-suggestions" style="font-size: 0.75rem;">Ver tudo</a>
+              </div>
+
+              <!-- Suggested Members List -->
+              <div class="d-flex flex-column gap-3" id="sidebar-suggestions-container">
+                <!-- Dynamically populated suggested members by JS -->
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+
+        <!-- View 2: Instagram-style Chat Hub (Hidden by default) -->
+        <div class="row g-0 premium-card p-0 overflow-hidden border border-light shadow-sm rounded-4 d-none" id="view-chat-container" style="height: clamp(450px, 75vh, 650px); background: #ffffff;">
+          <!-- Left Column: Conversations List -->
+          <div class="col-4 border-end d-flex flex-column h-100 bg-light bg-opacity-25" style="max-height: 100%;">
+            <div class="p-3 border-bottom bg-white d-flex align-items-center">
+              <h6 class="fw-bold mb-0 text-success"><i class="fas fa-comments me-2"></i>Conversas</h6>
+            </div>
+            <div class="flex-grow-1 overflow-y-auto" id="conversations-list" style="overflow-y: auto;">
+              <!-- Conversations loaded by JS -->
+              <div class="p-3 d-flex flex-column gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="skeleton skeleton-circle" style="width: 40px; height: 40px; flex-shrink: 0;"></div>
+                  <div class="flex-grow-1">
+                    <div class="skeleton skeleton-text" style="width: 100px; height: 14px; margin-bottom: 8px;"></div>
+                    <div class="skeleton skeleton-text" style="width: 140px; height: 11px; margin-bottom: 0;"></div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="skeleton skeleton-circle" style="width: 40px; height: 40px; flex-shrink: 0;"></div>
+                  <div class="flex-grow-1">
+                    <div class="skeleton skeleton-text" style="width: 80px; height: 14px; margin-bottom: 8px;"></div>
+                    <div class="skeleton skeleton-text" style="width: 110px; height: 11px; margin-bottom: 0;"></div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="skeleton skeleton-circle" style="width: 40px; height: 40px; flex-shrink: 0;"></div>
+                  <div class="flex-grow-1">
+                    <div class="skeleton skeleton-text" style="width: 110px; height: 14px; margin-bottom: 8px;"></div>
+                    <div class="skeleton skeleton-text" style="width: 130px; height: 11px; margin-bottom: 0;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Chat Room Panel -->
+          <div class="col-8 d-flex flex-column h-100 position-relative" style="max-height: 100%;" id="chat-room-panel">
+            <!-- Active Chat Header -->
+            <div class="p-3 border-bottom bg-white d-flex align-items-center justify-content-between" id="chat-header" style="min-height: 60px;">
+              <div class="text-muted smaller">Selecione uma conversa para começar a enviar mensagens.</div>
+            </div>
+
+            <!-- Product Banner Container (Vinted Style) -->
+            <div id="chat-product-banner-container" class="d-none"></div>
+
+            <!-- Messages Area -->
+            <div class="flex-grow-1 p-3 overflow-y-auto bg-light bg-opacity-10 d-flex flex-column gap-2" id="chat-messages-area" style="overflow-y: auto; background-color: #fafbfc;">
+              <!-- Placeholder when no chat selected -->
+              <div class="m-auto text-center text-muted py-5 px-3">
+                <div class="mb-3" style="font-size: 3rem; opacity: 0.15;">
+                  <i class="fas fa-paper-plane text-success"></i>
+                </div>
+                <h5 class="fw-bold text-dark">As Tuas Mensagens</h5>
+                <p class="small text-muted" style="max-width: 320px;">
+                  Envia mensagens privadas a apicultores ou a membros da comunidade Hexomel para tirar dúvidas ou fazer perguntas sobre mel!
+                </p>
+              </div>
+            </div>
+
+            <!-- Chat Input Area (Hidden initially) -->
+            <div class="p-3 border-top bg-white d-none" id="chat-input-area">
+              <form id="chat-send-form" class="d-flex gap-2 align-items-center">
+                <input type="text" id="chat-message-input" class="form-control" placeholder="Escreva a sua mensagem..." style="border-radius: 20px; padding-inline: 15px;" required autocomplete="off" />
+                <button type="submit" class="btn btn-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px; padding: 0; background-color: var(--primary-green); border: none;">
+                  <i class="fas fa-paper-plane" style="font-size: 0.95rem; color: white;"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Premium -->
+  <footer class="footer-premium">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <a href="index.html" class="footer-brand">
+            <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" />
+          </a>
+          <p
+            class="mb-4 text-white-50"
+            style="max-width: 300px; font-size: 0.95rem; line-height: 1.6" data-i18n="footer.desc"
+          >
+            Dedicados à produção de mel 100% natural, preservando a pureza e a
+            tradição apícola em cada gota.
+          </p>
+          <div class="social-links">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              class="social-icon"
+              ><i class="fab fa-instagram"></i
+            ></a>
+            <a href="https://facebook.com" target="_blank" class="social-icon"
+              ><i class="fab fa-facebook-f"></i
+            ></a>
+            <a
+              href="https://wa.me/351912345678"
+              target="_blank"
+              class="social-icon"
+              ><i class="fab fa-whatsapp"></i
+            ></a>
+          </div>
+        </div>
+        <div class="col-lg-2 ms-lg-auto">
+          <h5 class="footer-heading" data-i18n="footer.nav">Navegação</h5>
+          <ul class="list-unstyled">
+            <li><a href="index.html" class="footer-link" data-i18n="nav.home">Início</a></li>
+            <li><a href="shop.html" class="footer-link" data-i18n="nav.products">Produtos</a></li>
+            <li><a href="workshops.html" class="footer-link" data-i18n="nav.workshops">Workshops</a></li>
+            <li><a href="about.html" class="footer-link" data-i18n="nav.about">Sobre</a></li>
+            <li><a href="contact.html" class="footer-link" data-i18n="nav.contacts">Contactos</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-2">
+          <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
+          <ul class="list-unstyled">
+            <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+            <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+            <li><a href="#" class="footer-link">FAQ</a></li>
+            <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h5 class="footer-heading" data-i18n="footer.contacts">Contactos</h5>
+          <p class="small mb-2 text-white">
+            <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da
+            Estrela, Portugal
+          </p>
+          <p class="small mb-2 text-white">
+            <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+          </p>
+          <p class="small mb-4 text-white">
+            <i class="fas fa-envelope me-2 text-warning"></i> hexomelpap@gmail.com
+          </p>
+        </div>
+      </div>
+      <hr class="my-5 opacity-10" />
+      <div class="text-center small opacity-50">
+        <p class="mb-0" data-i18n="footer.copy">
+          &copy; 2026 Hexomel — Excelência em Mel Artesanal. Todos os direitos
+          reservados.
+        </p>
+      </div>
+    </div>
+  <!-- Member Profile Modal (HexoHive Premium Detail View) -->
+  <div class="modal fade" id="memberProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content modal-profile-premium border-0 shadow-lg">
+        <!-- Cover Background Header -->
+        <div class="modal-profile-cover">
+          <div class="modal-profile-cover-overlay"></div>
+          <button type="button" class="btn-profile-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <!-- Modal Body containing Profile Card and Content -->
+        <div class="modal-body p-0">
+          <div class="profile-header-container px-4 pb-3">
+            <div class="d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4 profile-header-main">
+              <!-- Avatar Wrapper -->
+              <div class="profile-avatar-wrapper">
+                <img id="modal-member-avatar" src="/images/default-user.png" class="profile-avatar-img" alt="User Avatar" />
+              </div>
+              
+              <!-- Profile Info -->
+              <div class="profile-info-block text-center text-md-start flex-grow-1">
+                <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+                  <h3 class="fw-bold mb-0 text-dark" id="modal-member-name">Carregando...</h3>
+                  <div id="modal-member-badge"></div>
+                </div>
+                <p class="profile-bio mb-3" id="modal-member-bio"></p>
+                
+                <!-- Profile Mini Stats -->
+                <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-4 profile-stats-row" id="modal-member-stats">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom Tabs (Social Style) -->
+          <div class="profile-tabs-wrapper px-4 border-bottom">
+            <ul class="nav nav-tabs nav-profile-tabs border-0 gap-2" id="memberProfileTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="modal-tab-activity" data-bs-toggle="tab" data-bs-target="#modal-pane-activity" type="button" role="tab" aria-selected="true">
+                  <i class="far fa-star me-2"></i>Atividade &amp; Reviews
+                </button>
+              </li>
+              <li class="nav-item d-none" role="presentation" id="modal-tab-products-li">
+                <button class="nav-link" id="modal-tab-products" data-bs-toggle="tab" data-bs-target="#modal-pane-products" type="button" role="tab" aria-selected="false">
+                  <i class="fas fa-store me-2"></i>Produtos
+                </button>
+              </li>
+              <li class="nav-item d-none" role="presentation" id="modal-tab-favorites-li">
+                <button class="nav-link" id="modal-tab-favorites" data-bs-toggle="tab" data-bs-target="#modal-pane-favorites" type="button" role="tab" aria-selected="false">
+                  <i class="far fa-heart me-2"></i>Favoritos
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Tab Content with scrollable view -->
+          <div class="tab-content p-4" id="memberProfileTabContent">
+            <!-- Pane 1: Activity & Reviews -->
+            <div class="tab-pane fade show active" id="modal-pane-activity" role="tabpanel">
+              <div id="modal-activity-content">
+                <!-- Loaded Dynamically -->
+              </div>
+            </div>
+
+            <!-- Pane 2: Products -->
+            <div class="tab-pane fade" id="modal-pane-products" role="tabpanel">
+              <div class="row g-3" id="modal-products-grid">
+                <!-- Loaded Dynamically -->
+              </div>
+            </div>
+
+            <!-- Pane 3: Favorites -->
+            <div class="tab-pane fade" id="modal-pane-favorites" role="tabpanel">
+              <div class="row g-3" id="modal-favorites-grid">
+                <!-- Loaded Dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Premium Action Footer -->
+        <div class="modal-footer profile-modal-footer px-4 py-3 d-flex justify-content-end gap-2 border-0">
+          <a href="#" id="modal-chat-btn" class="btn btn-profile-primary">
+            <i class="fas fa-comment-dots me-2"></i>Enviar Mensagem
+          </a>
+          <button type="button" class="btn btn-profile-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script type="module" src="src/beeAnimation.js"></script>
+  <script type="module" src="src/rede-social.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+
+</html>

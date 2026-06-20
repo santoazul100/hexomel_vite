@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Produto — Hexomel</title>
     <meta name="description" content="Produto artesanal Hexomel — mel 100% natural da Serra da Estrela." />
@@ -93,12 +94,16 @@
         background: var(--primary-green, #1a4d2e);
         color: white;
         border: none;
-        padding: 16px 40px;
+        height: 52px;
+        padding: 0 40px;
         border-radius: 14px;
         font-weight: 700;
         font-size: 1.1rem;
         transition: all 0.3s ease;
         box-shadow: 0 8px 25px rgba(26, 77, 46, 0.25);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
       .btn-add-cart-lg:hover {
         transform: translateY(-3px);
@@ -114,12 +119,13 @@
         border-radius: 12px;
         overflow: hidden;
         border: 1px solid rgba(0,0,0,0.06);
+        height: 52px;
       }
       .qty-selector button {
         background: transparent;
         border: none;
         width: 44px;
-        height: 44px;
+        height: 100%;
         font-size: 1.2rem;
         cursor: pointer;
         color: #475569;
@@ -184,6 +190,27 @@
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid rgba(244, 180, 0, 0.3);
+      }
+      .apicultor-badge.hexomel-badge {
+        background: rgba(26, 77, 46, 0.08);
+        border: 1px solid rgba(26, 77, 46, 0.15);
+        color: #1a4d2e;
+        cursor: default;
+      }
+      .apicultor-badge.hexomel-badge:hover {
+        background: rgba(26, 77, 46, 0.12);
+        transform: none;
+        box-shadow: none;
+        color: #1a4d2e;
+      }
+      .apicultor-badge.hexomel-badge .hexomel-badge-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary-green, #1a4d2e);
+        color: white;
+        font-size: 0.95rem;
+        border: 2px solid rgba(26, 77, 46, 0.3);
       }
       .star-rating-lg i {
         font-size: 1.1rem;

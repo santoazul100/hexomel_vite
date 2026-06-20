@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hexomel</title>
     <!-- Bootstrap 5 CSS -->
@@ -156,7 +157,7 @@
       </section>
 
       <!-- Featured Collection -->
-      <section class="py-5 bg-white overflow-hidden">
+      <section class="py-5 overflow-hidden" style="background-color: #f7faf7;">
         <div class="container py-5">
           <div class="text-center mb-5 animate-fade-up">
             <span class="text-uppercase small fw-bold text-muted tracking-wider" data-i18n="home.selection"
@@ -179,19 +180,13 @@
             ></div>
           </div>
 
-          <div class="product-carousel-shell position-relative animate-fade-up">
-            <!-- Header layout with navigation controls on the right -->
-            <div class="d-flex justify-content-between align-items-center mb-4 carousel-heading">
-              <span class="text-uppercase small fw-bold text-muted tracking-wider" style="visibility: hidden; width: 0;"></span>
-              <div class="carousel-nav-buttons d-flex gap-2 ms-auto">
-                <button class="carousel-btn prev-btn" id="featured-prev" aria-label="Anterior">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="carousel-btn next-btn" id="featured-next" aria-label="Seguinte">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
+          <div class="product-carousel-shell position-relative animate-fade-up px-md-5">
+            <button class="carousel-btn prev-btn" id="featured-prev" aria-label="Anterior">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button class="carousel-btn next-btn" id="featured-next" aria-label="Seguinte">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
 
             <div class="product-carousel" id="featured-products">
               <!-- Dynamically populated or fallback static items -->
@@ -224,7 +219,10 @@
                   <button class="add-to-cart-home" data-id="fallback-3"><i class="fas fa-cart-plus"></i></button>
                   <a href="shop.html">Ver Detalhes</a>
                 </div>
-              </div>
+            </div>
+            <!-- Dots Indicators -->
+            <div class="carousel-indicators-container d-flex justify-content-center gap-2 mt-2" id="featured-carousel-dots">
+              <!-- Rendered dynamically -->
             </div>
           </div>
         </div>

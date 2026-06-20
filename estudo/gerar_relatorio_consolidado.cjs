@@ -118,8 +118,8 @@ const correctionNotes = [
 
 const frontendTechnologies = [
   "HTML5 multipágina para a estrutura das páginas públicas, perfil, checkout, dashboards e administração.",
-  "CSS3 com ficheiros dedicados como index.css, modern.css, checkout.css, skeleton.css e i18n.css.",
-  "JavaScript ES Modules para a lógica de autenticação, loja, perfil, analytics, workshops, comunidade e checkout.",
+  "CSS3 com ficheiros dedicados como index.css, modern.css, aprender.css, checkout.css, skeleton.css e i18n.css.",
+  "JavaScript ES Modules para a lógica de autenticação, loja, perfil, aprender (quiz e glossário), analytics, workshops, comunidade e checkout.",
   "Vite 5.0.8 como servidor de desenvolvimento, proxy para /api e build otimizado multi-entry.",
   "Bootstrap 5.3 via CDN para grelhas, modais, utilitários e estrutura responsiva.",
   "Bootstrap Icons 1.11.3 e Font Awesome 6.x via CDN para iconografia da interface.",
@@ -146,7 +146,7 @@ const backendTechnologies = [
 const dataAndModules = [
   "MySQL / InnoDB como base de dados relacional principal do projeto.",
   "Esquema com entidades centrais: cliente, categoria, origem, produto, carrinho, item_carrinho, encomenda e item_encomenda.",
-  "Módulos adicionais para favoritos, avaliações, workshops, reservas de workshops, pedidos de upgrade, perguntas/respostas da comunidade, interações analíticas, slugs e definições do site.",
+  "Módulos adicionais para favoritos, avaliações, workshops, reservas de workshops, pedidos de upgrade, perguntas/respostas da comunidade, interações analíticas, quiz e tabela de liderança, factos de aprendizagem, glossário, slugs e definições do site.",
   "Armazenamento de estado local no frontend com localStorage e sessionStorage para sessão, idioma e carrinho.",
 ];
 
@@ -161,6 +161,9 @@ const features = [
   "Página de curiosidades com visualização 3D interativa do frasco e variação visual de tipos de mel.",
   "Sistema de analytics silencioso para page views, cliques, add to cart e arranque de checkout.",
   "Sistema de skeleton loaders, toasts e modais para elevar a experiência de utilização.",
+  "Secção de aprendizagem didática e gamificada com cartões 3D, glossário com filtros rápidos de categorias e quiz dinâmico com atalhos de teclado.",
+  "Tabela de liderança global (Leaderboard) no quiz integrada com base de dados, exibindo os Top 5 classificados com badges (Coroa de Ouro, Prata, Bronze) e patamares dinâmicos (Mestre Apicultor, Zangão Esforçado) e o recorde do próprio utilizador.",
+  "CMS administrativo avançado para controlo CRUD dinâmico sobre factos didáticos e termos do glossário.",
 ];
 
 const internalSources = [
@@ -168,6 +171,8 @@ const internalSources = [
   "estudo/relatorio/Secao Tecnologias Pap Vite Javascript.docx",
   "estudo/RELATORIO_ESTUDO_HEXOMEL.md",
   "estudo/funcionalidades.md",
+  "frontend/aprender.html",
+  "frontend/src/aprender.js",
   "estudo/DETALHES_TECNICOS_COMPRAS_EMAIL.md",
   "estudo/SKELETON_LOADERS_ESTUDO.md",
   "frontend/package.json",

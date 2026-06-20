@@ -33,7 +33,7 @@ O sistema utiliza um modelo relacional robusto para garantir a integridade dos d
 3. **Enviado / Entregue**: Estados geridos pela administração para controlo logístico.
 
 ### Botão de Pagamento Recorrente
-Implementámos uma funcionalidade premium no perfil do utilizador: se uma encomenda estiver **Pendente**, o sistema deteta e oferece um botão **"Pagar"** em vez de mostrar o recibo. Isto permite que o utilizador conclua uma compra que foi interrompida sem ter de adicionar tudo ao carrinho novamente.
+Implementámos uma funcionalidade no perfil do utilizador: se uma encomenda estiver **Pendente**, o sistema deteta e oferece um botão **"Pagar"** em vez de mostrar o recibo. Isto permite que o utilizador conclua uma compra que foi interrompida sem ter de adicionar tudo ao carrinho novamente.
 
 ---
 

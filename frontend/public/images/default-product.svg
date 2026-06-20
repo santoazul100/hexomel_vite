@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fffdf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fef6d5;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="honeyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f4b400;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d49000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="20" fill="url(#grad)" />
+  <!-- Subtle repeating honeycomb pattern in background -->
+  <g opacity="0.08" stroke="#1a4d2e" stroke-width="1" fill="none">
+    <path d="M 60,20 L 77.3,30 L 77.3,50 L 60,60 L 42.7,50 L 42.7,30 Z" />
+    <path d="M 94.6,40 L 111.9,50 L 111.9,70 L 94.6,80 L 77.3,70 L 77.3,50 Z" />
+    <path d="M 25.4,40 L 42.7,50 L 42.7,70 L 25.4,80 L 8.1,70 L 8.1,50 Z" />
+    <path d="M 60,60 L 77.3,70 L 77.3,90 L 60,100 L 42.7,90 L 42.7,70 Z" />
+  </g>
+  <!-- Jar of Honey Graphic -->
+  <g transform="translate(10, 5)">
+    <!-- Jar body outline & fill -->
+    <path d="M 40,45 C 38,50 35,55 35,65 C 35,80 43,88 60,88 C 77,88 85,80 85,65 C 85,55 82,50 80,45 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+    <!-- Honey content -->
+    <path d="M 37,63 C 37,76 43,85 60,85 C 77,85 83,76 83,63 C 83,61 80,59 75,59 C 68,59 65,63 60,63 C 55,63 52,59 45,59 C 40,59 37,61 37,63 Z" fill="url(#honeyGrad)" />
+    <!-- Jar Neck -->
+    <rect x="45" y="38" width="30" height="7" rx="2" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+    <!-- Jar Lid (Beekeeper Green) -->
+    <path d="M 43,32 L 77,32 C 77,32 78,36 76,38 L 44,38 C 42,36 43,32 43,32 Z" fill="#1a4d2e" />
+    <rect x="46" y="29" width="28" height="3" rx="1" fill="#e6a100" />
+    <!-- Mini Bee label -->
+    <rect x="50" y="66" width="20" height="12" rx="1" fill="#ffffff" stroke="#e6a100" stroke-width="1" />
+    <circle cx="60" cy="72" r="2" fill="#1e293b" />
+    <path d="M 58,72 L 56,70" stroke="#1e293b" stroke-width="1" />
+    <path d="M 62,72 L 64,70" stroke="#1e293b" stroke-width="1" />
+  </g>
+</svg>

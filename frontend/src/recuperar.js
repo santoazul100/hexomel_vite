@@ -166,16 +166,33 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(data.error || "Erro ao redefinir palavra-passe.");
         }
 
-        Swal.fire({
-          icon: "success",
-          title: "Sucesso!",
-          text: data.message,
-          confirmButtonText: "Iniciar Sessão",
-          confirmButtonColor: "#2d5f3f"
-        }).then(() => {
-          // Redirect back home and open the login screen automatically
-          window.location.href = "/?openAuth=login";
-        });
+        // Auto-login: If backend returned token and user info, save immediately!
+        if (data.token && data.user) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          console.log("Auto-login active following password reset.");
+
+          Swal.fire({
+            icon: "success",
+            title: "Sucesso!",
+            text: "A sua palavra-passe foi redefinida e a sua sessão foi iniciada automaticamente!",
+            confirmButtonText: "Entrar na Minha Conta",
+            confirmButtonColor: "#2d5f3f"
+          }).then(() => {
+            window.location.href = "/";
+          });
+        } else {
+          Swal.fire({
+            icon: "success",
+            title: "Sucesso!",
+            text: data.message,
+            confirmButtonText: "Iniciar Sessão",
+            confirmButtonColor: "#2d5f3f"
+          }).then(() => {
+            // Redirect back home and open the login screen automatically
+            window.location.href = "/?openAuth=login";
+          });
+        }
       } catch (error) {
         Swal.fire({
           icon: "error",

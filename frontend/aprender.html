@@ -48,9 +48,7 @@
         </div>
       </div>
     </div>
-  </nav>
-
-  <main>
+  </nav>  <main>
     <!-- HERO -->
     <section class="aprender-hero position-relative">
       <div class="bee-container" style="position:absolute;width:100%;height:100%;pointer-events:none;top:0;left:0;overflow:hidden;">
@@ -69,8 +67,8 @@
           </div>
           <div class="col-lg-6 d-none d-lg-flex justify-content-center animate-fade-up" style="animation-delay:0.2s">
             <div class="position-relative">
-              <div class="hero-image-wrapper" style="background:radial-gradient(circle, rgba(244,180,0,0.1) 0%, transparent 70%);border-radius:50%;padding:40px;">
-                <img src="/images/bee_learning_hero.png" alt="Abelha a aprender" class="img-fluid" style="max-width:420px;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.1));" />
+              <div class="hero-image-wrapper" style="background:radial-gradient(circle, rgba(244,180,0,0.15) 0%, transparent 70%);border-radius:50%;padding:20px;">
+                <img src="/images/premium_learn_hero.png" alt="Mundo das Abelhas" class="img-fluid" style="max-width:460px;border-radius:28px;box-shadow:0 30px 60px rgba(26,77,46,0.15);border:1px solid rgba(255,255,255,0.8);" />
               </div>
             </div>
           </div>
@@ -87,46 +85,81 @@
           <p class="text-muted mt-2">Responde às perguntas e descobre a tua pontuação!</p>
         </div>
         <div class="row justify-content-center">
-          <div class="col-lg-8">
+          <div class="col-lg-8 col-xl-7">
+            <!-- Quiz Card Container -->
             <div id="quiz-container" class="quiz-card scroll-reveal">
+              <!-- Gamified Dots Progress Tracker -->
+              <div id="quiz-dots" class="quiz-dots d-flex justify-content-center gap-2 mb-4"></div>
+              
+              <!-- Subtle Secondary Progress Bar -->
               <div id="quiz-progress" class="quiz-progress mb-4"><div class="quiz-progress-bar" id="quiz-progress-bar"></div></div>
+              
               <div id="quiz-question-num" class="quiz-question-num">Pergunta 1 de 8</div>
               <h3 id="quiz-question" class="quiz-question mb-4">A carregar...</h3>
-              <div id="quiz-options" class="d-flex flex-column gap-3"></div>
-              <div id="quiz-feedback" class="quiz-feedback mt-3" style="display:none;"></div>
-              <button id="quiz-next" class="btn btn-auth-enhanced register mt-4 px-5 py-3" style="display:none;">Próxima <i class="fas fa-arrow-right ms-2"></i></button>
-            </div>
-            <div id="quiz-result" class="quiz-result text-center scroll-reveal" style="display:none;">
-              <div class="quiz-result-icon mb-3"><i class="fas fa-trophy"></i></div>
-              <h2 class="fw-bold mb-2" style="color:var(--primary-green)" data-i18n="learn.quiz.done">Quiz Concluído!</h2>
-              <p class="display-4 fw-bold" style="color:var(--secondary-gold);" id="quiz-score">0/8</p>
-              <p class="text-muted mb-4" id="quiz-message">Resultado</p>
               
-              <!-- Leaderboard Section -->
-              <div id="quiz-leaderboard" class="mb-4 text-start bg-light p-3 rounded-4 border mx-auto" style="max-width: 400px; display: none;">
-                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-medal text-warning me-2"></i>Tabela de Liderança</h5>
-                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                  <div>
-                    <span class="d-block small text-muted text-uppercase fw-bold">O Teu Melhor</span>
-                    <span id="lb-user-score" class="fw-bold text-dark">--</span>
-                  </div>
-                  <i class="fas fa-user-circle fs-4 text-muted"></i>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <span class="d-block small text-muted text-uppercase fw-bold">Melhor Global</span>
-                    <span id="lb-global-score" class="fw-bold text-dark">--</span>
-                    <span id="lb-global-user" class="small text-muted d-block">--</span>
-                  </div>
-                  <i class="fas fa-globe-europe fs-4 text-muted"></i>
+              <div id="quiz-options" class="quiz-options-container d-flex flex-column gap-3"></div>
+              
+              <div id="quiz-feedback" class="quiz-feedback mt-4" style="display:none;"></div>
+              
+              <button id="quiz-next" class="btn btn-auth-enhanced register w-100 mt-4 px-5 py-3 justify-content-center" style="display:none;">Próxima <i class="fas fa-arrow-right ms-2"></i></button>
+            </div>
+
+            <!-- Quiz Results (Hidden by default) -->
+            <div id="quiz-result" class="quiz-result-card text-center scroll-reveal" style="display:none;">
+              <!-- Circular Progress Gauge -->
+              <div class="circular-progress-wrapper mb-4">
+                <svg class="circular-progress" viewBox="0 0 120 120">
+                  <circle class="bg" cx="60" cy="60" r="50"></circle>
+                  <circle class="fg" id="quiz-circular-progress" cx="60" cy="60" r="50" transform="rotate(-90 60 60)"></circle>
+                </svg>
+                <div class="circular-progress-text">
+                  <span id="quiz-score" class="score-number">0/8</span>
                 </div>
               </div>
               
-              <div id="quiz-login-prompt" class="mb-4 small text-muted" style="display: none;">
-                <a href="#" onclick="document.getElementById('authSection').querySelector('button').click(); return false;" class="text-decoration-underline text-success fw-bold">Inicia sessão</a> para guardar a tua pontuação e entrar na tabela de liderança!
+              <!-- Tier Badge -->
+              <div class="d-inline-block mb-3">
+                <span id="quiz-tier-badge" class="badge-tier px-4 py-2"><i class="fas fa-award me-2"></i>Mestre Apicultor</span>
               </div>
 
-              <button id="quiz-restart" class="btn btn-auth-enhanced register px-5 py-3"><i class="fas fa-redo me-2"></i>Tentar Novamente</button>
+              <h2 class="fw-bold mb-2" style="color:var(--primary-green)" data-i18n="learn.quiz.done">Quiz Concluído!</h2>
+              <p class="text-muted mb-4 px-3" id="quiz-message">Resultado</p>
+
+              <button id="quiz-restart" class="btn btn-auth-enhanced register px-5 py-3 w-100 justify-content-center"><i class="fas fa-redo me-2"></i>Tentar Novamente</button>
+            </div>
+
+            <!-- Leaderboard Redesigned Section -->
+            <div id="quiz-leaderboard" class="quiz-leaderboard-card mt-4 text-start p-4 rounded-4 scroll-reveal">
+              <h5 class="fw-bold mb-3 d-flex align-items-center justify-content-between text-dark">
+                <span><i class="fas fa-medal text-warning me-2"></i>Tabela de Liderança</span>
+                <span class="badge bg-success-light text-success small py-1 px-2 text-uppercase" style="font-size:0.65rem;">Melhores Scores</span>
+              </h5>
+              
+              <div class="leaderboard-list d-flex flex-column gap-2">
+                <!-- User Best Score -->
+                <div id="lb-user-row" class="leaderboard-item user-best-score d-flex justify-content-between align-items-center p-3 rounded-3" style="display: none !important;">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="rank-badge user-rank"><i class="fas fa-user text-muted"></i></div>
+                    <div>
+                      <span id="lb-user-name" class="d-block fw-bold text-dark" style="font-size: 0.9rem;">Tu</span>
+                      <span id="lb-user-tier" class="d-block small text-muted" style="font-size: 0.7rem;">O Teu Melhor</span>
+                    </div>
+                  </div>
+                  <span id="lb-user-score" class="fw-bold fs-5" style="color: var(--primary-green);">--</span>
+                </div>
+                
+                <!-- Top 5 Global Title -->
+                <div class="small text-muted text-uppercase fw-bold mt-2" style="font-size: 0.65rem;"><i class="fas fa-trophy text-warning me-1"></i> Top 5 Classificados</div>
+                
+                <!-- Top 5 Global List Container -->
+                <div id="lb-ranking-container" class="d-flex flex-column gap-2">
+                  <div class="text-center py-3 text-muted small">A carregar classificação...</div>
+                </div>
+              </div>
+
+              <div id="quiz-login-prompt" class="mt-3 small text-muted text-center" style="display: none;">
+                <a href="#" onclick="document.getElementById('authSection').querySelector('button').click(); return false;" class="text-decoration-underline text-success fw-bold">Inicia sessão</a> para guardar a tua pontuação!
+              </div>
             </div>
           </div>
         </div>
@@ -141,13 +174,8 @@
           <h2 class="display-5 fw-bold mt-3" style="color:var(--primary-green)" data-i18n="learn.reveal.title">Factos Para Descobrir</h2>
           <p class="text-muted mt-2">Clica nos cartões para revelar factos surpreendentes!</p>
         </div>
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.1s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-droplet fa-lg"></i></div><h5>A Produção de uma Vida</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-crown"></i><p>Durante o seu ciclo natural, uma abelha obreira produz apenas <strong>uma fração de colher de chá</strong> de mel, evidenciando o valor de cada gota.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.2s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-hourglass-half fa-lg"></i></div><h5>Conservação Milenar</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-shield-alt"></i><p>Pela sua baixa humidade e acidez natural, o mel puro é dos únicos alimentos que <strong>nunca se estraga</strong>, mantendo-se inalterado por séculos.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.3s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-route fa-lg"></i></div><h5>A Dança das Abelhas</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-map-marked-alt"></i><p>As abelhas comunicam a localização exata das flores através de uma <strong>coreografia complexa</strong>, um padrão de movimentos único na natureza.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.4s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-gem fa-lg"></i></div><h5>O Processo de Cristalização</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-temperature-low"></i><p>A cristalização atesta a <strong>pureza e qualidade</strong> do mel cru. Para o devolver ao estado líquido original, basta aquecê-lo suavemente.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.5s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-wind fa-lg"></i></div><h5>Engenharia Natural</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-tachometer-alt"></i><p>Equipadas com quatro asas, conseguem bater as asas até <strong>200 vezes por segundo</strong>, alcançando velocidades de voo surpreendentes.</p></div></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.6s"><div class="reveal-card" onclick="this.classList.toggle('is-revealed')"><div class="reveal-front"><div class="icon-wrapper mb-3"><i class="fas fa-leaf fa-lg"></i></div><h5>Propriedades Terapêuticas</h5><span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span></div><div class="reveal-back"><i class="fas fa-heartbeat"></i><p>O mel natural possui <strong>propriedades antibacterianas</strong> e antioxidantes notáveis, sendo utilizado há milénios como aliado do bem-estar.</p></div></div></div>
+        <div class="row g-4" id="reveal-cards-container">
+          <!-- Dynamically loaded from DB -->
         </div>
       </div>
     </section>
@@ -160,13 +188,35 @@
           <h2 class="display-5 fw-bold mt-3" style="color:var(--primary-green)" data-i18n="learn.glossary.title">Glossário do Mel</h2>
           <p class="text-muted mt-2">Termos essenciais do mundo apícola</p>
         </div>
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.1s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);"><i class="fas fa-droplet"></i></div><h5>Néctar</h5><p>Líquido açucarado produzido pelas flores que as abelhas recolhem e transformam em mel.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.2s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);"><i class="fas fa-shield-alt"></i></div><h5>Própolis</h5><p>Substância resinosa recolhida pelas abelhas, usada para desinfetar e selar a colmeia.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.3s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-crown"></i></div><h5>Geleia Real</h5><p>Alimento exclusivo da rainha, rico em proteínas e vitaminas. Permite que ela viva até 5 anos.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.4s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);"><i class="fas fa-seedling"></i></div><h5>Polinização</h5><p>Transferência de pólen entre flores, essencial para a reprodução das plantas e formação de frutos.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.5s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-th"></i></div><h5>Alvéolo</h5><p>Célula hexagonal de cera onde as abelhas armazenam mel, pólen ou criam as larvas.</p></div></div>
-          <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: 0.6s"><div class="glossary-card"><div class="glossary-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);"><i class="fas fa-wind"></i></div><h5>Fumigador</h5><p>Ferramenta do apicultor que produz fumo para acalmar as abelhas durante a inspeção.</p></div></div>
+
+        <!-- Glossary Search & Filter Controls -->
+        <div class="row justify-content-center mb-5 scroll-reveal">
+          <div class="col-md-8 col-lg-7">
+            <div class="glossary-search-wrapper position-relative mb-4">
+              <i class="fas fa-search search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+              <input type="text" id="glossary-search" class="form-control form-control-enhanced py-3 ps-5 pe-4 rounded-pill" placeholder="Pesquisar termo no glossário..." />
+              <button id="glossary-search-clear" class="btn btn-link position-absolute top-50 end-0 translate-middle-y me-3 text-decoration-none text-muted p-0" style="display:none;"><i class="fas fa-times-circle"></i></button>
+            </div>
+            
+            <div class="glossary-filters d-flex justify-content-center flex-wrap gap-2">
+              <button class="btn btn-filter active" data-filter="all">Todos</button>
+              <button class="btn btn-filter" data-filter="substance">Substâncias</button>
+              <button class="btn btn-filter" data-filter="hive">A Colmeia</button>
+              <button class="btn btn-filter" data-filter="process">Processos</button>
+              <button class="btn btn-filter" data-filter="equipment">Equipamentos</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Glossary Grid -->
+        <div class="row g-4" id="glossary-grid">
+          <!-- Dynamically loaded from DB -->
+        </div>
+        <!-- No Results Msg -->
+        <div id="glossary-no-results" class="text-center py-5 scroll-reveal" style="display:none;">
+          <i class="fas fa-search-minus text-muted display-4 mb-3"></i>
+          <h4 class="fw-bold text-dark">Nenhum termo encontrado</h4>
+          <p class="text-muted">Tenta pesquisar por outras palavras-chave ou muda de categoria.</p>
         </div>
       </div>
     </section>
@@ -227,10 +277,10 @@
   <script type="module" src="src/main.js"></script>
   <script type="module" src="src/aprender.js"></script>
   <script>
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
+    window.obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); window.obs.unobserve(e.target); } });
     }, { threshold: 0, rootMargin: '0px 0px 50px 0px' });
-    document.querySelectorAll('.scroll-reveal').forEach(el => obs.observe(el));
+    document.querySelectorAll('.scroll-reveal').forEach(el => window.obs.observe(el));
   </script>
 </body>
 </html>

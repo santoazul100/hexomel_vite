@@ -271,7 +271,7 @@ class CartManager {
         total += item.Preco * item.Quantidade;
         return `
             <div class="cart-item" style="display: flex; gap: 15px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); align-items: stretch;">
-                <img src="${item.Imagem || '/img/produtos/' + item.ID_Produto + '.webp'}" onerror="this.src='/images/logo_hexomel.webp'" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 5px;" alt="${item.Nome}">
+                <img src="${item.Imagem || '/img/produtos/' + item.ID_Produto + '.webp'}" onerror="this.src='/images/default-product.png'" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 5px;" alt="${item.Nome}">
                 
                 <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>

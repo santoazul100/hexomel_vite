@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hexomel</title>
     <!-- Bootstrap 5 CSS -->
@@ -222,36 +223,49 @@
 
           <!-- Products Feed -->
           <div class="col-lg-9">
-            <div class="shop-toolbar mb-5 animate-fade-up">
-              
+            <div class="shop-toolbar mb-4 animate-fade-up">
               <div class="shop-toolbar-actions">
                 <div class="shop-search-container">
-              <div class="premium-search-wrapper">
-                <i class="fas fa-search search-icon"></i>
-                <input 
-                  type="text" 
-                  id="product-search" 
-                  class="premium-search-input" 
-                  placeholder="Pesquisar por mel, origem, tags..." data-i18n-ph="shop.search"
-                  autocomplete="off"
-                >
-                <button id="clear-search" class="clear-search-btn d-none">&times;</button>
-                <div id="search-suggestions" class="search-suggestions-panel d-none"></div>
+                  <div class="premium-search-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input 
+                      type="text" 
+                      id="product-search" 
+                      class="premium-search-input" 
+                      placeholder="Pesquisar por mel, origem, tags..." data-i18n-ph="shop.search"
+                      autocomplete="off"
+                    >
+                    <button id="clear-search" class="clear-search-btn d-none">&times;</button>
+                    <div id="search-suggestions" class="search-suggestions-panel d-none"></div>
+                  </div>
+                </div>
+                
+                <div class="shop-controls-wrap">
+                  <!-- Layout Switcher Button Group -->
+                  <div class="d-flex border rounded-pill p-1 bg-light" style="border-color: rgba(0,0,0,0.06) !important;">
+                    <button type="button" class="layout-toggle-btn active" id="btn-shop-grid" title="Vista em Grelha">
+                      <i class="fas fa-th-large"></i>
+                    </button>
+                    <button type="button" class="layout-toggle-btn" id="btn-shop-list" title="Vista em Lista">
+                      <i class="fas fa-list"></i>
+                    </button>
+                  </div>
+                  
+                  <!-- Sort Selector -->
+                  <div class="shop-sort-wrap d-flex align-items-center gap-2 border rounded-pill px-3 py-1 bg-white" style="border-color: rgba(0,0,0,0.06) !important; height: 40px;">
+                    <i class="fas fa-sort text-muted" style="font-size: 0.85rem;"></i>
+                    <select
+                      id="sort-select"
+                      class="form-select border-0 bg-transparent fw-bold py-0"
+                      style="width: auto; cursor: pointer; font-size: 0.9rem; box-shadow: none; padding-right: 1.5rem;"
+                    >
+                      <option>Mais recentes</option>
+                      <option>Preço: Baixo-Alto</option>
+                      <option>Preço: Alto-Baixo</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
-            
-              <div class="shop-sort-wrap">
-                <select
-                  id="sort-select"
-                  class="form-select border-0 bg-transparent fw-bold"
-                  style="width: auto; cursor: pointer"
-                >
-                  <option>Mais recentes</option>
-                  <option>Preço: Baixo-Alto</option>
-                  <option>Preço: Alto-Baixo</option>
-                </select>
-              </div>
-            </div>
             </div>
 
             <div class="row g-4" id="products-grid">

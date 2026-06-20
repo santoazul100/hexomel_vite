@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hexomel</title>
     <!-- Favicon -->
@@ -169,6 +170,7 @@
               >
                 <i class="fas fa-map-marker-alt me-1"></i> Morada não definida
               </p>
+              <div id="profile-guest-actions" class="d-flex flex-wrap gap-2 mt-2 justify-content-center justify-content-md-start"></div>
             </div>
           </div>
         </div>
@@ -185,6 +187,9 @@
               </button>
               <button class="btn btn-profile-tab" data-tab="favorites">
                 <i class="fas fa-heart me-2"></i>Favoritos
+              </button>
+              <button class="btn btn-profile-tab d-none" data-tab="products" id="nav-tab-products">
+                <i class="fas fa-box-open me-2"></i>Produtos
               </button>
               <button class="btn btn-profile-tab" data-tab="workshops">
                 <i class="fas fa-chalkboard-teacher me-2"></i>Workshops
@@ -220,10 +225,20 @@
           <div class="col-lg-9">
             <!-- Orders Tab -->
             <div class="profile-tab-content active" id="tab-orders">
-              <h3 class="fw-bold mb-4">As Minhas Encomendas</h3>
+              <h3 class="fw-bold mb-4" id="orders-tab-title">As Minhas Encomendas</h3>
               <div id="orders-list" class="d-flex flex-column gap-3">
                 <div class="text-center py-5 opacity-50">
                   Carregando encomendas...
+                </div>
+              </div>
+            </div>
+
+            <!-- Products Tab (Vinted Style - Advertised Products) -->
+            <div class="profile-tab-content" id="tab-products" style="display: none">
+              <h3 class="fw-bold mb-4">Produtos Anunciados</h3>
+              <div id="products-grid" class="row g-4">
+                <div class="text-center py-5 opacity-50">
+                  A carregar produtos...
                 </div>
               </div>
             </div>
@@ -270,6 +285,23 @@
                         <div class="text-muted small mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.70rem;">Email</div>
                         <div class="fw-medium text-dark fs-6" id="view-email">
                           email@exemplo.com
+                        </div>
+                      </div>
+                      <div class="col-12 mt-2" id="personal-privacy-section">
+                        <hr class="my-3 opacity-10">
+                        <div class="row g-3">
+                          <div class="col-12">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input" type="checkbox" role="switch" id="view-favorites-public-switch" style="cursor: pointer;" />
+                              <label class="form-check-label small fw-bold text-muted text-uppercase" for="view-favorites-public-switch" style="letter-spacing: 0.5px; font-size: 0.70rem; cursor: pointer; user-select: none;">Tornar Favoritos Públicos na HexoHive</label>
+                            </div>
+                          </div>
+                          <div class="col-12" id="view-orders-privacy-container">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input" type="checkbox" role="switch" id="view-orders-public-switch" style="cursor: pointer;" />
+                              <label class="form-check-label small fw-bold text-muted text-uppercase" for="view-orders-public-switch" style="letter-spacing: 0.5px; font-size: 0.70rem; cursor: pointer; user-select: none;">Tornar Encomendas Públicas na HexoHive</label>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -373,7 +405,7 @@
               id="tab-favorites"
               style="display: none"
             >
-              <h3 class="fw-bold mb-4">Os Meus Favoritos</h3>
+              <h3 class="fw-bold mb-4" id="favorites-tab-title">Os Meus Favoritos</h3>
               <div id="favorites-grid" class="row g-4">
                 <div class="text-center py-5 opacity-50">
                   Ainda não tens favoritos...
@@ -388,8 +420,8 @@
               style="display: none"
             >
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold mb-0">As Minhas Reservas</h3>
-                <a href="workshops.html" class="btn btn-auth-enhanced login btn-sm">
+                <h3 class="fw-bold mb-0" id="workshops-tab-title">As Minhas Reservas</h3>
+                <a href="workshops.html" class="btn btn-auth-enhanced login btn-sm" id="btn-browse-workshops">
                   <i class="fas fa-plus me-1"></i>Ver Workshops
                 </a>
               </div>

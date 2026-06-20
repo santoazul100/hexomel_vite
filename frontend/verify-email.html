@@ -2,6 +2,7 @@
 <html lang="pt">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Verificar Email — Hexomel</title>
     <meta name="description" content="Verifique o seu email para ativar a sua conta Hexomel." />
@@ -17,8 +18,12 @@
     <script src="src/pre-load.js"></script>
     <meta name="view-transition" content="same-origin" />
     <style>
+      main {
+        padding-top: 120px !important;
+        margin-top: 0 !important;
+      }
       .message-container { text-align: center; margin-top: 1.5rem; }
-      .message-container i { font-size: 4.5rem; margin-bottom: 1.5rem; display: block; }
+      .message-container > i { font-size: 4.5rem; margin-bottom: 1.5rem; display: block; }
       .success-icon { color: var(--primary-green); }
       .error-icon { color: #d32f2f; }
       .spinner { display: inline-block; width: 45px; height: 45px; border: 4px solid rgba(45, 95, 63, 0.1); border-radius: 50%; border-top-color: var(--primary-green); animation: spin 1s ease-in-out infinite; margin-bottom: 1.5rem; }
@@ -92,9 +97,9 @@
       <div class="container py-5 mt-4 position-relative z-1">
         <div class="row">
           <div class="col-lg-5 mx-auto">
-            <div class="premium-card p-4 p-md-5 border-0 shadow-lg animate-fade-up text-center">
+            <div class="premium-card p-4 p-md-5 animate-fade-up text-center">
               
-              <h2 class="fw-bold mb-4" style="color: var(--primary-green);">Verificação de Email</h2>
+              <h2 class="fw-bold mb-4" style="color: var(--primary-green); font-family: var(--font-heading);">Verificação de Email</h2>
               
               <div id="verify-content" class="message-container">
                 <div class="spinner"></div>
@@ -102,7 +107,7 @@
               </div>
 
               <!-- Footer Links -->
-              <div class="text-center mt-4 pt-3 border-top">
+              <div id="verify-footer" class="text-center mt-4 pt-3 border-top">
                 <a href="/" class="text-muted text-decoration-none hover-success">
                   <i class="fas fa-home me-1"></i> Voltar à Página Inicial
                 </a>

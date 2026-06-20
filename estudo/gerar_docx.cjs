@@ -13,7 +13,7 @@ async function generateDoc() {
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "O projeto Hexomel é um website premium de comércio eletrónico de mel português, desenvolvido com foco em performance, design minimalista e interatividade dinâmica. Utiliza arquitetura SPA no frontend com Vanilla JavaScript e Vite, e uma API RESTful Node.js/Express no backend conectada a uma base de dados MySQL.", size: 24 }),
+                        new TextRun({ text: "O projeto Hexomel é um website de comércio eletrónico de mel português, desenvolvido com foco em performance, design minimalista e interatividade dinâmica. Utiliza arquitetura SPA no frontend com Vanilla JavaScript e Vite, e uma API RESTful Node.js/Express no backend conectada a uma base de dados MySQL.", size: 24 }),
                     ],
                     spacing: { after: 400 },
                 }),

@@ -125,11 +125,30 @@ export const initializeAuthForms = () => {
             timer: 1500,
           }).then(() => {
             if (role?.toLowerCase() === "admin") {
-              window.location.href = "admin.html";
+              const urlParams = new URLSearchParams(window.location.search);
+              const isAdminSecret = urlParams.get("admin") === "true";
+              if (!isAdminSecret) {
+                clearSession();
+                updateNav(null);
+                Swal.fire({
+                  icon: "warning",
+                  title: "Acesso Restrito",
+                  text: "Contas de administrador apenas podem iniciar sessão a partir do URL dedicado.",
+                  confirmButtonColor: "#1a4d2e"
+                });
+                return;
+              }
+              window.location.href = "/admin";
             } else if (isProfileIncomplete) {
               window.location.href = "profile.html?tab=dados&welcome=1";
             } else {
-              window.location.reload();
+              const urlParams = new URLSearchParams(window.location.search);
+              const redirectUrl = urlParams.get("redirect");
+              if (redirectUrl) {
+                window.location.href = redirectUrl;
+              } else {
+                window.location.reload();
+              }
             }
           });
         } else {
@@ -281,7 +300,13 @@ const handleGoogleCallback = async (response) => {
         timer: 1500,
         showConfirmButton: false,
       }).then(() => {
-        window.location.reload();
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get("redirect");
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          window.location.reload();
+        }
       });
     } else {
       window.closeAllPopups();
@@ -360,11 +385,13 @@ export function updateNav(user) {
                             : "Cliente"
                       }</p>
                   </li>
-                  <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> Perfil</a></li>
+                  <li><a class="dropdown-item dropdown-item-premium mt-1" href="profile.html"><i class="fas fa-user-circle me-2"></i> <span data-i18n="nav.profile">Perfil</span></a></li>
+                  <li><a class="dropdown-item dropdown-item-premium" href="rede-social.html?tab=chat"><i class="fas fa-comments me-2"></i> <span data-i18n="nav.messages">Mensagens</span></a></li>
+                  <li><a class="dropdown-item dropdown-item-premium" href="rede-social.html"><i class="fas fa-users me-2"></i> <span data-i18n="nav.social">HexoHive</span></a></li>
 
                   ${
                     user.role?.toLowerCase() === "admin"
-                      ? '<li><a class="dropdown-item dropdown-item-premium" href="admin.html"><i class="fas fa-cog me-2"></i> Admin</a></li>'
+                      ? '<li><a class="dropdown-item dropdown-item-premium" href="/admin"><i class="fas fa-cog me-2"></i> Admin</a></li>'
                       : ""
                   }
                   ${
@@ -420,18 +447,20 @@ export function updateNav(user) {
     }, 1200);
 
   } else {
-    authSection.innerHTML = `
+    const isAuthPage = window.location.pathname.includes("login.html") || window.location.pathname.includes("register.html") || window.location.pathname.includes("verify-email.html") || window.location.pathname.includes("recuperar.html");
+    authSection.innerHTML = isAuthPage ? "" : `
       <div class="d-flex align-items-center gap-2">
         <button class="btn btn-nav-auth-filled" data-i18n="auth.login" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
       </div>
     `;
-    // Re-apply i18n if language is not PT (since we just injected new DOM)
-    try {
-      import('./i18n.js').then(({ getLang, initI18n }) => {
-        if (getLang() !== 'pt') initI18n();
-      });
-    } catch(e) { /* ignore if i18n not loaded */ }
   }
+
+  // Re-apply i18n if language is not PT (since we just injected new DOM)
+  try {
+    import('./i18n.js').then(({ getLang, initI18n }) => {
+      if (getLang() !== 'pt') initI18n();
+    });
+  } catch(e) { /* ignore if i18n not loaded */ }
 
   // Add the loaded class with a tiny delay to trigger CSS transition anti-FOUC
   setTimeout(() => {

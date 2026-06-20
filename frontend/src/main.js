@@ -13,7 +13,7 @@ import {
 import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { trackPageView, setupAutoTracking } from "./analytics.js";
-import { API_URL, ensureBackendReady } from "./api.js";
+import { API_URL, ensureBackendReady, parseJsonSafely } from "./api.js";
 
 // Global fetch interceptor for automatic logout on 401 Unauthorized
 const originalFetch = window.fetch;
@@ -78,7 +78,7 @@ document
 window.updateScrollLock = function () {
   const anyModalOpen = !!document.querySelector(".modal.show");
   const anyOverlayActive = !!document.querySelector(
-    ".auth-overlay.active, .cart-sidebar.open, .product-details-overlay.active, #checkoutModal.show",
+    ".auth-overlay.active, .cart-sidebar.open, .details-overlay.active, #checkoutModal.show",
   );
   const anySwalOpen = document.body.classList.contains("swal2-shown");
 
@@ -209,19 +209,30 @@ function initializePasswordStrengthMeters() {
 window.toggleAuthMode = function (mode) {
   const loginView = document.getElementById("login-view-v2");
   const registerView = document.getElementById("register-view-v2");
+  const forgotView = document.getElementById("forgot-view-v2");
+  const switcher = document.querySelector(".auth-switcher-v2");
   const pillLogin = document.getElementById("pill-login");
   const pillRegister = document.getElementById("pill-register");
 
   if (mode === "login") {
-    loginView.style.display = "block";
-    registerView.style.display = "none";
-    pillLogin.classList.add("active");
-    pillRegister.classList.remove("active");
-  } else {
-    loginView.style.display = "none";
-    registerView.style.display = "block";
-    pillLogin.classList.remove("active");
-    pillRegister.classList.add("active");
+    if (loginView) loginView.style.display = "block";
+    if (registerView) registerView.style.display = "none";
+    if (forgotView) forgotView.style.display = "none";
+    if (switcher) switcher.style.display = "flex";
+    if (pillLogin) pillLogin.classList.add("active");
+    if (pillRegister) pillRegister.classList.remove("active");
+  } else if (mode === "register") {
+    if (loginView) loginView.style.display = "none";
+    if (registerView) registerView.style.display = "block";
+    if (forgotView) forgotView.style.display = "none";
+    if (switcher) switcher.style.display = "flex";
+    if (pillLogin) pillLogin.classList.remove("active");
+    if (pillRegister) pillRegister.classList.add("active");
+  } else if (mode === "forgot") {
+    if (loginView) loginView.style.display = "none";
+    if (registerView) registerView.style.display = "none";
+    if (forgotView) forgotView.style.display = "block";
+    if (switcher) switcher.style.display = "none";
   }
 };
 
@@ -279,19 +290,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Load dynamic CMS content for the current page
   await loadCMSContent();
+
+  // Load dynamic friendly URLs cache
+  await loadSiteSlugsCache();
+
+  // Apply friendly URLs to all links on load
+  if (typeof applyFriendlyUrlsToDOM === "function") {
+    applyFriendlyUrlsToDOM();
+  }
 });
 
 async function applySiteSEO() {
   const pageKeyByFile = {
     "": "inicio",
     "index.html": "inicio",
+    "inicio": "inicio",
     "shop.html": "loja",
+    "loja": "loja",
     "about.html": "sobre",
+    "sobre-nos": "sobre",
     "contact.html": "contactos",
+    "contactos": "contactos",
     "workshops.html": "workshops",
+    "workshops": "workshops",
     "curiosidades.html": "curiosidades",
+    "curiosidades": "curiosidades",
     "comunidade.html": "comunidade",
+    "comunidade": "comunidade",
     "apicultores.html": "apicultores",
+    "apicultores": "apicultores",
+    "rede-social.html": "social",
+    "rede-social": "social",
   };
 
   const fileName = window.location.pathname.split("/").pop() || "index.html";
@@ -332,7 +361,8 @@ async function applySiteSEO() {
 function injectLangToggle() {
   const navbarRight = document.querySelector(".navbar-right-fixed");
   if (!navbarRight) return;
-  // Insert before cart
+  if (navbarRight.querySelector("#lang-toggle-btn")) return; // Evitar duplicados!
+
   const langContainer = document.createElement("div");
   langContainer.className = "me-3 d-flex align-items-center";
   langContainer.innerHTML = createLangToggle();
@@ -398,7 +428,7 @@ function injectAuthModal() {
                 </button>
               </div>
             </div>
-            <a href="/recuperar.html" class="forgot-password-link-v2">Esqueceu-se da palavra-passe?</a>
+            <a href="#" class="forgot-password-link-v2" onclick="window.toggleAuthMode('forgot')">Esqueceu-se da palavra-passe?</a>
             <button type="submit" class="auth-btn-primary" id="login-submit-v2">Entrar</button>
           </form>
 
@@ -454,21 +484,94 @@ function injectAuthModal() {
             <button type="submit" class="auth-btn-primary" id="register-submit-v2">Criar conta</button>
           </form>
         </div>
+
+        <!-- Forgot Password View -->
+        <div id="forgot-view-v2" style="display: none;">
+          <form id="forgotFormV2">
+            <p class="text-muted small text-center mb-3">Introduza o seu email ou nome de utilizador.<br>Enviaremos um link seguro para redefinir o acesso.</p>
+            <div class="auth-field-v2">
+              <label class="auth-label-v2">Email ou nome de utilizador</label>
+              <input type="text" id="forgot-identity-v2" class="auth-input-v2" placeholder="Email ou nome de utilizador" required autocomplete="username">
+            </div>
+            <button type="submit" class="auth-btn-primary" id="forgot-submit-v2">Enviar Link de Recuperação</button>
+            <a href="#" class="forgot-password-link-v2 text-center d-block mt-3" onclick="window.toggleAuthMode('login')" style="text-align: center; margin-top: 15px !important; display: block;">Voltar para Iniciar Sessão</a>
+          </form>
+        </div>
       </div>
     </div>
   `;
   document.body.insertAdjacentHTML("beforeend", modalHtml);
 
-  // Close when clicking outside the card
-  // Close when clicking outside the card (DISABLED as per user request)
-  // document.getElementById("authOverlay").addEventListener("click", (e) => {
-  //   if (e.target.id === "authOverlay") {
-  //     window.closeAuthModal();
-  //   }
-  // });
+  // Bind forgot password form handler
+  const forgotForm = document.getElementById("forgotFormV2");
+  if (forgotForm) {
+    let forgotSubmitting = false;
+    forgotForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (forgotSubmitting) return;
+
+      const identity = document.getElementById("forgot-identity-v2").value.trim();
+      if (!identity) return;
+
+      forgotSubmitting = true;
+      const submitBtn = document.getElementById("forgot-submit-v2");
+      if (submitBtn) submitBtn.disabled = true;
+
+      Swal.fire({
+        title: "A processar...",
+        text: "Por favor, aguarde enquanto validamos o seu pedido.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      try {
+        const backendAvailable = await ensureBackendReady();
+        if (!backendAvailable) {
+          throw new Error("O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos.");
+        }
+
+        const response = await fetch(`${API_URL}/auth/forgot-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ identity })
+        });
+
+        const data = await parseJsonSafely(response);
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erro ao solicitar redefinição.");
+        }
+
+        window.closeAuthModal();
+
+        Swal.fire({
+          icon: "success",
+          title: "Email Enviado!",
+          text: data.message,
+          confirmButtonText: "Ok",
+          confirmButtonColor: "#1a4d2e"
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Erro no Pedido",
+          text: error.message,
+          confirmButtonText: "Fechar",
+          confirmButtonColor: "#dc3545"
+        });
+      } finally {
+        forgotSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  }
 }
 
-async function loadDynamicMenu() {
+export async function loadDynamicMenu() {
   const navList = document.querySelector("#navbarNav ul.navbar-nav");
   if (!navList) return;
 
@@ -494,6 +597,7 @@ async function loadDynamicMenu() {
           else if (m.Link === "about.html") i18nAttr = 'data-i18n="nav.about"';
           else if (m.Link === "contact.html") i18nAttr = 'data-i18n="nav.contacts"';
           else if (m.Label.toLowerCase() === "descobrir") i18nAttr = 'data-i18n="nav.discover"';
+          else if (m.Link === "rede-social.html") i18nAttr = 'data-i18n="nav.social"';
 
           if (children.length > 0) {
             const childrenHtml = children.map(c => {
@@ -502,6 +606,8 @@ async function loadDynamicMenu() {
               if (c.Link === "curiosidades.html") cI18n = 'data-i18n="nav.curiosities"';
               else if (c.Link === "aprender.html") cI18n = 'data-i18n="nav.learn"';
               else if (c.Link === "comunidade.html") cI18n = 'data-i18n="nav.community"';
+              else if (c.Link === "rede-social.html") cI18n = 'data-i18n="nav.social"';
+              else if (c.Link && c.Link.includes("tab=messages")) cI18n = 'data-i18n="nav.messages"';
               
               return `<li><a class="dropdown-item" href="${c.Link || '#'}" ${cTarget} ${cI18n}>${c.Label}</a></li>`;
             }).join("");
@@ -532,6 +638,11 @@ async function loadDynamicMenu() {
       if (typeof initI18n === "function") {
         initI18n();
       }
+
+      // Apply friendly URLs to dynamic menu items
+      if (typeof applyFriendlyUrlsToDOM === "function") {
+        applyFriendlyUrlsToDOM();
+      }
     }
   } catch (error) {
     console.warn("Could not load dynamic menu, using static HTML fallback:", error);
@@ -550,8 +661,13 @@ async function loadCMSContent() {
   const pageKeyMap = {
     "index": "home",
     "": "home",
+    "inicio": "home",
     "about": "about",
+    "sobre-nos": "about",
+    "about.html": "about",
     "contact": "contact",
+    "contactos": "contact",
+    "contact.html": "contact",
   };
 
   const pageKey = pageKeyMap[path];
@@ -560,20 +676,38 @@ async function loadCMSContent() {
   // Map of CMS block keys to CSS selectors for each page
   const selectorMap = {
     home: {
-      hero_title: ".hero-title",
-      hero_subtitle: ".hero-subtitle",
-      featured_title: ".featured-collection-title, section.py-5.bg-white h2",
-      featured_subtitle: ".featured-collection-subtitle",
+      hero_title: ".hero-title, [data-i18n='home.title']",
+      hero_subtitle: ".hero-subtitle, [data-i18n='home.subtitle']",
+      featured_title: "h2[data-i18n='home.collection'], .featured-collection-title",
+      featured_subtitle: "span[data-i18n='home.selection'], .featured-collection-subtitle",
     },
     about: {
-      hero_title: ".about-hero-title",
-      hero_subtitle: ".about-hero-subtitle",
+      hero_title: ".about-hero-title, [data-i18n-html='about.title']",
+      hero_subtitle: ".about-hero-subtitle, [data-i18n='about.subtitle']",
       legacy_text: ".about-legacy-text",
     },
     contact: {
       hero_title: ".contact-hero-title",
       hero_subtitle: ".contact-hero-subtitle",
     },
+  };
+
+  const i18nKeyMap = {
+    home: {
+      hero_title: "home.title",
+      hero_subtitle: "home.subtitle",
+      featured_title: "home.collection",
+      featured_subtitle: "home.selection",
+    },
+    about: {
+      hero_title: "about.title",
+      hero_subtitle: "about.subtitle",
+      legacy_text: "about.story.p2",
+    },
+    contact: {
+      hero_title: "contact.title",
+      hero_subtitle: "contact.subtitle",
+    }
   };
 
   const selectors = selectorMap[pageKey];
@@ -589,9 +723,18 @@ async function loadCMSContent() {
 
     if (!blocks || blocks.length === 0) return;
 
+    // Load i18n module to update cache
+    const i18nModule = await import("./i18n.js");
+
     for (const block of blocks) {
       const selector = selectors[block.Block_Key];
       if (!selector) continue;
+
+      // Update translation cache in i18n
+      const i18nKey = i18nKeyMap[pageKey]?.[block.Block_Key];
+      if (i18nKey && i18nModule && typeof i18nModule.updateTranslation === "function") {
+        i18nModule.updateTranslation(i18nKey, "pt", block.Content_Value);
+      }
 
       const el = document.querySelector(selector);
       if (!el) continue;
@@ -615,3 +758,164 @@ async function loadCMSContent() {
     console.warn("CMS content not available, using static HTML fallback:", error);
   }
 }
+
+let siteSlugsCache = null;
+
+export function checkCanonicalUrl() {
+  if (!siteSlugsCache) return;
+  
+  const currentPath = window.location.pathname;
+  const fileName = currentPath.split('/').pop() || '';
+  
+  const fileToPageKey = {
+    'index.html': 'inicio',
+    'shop.html': 'loja',
+    'about.html': 'sobre',
+    'contact.html': 'contactos',
+    'workshops.html': 'workshops',
+    'curiosidades.html': 'curiosidades',
+    'aprender.html': 'aprender',
+    'comunidade.html': 'comunidade',
+    'apicultores.html': 'apicultores',
+    'rede-social.html': 'social'
+  };
+  
+  const pageKeyToDefaultSlug = {
+    inicio: 'inicio',
+    loja: 'loja',
+    sobre: 'sobre-nos',
+    contactos: 'contactos',
+    workshops: 'workshops',
+    curiosidades: 'curiosidades',
+    aprender: 'aprender',
+    comunidade: 'comunidade',
+    apicultores: 'apicultores',
+    social: 'rede-social'
+  };
+
+  let currentPageKey = null;
+  
+  if (fileToPageKey[fileName]) {
+    currentPageKey = fileToPageKey[fileName];
+  } else {
+    const cleanPath = currentPath.replace(/^\//, '').replace(/\/$/, '');
+    const foundBySlug = siteSlugsCache.find(p => p.Slug === cleanPath);
+    if (foundBySlug) {
+      return;
+    }
+    
+    const foundByDefault = Object.entries(pageKeyToDefaultSlug).find(([key, def]) => def === cleanPath);
+    if (foundByDefault) {
+      currentPageKey = foundByDefault[0];
+    }
+  }
+  
+  if (currentPageKey) {
+    const pageConfig = siteSlugsCache.find(p => p.Pagina === currentPageKey);
+    if (pageConfig && pageConfig.Slug) {
+      const canonicalPath = '/' + pageConfig.Slug;
+      if (currentPath !== canonicalPath) {
+        window.history.replaceState(null, '', canonicalPath + window.location.search + window.location.hash);
+      }
+    }
+  }
+}
+
+export async function loadSiteSlugsCache() {
+  try {
+    const backendAvailable = await ensureBackendReady();
+    if (!backendAvailable) return;
+    const response = await fetch(`${API_URL}/site-slugs`, {
+      headers: { Accept: "application/json" },
+    });
+    if (response.ok) {
+      siteSlugsCache = await response.json();
+      applyFriendlyUrlsToDOM();
+      checkCanonicalUrl();
+    }
+  } catch (error) {
+    console.warn("Could not load site-slugs cache:", error);
+  }
+}
+
+export function toFriendlyUrl(url) {
+  if (!url) return url;
+  
+  if (url.startsWith('http') && !url.includes(window.location.host)) {
+    return url;
+  }
+  
+  try {
+    const urlObj = new URL(url, window.location.origin);
+    const pathname = urlObj.pathname.split('/').pop() || '';
+    
+    const fileToPageKey = {
+      'index.html': 'inicio',
+      'shop.html': 'loja',
+      'about.html': 'sobre',
+      'contact.html': 'contactos',
+      'workshops.html': 'workshops',
+      'curiosidades.html': 'curiosidades',
+      'aprender.html': 'aprender',
+      'comunidade.html': 'comunidade',
+      'apicultores.html': 'apicultores',
+      'rede-social.html': 'social'
+    };
+    
+    const pageKey = fileToPageKey[pathname];
+    if (pageKey) {
+      let customSlug = null;
+      if (siteSlugsCache) {
+        const found = siteSlugsCache.find(p => p.Pagina === pageKey);
+        if (found && found.Slug) {
+          customSlug = found.Slug;
+        }
+      }
+      
+      if (!customSlug) {
+        const defaults = {
+          inicio: 'inicio',
+          loja: 'loja',
+          sobre: 'sobre-nos',
+          contactos: 'contactos',
+          workshops: 'workshops',
+          curiosidades: 'curiosidades',
+          aprender: 'aprender',
+          comunidade: 'comunidade',
+          apicultores: 'apicultores',
+          social: 'rede-social'
+        };
+        customSlug = defaults[pageKey];
+      }
+      
+      urlObj.pathname = '/' + customSlug;
+    } else if (pathname === 'produto.html') {
+      const slug = urlObj.searchParams.get('slug');
+      if (slug) {
+        urlObj.pathname = `/produto/${slug}`;
+        urlObj.search = ''; // clear query parameter
+      }
+    }
+    
+    return urlObj.pathname + urlObj.search + urlObj.hash;
+  } catch (e) {
+    return url;
+  }
+}
+
+export function applyFriendlyUrlsToDOM() {
+  document.querySelectorAll('a').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+      const friendly = toFriendlyUrl(href);
+      if (friendly !== href) {
+        link.setAttribute('href', friendly);
+      }
+    }
+  });
+}
+
+window.toFriendlyUrl = toFriendlyUrl;
+window.applyFriendlyUrlsToDOM = applyFriendlyUrlsToDOM;
+window.loadSiteSlugsCache = loadSiteSlugsCache;
+window.checkCanonicalUrl = checkCanonicalUrl;

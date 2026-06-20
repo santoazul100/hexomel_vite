@@ -514,9 +514,9 @@ class CheckoutManager {
         subtotal += item.Preco * item.Quantidade;
         return `
                 <div class="summary-item">
-                    <img src="${item.Imagem || "/images/logo_hexomel.webp"}" 
+                    <img src="${item.Imagem || "/images/default-product.png"}" 
                          class="summary-item-img" 
-                         onerror="this.src='/images/logo_hexomel.webp'">
+                         onerror="this.src='/images/default-product.png'">
                     <div class="summary-item-info">
                         <div class="summary-item-name">${item.Nome}</div>
                         <div style="font-size: 0.75rem; color: var(--text-light)">Quantidade: ${item.Quantidade}</div>

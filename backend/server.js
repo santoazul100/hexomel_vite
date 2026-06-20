@@ -913,6 +913,73 @@ const runDatabaseMigrations = async () => {
       )
       .catch(() => console.log("quiz_score table creation handled"));
 
+    // Aprender page: Dynamic content tables
+    await db
+      .run(
+        `
+        CREATE TABLE IF NOT EXISTS aprender_facto (
+          ID_Facto INT NOT NULL AUTO_INCREMENT,
+          Titulo VARCHAR(255) NOT NULL,
+          Icon_Frente VARCHAR(100) NOT NULL,
+          Icon_Verso VARCHAR(100) NOT NULL,
+          Conteudo_Verso TEXT NOT NULL,
+          PRIMARY KEY (ID_Facto)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `,
+      )
+      .catch(() => console.log("aprender_facto table creation handled"));
+
+    await db
+      .run(
+        `
+        CREATE TABLE IF NOT EXISTS aprender_glossario (
+          ID_Glossario INT NOT NULL AUTO_INCREMENT,
+          Termo VARCHAR(255) NOT NULL,
+          Definicao TEXT NOT NULL,
+          Icon VARCHAR(100) NOT NULL,
+          Categoria VARCHAR(50) NOT NULL,
+          PRIMARY KEY (ID_Glossario)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `,
+      )
+      .catch(() => console.log("aprender_glossario table creation handled"));
+
+    // Seed default facts if empty
+    const factsCount = await db
+      .get("SELECT COUNT(*) as c FROM aprender_facto")
+      .catch(() => ({ c: 1 }));
+    if (factsCount && factsCount.c === 0) {
+      const defaultFacts = [
+        ["A Produção de uma Vida", "fas fa-spoon", "fas fa-hourglass-end", "Durante o seu ciclo natural, uma abelha obreira produz apenas <strong>uma fração de colher de chá</strong> de mel, evidenciando o valor de cada gota."],
+        ["Conservação Milenar", "fas fa-calendar-alt", "fas fa-infinity", "Pela sua baixa humidade e acidez natural, o mel puro é dos únicos alimentos que <strong>nunca se estraga</strong>, mantendo-se inalterado por séculos."],
+        ["A Dança das Abelhas", "fas fa-music", "fas fa-compass", "As abelhas comunicam a localização exata das flores através de uma <strong>coreografia complexa</strong>, um padrão de movimentos único na natureza."],
+        ["O Processo de Cristalização", "fas fa-snowflake", "fas fa-fire", "A cristalização atesta a <strong>pureza e qualidade</strong> do mel cru. Para o devolver ao estado líquido original, basta aquecê-lo suavemente."],
+        ["Engenharia Natural", "fas fa-cogs", "fas fa-tachometer-alt", "Equipadas com quatro asas, conseguem bater as asas até <strong>200 vezes por segundo</strong>, alcançando velocidades de voo surpreendentes."],
+        ["Propriedades Terapêuticas", "fas fa-mortar-pestle", "fas fa-spa", "O mel natural possui <strong>propriedades antibacterianas</strong> e antioxidantes notáveis, sendo utilizado há milénios como aliado do bem-estar."]
+      ];
+      for (const f of defaultFacts) {
+        await db.run("INSERT INTO aprender_facto (Titulo, Icon_Frente, Icon_Verso, Conteudo_Verso) VALUES (?, ?, ?, ?)", f);
+      }
+    }
+
+    // Seed default glossary if empty
+    const glossaryCount = await db
+      .get("SELECT COUNT(*) as c FROM aprender_glossario")
+      .catch(() => ({ c: 1 }));
+    if (glossaryCount && glossaryCount.c === 0) {
+      const defaultGlossary = [
+        ["Néctar", "Líquido açucarado produzido pelas flores que as abelhas recolhem e transformam em mel.", "fas fa-droplet", "substance"],
+        ["Própolis", "Substância resinosa recolhida pelas abelhas, usada para desinfetar e selar a colmeia.", "fas fa-shield-alt", "substance"],
+        ["Geleia Real", "Alimento exclusivo da rainha, rico em proteínas e vitaminas. Permite que ela viva até 5 anos.", "fas fa-crown", "substance"],
+        ["Polinização", "Transferência de pólen entre flores, essencial para a reprodução das plantas e formação de frutos.", "fas fa-seedling", "process"],
+        ["Alvéolo", "Célula hexagonal de cera onde as abelhas armazenam mel, pólen ou criam as larvas.", "fas fa-th", "hive"],
+        ["Fumigador", "Ferramenta do apicultor que produz fumo para acalmar as abelhas durante a inspeção.", "fas fa-smog", "equipment"]
+      ];
+      for (const g of defaultGlossary) {
+        await db.run("INSERT INTO aprender_glossario (Termo, Definicao, Icon, Categoria) VALUES (?, ?, ?, ?)", g);
+      }
+    }
+
     // Seed default quiz questions if empty
     const quizCount = await db
       .get("SELECT COUNT(*) as c FROM quiz_pergunta")
@@ -1255,6 +1322,57 @@ const runDatabaseMigrations = async () => {
       }
       console.log("Analytics seeded successfully!");
     }
+
+    // Custom migrations for Social Network, Messaging, and Privacy Toggles
+    await db.run("ALTER TABLE cliente ADD COLUMN Restrito_Postar BOOLEAN DEFAULT FALSE").catch(() => {});
+    await db.run("ALTER TABLE cliente ADD COLUMN Favoritos_Publicos BOOLEAN DEFAULT FALSE").catch(() => {});
+    await db.run("ALTER TABLE cliente ADD COLUMN Encomendas_Publicas BOOLEAN DEFAULT FALSE").catch(() => {});
+    await db.run("ALTER TABLE menu_nav ADD COLUMN ID_Parent INT(10) DEFAULT NULL").catch(() => {});
+    await db.run("DELETE FROM menu_nav WHERE Link = 'rede-social.html' OR Link = 'profile.html?tab=messages'").catch(() => {});
+
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS mensagem_privada (
+        ID_Mensagem int(10) NOT NULL AUTO_INCREMENT,
+        ID_Remetente int(10) NOT NULL,
+        ID_Destinatario int(10) NOT NULL,
+        Texto TEXT NOT NULL,
+        Data_Envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        Lida BOOLEAN DEFAULT FALSE,
+        PRIMARY KEY (ID_Mensagem),
+        KEY ID_Remetente (ID_Remetente),
+        KEY ID_Destinatario (ID_Destinatario),
+        CONSTRAINT fk_msg_remetente FOREIGN KEY (ID_Remetente) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE,
+        CONSTRAINT fk_msg_destinatario FOREIGN KEY (ID_Destinatario) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.log("mensagem_privada table creation handled", err));
+
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS bloqueio (
+        ID_Bloqueador int(10) NOT NULL,
+        ID_Bloqueado int(10) NOT NULL,
+        Data_Bloqueio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (ID_Bloqueador, ID_Bloqueado),
+        CONSTRAINT fk_block_bloqueador FOREIGN KEY (ID_Bloqueador) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE,
+        CONSTRAINT fk_block_bloqueado FOREIGN KEY (ID_Bloqueado) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.log("bloqueio table creation handled", err));
+
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS denuncia (
+        ID_Denuncia int(10) NOT NULL AUTO_INCREMENT,
+        ID_Denunciante int(10) NOT NULL,
+        ID_Denunciado int(10) NOT NULL,
+        Tipo_Item VARCHAR(50) NOT NULL,
+        ID_Item int(10) DEFAULT NULL,
+        Texto_Item TEXT DEFAULT NULL,
+        Motivo TEXT DEFAULT NULL,
+        Data_Denuncia TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        Status VARCHAR(20) DEFAULT 'Pendente',
+        PRIMARY KEY (ID_Denuncia),
+        CONSTRAINT fk_denuncia_denunciante FOREIGN KEY (ID_Denunciante) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE,
+        CONSTRAINT fk_denuncia_denunciado FOREIGN KEY (ID_Denunciado) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.log("denuncia table creation handled", err));
 
     console.log("Auto-migrations completed.");
   } catch (err) {
@@ -2508,7 +2626,9 @@ app.get("/api/products", async (req, res) => {
       p.Slug,
       COALESCE(AVG(a.Nota), 0) as Rating, 
       COUNT(a.ID_Avaliacao) as ReviewCount,
-      c.Nome as ApicultorNome
+      c.Nome as ApicultorNome,
+      c.Picture as ApicultorFoto,
+      c.Bio as ApicultorBio
       FROM produto p
       LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
@@ -3210,7 +3330,18 @@ app.get("/api/apicultores", async (req, res) => {
 app.get("/api/apicultores/:id/products", async (req, res) => {
   try {
     const products = await db.all(
-      "SELECT * FROM produto WHERE ID_Apicultor = ?",
+      `SELECT p.*,
+        p.Tags,
+        COALESCE(AVG(a.Nota), 0) as Rating,
+        COUNT(a.ID_Avaliacao) as ReviewCount,
+        cat.Nome as CategoriaNome,
+        o.Nome as OrigemNome
+        FROM produto p
+        LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+        LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+        LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
+        WHERE p.ID_Apicultor = ? AND (p.Status = 'Aprovado' OR p.Status IS NULL)
+        GROUP BY p.ID_Produto`,
       [req.params.id],
     );
     res.json(products);
@@ -3812,7 +3943,7 @@ app.patch(
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
 
@@ -3825,7 +3956,13 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
       [req.user.id],
     );
 
-    res.json({ ...user, checkoutVerified: !!user.checkoutVerified, orders });
+    res.json({
+      ...user,
+      checkoutVerified: !!user.checkoutVerified,
+      favoritesPublic: !!user.favoritesPublic,
+      ordersPublic: !!user.ordersPublic,
+      orders
+    });
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ error: "Database error", details: error.message });
@@ -3834,7 +3971,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
 
 app.put("/api/user/profile", authenticateToken, async (req, res) => {
   try {
-    const { name, email, phone, address, bio } = req.body;
+    const { name, email, phone, address, bio, favoritesPublic, ordersPublic } = req.body;
     let updates = [];
     let params = [];
     if (name !== undefined) {
@@ -3857,6 +3994,14 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
       updates.push("Bio = ?");
       params.push(bio);
     }
+    if (favoritesPublic !== undefined) {
+      updates.push("Favoritos_Publicos = ?");
+      params.push(favoritesPublic ? 1 : 0);
+    }
+    if (ordersPublic !== undefined) {
+      updates.push("Encomendas_Publicas = ?");
+      params.push(ordersPublic ? 1 : 0);
+    }
 
     if (updates.length === 0)
       return res.status(400).json({ error: "No fields to update" });
@@ -3868,11 +4013,18 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
     );
 
     const user = await db.get(
-      "SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
 
-    res.json({ message: "Profile updated successfully", user });
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        ...user,
+        favoritesPublic: !!user.favoritesPublic,
+        ordersPublic: !!user.ordersPublic
+      }
+    });
   } catch (error) {
     console.error("Profile update error:", error);
     res.status(500).json({ error: "Database error" });
@@ -3906,16 +4058,316 @@ app.put("/api/user/profile/password", authenticateToken, async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
+// MEMBERS & SOCIAL & BLOCKS & MESSAGES
+// -----------------------------------------------------------------------------
+app.get("/api/members", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Cliente as id, Nome as name, Email as email, UserType as role, Picture as picture, Bio as bio, Restrito_Postar as restrictedToPost FROM cliente WHERE UserType != 'admin' ORDER BY Nome ASC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/members/:id/profile", async (req, res) => {
+  const memberId = parseInt(req.params.id);
+  try {
+    const member = await db.get("SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Bio as bio, UserType as role, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic, Morada as address FROM cliente WHERE ID_Cliente = ?", [memberId]);
+    if (!member || member.role === "admin") return res.status(404).json({ error: "Membro não encontrado." });
+
+    let city = "Não definida";
+    if (member.address) {
+      const zipMatch = member.address.match(/\b\d{4}-\d{3}\b/);
+      if (zipMatch) {
+        city = member.address.substring(member.address.indexOf(zipMatch[0]) + zipMatch[0].length).trim();
+      }
+    }
+
+    let products = [];
+    let hostedWorkshops = [];
+    if (member.role === "apicultor") {
+      products = await db.all(`SELECT p.ID_Produto as id, p.Nome as name, p.Preco as price, p.Stock as stock, p.Imagem as image, p.Descricao as description, p.Slug as slug, p.Tags as tags,
+        COALESCE(AVG(a.Nota), 0) as rating,
+        COUNT(a.ID_Avaliacao) as reviewCount,
+        cat.Nome as category,
+        o.Nome as origin
+        FROM produto p
+        LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+        LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+        LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
+        WHERE p.ID_Apicultor = ? AND (p.Status = 'Aprovado' OR p.Status IS NULL)
+        GROUP BY p.ID_Produto`, [memberId]);
+      hostedWorkshops = await db.all("SELECT ID_Workshop as id, Titulo as title, Data_Realizacao as date, Preco as price, Imagem as image FROM workshop WHERE ID_Apicultor = ? AND (Status = 'Aprovado' OR Status IS NULL) ORDER BY Data_Realizacao DESC", [memberId]);
+    }
+
+    const reviews = await db.all(`SELECT a.ID_Avaliacao as id, a.Nota as rating, a.Comentario as comment, a.Data_Avaliacao as date, p.ID_Produto as productId, p.Nome as productName, p.Imagem as productImage FROM avaliacao a JOIN produto p ON a.ID_Produto = p.ID_Produto WHERE a.ID_Cliente = ? ORDER BY a.Data_Avaliacao DESC`, [memberId]);
+
+    let favorites = [];
+    if (member.favoritesPublic) {
+      favorites = await db.all(`SELECT p.ID_Produto as id, p.Nome as name, p.Preco as price, p.Imagem as image, p.Slug as slug, p.Tags as tags,
+        COALESCE(AVG(a.Nota), 0) as rating,
+        COUNT(a.ID_Avaliacao) as reviewCount,
+        cat.Nome as category,
+        o.Nome as origin
+        FROM favoritos f
+        JOIN produto p ON f.ID_Produto = p.ID_Produto
+        LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+        LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+        LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
+        WHERE f.ID_Cliente = ?
+        GROUP BY p.ID_Produto`, [memberId]);
+    }
+
+    let orders = [];
+    if (member.ordersPublic) {
+      orders = await db.all("SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC", [memberId]);
+    }
+
+    res.json({
+      member: { id: member.id, name: member.name, email: member.email, picture: member.picture, bio: member.bio, role: member.role, favoritesPublic: !!member.favoritesPublic, ordersPublic: !!member.ordersPublic, location: city },
+      products, hostedWorkshops, reviews, favorites, orders
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/users/:id", async (req, res) => {
+  try {
+    const user = await db.get("SELECT ID_Cliente as id, Nome as name, Picture as picture, UserType as role FROM cliente WHERE ID_Cliente = ?", [req.params.id]);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/users/blocks", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all("SELECT ID_Bloqueado as id FROM bloqueio WHERE ID_Bloqueador = ?", [req.user.id]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/users/block/:id", authenticateToken, async (req, res) => {
+  const blockerId = req.user.id;
+  const blockedId = parseInt(req.params.id);
+  if (blockerId === blockedId) {
+    return res.status(400).json({ error: "Não podes bloquear-te a ti mesmo." });
+  }
+  try {
+    await db.run("INSERT IGNORE INTO bloqueio (ID_Bloqueador, ID_Bloqueado) VALUES (?, ?)", [blockerId, blockedId]);
+    res.json({ message: "Utilizador bloqueado com sucesso." });
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/users/unblock/:id", authenticateToken, async (req, res) => {
+  const blockerId = req.user.id;
+  const blockedId = parseInt(req.params.id);
+  try {
+    await db.run("DELETE FROM bloqueio WHERE ID_Bloqueador = ? AND ID_Bloqueado = ?", [blockerId, blockedId]);
+    res.json({ message: "Utilizador desbloqueado com sucesso." });
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/reports/create", authenticateToken, async (req, res) => {
+  const reporterId = req.user.id;
+  const { reportedUserId, itemType, itemId, reason, itemText } = req.body;
+  if (!reportedUserId || !itemType) {
+    return res.status(400).json({ error: "Motivo e dados insuficientes." });
+  }
+  try {
+    await db.run(
+      "INSERT INTO denuncia (ID_Denunciante, ID_Denunciado, Tipo_Item, ID_Item, Texto_Item, Motivo) VALUES (?, ?, ?, ?, ?, ?)",
+      [reporterId, reportedUserId, itemType, itemId || null, itemText || null, reason || null]
+    );
+    res.json({ message: "Denúncia registada com sucesso." });
+  } catch (error) {
+    console.error("Report error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/messages/conversations", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const partners = await db.all(`
+      SELECT DISTINCT partnerId FROM (
+        SELECT ID_Remetente as partnerId FROM mensagem_privada WHERE ID_Destinatario = ?
+        UNION
+        SELECT ID_Destinatario as partnerId FROM mensagem_privada WHERE ID_Remetente = ?
+      ) as partners
+    `, [userId, userId]);
+
+    const conversations = [];
+    for (const p of partners) {
+      const partnerId = p.partnerId;
+      const partnerInfo = await db.get("SELECT ID_Cliente as id, Nome as name, Picture as picture FROM cliente WHERE ID_Cliente = ?", [partnerId]);
+      if (!partnerInfo) continue;
+
+      const unread = await db.get("SELECT COUNT(*) as count FROM mensagem_privada WHERE ID_Remetente = ? AND ID_Destinatario = ? AND Lida = FALSE", [partnerId, userId]);
+      const lastMsg = await db.get("SELECT Texto as text, Data_Envio as sentAt FROM mensagem_privada WHERE (ID_Remetente = ? AND ID_Destinatario = ?) OR (ID_Remetente = ? AND ID_Destinatario = ?) ORDER BY Data_Envio DESC LIMIT 1", [userId, partnerId, partnerId, userId]);
+
+      conversations.push({
+        partner: partnerInfo,
+        unreadCount: unread ? unread.count : 0,
+        lastMessage: lastMsg ? { text: lastMsg.text, sentAt: lastMsg.sentAt } : null
+      });
+    }
+
+    // Sort conversations by last message sentAt DESC
+    conversations.sort((a, b) => {
+      const dateA = a.lastMessage ? new Date(a.lastMessage.sentAt) : new Date(0);
+      const dateB = b.lastMessage ? new Date(b.lastMessage.sentAt) : new Date(0);
+      return dateB - dateA;
+    });
+
+    res.json(conversations);
+  } catch (error) {
+    console.error("Conversations fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/messages/history/:partnerId", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const partnerId = parseInt(req.params.partnerId);
+  try {
+    const messages = await db.all(`
+      SELECT ID_Remetente as senderId, ID_Destinatario as receiverId, Texto as text, Data_Envio as sentAt 
+      FROM mensagem_privada 
+      WHERE (ID_Remetente = ? AND ID_Destinatario = ?) OR (ID_Remetente = ? AND ID_Destinatario = ?) 
+      ORDER BY Data_Envio ASC
+    `, [userId, partnerId, partnerId, userId]);
+
+    const blockedByMe = await db.get("SELECT 1 FROM bloqueio WHERE ID_Bloqueador = ? AND ID_Bloqueado = ?", [userId, partnerId]);
+    const blockedMe = await db.get("SELECT 1 FROM bloqueio WHERE ID_Bloqueador = ? AND ID_Bloqueado = ?", [partnerId, userId]);
+
+    res.json({
+      messages,
+      blockedByMe: !!blockedByMe,
+      blockedMe: !!blockedMe
+    });
+  } catch (error) {
+    console.error("History fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/messages/send", authenticateToken, async (req, res) => {
+  const senderId = req.user.id;
+  const { receiverId, text } = req.body;
+  if (!receiverId || !text) {
+    return res.status(400).json({ error: "Receiver and text are required." });
+  }
+  try {
+    // Check block status
+    const blockCheck = await db.get("SELECT 1 FROM bloqueio WHERE (ID_Bloqueador = ? AND ID_Bloqueado = ?) OR (ID_Bloqueador = ? AND ID_Bloqueado = ?)", [senderId, receiverId, receiverId, senderId]);
+    if (blockCheck) {
+      return res.status(403).json({ error: "Não podes enviar mensagens a este utilizador devido a um bloqueio." });
+    }
+
+    const result = await db.run("INSERT INTO mensagem_privada (ID_Remetente, ID_Destinatario, Texto) VALUES (?, ?, ?)", [senderId, receiverId, text]);
+    res.status(201).json({ id: result.insertId, message: "Mensagem enviada." });
+  } catch (error) {
+    console.error("Send message error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/messages/read/:partnerId", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const partnerId = parseInt(req.params.partnerId);
+  try {
+    await db.run("UPDATE mensagem_privada SET Lida = TRUE WHERE ID_Remetente = ? AND ID_Destinatario = ? AND Lida = FALSE", [partnerId, userId]);
+    res.json({ message: "Mensagens marcadas como lidas." });
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// REVIEWS (AVALIAÇÕES)
+// -----------------------------------------------------------------------------
+app.get("/api/products/:id/reviews", async (req, res) => {
+  const productId = parseInt(req.params.id);
+  try {
+    const rows = await db.all(`
+      SELECT a.ID_Avaliacao, a.Nota, a.Comentario, a.Data_Avaliacao, a.ID_Cliente,
+             c.Nome as ClienteNome, c.Picture as ClienteFoto
+      FROM avaliacao a
+      JOIN cliente c ON a.ID_Cliente = c.ID_Cliente
+      WHERE a.ID_Produto = ?
+      ORDER BY a.Data_Avaliacao DESC
+    `, [productId]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch reviews error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.post("/api/products/:id/reviews", authenticateToken, async (req, res) => {
+  const productId = parseInt(req.params.id);
+  const { rating, comment } = req.body;
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: "Classificação inválida." });
+  }
+  try {
+    const result = await db.run(
+      "INSERT INTO avaliacao (Nota, Comentario, ID_Produto, ID_Cliente) VALUES (?, ?, ?, ?)",
+      [rating, comment || null, productId, req.user.id]
+    );
+    res.status(201).json({ id: result.insertId, message: "Avaliação registada." });
+  } catch (error) {
+    console.error("Create review error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete("/api/admin/reviews/:reviewId", authenticateToken, async (req, res) => {
+  const reviewId = parseInt(req.params.reviewId);
+  try {
+    const review = await db.get("SELECT ID_Cliente FROM avaliacao WHERE ID_Avaliacao = ?", [reviewId]);
+    if (!review) return res.status(404).json({ error: "Avaliação não encontrada." });
+
+    if (req.user.id !== review.ID_Cliente && req.user.role !== "admin") {
+      return res.status(403).json({ error: "Acesso negado." });
+    }
+
+    await db.run("DELETE FROM avaliacao WHERE ID_Avaliacao = ?", [reviewId]);
+    res.json({ message: "Avaliação eliminada com sucesso." });
+  } catch (error) {
+    console.error("Delete review error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// -----------------------------------------------------------------------------
 // FAVORITOS
 // -----------------------------------------------------------------------------
 app.get("/api/user/favorites", authenticateToken, async (req, res) => {
   try {
     const rows = await db.all(
       `
-      SELECT p.ID_Produto, p.Nome, p.Preco, p.Imagem, p.Slug 
+      SELECT p.ID_Produto as id, p.Nome as name, p.Preco as price, p.Imagem as image, p.Slug as slug, p.Tags as tags,
+        COALESCE(AVG(a.Nota), 0) as rating,
+        COUNT(a.ID_Avaliacao) as reviewCount,
+        cat.Nome as category,
+        o.Nome as origin
       FROM favoritos f
       JOIN produto p ON f.ID_Produto = p.ID_Produto
+      LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+      LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+      LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
       WHERE f.ID_Cliente = ?
+      GROUP BY p.ID_Produto
     `,
       [req.user.id],
     );
@@ -5580,14 +6032,15 @@ app.post("/api/quiz/score", authenticateToken, async (req, res) => {
 // Get leaderboard
 app.get("/api/quiz/leaderboard", async (req, res) => {
   try {
-    // Get global top score
-    const globalBest = await db.get(`
-      SELECT qs.Score, qs.Max_Score, c.Nome, c.Apelido, c.Username 
+    // Get global top 5 scores
+    const globalBestList = await db.all(`
+      SELECT qs.Score, qs.Max_Score, c.Nome, c.Username 
       FROM quiz_score qs 
       JOIN cliente c ON qs.ID_Cliente = c.ID_Cliente 
       ORDER BY (qs.Score * 1.0 / qs.Max_Score) DESC, qs.Score DESC, qs.Data_Score ASC 
-      LIMIT 1
+      LIMIT 5
     `);
+    const globalBest = globalBestList[0] || null;
 
     let userBest = null;
 
@@ -5618,10 +6071,130 @@ app.get("/api/quiz/leaderboard", async (req, res) => {
       }
     }
 
-    res.json({ globalBest, userBest });
+    res.json({ globalBestList, globalBest, userBest });
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
     res.status(500).json({ error: "Failed to fetch leaderboard." });
+  }
+});
+
+// ============================================================
+// APRENDER PAGE DYNAMIC CONTENT API
+// ============================================================
+
+// Get all facts
+app.get("/api/aprender/factos", async (req, res) => {
+  try {
+    const facts = await db.all("SELECT * FROM aprender_facto ORDER BY ID_Facto ASC");
+    res.json(facts);
+  } catch (error) {
+    console.error("Error fetching facts:", error);
+    res.status(500).json({ error: "Failed to fetch facts." });
+  }
+});
+
+// Admin CRUD: Add new fact
+app.post("/api/aprender/factos", authenticateToken, isAdmin, async (req, res) => {
+  const { titulo, icon_frente, icon_verso, conteudo_verso } = req.body;
+  if (!titulo || !icon_frente || !icon_verso || !conteudo_verso) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  try {
+    const result = await db.run(
+      "INSERT INTO aprender_facto (Titulo, Icon_Frente, Icon_Verso, Conteudo_Verso) VALUES (?, ?, ?, ?)",
+      [titulo, icon_frente, icon_verso, conteudo_verso]
+    );
+    res.status(201).json({ message: "Fact added successfully.", id: result.insertId });
+  } catch (error) {
+    console.error("Error adding fact:", error);
+    res.status(500).json({ error: "Failed to add fact." });
+  }
+});
+
+// Admin CRUD: Update fact
+app.put("/api/aprender/factos/:id", authenticateToken, isAdmin, async (req, res) => {
+  const { titulo, icon_frente, icon_verso, conteudo_verso } = req.body;
+  if (!titulo || !icon_frente || !icon_verso || !conteudo_verso) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  try {
+    await db.run(
+      "UPDATE aprender_facto SET Titulo = ?, Icon_Frente = ?, Icon_Verso = ?, Conteudo_Verso = ? WHERE ID_Facto = ?",
+      [titulo, icon_frente, icon_verso, conteudo_verso, req.params.id]
+    );
+    res.json({ message: "Fact updated successfully." });
+  } catch (error) {
+    console.error("Error updating fact:", error);
+    res.status(500).json({ error: "Failed to update fact." });
+  }
+});
+
+// Admin CRUD: Delete fact
+app.delete("/api/aprender/factos/:id", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    await db.run("DELETE FROM aprender_facto WHERE ID_Facto = ?", [req.params.id]);
+    res.json({ message: "Fact deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting fact:", error);
+    res.status(500).json({ error: "Failed to delete fact." });
+  }
+});
+
+// Get all glossary terms
+app.get("/api/aprender/glossario", async (req, res) => {
+  try {
+    const glossary = await db.all("SELECT * FROM aprender_glossario ORDER BY ID_Glossario ASC");
+    res.json(glossary);
+  } catch (error) {
+    console.error("Error fetching glossary:", error);
+    res.status(500).json({ error: "Failed to fetch glossary." });
+  }
+});
+
+// Admin CRUD: Add new glossary term
+app.post("/api/aprender/glossario", authenticateToken, isAdmin, async (req, res) => {
+  const { termo, definicao, icon, categoria } = req.body;
+  if (!termo || !definicao || !icon || !categoria) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  try {
+    const result = await db.run(
+      "INSERT INTO aprender_glossario (Termo, Definicao, Icon, Categoria) VALUES (?, ?, ?, ?)",
+      [termo, definicao, icon, categoria]
+    );
+    res.status(201).json({ message: "Glossary term added successfully.", id: result.insertId });
+  } catch (error) {
+    console.error("Error adding glossary term:", error);
+    res.status(500).json({ error: "Failed to add glossary term." });
+  }
+});
+
+// Admin CRUD: Update glossary term
+app.put("/api/aprender/glossario/:id", authenticateToken, isAdmin, async (req, res) => {
+  const { termo, definicao, icon, categoria } = req.body;
+  if (!termo || !definicao || !icon || !categoria) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  try {
+    await db.run(
+      "UPDATE aprender_glossario SET Termo = ?, Definicao = ?, Icon = ?, Categoria = ? WHERE ID_Glossario = ?",
+      [termo, definicao, icon, categoria, req.params.id]
+    );
+    res.json({ message: "Glossary term updated successfully." });
+  } catch (error) {
+    console.error("Error updating glossary term:", error);
+    res.status(500).json({ error: "Failed to update glossary term." });
+  }
+});
+
+// Admin CRUD: Delete glossary term
+app.delete("/api/aprender/glossario/:id", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    await db.run("DELETE FROM aprender_glossario WHERE ID_Glossario = ?", [req.params.id]);
+    res.json({ message: "Glossary term deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting glossary term:", error);
+    res.status(500).json({ error: "Failed to delete glossary term." });
   }
 });
 

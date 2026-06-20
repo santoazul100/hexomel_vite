@@ -1,5 +1,7 @@
 // Apicultor Dashboard Logic
 const API_URL = "/api";
+import { initI18n, createLangToggle } from "./i18n.js";
+
 
 class ApicultorUI {
   constructor() {
@@ -13,6 +15,7 @@ class ApicultorUI {
     this.currentTags = new Set();
     this._editingProductId = null;
     this._editingWorkshopId = null;
+    this.layoutAnimationStyle = "fade";
     this.init();
   }
 
@@ -39,7 +42,31 @@ class ApicultorUI {
       if (cartBtn) cartBtn.addEventListener("click", () => cart.toggle(true));
     } catch (e) {}
 
+    // Inject language toggle into navbar (translation flag)
+    const navbarRight = document.querySelector(".navbar-right-fixed");
+    if (navbarRight) {
+      const langContainer = document.createElement("div");
+      langContainer.className = "me-3 d-flex align-items-center";
+      langContainer.innerHTML = createLangToggle();
+      navbarRight.insertBefore(langContainer, navbarRight.firstChild);
+    }
+    initI18n();
+
     await Promise.all([this.loadCategories(), this.loadOrigins()]);
+
+    // Load site settings for layout transition animation style
+    try {
+      const res = await fetch(`${API_URL}/site-settings`);
+      if (res.ok) {
+        const settings = await res.json();
+        if (settings.layout_animation_style) {
+          this.layoutAnimationStyle = settings.layout_animation_style;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load site settings for layout animation:", e);
+    }
+
     this.initSidebar(); // Collapsed preference
     this.switchSection("dashboard");
   }
@@ -140,6 +167,7 @@ class ApicultorUI {
     this.initTagInput();
     this.initSearch();
     this.initFlatpickr();
+    this.setupLayoutToggle();
   }
 
   initFlatpickr() {
@@ -421,55 +449,173 @@ class ApicultorUI {
   }
 
   renderProducts() {
-    const container = document.getElementById("product-list-body");
-    if (!container) return;
+    const tableBody = document.getElementById("product-list-body");
+    const gridBody = document.getElementById("product-grid-body");
+    if (!tableBody || !gridBody) return;
+
+    const currentView = localStorage.getItem("apicultorProductView") || "table";
 
     if (this.products.length === 0) {
-      container.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-box-open fa-2x mb-3 d-block opacity-25"></i>Ainda não adicionou nenhum produto.</td></tr>`;
+      const emptyHtml = `<div class="col-12 text-center py-5 text-muted"><i class="fas fa-box-open fa-3x mb-3 d-block opacity-25"></i>Ainda não adicionou nenhum produto.</div>`;
+      tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-box-open fa-2x mb-3 d-block opacity-25"></i>Ainda não adicionou nenhum produto.</td></tr>`;
+      gridBody.innerHTML = emptyHtml;
       return;
     }
 
-    container.innerHTML = this.products
-      .map((p) => {
-        let statusClass = "aprovado";
-        if (p.Status === "Pendente") statusClass = "pendente";
-        if (p.Status === "Rejeitado") statusClass = "rejeitado";
+    if (currentView === "table") {
+      tableBody.innerHTML = this.products
+        .map((p) => {
+          let statusClass = "aprovado";
+          if (p.Status === "Pendente") statusClass = "pendente";
+          if (p.Status === "Rejeitado") statusClass = "rejeitado";
 
-        const category = this.categories.find(c => String(c.ID_Categoria) === String(p.ID_Categoria))?.Nome || "Sem Categoria";
-        const origin = this.origins.find(o => String(o.ID_Origem) === String(p.ID_Origem))?.Nome || "N/A";
+          const category = this.categories.find(c => String(c.ID_Categoria) === String(p.ID_Categoria))?.Nome || "Sem Categoria";
+          const origin = this.origins.find(o => String(o.ID_Origem) === String(p.ID_Origem))?.Nome || "N/A";
 
-        return `
-          <tr>
-            <td>
-              <div class="d-flex align-items-center gap-3">
-                <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-small" alt="${p.Nome}">
-                <div>
-                  <div class="fw-bold">${p.Nome}</div>
-                  ${p.Slug ? `<div class="text-muted" style="font-size:0.7rem; font-family:monospace;"><i class="fas fa-link me-1"></i>${p.Slug}</div>` : ''}
+          return `
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-small" alt="${p.Nome}">
+                  <div>
+                    <div class="fw-bold">${p.Nome}</div>
+                    ${p.Slug ? `<div class="text-muted" style="font-size:0.7rem; font-family:monospace;"><i class="fas fa-link me-1"></i>${p.Slug}</div>` : ''}
+                  </div>
+                </div>
+              </td>
+              <td><span class="text-muted small">${category}</span></td>
+              <td><span class="text-muted small">${origin}</span></td>
+              <td>${parseFloat(p.Preco).toFixed(2)}€</td>
+              <td>${p.Stock} UN</td>
+              <td><span class="badge-premium ${statusClass}">${p.Status || "Aprovado"}</span></td>
+              <td class="text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                  ${p.Slug ? `<a href="/produto/${p.Slug}" target="_blank" class="btn-action-premium" title="Ver Página" style="text-decoration:none;">
+                    <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
+                  </a>` : ''}
+                   ${p.Status === "Aprovado" ? `
+                   <button class="btn-action-premium" onclick="apicultorUI.editProduct('${p.ID_Produto}')" title="Editar">
+                     <i class="fas fa-pencil-alt" style="font-size: 0.8rem;"></i>
+                   </button>
+                   ` : `
+                   <button class="btn-action-premium" disabled style="opacity: 0.5; cursor: not-allowed;" title="Apenas editável após aprovação">
+                     <i class="fas fa-pencil-alt" style="font-size: 0.8rem;"></i>
+                   </button>
+                   `}
+                  <button class="btn-action-premium delete" onclick="apicultorUI.deleteProduct('${p.ID_Produto}')" title="Remover">
+                    <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>`;
+        })
+        .join("");
+    } else {
+      gridBody.innerHTML = this.products
+        .map((p) => {
+          let statusClass = "aprovado";
+          if (p.Status === "Pendente") statusClass = "pendente";
+          if (p.Status === "Rejeitado") statusClass = "rejeitado";
+
+          const category = this.categories.find(c => String(c.ID_Categoria) === String(p.ID_Categoria))?.Nome || "Sem Categoria";
+          const origin = this.origins.find(o => String(o.ID_Origem) === String(p.ID_Origem))?.Nome || "N/A";
+
+          return `
+            <div class="col-sm-6 col-md-4">
+              <div class="dash-product-card">
+                <div class="dash-product-img-container">
+                  <span class="badge-premium ${statusClass} dash-product-badge-status">${p.Status || "Aprovado"}</span>
+                  <div class="dash-product-actions">
+                    ${p.Slug ? `<a href="/produto/${p.Slug}" target="_blank" class="btn-action-premium" title="Ver Página" style="text-decoration:none; width:28px; height:28px;">
+                      <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
+                    </a>` : ''}
+                    ${p.Status === "Aprovado" ? `
+                    <button class="btn-action-premium" onclick="apicultorUI.editProduct('${p.ID_Produto}')" title="Editar" style="width:28px; height:28px;">
+                      <i class="fas fa-pencil-alt" style="font-size: 0.75rem;"></i>
+                    </button>
+                    ` : `
+                    <button class="btn-action-premium" disabled style="opacity: 0.5; cursor: not-allowed; width:28px; height:28px;" title="Apenas editável após aprovação">
+                      <i class="fas fa-pencil-alt" style="font-size: 0.75rem;"></i>
+                    </button>
+                    `}
+                    <button class="btn-action-premium delete" onclick="apicultorUI.deleteProduct('${p.ID_Produto}')" title="Remover" style="width:28px; height:28px;">
+                      <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                    </button>
+                  </div>
+                  <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" class="img-fluid" style="max-height:160px; object-fit:contain;">
+                </div>
+                <div class="dash-product-body">
+                  <div class="dash-product-title">${p.Nome}</div>
+                  <div class="dash-product-meta">${category} • ${origin}</div>
+                  <div class="dash-product-footer">
+                    <span class="fw-bold text-success">${parseFloat(p.Preco).toFixed(2)}€</span>
+                    <span class="badge bg-light text-dark border small fw-600">${p.Stock} UN</span>
+                  </div>
                 </div>
               </div>
-            </td>
-            <td><span class="text-muted small">${category}</span></td>
-            <td><span class="text-muted small">${origin}</span></td>
-            <td>${parseFloat(p.Preco).toFixed(2)}€</td>
-            <td>${p.Stock} UN</td>
-            <td><span class="badge-premium ${statusClass}">${p.Status || "Aprovado"}</span></td>
-            <td class="text-end">
-              <div class="d-flex gap-1 justify-content-end">
-                ${p.Slug ? `<a href="produto.html?slug=${p.Slug}" target="_blank" class="btn-action-premium" title="Ver Página" style="text-decoration:none;">
-                  <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
-                </a>` : ''}
-                <button class="btn-action-premium" onclick="apicultorUI.editProduct('${p.ID_Produto}')" title="Editar">
-                  <i class="fas fa-pencil-alt" style="font-size: 0.8rem;"></i>
-                </button>
-                <button class="btn-action-premium delete" onclick="apicultorUI.deleteProduct('${p.ID_Produto}')" title="Remover">
-                  <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
-                </button>
-              </div>
-            </td>
-          </tr>`;
-      })
-      .join("");
+            </div>`;
+        })
+        .join("");
+    }
+  }
+
+  setupLayoutToggle() {
+    const btnTable = document.getElementById("btn-view-table");
+    const btnGrid = document.getElementById("btn-view-grid");
+
+    if (!btnTable || !btnGrid) return;
+
+    // Check local storage for preference
+    const viewPreference = localStorage.getItem("apicultorProductView") || "table";
+    this.setProductView(viewPreference);
+
+    btnTable.addEventListener("click", () => {
+      this.setProductView("table");
+    });
+
+    btnGrid.addEventListener("click", () => {
+      this.setProductView("grid");
+    });
+  }
+
+  setProductView(view) {
+    const btnTable = document.getElementById("btn-view-table");
+    const btnGrid = document.getElementById("btn-view-grid");
+    const tableWrapper = document.getElementById("product-table-wrapper");
+    const gridWrapper = document.getElementById("product-grid-wrapper");
+
+    if (!btnTable || !btnGrid || !tableWrapper || !gridWrapper) return;
+
+    const previousView = localStorage.getItem("apicultorProductView");
+    localStorage.setItem("apicultorProductView", view);
+
+    if (view === "table") {
+      btnTable.classList.add("active");
+      btnGrid.classList.remove("active");
+      tableWrapper.classList.remove("d-none");
+      gridWrapper.classList.add("d-none");
+
+      // Apply transition layout animation if layout view was changed by the user
+      if (previousView && previousView !== view) {
+        tableWrapper.classList.remove("layout-anim-fade", "layout-anim-roda");
+        void tableWrapper.offsetWidth; // Force layout recalculation/reflow
+        tableWrapper.classList.add(`layout-anim-${this.layoutAnimationStyle || "fade"}`);
+      }
+    } else {
+      btnTable.classList.remove("active");
+      btnGrid.classList.add("active");
+      tableWrapper.classList.add("d-none");
+      gridWrapper.classList.remove("d-none");
+
+      // Apply transition layout animation if layout view was changed by the user
+      if (previousView && previousView !== view) {
+        gridWrapper.classList.remove("layout-anim-fade", "layout-anim-roda");
+        void gridWrapper.offsetWidth; // Force layout recalculation/reflow
+        gridWrapper.classList.add(`layout-anim-${this.layoutAnimationStyle || "fade"}`);
+      }
+    }
+
+    this.renderProducts();
   }
 
   editProduct(id) {
@@ -679,6 +825,7 @@ class ApicultorUI {
     document.getElementById("product-id").value = "";
     const slugInput = document.getElementById("prod-slug");
     if (slugInput) slugInput.value = "";
+    const preview = document.getElementById("prod-image-preview");
     const placeholder = document.getElementById("prod-image-placeholder");
     if (preview) { preview.src = ""; preview.style.display = "none"; }
     if (placeholder) placeholder.style.display = "block";

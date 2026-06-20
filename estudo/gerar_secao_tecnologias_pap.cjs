@@ -97,14 +97,14 @@ const frontendTech = [
     whatIs:
       "O HTML5 é a linguagem que define a estrutura das páginas web. É nele que se organizam cabeçalhos, menus, secções, botões, formulários, cartões de produto e áreas de conteúdo.",
     inProject:
-      "No projeto Hexomel, o HTML5 está presente em páginas como index.html, shop.html, checkout.html, profile.html e admin.html. Isto mostra que o sistema segue uma abordagem multipágina, em que cada área importante possui a sua própria página.",
+      "No projeto Hexomel, o HTML5 está presente em páginas como index.html, shop.html, aprender.html, checkout.html, profile.html e admin.html. Isto mostra que o sistema segue uma abordagem multipágina, em que cada área importante possui a sua própria página.",
   },
   {
     title: "CSS3",
     whatIs:
       "O CSS3 é a tecnologia usada para controlar a apresentação visual do website. Permite definir cores, espaçamentos, tipografia, responsividade, animações e comportamento visual dos componentes.",
     inProject:
-      "No Hexomel, o CSS é usado em ficheiros como index.css, modern.css, skeleton.css e i18n.css. É graças a esta camada que o site ganha identidade visual premium, loaders, transições e consistência entre a área pública, o perfil e os dashboards.",
+      "No Hexomel, o CSS é usado em ficheiros como index.css, modern.css, aprender.css, skeleton.css e i18n.css. É graças a esta camada que o site ganha identidade visual, loaders, transições e consistência entre a área pública, o perfil e os dashboards.",
   },
   {
     title: "Bootstrap, Bootstrap Icons e Font Awesome",
@@ -118,7 +118,7 @@ const frontendTech = [
     whatIs:
       "O JavaScript é a linguagem responsável pela interatividade do site. A sintaxe com módulos ES permite separar o código por ficheiros e responsabilidades, tornando a aplicação mais organizada e reutilizável.",
     inProject:
-      "No Hexomel, o JavaScript controla autenticação, carrinho, filtros da loja, perfil, dashboards, comunidade, workshops, analytics e checkout. Módulos como main.js, shop.js, auth.js, checkout.js e analytics.js mostram essa divisão de responsabilidades.",
+      "No Hexomel, o JavaScript controla autenticação, carrinho, filtros da loja, perfil, aprender (quiz e glossário), dashboards, comunidade, workshops, analytics e checkout. Módulos como main.js, shop.js, aprender.js, auth.js, checkout.js e analytics.js mostram essa divisão de responsabilidades.",
   },
   {
     title: "Vite",

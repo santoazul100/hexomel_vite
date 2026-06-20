@@ -6,10 +6,11 @@ import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { logInteraction, trackPageView } from "./analytics.js";
 import { Skeleton } from "./skeleton.js";
+import { getLoggedUser } from "./auth.js";
 
 // Easy-to-edit config
 const SHOP_CONFIG = {
-  fallbackImage: "https://placehold.co/400x400/f6f6f6/e0e0e0?text=Honey",
+  fallbackImage: "/images/default-product.png",
   productsPerPage: 9,
   maxSuggestions: 6,
   minSearchCharsForSuggestions: 2,
@@ -28,6 +29,7 @@ let userFavorites = [];
 let activeSuggestionIndex = -1;
 let currentSuggestions = [];
 let currentPage = 1;
+let layoutAnimationStyle = "fade";
 
 function escapeHtml(value = "") {
   return String(value)
@@ -280,12 +282,14 @@ async function fetchProducts() {
         originId: p.ID_Origem,
         apicultorId: p.ID_Apicultor || null,
         apicultorName: p.ApicultorNome || "Hexomel",
+        apicultorFoto: p.ApicultorFoto || null,
         image: p.Imagem || `/img/produtos/${p.ID_Produto}.webp`,
         weight: "500g",
         tags: p.Tags ? p.Tags.split(",").map((t) => t.trim()) : [],
         rating: p.Rating || 0,
         reviewCount: p.ReviewCount || 0,
         slug: p.Slug || null,
+        stock: p.Stock !== undefined ? p.Stock : 0,
       };
     });
 
@@ -446,73 +450,135 @@ function renderProducts() {
     startIndex + SHOP_CONFIG.productsPerPage,
   );
 
-  grid.innerHTML = paginatedProducts
-    .map(
-      (product) => `
-    <div class="col-md-6 col-lg-4 mb-4">
-      <div class="product-card-premium h-100 position-relative d-flex flex-column">
-        <div class="product-img-container" style="cursor: pointer" onclick="window.openProductDetails(${product.id})">
-          <div class="product-tags-container">
-            ${product.tags
-              .map(
-                (tag) => `
-              <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
-            `,
-              )
-              .join("")}
+  const currentView = localStorage.getItem("shopProductView") || "grid";
+
+  if (currentView === "grid") {
+    grid.innerHTML = paginatedProducts
+      .map(
+        (product) => `
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="product-card-premium h-100 position-relative d-flex flex-column">
+          <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${product.slug || product.id}'">
+            <div class="product-tags-container">
+              ${product.tags
+                .map(
+                  (tag) => `
+                <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+              `,
+                )
+                .join("")}
+            </div>
+            <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
           </div>
-          <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
-        </div>
-        <div class="p-4 d-flex flex-column flex-grow-1">
-          <div onclick="window.openProductDetails(${product.id})" style="cursor: pointer" class="mb-3">
-              <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${product.name}</h3>
-              <div class="star-rating">
-                ${generateStars(product.rating)} 
-                <span class="text-muted small">(${product.reviewCount})</span>
+          <div class="p-4 d-flex flex-column flex-grow-1">
+            <div onclick="window.location.href='/produto/${product.slug || product.id}'" style="cursor: pointer" class="mb-3">
+                <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${product.name}</h5>
+                <div class="star-rating">
+                  ${generateStars(product.rating)} 
+                  <span class="text-muted small">(${product.reviewCount})</span>
+                </div>
+                <p class="text-muted small mb-0">${product.category} • ${product.weight}</p>
+                <p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${product.origin}</p>
+                ${
+                  product.apicultorId
+                    ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
+                        <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                        <a href="profile.html?id=${product.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
+                          ${product.apicultorName}
+                        </a>
+                      </p>`
+                    : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
+                }
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
+              <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
+              
+              <div class="d-flex gap-2">
+
+                <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                        style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
+                        onclick="event.stopPropagation(); window.addToCart(${product.id})"
+                        title="Adicionar ao Carrinho">
+                    <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
+                </button>
+                <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
+                        style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                        id="btn-fav-${product.id}"
+                        onclick="window.toggleFavorite(${product.id})">
+                    <i class="fas fa-heart"></i>
+                </button>
               </div>
-              <p class="text-muted small mb-0">${product.category} • ${product.weight}</p>
-              <p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${product.origin}</p>
-              ${
-                product.apicultorId
-                  ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
-                      <i class="fas fa-user-tie me-1"></i>Vendido por: 
-                      <a href="apicultor.html?id=${product.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
-                        ${product.apicultorName}
-                      </a>
-                    </p>`
-                  : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
-              }
-          </div>
-          <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
-            <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
-            
-            <div class="d-flex gap-2">
-              ${product.slug ? `<a href="produto.html?slug=${product.slug}" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
-                      style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0; text-decoration: none;" 
-                      onclick="event.stopPropagation()"
-                      title="Ver Produto">
-                  <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
-              </a>` : ''}
-              <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
-                      style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
-                      onclick="event.stopPropagation(); window.addToCart(${product.id})"
-                      title="Adicionar ao Carrinho">
-                  <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
-              </button>
-              <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
-                      style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
-                      id="btn-fav-${product.id}"
-                      onclick="window.toggleFavorite(${product.id})">
-                  <i class="fas fa-heart"></i>
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  `,
-    )
-    .join("");
+    `,
+      )
+      .join("");
+  } else {
+    grid.innerHTML = paginatedProducts
+      .map(
+        (product) => `
+      <div class="col-12">
+        <div class="product-card-list-view">
+          <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${product.slug || product.id}'">
+            <div class="product-tags-container">
+              ${product.tags
+                .map(
+                  (tag) => `
+                <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+              `,
+                )
+                .join("")}
+            </div>
+            <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
+          </div>
+          <div class="list-body">
+            <div onclick="window.location.href='/produto/${product.slug || product.id}'" style="cursor: pointer" class="mb-3">
+                <h5 class="fw-bold mb-1">${product.name}</h5>
+                <div class="star-rating mb-2">
+                  ${generateStars(product.rating)} 
+                  <span class="text-muted small">(${product.reviewCount})</span>
+                </div>
+                <p class="text-muted small mb-0">${product.category} • ${product.weight}</p>
+                <p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${product.origin}</p>
+                ${
+                  product.apicultorId
+                    ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
+                        <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                        <a href="profile.html?id=${product.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
+                          ${product.apicultorName}
+                        </a>
+                      </p>`
+                    : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
+                }
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
+              <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${product.price.toFixed(2)}</span>
+              
+              <div class="d-flex gap-2">
+
+                <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
+                        style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
+                        onclick="event.stopPropagation(); window.addToCart(${product.id})"
+                        title="Adicionar ao Carrinho">
+                    <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
+                </button>
+                <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
+                        style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                        id="btn-fav-${product.id}"
+                        onclick="window.toggleFavorite(${product.id})">
+                    <i class="fas fa-heart"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `,
+      )
+      .join("");
+  }
 
   renderPagination();
 }
@@ -639,55 +705,120 @@ window.openProductDetails = async function (productId) {
 
   const modalHtml = `
     <div class="details-overlay" id="detailsOverlay">
-      <div class="details-card-minimal">
+      <div class="details-card-minimal" style="border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid rgba(0,0,0,0.05);">
         <button class="details-close-minimal" onclick="window.closeProductDetails()">×</button>
         
-        <div class="details-image-section">
-          <img src="${product.image}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'" alt="${product.name}">
+        <div class="details-image-section" style="background: #fafafa;">
+          <img src="${product.image}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'" alt="${product.name}" style="border-radius: 16px;">
         </div>
         
-        <div class="details-info-section">
-          <div class="minimal-category">${product.category}</div>
-          <h2 class="minimal-title">${product.name}</h2>
-          <div class="minimal-price">€${product.price.toFixed(2)}</div>
+        <div class="details-info-section" style="padding: 50px 40px;">
+          <!-- Tags -->
+          ${product.tags && product.tags.length > 0 ? `
+            <div class="produto-tags-top d-flex flex-wrap gap-2 mb-3">
+              ${product.tags.map(t => `<span class="badge-tag" style="background: rgba(244, 180, 0, 0.08); border: 1px solid rgba(244, 180, 0, 0.15); border-radius: 6px; padding: 4px 10px; font-size: 0.68rem; font-weight: 700; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px;">${t}</span>`).join("")}
+            </div>
+          ` : ""}
           
+          <h2 class="fw-bold mb-2" style="font-family: 'Outfit', sans-serif; font-size: 2rem; color: #1e293b; letter-spacing: 0; text-transform: none;">${product.name}</h2>
           
-          <div class="progress mb-4" style="height: 5px;">
-             <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+          <div class="star-rating-lg d-flex align-items-center gap-2 mb-3" style="color: #f4b400;">
+            ${generateStars(product.rating || 0)}
+            <span class="text-muted small">(${product.reviewCount || 0} avaliações)</span>
           </div>
 
-          <div class="minimal-description">
-            ${product.description || "Descrição do produto não disponível."}
+          <div class="minimal-price mb-4" style="font-size: 1.8rem; font-weight: bold; color: var(--primary-green, #1a4d2e); margin-bottom: 20px;">€${product.price.toFixed(2)}</div>
+
+          <div class="minimal-description mb-4" style="font-size: 0.95rem; line-height: 1.7; color: #475569; margin-bottom: 25px; max-width: 100%;">
+            ${product.description || "Descrição não disponível para este produto."}
           </div>
 
-          <div class="quantity-selector mt-4">
-             <button class="qty-btn" onclick="window.updateModalQty(-1)">-</button>
-             <input type="number" id="modal-qty" class="qty-input" value="1" min="1" readonly>
-             <button class="qty-btn" onclick="window.updateModalQty(1)">+</button>
+          <!-- Product Meta -->
+          <div class="mb-4">
+            ${product.category ? `
+              <div class="produto-meta-item d-flex align-items-center gap-2 mb-2 text-muted" style="font-size: 0.9rem;">
+                <i class="fas fa-layer-group" style="width: 20px; color: var(--primary-green, #1a4d2e);"></i>
+                <span>Categoria: <strong class="text-dark">${product.category}</strong></span>
+              </div>
+            ` : ""}
+            ${product.origin && product.origin !== "N/A" ? `
+              <div class="produto-meta-item d-flex align-items-center gap-2 mb-2 text-muted" style="font-size: 0.9rem;">
+                <i class="fas fa-map-marker-alt" style="width: 20px; color: var(--primary-green, #1a4d2e);"></i>
+                <span>Origem: <strong class="text-dark">${product.origin}</strong></span>
+              </div>
+            ` : ""}
+            <div class="produto-meta-item d-flex align-items-center gap-2 mb-2 text-muted" style="font-size: 0.9rem;">
+              <i class="fas fa-box" style="width: 20px; color: var(--primary-green, #1a4d2e);"></i>
+              <span>Stock: <strong class="text-dark">${product.stock > 0 ? `${product.stock} disponíveis` : "Esgotado"}</strong></span>
+            </div>
           </div>
-          
-          <div class="minimal-actions mb-5">
-            <button class="btn-minimal-add" onclick="window.addToCartFromDetails(${product.id})">
-              ADICIONAR
+
+          <!-- Seller Badge -->
+          ${product.apicultorId ? `
+            <a href="profile.html?id=${product.apicultorId}" class="apicultor-badge mb-4 d-inline-flex" style="text-decoration: none;">
+              <img src="${product.apicultorFoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.apicultorName || 'A')}&background=random`}" 
+                   alt="${product.apicultorName}" 
+                   referrerpolicy="no-referrer" 
+                   style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(244, 180, 0, 0.3);"
+                   onerror="this.src='https://ui-avatars.com/api/?name=A&background=random'">
+              <div>
+                <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; color: #92400e; font-weight: bold; line-height: 1.1;">Vendido por</div>
+                <div class="fw-bold" style="font-size: 0.9rem; color: #78350f;">${product.apicultorName || "Apicultor"}</div>
+              </div>
+            </a>
+          ` : `
+            <div class="apicultor-badge hexomel-badge mb-4 d-inline-flex">
+              <div class="hexomel-badge-icon d-flex align-items-center justify-content-center">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div>
+                <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; color: #1a4d2e; font-weight: bold; line-height: 1.1;">Garantia</div>
+                <div class="fw-bold" style="font-size: 0.9rem; color: #1a4d2e;">Original Hexomel</div>
+              </div>
+            </div>
+          `}
+
+          <!-- Actions -->
+          <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+            <div class="qty-selector d-flex align-items-center" style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 0;">
+               <button class="qty-btn" onclick="window.updateModalQty(-1)" style="width: 38px; height: 38px; border: none; background: #f8fafc; font-weight: bold; margin: 0;">-</button>
+               <input type="number" id="modal-qty" class="qty-input" value="1" min="1" readonly style="width: 38px; height: 38px; text-align: center; border: none; font-weight: bold; margin: 0;">
+               <button class="qty-btn" onclick="window.updateModalQty(1)" style="width: 38px; height: 38px; border: none; background: #f8fafc; font-weight: bold; margin: 0;">+</button>
+            </div>
+            
+            <button class="btn-minimal-add" onclick="window.addToCartFromDetails(${product.id})" ${product.stock <= 0 ? "disabled" : ""} style="background: var(--primary-green, #1a4d2e); border: none; color: white; border-radius: 8px; padding: 10px 24px; font-weight: bold; height: 40px; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 0.5px; margin: 0;">
+              <i class="fas fa-shopping-cart me-2"></i> ${product.stock > 0 ? "Adicionar" : "Esgotado"}
             </button>
+
             <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(product.id) ? "active" : ""}" 
-                  style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.75rem; padding: 0 !important; flex-shrink: 0;" 
+                  style="width: 40px; height: 40px; min-width: 40px !important; font-size: 1rem; padding: 0 !important; flex-shrink: 0; background: #f1f5f9; border: none; color: #64748b; margin: 0;" 
                   id="modal-fav-btn"
                   onclick="window.toggleFavorite(${product.id})">
-              <i class="fas fa-heart" ></i>
-          </button>
+              <i class="fas fa-heart"></i>
+            </button>
           </div>
 
+          <!-- Message Button / Support Button -->
+          ${product.apicultorId ? `
+            <button class="btn btn-outline-success rounded-pill fw-bold px-4 py-2 mt-3 w-100" id="modal-btn-ask-seller" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease; font-size: 0.85rem;" onclick="window.modalAskSeller(${product.id})">
+              <i class="fas fa-comment-dots me-2"></i>Perguntar ao Vendedor
+            </button>
+          ` : `
+            <a href="contact.html" class="btn btn-outline-success rounded-pill fw-bold px-4 py-2 mt-3 w-100 d-flex align-items-center justify-content-center" id="modal-btn-contact-support" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease; text-decoration: none; font-size: 0.85rem;">
+              <i class="fas fa-envelope me-2"></i>Contactar Apoio ao Cliente
+            </a>
+          `}
+
           <!-- Reviews Section -->
-           <div class="reviews-section">
-            <h3 class="reviews-title">Avaliações</h3>
-            <div id="reviews-list-${product.id}" class="review-list">
+          <div class="reviews-section mt-5" style="border-top: 1px solid #e2e8f0; padding-top: 25px;">
+            <h3 class="reviews-title" style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: bold; color: #1e293b; margin-bottom: 20px;">Avaliações</h3>
+            <div id="reviews-list-${product.id}" class="review-list mb-4">
                 <p class="text-muted">A carregar avaliações...</p>
             </div>
             
-            <div class="review-form-container">
-                <label class="form-label">A sua avaliação</label>
-                <div class="rating-input d-flex gap-1" id="rating-input-stars">
+            <div class="review-form-container p-3" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <label class="form-label fw-bold text-dark small mb-1" style="display: block;">A sua avaliação</label>
+                <div class="rating-input d-flex gap-1 mb-3" id="rating-input-stars" style="color: #cbd5e1; cursor: pointer; font-size: 1.1rem;">
                     <i class="far fa-star" data-value="1"></i>
                     <i class="far fa-star" data-value="2"></i>
                     <i class="far fa-star" data-value="3"></i>
@@ -696,10 +827,10 @@ window.openProductDetails = async function (productId) {
                 </div>
                 <input type="hidden" id="review-rating-value" value="0">
                 
-                <label class="form-label mt-3">O seu comentário</label>
-                <textarea id="review-comment" class="review-textarea" placeholder="Partilhe a sua experiência..."></textarea>
+                <label class="form-label fw-bold text-dark small mb-1" style="display: block;">O seu comentário</label>
+                <textarea id="review-comment" class="review-textarea" placeholder="Partilhe a sua experiência..." style="width: 100%; min-height: 80px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 0.85rem; outline: none; transition: border 0.2s; background: white; margin-bottom: 15px;"></textarea>
                 
-                <button class="btn-submit-review" onclick="window.submitReview(${product.id})">Enviar Avaliação</button>
+                <button class="btn-submit-review" onclick="window.submitReview(${product.id})" style="background: var(--primary-green, #1a4d2e); color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: background 0.2s;">Enviar Avaliação</button>
             </div>
           </div>
         </div>
@@ -798,6 +929,41 @@ window.addToCartFromDetails = function (id) {
   cart.addItem(id, qty);
   window.closeProductDetails();
   // cart.toggle(true); // Optional: open cart after add
+};
+
+window.modalAskSeller = function (productId) {
+  const product = products.find((p) => p.id === productId);
+  if (!product) return;
+  const currentUser = getLoggedUser();
+  if (!currentUser) {
+    Swal.fire({
+      icon: "warning",
+      title: "Inicie sessão",
+      text: "Precisa de iniciar sessão para enviar mensagens ao vendedor.",
+      showCancelButton: true,
+      confirmButtonText: "Iniciar Sessão",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "var(--primary-green)"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname + window.location.search);
+      }
+    });
+    return;
+  }
+
+  if (currentUser.id === product.apicultorId) {
+    Swal.fire({
+      icon: "info",
+      title: "Este produto é seu",
+      text: "Não pode enviar uma mensagem a si mesmo sobre o seu próprio produto.",
+      confirmButtonColor: "var(--primary-green)"
+    });
+    return;
+  }
+
+  const prefillMsg = `Olá! Tenho interesse no seu produto "${product.name}". Gostaria de obter mais informações.`;
+  window.location.href = `rede-social.html?chatWith=${product.apicultorId}&prefill=${encodeURIComponent(prefillMsg)}&product=${product.slug || ''}`;
 };
 
 function isFavorited(productId) {
@@ -933,7 +1099,11 @@ window.loadReviews = async (productId) => {
 
     container.innerHTML = reviews
       .map(
-        (r) => `
+        (r) => {
+          const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+          const canDelete = currentUser && (currentUser.id === r.ID_Cliente || currentUser.role === "admin");
+
+          return `
             <div class="review-card">
                 <div class="review-header">
                     <div class="reviewer-info">
@@ -943,11 +1113,65 @@ window.loadReviews = async (productId) => {
                     <div class="star-rating" style="font-size: 0.8rem">${generateStars(r.Nota)}</div>
                 </div>
                 <div class="review-text">${r.Comentario || ""}</div>
-                <div class="review-date text-end mt-2">${new Date(r.Data_Avaliacao).toLocaleDateString()}</div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div class="review-date">${new Date(r.Data_Avaliacao).toLocaleDateString()}</div>
+                    ${canDelete ? `
+                      <button class="btn btn-sm btn-link text-danger text-decoration-none p-0 delete-review-btn" 
+                              data-id="${r.ID_Avaliacao}" 
+                              style="font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-trash-alt me-1"></i> Eliminar
+                      </button>
+                    ` : ""}
+                </div>
             </div>
-        `,
+          `;
+        }
       )
       .join("");
+
+    // Bind delete review buttons inside modal
+    container.querySelectorAll(".delete-review-btn").forEach(btn => {
+      btn.addEventListener("click", async function() {
+        const reviewId = this.getAttribute("data-id");
+        const token = localStorage.getItem("token");
+
+        const result = await Swal.fire({
+          title: "Tem a certeza?",
+          text: "Esta ação apagará permanentemente a sua avaliação.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          confirmButtonText: "Sim, apagar!",
+          cancelButtonText: "Cancelar"
+        });
+
+        if (result.isConfirmed) {
+          try {
+            const deleteRes = await fetch(`${API_URL}/admin/reviews/${reviewId}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const data = await deleteRes.json();
+            if (deleteRes.ok) {
+              Swal.fire({
+                icon: "success",
+                title: "Avaliação apagada com sucesso",
+                timer: 1200,
+                showConfirmButton: false
+              });
+              window.loadReviews(productId);
+            } else {
+              Swal.fire("Erro", data.error || "Erro ao apagar avaliação", "error");
+            }
+          } catch (err) {
+            console.error(err);
+            Swal.fire("Erro", "Erro ao comunicar com o servidor", "error");
+          }
+        }
+      });
+    });
+
   } catch (err) {
     console.error(err);
     container.innerHTML =
@@ -1025,12 +1249,74 @@ window.submitReview = async (productId) => {
   }
 };
 
+function initLayoutToggle() {
+  const btnGrid = document.getElementById("btn-shop-grid");
+  const btnList = document.getElementById("btn-shop-list");
+
+  if (!btnGrid || !btnList) return;
+
+  const viewPreference = localStorage.getItem("shopProductView") || "grid";
+  setShopView(viewPreference);
+
+  btnGrid.addEventListener("click", () => {
+    setShopView("grid");
+  });
+
+  btnList.addEventListener("click", () => {
+    setShopView("list");
+  });
+}
+
+function setShopView(view) {
+  const btnGrid = document.getElementById("btn-shop-grid");
+  const btnList = document.getElementById("btn-shop-list");
+
+  if (!btnGrid || !btnList) return;
+
+  const previousView = localStorage.getItem("shopProductView");
+  localStorage.setItem("shopProductView", view);
+
+  if (view === "grid") {
+    btnGrid.classList.add("active");
+    btnList.classList.remove("active");
+  } else {
+    btnGrid.classList.remove("active");
+    btnList.classList.add("active");
+  }
+
+  // Apply transition animation if the layout view was actually changed by the user
+  if (previousView && previousView !== view) {
+    const grid = document.getElementById("products-grid");
+    if (grid) {
+      grid.classList.remove("layout-anim-fade", "layout-anim-roda");
+      void grid.offsetWidth; // Force layout recalculation/reflow
+      grid.classList.add(`layout-anim-${layoutAnimationStyle}`);
+    }
+  }
+
+  renderProducts();
+}
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
   trackPageView(); // Log page view
   initSearchControls();
+  initLayoutToggle();
   await fetchProducts();
   await fetchFavorites(); // Get latest from DB
+
+  // Load site settings for layout animation style
+  try {
+    const res = await fetch(`${API_URL}/site-settings`);
+    if (res.ok) {
+      const settings = await res.json();
+      if (settings.layout_animation_style) {
+        layoutAnimationStyle = settings.layout_animation_style;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load site settings for layout animation:", e);
+  }
 
   // Bind Filter Events
   const filters = document.querySelectorAll(

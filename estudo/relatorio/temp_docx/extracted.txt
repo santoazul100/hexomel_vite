@@ -1,0 +1,153 @@
+﻿3.1 TÃ­tulo do Projeto
+O projeto desenvolvido no Ã¢mbito da Prova de AptidÃ£o Profissional tem como tÃ­tulo Hexomel.
+A designaÃ§Ã£o Hexomel foi escolhida para associar imediatamente a plataforma ao universo do mel, da apicultura e da organizaÃ§Ã£o natural das colmeias. O prefixo "Hexo" faz referÃªncia Ã  estrutura hexagonal dos favos de mel, sÃ­mbolo universal da eficiÃªncia natural das abelhas, enquanto "mel" identifica de forma direta o produto central da plataforma. O nome transmite uma identidade curta, memorÃ¡vel e adequada a uma marca digital, mantendo ligaÃ§Ã£o ao produto principal e ao posicionamento premium pretendido.
+3.2 Tema do Projeto
+O tema do projeto centra-se na criaÃ§Ã£o de uma plataforma web completa para comÃ©rcio eletrÃ³nico, divulgaÃ§Ã£o e valorizaÃ§Ã£o do mel portuguÃªs artesanal. A soluÃ§Ã£o nÃ£o se limita a apresentar e vender produtos: integra perfis de utilizador diferenciados, catÃ¡logo filtrÃ¡vel com paginaÃ§Ã£o dinÃ¢mica, carrinho de compras persistente, checkout com verificaÃ§Ã£o 2FA, pagamentos reais via Stripe, sistema de comunidade Q&A, Ã¡rea dedicada ao apicultor, painel administrativo com dashboard analÃ­tico, workshops presenciais e conteÃºdos educativos sobre apicultura.
+A Hexomel combina trÃªs dimensÃµes complementares que, em conjunto, formam um ecossistema digital coerente:
+DimensÃ£o
+AplicaÃ§Ã£o no Projeto
+Exemplos Concretos
+Comercial
+Venda online, gestÃ£o de compras e fluxo completo de encomendas.
+Loja com filtros cruzados, carrinho dual (localStorage + BD), checkout em 2 passos, Stripe Checkout, histÃ³rico de encomendas, recibos por email.
+Educativa
+ExplicaÃ§Ã£o do produto, da apicultura e da origem botÃ¢nica do mel.
+PÃ¡gina de curiosidades com visualizador 3D (Three.js), secÃ§Ã£o de aprendizagem, referÃªncias sobre tipos de mel e boas prÃ¡ticas apÃ­colas.
+ComunitÃ¡ria
+InteraÃ§Ã£o entre utilizadores, clientes e apicultores verificados.
+Sistema Q&A com perguntas, respostas, votos, melhor resposta, moderaÃ§Ã£o administrativa e perfis de apicultor certificado.
+Administrativa
+GestÃ£o interna, monitorizaÃ§Ã£o e anÃ¡lise de dados da plataforma.
+Dashboard com KPIs, grÃ¡ficos Chart.js (vendas, categorias, crescimento), gestÃ£o de produtos, utilizadores, workshops e aprovaÃ§Ã£o de upgrades.
+
+Tabela 1. As quatro dimensÃµes complementares da plataforma Hexomel.
+3.3 MotivaÃ§Ã£o para o Projeto
+A motivaÃ§Ã£o principal para o desenvolvimento da Hexomel foi criar um projeto completo, com utilidade prÃ¡tica e capaz de demonstrar competÃªncias tÃ©cnicas adquiridas ao longo do curso de InformÃ¡tica e Tecnologias de MultimÃ©dia.
+A apicultura Ã© uma atividade tradicional com importÃ¢ncia econÃ³mica, ambiental e cultural em Portugal, mas muitos pequenos produtores continuam com pouca presenÃ§a digital, o que limita a divulgaÃ§Ã£o dos seus produtos e reduz o contacto direto com o consumidor final. A Hexomel surge como resposta a essa realidade, propondo uma plataforma onde o mel nÃ£o Ã© tratado como um produto genÃ©rico, mas como o centro de uma experiÃªncia digital cuidada e profissional.
+Origem e EvoluÃ§Ã£o do Projeto
+Importa referir que a Hexomel nÃ£o nasceu do zero como um conceito totalmente novo. Numa fase inicial, o projeto comeÃ§ou como uma aplicaÃ§Ã£o simples destinada Ã  empresa do meu pai, ligada Ã  produÃ§Ã£o e venda de mel. Contudo, rapidamente se tornou evidente que essa versÃ£o inicial era demasiado bÃ¡sica e limitada para servir como Prova de AptidÃ£o Profissional â€” tanto em termos de funcionalidades como de complexidade tÃ©cnica e ambiÃ§Ã£o de design.
+Face a essas limitaÃ§Ãµes, tomei a decisÃ£o de reconstruir o projeto de raiz, transformando-o numa plataforma completa de e-commerce com mÃºltiplos perfis de utilizador, seguranÃ§a avanÃ§ada, pagamentos reais, comunidade interativa, visualizaÃ§Ã£o 3D e painel administrativo com analytics. O resultado final Ã© uma aplicaÃ§Ã£o que, embora mantenha a ligaÃ§Ã£o ao mel e Ã  apicultura como tema central, representa uma evoluÃ§Ã£o substancial em relaÃ§Ã£o ao ponto de partida â€” passando de uma pÃ¡gina informativa simples para uma plataforma full-stack funcional e profissional.
+Objetivos TÃ©cnicos e Pessoais
+Do ponto de vista tÃ©cnico, o projeto permitiu trabalhar vÃ¡rias Ã¡reas fundamentais do desenvolvimento web moderno:
+â€¢ Valorizar o mel portuguÃªs e a produÃ§Ã£o artesanal atravÃ©s de uma presenÃ§a digital cuidada e com design premium.
+â€¢ Criar uma ponte direta entre apicultores e consumidores, reduzindo a dependÃªncia de intermediÃ¡rios comerciais.
+â€¢ Construir uma aplicaÃ§Ã£o full-stack funcional, com frontend, backend e base de dados prÃ³prios, sem recurso a plataformas prÃ©-fabricadas como Shopify ou WordPress.
+â€¢ Explorar seguranÃ§a real com bcrypt, JWT, Google OAuth e verificaÃ§Ã£o 2FA por email antes do pagamento.
+â€¢ Integrar pagamentos reais e fluxos comerciais prÃ³ximos de uma loja online profissional, utilizando a API Stripe Checkout.
+â€¢ Aplicar princÃ­pios de UX premium, como skeleton loaders, View Transitions API, toasts nÃ£o-intrusivos, micro-interaÃ§Ãµes e animaÃ§Ãµes procedurais.
+â€¢ Produzir documentaÃ§Ã£o tÃ©cnica completa que explique decisÃµes, ferramentas, arquitetura e a evoluÃ§Ã£o do sistema ao longo do desenvolvimento.
+
+Esta diversidade tÃ©cnica tornou a PAP mais completa e aproximou o trabalho de um cenÃ¡rio real de desenvolvimento de software profissional.
+
+3.4 EvoluÃ§Ã£o do Projeto: Da VersÃ£o Inicial Ã  Plataforma Final
+Como referido anteriormente, o projeto Hexomel teve uma evoluÃ§Ã£o significativa desde a sua conceÃ§Ã£o inicial. Esta secÃ§Ã£o documenta essa transformaÃ§Ã£o, comparando o ponto de partida com o resultado final em termos de funcionalidades, complexidade tÃ©cnica e ambiÃ§Ã£o.
+3.4.1 VersÃ£o Inicial â€” AplicaÃ§Ã£o Simples para a Empresa
+A primeira versÃ£o do projeto foi concebida como uma aplicaÃ§Ã£o web simples destinada Ã  empresa familiar do meu pai, dedicada Ã  produÃ§Ã£o e comercializaÃ§Ã£o de mel. Esta versÃ£o inicial tinha um Ã¢mbito limitado:
+â€¢ ApresentaÃ§Ã£o bÃ¡sica dos produtos com imagens e preÃ§os estÃ¡ticos.
+â€¢ PÃ¡gina informativa sobre a empresa e a atividade apÃ­cola.
+â€¢ FormulÃ¡rio de contacto simples, sem backend funcional.
+â€¢ Sem sistema de autenticaÃ§Ã£o, carrinho de compras ou pagamentos.
+â€¢ Base de dados rudimentar com apenas 5 tabelas (cliente, produto, encomenda, categoria, workshop), sem relaÃ§Ãµes complexas nem integridade referencial completa.
+â€¢ Design funcional mas bÃ¡sico, sem componentes premium ou micro-interaÃ§Ãµes.
+
+Embora esta versÃ£o cumprisse o propÃ³sito de apresentar os produtos da empresa, estava longe de demonstrar a profundidade tÃ©cnica e a ambiÃ§Ã£o necessÃ¡rias para uma Prova de AptidÃ£o Profissional do curso de InformÃ¡tica e Tecnologias de MultimÃ©dia.
+3.4.2 DecisÃ£o de ReconstruÃ§Ã£o
+A decisÃ£o de reconstruir o projeto de raiz foi motivada por vÃ¡rios fatores:
+â€¢ Complexidade tÃ©cnica insuficiente: a versÃ£o original nÃ£o permitia demonstrar competÃªncias em Ã¡reas como autenticaÃ§Ã£o avanÃ§ada, integraÃ§Ã£o de APIs externas, seguranÃ§a, analytics ou visualizaÃ§Ã£o 3D.
+â€¢ LimitaÃ§Ãµes funcionais: a ausÃªncia de carrinho persistente, checkout real, sistema de roles, comunidade e painel administrativo tornava a aplicaÃ§Ã£o demasiado simples para um projeto final.
+â€¢ Design pouco ambicioso: o aspeto visual da versÃ£o inicial nÃ£o refletia as competÃªncias de design multimÃ©dia adquiridas ao longo do curso.
+â€¢ Oportunidade de aprendizagem: a reconstruÃ§Ã£o permitiu explorar tecnologias e padrÃµes arquiteturais mais avanÃ§ados, aproximando o projeto de um cenÃ¡rio real de desenvolvimento profissional.
+3.4.3 VersÃ£o Final â€” Plataforma Completa
+A versÃ£o final da Hexomel representa uma transformaÃ§Ã£o completa em relaÃ§Ã£o ao ponto de partida. A tabela seguinte sintetiza as principais diferenÃ§as:
+Aspeto
+VersÃ£o Inicial
+VersÃ£o Final
+AutenticaÃ§Ã£o
+Sem login
+JWT + Google OAuth + 2FA por email
+Perfis de utilizador
+Sem diferenciaÃ§Ã£o
+3 perfis: cliente, apicultor e administrador
+CatÃ¡logo
+Produtos estÃ¡ticos
+CatÃ¡logo dinÃ¢mico com filtros cruzados, pesquisa, paginaÃ§Ã£o e ordenaÃ§Ã£o
+Carrinho
+Inexistente
+Carrinho dual: localStorage (offline) + BD MySQL (persistente)
+Pagamentos
+Sem pagamentos
+Stripe Checkout com recibos automÃ¡ticos por email
+Base de dados
+5 tabelas simples
+15+ tabelas com integridade referencial, migraÃ§Ãµes e JSON nativo
+SeguranÃ§a
+MÃ­nima
+bcrypt, JWT, roles, middleware de autorizaÃ§Ã£o, OTP 2FA, rate-limiting
+Comunidade
+Inexistente
+FÃ³rum Q&A com votos, melhor resposta e moderaÃ§Ã£o
+Workshops
+Listagem estÃ¡tica
+CRUD completo com reservas, gestÃ£o de vagas e aprovaÃ§Ã£o por admin
+VisualizaÃ§Ã£o 3D
+Inexistente
+Visualizador Three.js com materiais PBR por tipo de mel
+Analytics
+Inexistente
+Sistema comportamental com funnel, page views e dados JSON
+Dashboard admin
+Inexistente
+KPIs, grÃ¡ficos Chart.js, gestÃ£o de utilizadores, produtos e upgrades
+InternacionalizaÃ§Ã£o
+Apenas portuguÃªs
+Sistema i18n completo com PT/EN e persistÃªncia no localStorage
+Design/UX
+Funcional mas bÃ¡sico
+Design premium com glassmorphism, skeleton loaders, View Transitions API, toasts e animaÃ§Ãµes
+
+Tabela 2. ComparaÃ§Ã£o funcional entre a versÃ£o inicial e a versÃ£o final da Hexomel.
+
+Esta evoluÃ§Ã£o demonstra nÃ£o apenas o crescimento tÃ©cnico do projeto, mas tambÃ©m a capacidade de anÃ¡lise crÃ­tica, adaptaÃ§Ã£o e tomada de decisÃ£o durante o processo de desenvolvimento â€” competÃªncias essenciais num profissional de informÃ¡tica e multimÃ©dia.
+
+3.5 Melhorias TÃ©cnicas EspecÃ­ficas
+Para alÃ©m da visÃ£o geral apresentada na secÃ§Ã£o anterior, importa detalhar as melhorias tÃ©cnicas mais significativas que distinguem a versÃ£o final da Hexomel.
+3.5.1 Base de Dados â€” De 5 para 15+ Tabelas
+A maior melhoria estrutural foi a passagem de um modelo pensado apenas para uma loja online simples para um modelo relacional capaz de sustentar uma plataforma completa. A versÃ£o antiga tinha uma funÃ§Ã£o principalmente conceptual; a versÃ£o nova foi construÃ­da de acordo com problemas reais encontrados durante o desenvolvimento.
+â€¢ A base de dados deixou de guardar apenas entidades principais e passou a representar fluxos reais de compra, com tabelas especÃ­ficas para cada fase do processo.
+â€¢ A relaÃ§Ã£o muitos-para-muitos entre encomendas e produtos foi resolvida com a tabela item_encomenda, que guarda o preÃ§o unitÃ¡rio no momento da compra para garantir imutabilidade histÃ³rica.
+â€¢ Foram adicionados papÃ©is de utilizador (client, beekeeper, admin) para suportar trÃªs perfis com permissÃµes diferenciadas.
+â€¢ O catÃ¡logo ficou mais rico com campos de categoria, origem botÃ¢nica, tags, estado de aprovaÃ§Ã£o e associaÃ§Ã£o ao apicultor produtor.
+â€¢ Foram adicionadas tabelas para comunidade Q&A (pergunta_comunidade, resposta_comunidade, voto_pergunta, voto_resposta), favoritos, avaliaÃ§Ãµes, analytics (interacao com JSON nativo) e upgrade_requests.
+â€¢ O sistema de migraÃ§Ãµes programÃ¡ticas no server.js garante que novas colunas e tabelas sÃ£o adicionadas automaticamente ao arrancar, sem necessidade de scripts manuais.
+3.5.2 SeguranÃ§a â€” De Zero a Multi-Camada
+A versÃ£o inicial nÃ£o possuÃ­a qualquer mecanismo de seguranÃ§a. A versÃ£o final implementa mÃºltiplas camadas de proteÃ§Ã£o:
+â€¢ Hashing de passwords com bcryptjs (10 salt rounds), tornando impossÃ­vel a leitura direta de passwords mesmo em caso de acesso Ã  base de dados.
+â€¢ SessÃµes com JSON Web Tokens (JWT) com expiraÃ§Ã£o temporizada de 7 dias, eliminando a necessidade de sessÃµes no servidor.
+â€¢ Login social com Google OAuth 2.0, permitindo autenticaÃ§Ã£o segura sem criaÃ§Ã£o manual de password.
+â€¢ VerificaÃ§Ã£o 2FA por email antes do checkout, com cÃ³digo OTP de uso Ãºnico e expiraÃ§Ã£o temporal, usando Nodemailer via SMTP.
+â€¢ Middleware de autorizaÃ§Ã£o por roles, que protege rotas administrativas e de apicultor contra acessos nÃ£o autorizados.
+â€¢ VerificaÃ§Ã£o de email no registo, com token Ãºnico enviado por Nodemailer para confirmar a titularidade do endereÃ§o.
+3.5.3 ExperiÃªncia do Utilizador â€” De BÃ¡sico a Premium
+O design e a experiÃªncia do utilizador sofreram uma transformaÃ§Ã£o completa:
+â€¢ Skeleton loaders: placeholders visuais com efeito shimmer durante o carregamento de dados, substituindo o ecrÃ£ em branco.
+â€¢ View Transitions API: transiÃ§Ãµes suaves entre pÃ¡ginas usando a API nativa do browser, criando uma experiÃªncia de SPA hÃ­brida sem framework.
+â€¢ Sistema de toasts: notificaÃ§Ãµes discretas e nÃ£o-intrusivas para feedback de aÃ§Ãµes do utilizador (adicionar ao carrinho, erros, sucesso).
+â€¢ AnimaÃ§Ãµes procedurais: abelhas 2D flutuantes com fÃ­sica LERP e trigonometria, reagindo ao movimento do rato em tempo real.
+â€¢ VisualizaÃ§Ã£o 3D com Three.js: frasco de mel interativo com materiais PBR que mudam conforme a origem botÃ¢nica selecionada.
+â€¢ Glassmorphism e design system: variÃ¡veis CSS centralizadas, efeitos de vidro fosco, gradientes suaves e tipografia premium com Google Fonts (Outfit).
+â€¢ InternacionalizaÃ§Ã£o (i18n): sistema completo de traduÃ§Ã£o PT/EN com atributos data-i18n, persistÃªncia da lÃ­ngua e troca dinÃ¢mica sem recarregar a pÃ¡gina.
+â€¢ Responsividade total: layout adaptativo para desktop, tablet e mobile, com navbar colapsÃ¡vel e grid responsivo.
+3.5.4 Funcionalidades Novas
+A versÃ£o final introduziu funcionalidades que nÃ£o existiam de todo na versÃ£o inicial:
+â€¢ Sistema de comunidade Q&A: fÃ³rum interativo onde clientes fazem perguntas e apicultores verificados respondem, com sistema de votos e seleÃ§Ã£o de melhor resposta.
+â€¢ Dashboard administrativo: painel centralizado com KPIs em tempo real, grÃ¡ficos de vendas, categorias, estados de encomendas, crescimento de utilizadores e analytics comportamental.
+â€¢ Dashboard do apicultor: Ã¡rea dedicada onde apicultores gerem os seus produtos, acompanham vendas e criam/gerem workshops presenciais.
+â€¢ Sistema de upgrades: processo formal para clientes solicitarem promoÃ§Ã£o a apicultor, com upload de documentaÃ§Ã£o e aprovaÃ§Ã£o por administrador.
+â€¢ Analytics comportamental: registo silencioso de interaÃ§Ãµes (page views, product views, add-to-cart, search, checkout funnel) em formato JSON, permitindo anÃ¡lise detalhada do comportamento do utilizador.
+â€¢ Recibos automÃ¡ticos por email: apÃ³s pagamento via Stripe, o sistema gera e envia automaticamente um recibo HTML formatado com detalhes da encomenda, usando templates com o logÃ³tipo da marca.
+â€¢ SEO e slugs dinÃ¢micos: URLs amigÃ¡veis para produtos com geraÃ§Ã£o automÃ¡tica de slugs Ãºnicos, contribuindo para melhor indexaÃ§Ã£o nos motores de busca.
+
+3.6 SÃ­ntese da EvoluÃ§Ã£o
+A transformaÃ§Ã£o da Hexomel â€” de uma aplicaÃ§Ã£o simples para uma empresa familiar para uma plataforma de e-commerce completa â€” reflete o percurso de aprendizagem e amadurecimento tÃ©cnico ao longo do desenvolvimento deste projeto.
+A versÃ£o inicial demonstrou a intenÃ§Ã£o e o tema; a versÃ£o final demonstra a capacidade de execuÃ§Ã£o tÃ©cnica, a adaptaÃ§Ã£o contÃ­nua a novos requisitos e a ambiÃ§Ã£o de criar um produto que se aproxima de um cenÃ¡rio real de desenvolvimento profissional. Cada melhoria foi motivada por problemas concretos encontrados durante o desenvolvimento e nÃ£o por decisÃµes arbitrÃ¡rias, o que confere autenticidade e coerÃªncia ao projeto.
+Esta evoluÃ§Ã£o evidencia competÃªncias transversais de programaÃ§Ã£o, design, base de dados, seguranÃ§a, integraÃ§Ã£o de serviÃ§os externos e documentaÃ§Ã£o tÃ©cnica â€” Ã¡reas centrais do curso de InformÃ¡tica e Tecnologias de MultimÃ©dia.
