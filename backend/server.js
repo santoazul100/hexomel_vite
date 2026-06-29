@@ -876,6 +876,21 @@ const runDatabaseMigrations = async () => {
       )
       .catch(() => console.log("site_settings table creation handled"));
 
+    await db
+      .exec(
+        `
+        CREATE TABLE IF NOT EXISTS maintenance_complaints (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_name VARCHAR(255),
+          user_email VARCHAR(255),
+          message TEXT NOT NULL,
+          section VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `,
+      )
+      .catch(() => console.log("maintenance_complaints table creation handled"));
+
     // Quiz Tables
     await db
       .run(
@@ -1170,44 +1185,65 @@ const runDatabaseMigrations = async () => {
     const cmsCount = await db
       .get("SELECT COUNT(*) as c FROM cms_content")
       .catch(() => ({ c: 1 }));
-    if (cmsCount && cmsCount.c === 0) {
-      const defaultCMS = [
-        ["home", "hero_title", "text", "Mel Artesanal Premium"],
-        [
-          "home",
-          "hero_subtitle",
-          "text",
-          "O melhor mel natural do Alentejo e da Serra da Estrela, produzido com tradição, amor e pureza desde 1984. Descubra sabores autênticos diretamente das nossas colmeias.",
-        ],
-        ["home", "featured_title", "text", "Os Nossos Méis Destaque"],
-        [
-          "home",
-          "featured_subtitle",
-          "text",
-          "Colhidos artesanalmente, preservando todas as propriedades nutritivas e medicinais da flor à colmeia.",
-        ],
-        ["about", "hero_title", "text", "A Nossa História"],
-        [
-          "about",
-          "hero_subtitle",
-          "text",
-          "Compromisso com a natureza, com as abelhas e com a excelência do mel tradicional português.",
-        ],
-        [
-          "about",
-          "legacy_text",
-          "text",
-          "Desde 1984 que a família Hexomel se dedica à preservação da apicultura tradicional na Serra da Estrela e no Alentejo. O que começou com apenas três colmeias familiares cresceu para um ecossistema sustentável que apoia a biodiversidade local e promove práticas apícolas éticas.",
-        ],
-      ];
-      for (const c of defaultCMS) {
-        await db
-          .run(
-            "INSERT INTO cms_content (Page_Key, Block_Key, Type, Content_Value) VALUES (?, ?, ?, ?)",
-            c,
-          )
-          .catch(() => {});
-      }
+    const defaultCMS = [
+      ["home", "hero_title", "text", "Mel Artesanal Premium"],
+      [
+        "home",
+        "hero_subtitle",
+        "text",
+        "O melhor mel natural do Alentejo e da Serra da Estrela, produzido com tradição, amor e pureza desde 1984. Descubra sabores autênticos diretamente das nossas colmeias.",
+      ],
+      ["home", "featured_title", "text", "Os Nossos Méis Destaque"],
+      [
+        "home",
+        "featured_subtitle",
+        "text",
+        "Colhidos artesanalmente, preservando todas as propriedades nutritivas e medicinais da flor à colmeia.",
+      ],
+      ["about", "hero_title", "text", "A Nossa História"],
+      [
+        "about",
+        "hero_subtitle",
+        "text",
+        "Compromisso com a natureza, com as abelhas e com a excelência do mel tradicional português.",
+      ],
+      [
+        "about",
+        "legacy_text",
+        "text",
+        "Desde 1984 que a família Hexomel se dedica à preservação da apicultura tradicional na Serra da Estrela e no Alentejo. O que começou com apenas três colmeias familiares cresceu para um ecossistema sustentável que apoia a biodiversidade local e promove práticas apícolas éticas.",
+      ],
+      ["contact", "hero_title", "text", "Fale Connosco"],
+      [
+        "contact",
+        "hero_subtitle",
+        "text",
+        "Estamos aqui para esclarecer as suas dúvidas e ouvir as suas sugestões sobre o nosso mel artesanal.",
+      ],
+      ["shop", "hero_title", "text", "A Nossa Loja de Mel"],
+      [
+        "shop",
+        "hero_subtitle",
+        "text",
+        "Explore a nossa seleção exclusiva de mel puro e artesanal, colhido diretamente das colmeias dos nossos apicultores certificados.",
+      ],
+      ["workshops", "hero_title", "text", "Workshops de Apicultura"],
+      [
+        "workshops",
+        "hero_subtitle",
+        "text",
+        "Aprenda com apicultores experientes. Descubra os segredos do mel artesanal e participe em experiências únicas.",
+      ],
+      ["home", "hero_image", "image_url", "/images/hero.png"],
+      ["about", "hero_image", "image_url", "/images/mel-jar-premium.png"],
+    ];
+    for (const c of defaultCMS) {
+      await db
+        .run(
+          "INSERT IGNORE INTO cms_content (Page_Key, Block_Key, Type, Content_Value) VALUES (?, ?, ?, ?)",
+          c,
+        )
+        .catch(() => {});
     }
 
     // Seed default placeholder style if not exists
@@ -1387,6 +1423,7 @@ const initializeDatabase = async () => {
     databaseStartupError = null;
     console.log("MySQL Database connected and initialized.");
     await runDatabaseMigrations();
+    await censorExistingContent().catch((err) => console.error("Censorship cleaning error:", err));
   } catch (err) {
     databaseReady = false;
     databaseStartupError = err;
@@ -2135,6 +2172,11 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+// Verify Admin Token & Role
+app.get("/api/auth/verify-admin", authenticateToken, isAdmin, (req, res) => {
+  res.json({ valid: true, user: req.user });
+});
+
 // Verify Email
 app.get("/api/auth/verify-email", async (req, res) => {
   const { token } = req.query;
@@ -2172,7 +2214,7 @@ app.post(
   async (req, res) => {
     try {
       const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
-      const expiresDate = new Date(Date.now() + 10 * 1000 * 60); // 10 minutes from now
+      const expiresDate = new Date(Date.now() + 90 * 1000); // 1 minute 30 seconds from now
 
       await db.run(
         "UPDATE cliente SET Checkout_OTP = ?, Checkout_OTP_Expires = ? WHERE ID_Cliente = ?",
@@ -2207,7 +2249,7 @@ app.post(
                 <div style="background: #ffffff; display: inline-block; padding: 15px 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #f0f0f0;">
                   <span style="font-family: 'Monaco', 'Consolas', monospace; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #1a4d2e;">${otp}</span>
                 </div>
-                <p style="color: #718096; font-size: 14px; margin-top: 20px;">Este código expira em <strong>10 minutos</strong>.</p>
+                <p style="color: #718096; font-size: 14px; margin-top: 20px;">Este código expira em <strong>1 minuto e 30 segundos</strong>.</p>
               </div>
               
               <div style="text-align: center; color: #4a5568; font-size: 15px; line-height: 1.6;">
@@ -2327,6 +2369,17 @@ app.post(
     }
   },
 );
+
+// Global Logout (reset Checkout_Verified)
+app.post("/api/auth/logout", authenticateToken, async (req, res) => {
+  try {
+    await db.run("UPDATE cliente SET Checkout_Verified = 0 WHERE ID_Cliente = ?", [req.user.id]);
+    res.json({ message: "Sessão encerrada e estado de verificação limpo com sucesso." });
+  } catch (error) {
+    console.error("Logout DB error:", error);
+    res.status(500).json({ error: "Erro ao atualizar a sessão na base de dados." });
+  }
+});
 
 // Google Auth
 app.post("/api/auth/google", async (req, res) => {
@@ -2647,7 +2700,7 @@ app.get("/api/products", async (req, res) => {
 // Get all products (Admin view)
 app.get("/api/admin/products", authenticateToken, isAdmin, async (req, res) => {
   try {
-    const rows = await db.all("SELECT * FROM produto ORDER BY ID_Produto DESC");
+    const rows = await db.all("SELECT p.*, c.Nome AS Nome_Categoria, o.Nome AS Nome_Origem FROM produto p LEFT JOIN categoria c ON p.ID_Categoria = c.ID_Categoria LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem ORDER BY p.ID_Produto DESC");
     res.json(rows);
   } catch (error) {
     console.error("Admin products fetch error:", error);
@@ -3391,7 +3444,7 @@ app.get("/api/apicultores", async (req, res) => {
 app.get("/api/workshops", async (req, res) => {
   try {
     const workshops = await db.all(
-      "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.Status = 'Aprovado' ORDER BY w.Data_Realizacao ASC",
+      "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w LEFT JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.Status = 'Aprovado' ORDER BY w.Data_Realizacao ASC",
     );
     res.json(workshops);
   } catch (err) {
@@ -3403,7 +3456,7 @@ app.get("/api/workshops", async (req, res) => {
 app.get("/api/workshops/:id", async (req, res) => {
   try {
     const workshop = await db.get(
-      "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.ID_Workshop = ? AND w.Status = 'Aprovado'",
+      "SELECT w.*, c.Nome as ApicultorNome, c.Picture as ApicultorFoto FROM workshop w LEFT JOIN cliente c ON w.ID_Apicultor = c.ID_Cliente WHERE w.ID_Workshop = ? AND w.Status = 'Aprovado'",
       [req.params.id],
     );
     if (!workshop)
@@ -3532,7 +3585,7 @@ app.patch(
 app.get("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
   try {
     const rows = await db.all(
-      "SELECT ID_Cliente, Nome, Email, UserType, Data_Resgistro FROM cliente ORDER BY ID_Cliente DESC",
+      "SELECT ID_Cliente, Nome, Username, Email, UserType, Data_Resgistro, Restrito_Postar, Checkout_Verified, Checkout_OTP, Checkout_OTP_Expires, Picture, Is_Verified FROM cliente WHERE LOWER(UserType) != 'admin' ORDER BY ID_Cliente DESC",
     );
     res.json(rows);
   } catch (error) {
@@ -3583,6 +3636,231 @@ app.post("/api/admin/users", authenticateToken, isAdmin, async (req, res) => {
   } catch (error) {
     console.error("Admin create user error:", error);
     res.status(500).json({ error: "Database error" });
+  }
+});
+
+// ADMIN MODERATION ENDPOINTS
+// Get all content reports/denuncias
+app.get("/api/admin/reports", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const rows = await db.all(`
+      SELECT 
+        d.ID_Denuncia,
+        d.ID_Denunciante,
+        d.ID_Denunciado,
+        d.Tipo_Item,
+        d.ID_Item,
+        d.Texto_Item,
+        d.Motivo,
+        d.Data_Denuncia,
+        d.Status,
+        c1.Nome AS DenuncianteNome,
+        c1.Email AS DenuncianteEmail,
+        c2.Nome AS DenunciadoNome,
+        c2.Email AS DenunciadoEmail,
+        c2.Restrito_Postar AS DenunciadoRestrito
+      FROM denuncia d
+      JOIN cliente c1 ON d.ID_Denunciante = c1.ID_Cliente
+      JOIN cliente c2 ON d.ID_Denunciado = c2.ID_Cliente
+      ORDER BY d.Data_Denuncia DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch reports error:", error);
+    res.status(500).json({ error: "Erro na base de dados ao procurar denúncias." });
+  }
+});
+
+// Get all blocks/bloqueios
+app.get("/api/admin/blocks", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const rows = await db.all(`
+      SELECT 
+        b.ID_Bloqueador,
+        b.ID_Bloqueado,
+        b.Data_Bloqueio,
+        c1.Nome AS BloqueadorNome,
+        c1.Email AS BloqueadorEmail,
+        c2.Nome AS BloqueadoNome,
+        c2.Email AS BloqueadoEmail
+      FROM bloqueio b
+      JOIN cliente c1 ON b.ID_Bloqueador = c1.ID_Cliente
+      JOIN cliente c2 ON b.ID_Bloqueado = c2.ID_Cliente
+      ORDER BY b.Data_Bloqueio DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch blocks error:", error);
+    res.status(500).json({ error: "Erro na base de dados ao procurar bloqueios." });
+  }
+});
+
+// Resolve a report (Status = 'Resolvido')
+app.post("/api/admin/reports/:id/resolve", authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.run(
+      "UPDATE denuncia SET Status = 'Resolvido' WHERE ID_Denuncia = ?",
+      [id]
+    );
+    if (result.changes === 0) {
+      return res.status(404).json({ error: "Denúncia não encontrada." });
+    }
+    res.json({ message: "Denúncia marcada como resolvida com sucesso." });
+  } catch (error) {
+    console.error("Resolve report error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Toggle post restriction for a user (Restrito_Postar)
+app.post("/api/admin/users/:id/restrict", authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const body = req.body || {};
+  const restrictVal = (body.restrict === true || body.restrict === 1 || body.restrict === "1" || body.restrict === "true" || body.Restrito_Postar === 1 || body.Restrito_Postar === "1" || body.Restrito_Postar === true) ? 1 : 0;
+  try {
+    const user = await db.get("SELECT Nome, Email FROM cliente WHERE ID_Cliente = ?", [id]);
+    await db.run("UPDATE cliente SET Restrito_Postar = ? WHERE ID_Cliente = ?", [restrictVal, id]);
+
+    if (user && user.Email) {
+      if (restrictVal === 1) {
+        // Send email when blocked (non-blocking async)
+        mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
+          to: user.Email,
+          subject: "⚠️ Notificação de Moderação — Conta Restrita Hexomel",
+          html: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+              <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #f4b400; padding-bottom: 15px;">
+                <h2 style="color: #1a4d2e; margin: 0;">🍯 Hexomel</h2>
+              </div>
+              <h3 style="color: #d9534f;">Olá, ${user.Nome || 'Utilizador'}</h3>
+              <p style="color: #333; line-height: 1.6;">
+                Informamos que a sua conta Hexomel foi <strong>temporariamente restrita</strong> pela nossa equipa de administração e moderação.
+              </p>
+              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <p style="margin: 0; color: #856404; font-size: 14px;">
+                  <strong>O que significa isto?</strong><br/>
+                  Enquanto a restrição estiver ativa, não poderá publicar novos artigos ou enviar mensagens na comunidade do Hexomel. A navegação e compras na loja continuam disponíveis.
+                </p>
+              </div>
+              <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                Se considera que isto foi um engano ou deseja obter mais esclarecimentos, pode responder a este email para entrar em contacto com o nosso suporte.
+              </p>
+              <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px;">
+                &copy; 2026 Hexomel — Mel Multifloral Artesanal. Todos os direitos reservados.
+              </div>
+            </div>
+          `,
+        }).then(() => {
+          console.log(`📧 Restriction notification email sent to ${user.Email}`);
+        }).catch((mailErr) => {
+          console.error("📧 Failed to send restriction email:", mailErr.message);
+        });
+      } else {
+        // Send email when unblocked (non-blocking async)
+        mailTransporter.sendMail({
+          from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
+          to: user.Email,
+          subject: "✅ Notificação de Moderação — Restrição Removida Hexomel",
+          html: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+              <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1a4d2e; padding-bottom: 15px;">
+                <h2 style="color: #1a4d2e; margin: 0;">🍯 Hexomel</h2>
+              </div>
+              <h3 style="color: #1a4d2e;">Olá, ${user.Nome || 'Utilizador'}</h3>
+              <p style="color: #333; line-height: 1.6;">
+                Temos o prazer de informar que a restrição da sua conta Hexomel foi <strong>revertida</strong> pela nossa equipa.
+              </p>
+              <div style="background-color: #d1e7dd; border-left: 4px solid #198754; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <p style="margin: 0; color: #0f5132; font-size: 14px;">
+                  <strong>Conta Totalmente Ativa</strong><br/>
+                  Já pode voltar a publicar novos conteúdos e interagir com a comunidade Hexomel normalmente.
+                </p>
+              </div>
+              <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px;">
+                &copy; 2026 Hexomel — Mel Multifloral Artesanal. Todos os direitos reservados.
+              </div>
+            </div>
+          `,
+        }).then(() => {
+          console.log(`📧 Unrestrict notification email sent to ${user.Email}`);
+        }).catch((mailErr) => {
+          console.error("📧 Failed to send unrestrict email:", mailErr.message);
+        });
+      }
+    }
+
+    res.json({ message: restrictVal === 1 ? "Utilizador restrito com sucesso." : "Restrição removida com sucesso." });
+  } catch (error) {
+    console.error("Restrict user error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Toggle verification status for a user (Is_Verified / Checkout_Verified)
+app.patch("/api/admin/users/:id/verification", authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const body = req.body || {};
+  const isVerified = body.isVerified !== undefined ? body.isVerified : body.Is_Verified;
+  const checkoutVerified = body.checkoutVerified !== undefined ? body.checkoutVerified : body.Checkout_Verified;
+
+  try {
+    if (isVerified !== undefined) {
+      const val = (isVerified === true || isVerified === 1 || isVerified === "1" || isVerified === "true") ? 1 : 0;
+      await db.run("UPDATE cliente SET Is_Verified = ? WHERE ID_Cliente = ?", [val, id]);
+    }
+    if (checkoutVerified !== undefined) {
+      const val = (checkoutVerified === true || checkoutVerified === 1 || checkoutVerified === "1" || checkoutVerified === "true") ? 1 : 0;
+      if (val === 1) {
+        await db.run("UPDATE cliente SET Checkout_Verified = 1, Checkout_OTP = NULL, Checkout_OTP_Expires = NULL WHERE ID_Cliente = ?", [id]);
+      } else {
+        await db.run("UPDATE cliente SET Checkout_Verified = 0, Checkout_OTP = NULL, Checkout_OTP_Expires = NULL WHERE ID_Cliente = ?", [id]);
+      }
+    }
+    res.json({ message: "Estado de verificação atualizado com sucesso." });
+  } catch (error) {
+    console.error("Update verification error:", error);
+    res.status(500).json({ error: "Database error: " + error.message });
+  }
+});
+
+// Send custom email to user (Admin functionality)
+app.post("/api/admin/send-user-email", authenticateToken, isAdmin, async (req, res) => {
+  const { toEmail, toName, subject, message } = req.body;
+  if (!toEmail || !subject || !message) {
+    return res.status(400).json({ error: "Destinatário, assunto e mensagem são obrigatórios." });
+  }
+
+  try {
+    if (!mailTransporter) {
+      return res.status(503).json({ error: "Serviço de email não configurado no servidor." });
+    }
+
+    await mailTransporter.sendMail({
+      from: process.env.SMTP_FROM || "Hexomel <hexomelpap@gmail.com>",
+      to: toEmail,
+      subject: subject,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+          <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #f4b400; padding-bottom: 15px;">
+            <h2 style="color: #1a4d2e; margin: 0; font-size: 24px; font-weight: 700;">🐝 Hexomel</h2>
+          </div>
+          <h3 style="color: #1a4d2e; font-size: 18px; margin-top: 0;">Olá, ${toName || 'Utilizador'}</h3>
+          <p style="color: #334155; line-height: 1.6; font-size: 15px; white-space: pre-wrap;">${message}</p>
+          <div style="margin-top: 35px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px;">
+            <p>Se necessitar de esclarecimentos adicionais, por favor responda a este email.</p>
+            <p style="margin-top: 15px; color: #1a4d2e; font-weight: 600; font-size: 14px;">Equipa Hexomel</p>
+          </div>
+        </div>
+      `,
+    });
+
+    console.log(`📧 Custom admin email sent successfully to ${toEmail}`);
+    res.json({ message: "Email enviado com sucesso." });
+  } catch (error) {
+    console.error("Admin send email error:", error);
+    res.status(500).json({ error: "Falha ao enviar o email: " + error.message });
   }
 });
 
@@ -3943,7 +4221,7 @@ app.patch(
 app.get("/api/user/profile", authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic FROM cliente WHERE ID_Cliente = ?",
+      "SELECT ID_Cliente as id, Nome as name, Email as email, Username as username, Picture as picture, Morada as address, Telefone as phone, UserType as role, Bio as bio, Is_Verified as isVerified, Checkout_Verified as checkoutVerified, Restrito_Postar as restrictedToPost, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic FROM cliente WHERE ID_Cliente = ?",
       [req.user.id],
     );
 
@@ -3959,6 +4237,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
     res.json({
       ...user,
       checkoutVerified: !!user.checkoutVerified,
+      restrictedToPost: !!user.restrictedToPost,
       favoritesPublic: !!user.favoritesPublic,
       ordersPublic: !!user.ordersPublic,
       orders
@@ -4072,7 +4351,7 @@ app.get("/api/members", async (req, res) => {
 app.get("/api/members/:id/profile", async (req, res) => {
   const memberId = parseInt(req.params.id);
   try {
-    const member = await db.get("SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Bio as bio, UserType as role, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic, Morada as address FROM cliente WHERE ID_Cliente = ?", [memberId]);
+    const member = await db.get("SELECT ID_Cliente as id, Nome as name, Email as email, Picture as picture, Bio as bio, UserType as role, Checkout_Verified as checkoutVerified, Restrito_Postar as restrictedToPost, Favoritos_Publicos as favoritesPublic, Encomendas_Publicas as ordersPublic, Morada as address FROM cliente WHERE ID_Cliente = ?", [memberId]);
     if (!member || member.role === "admin") return res.status(404).json({ error: "Membro não encontrado." });
 
     let city = "Não definida";
@@ -4102,6 +4381,11 @@ app.get("/api/members/:id/profile", async (req, res) => {
 
     const reviews = await db.all(`SELECT a.ID_Avaliacao as id, a.Nota as rating, a.Comentario as comment, a.Data_Avaliacao as date, p.ID_Produto as productId, p.Nome as productName, p.Imagem as productImage FROM avaliacao a JOIN produto p ON a.ID_Produto = p.ID_Produto WHERE a.ID_Cliente = ? ORDER BY a.Data_Avaliacao DESC`, [memberId]);
 
+    const reviewsCensored = reviews.map(r => ({
+      ...r,
+      comment: r.comment ? censorText(r.comment) : r.comment
+    }));
+
     let favorites = [];
     if (member.favoritesPublic) {
       favorites = await db.all(`SELECT p.ID_Produto as id, p.Nome as name, p.Preco as price, p.Imagem as image, p.Slug as slug, p.Tags as tags,
@@ -4125,9 +4409,29 @@ app.get("/api/members/:id/profile", async (req, res) => {
 
     res.json({
       member: { id: member.id, name: member.name, email: member.email, picture: member.picture, bio: member.bio, role: member.role, favoritesPublic: !!member.favoritesPublic, ordersPublic: !!member.ordersPublic, location: city },
-      products, hostedWorkshops, reviews, favorites, orders
+      products, hostedWorkshops, reviews: reviewsCensored, favorites, orders
     });
   } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/users/blocks", authenticateToken, async (req, res) => {
+  try {
+    const rows = await db.all(`
+      SELECT 
+        c.ID_Cliente as id,
+        c.Nome as name,
+        c.Email as email,
+        c.Picture as picture,
+        c.UserType as role
+      FROM bloqueio b
+      JOIN cliente c ON b.ID_Bloqueado = c.ID_Cliente
+      WHERE b.ID_Bloqueador = ?
+    `, [req.user.id]);
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch user blocks error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -4142,15 +4446,6 @@ app.get("/api/users/:id", async (req, res) => {
   }
 });
 
-app.get("/api/users/blocks", authenticateToken, async (req, res) => {
-  try {
-    const rows = await db.all("SELECT ID_Bloqueado as id FROM bloqueio WHERE ID_Bloqueador = ?", [req.user.id]);
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
 app.post("/api/users/block/:id", authenticateToken, async (req, res) => {
   const blockerId = req.user.id;
   const blockedId = parseInt(req.params.id);
@@ -4158,9 +4453,10 @@ app.post("/api/users/block/:id", authenticateToken, async (req, res) => {
     return res.status(400).json({ error: "Não podes bloquear-te a ti mesmo." });
   }
   try {
-    await db.run("INSERT IGNORE INTO bloqueio (ID_Bloqueador, ID_Bloqueado) VALUES (?, ?)", [blockerId, blockedId]);
+    await db.run("INSERT OR IGNORE INTO bloqueio (ID_Bloqueador, ID_Bloqueado) VALUES (?, ?)", [blockerId, blockedId]);
     res.json({ message: "Utilizador bloqueado com sucesso." });
   } catch (error) {
+    console.error("Block user error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -4217,7 +4513,7 @@ app.get("/api/messages/conversations", authenticateToken, async (req, res) => {
       conversations.push({
         partner: partnerInfo,
         unreadCount: unread ? unread.count : 0,
-        lastMessage: lastMsg ? { text: lastMsg.text, sentAt: lastMsg.sentAt } : null
+        lastMessage: lastMsg ? { text: lastMsg.text ? censorText(lastMsg.text) : null, sentAt: lastMsg.sentAt } : null
       });
     }
 
@@ -4246,11 +4542,16 @@ app.get("/api/messages/history/:partnerId", authenticateToken, async (req, res) 
       ORDER BY Data_Envio ASC
     `, [userId, partnerId, partnerId, userId]);
 
+    const censoredMessages = messages.map(m => ({
+      ...m,
+      text: m.text ? censorText(m.text) : m.text
+    }));
+
     const blockedByMe = await db.get("SELECT 1 FROM bloqueio WHERE ID_Bloqueador = ? AND ID_Bloqueado = ?", [userId, partnerId]);
     const blockedMe = await db.get("SELECT 1 FROM bloqueio WHERE ID_Bloqueador = ? AND ID_Bloqueado = ?", [partnerId, userId]);
 
     res.json({
-      messages,
+      messages: censoredMessages,
       blockedByMe: !!blockedByMe,
       blockedMe: !!blockedMe
     });
@@ -4267,13 +4568,20 @@ app.post("/api/messages/send", authenticateToken, async (req, res) => {
     return res.status(400).json({ error: "Receiver and text are required." });
   }
   try {
+    // Check if sender is restricted
+    const sender = await db.get("SELECT Restrito_Postar FROM cliente WHERE ID_Cliente = ?", [senderId]);
+    if (sender && (sender.Restrito_Postar === 1 || sender.Restrito_Postar === true)) {
+      return res.status(403).json({ error: "A tua conta está restrita." });
+    }
+
     // Check block status
     const blockCheck = await db.get("SELECT 1 FROM bloqueio WHERE (ID_Bloqueador = ? AND ID_Bloqueado = ?) OR (ID_Bloqueador = ? AND ID_Bloqueado = ?)", [senderId, receiverId, receiverId, senderId]);
     if (blockCheck) {
       return res.status(403).json({ error: "Não podes enviar mensagens a este utilizador devido a um bloqueio." });
     }
 
-    const result = await db.run("INSERT INTO mensagem_privada (ID_Remetente, ID_Destinatario, Texto) VALUES (?, ?, ?)", [senderId, receiverId, text]);
+    const safeText = censorText(text.trim());
+    const result = await db.run("INSERT INTO mensagem_privada (ID_Remetente, ID_Destinatario, Texto) VALUES (?, ?, ?)", [senderId, receiverId, safeText]);
     res.status(201).json({ id: result.insertId, message: "Mensagem enviada." });
   } catch (error) {
     console.error("Send message error:", error);
@@ -4306,7 +4614,11 @@ app.get("/api/products/:id/reviews", async (req, res) => {
       WHERE a.ID_Produto = ?
       ORDER BY a.Data_Avaliacao DESC
     `, [productId]);
-    res.json(rows);
+    const censoredRows = rows.map(r => ({
+      ...r,
+      Comentario: r.Comentario ? censorText(r.Comentario) : r.Comentario
+    }));
+    res.json(censoredRows);
   } catch (error) {
     console.error("Fetch reviews error:", error);
     res.status(500).json({ error: "Database error" });
@@ -4320,13 +4632,43 @@ app.post("/api/products/:id/reviews", authenticateToken, async (req, res) => {
     return res.status(400).json({ error: "Classificação inválida." });
   }
   try {
+    const safeComment = comment ? censorText(comment.trim()) : null;
     const result = await db.run(
       "INSERT INTO avaliacao (Nota, Comentario, ID_Produto, ID_Cliente) VALUES (?, ?, ?, ?)",
-      [rating, comment || null, productId, req.user.id]
+      [rating, safeComment, productId, req.user.id]
     );
     res.status(201).json({ id: result.insertId, message: "Avaliação registada." });
   } catch (error) {
     console.error("Create review error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/admin/reviews", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const reviews = await db.all(`
+      SELECT 
+        a.ID_Avaliacao, 
+        a.Nota, 
+        a.Comentario, 
+        a.Data_Avaliacao, 
+        a.ID_Produto,
+        c.Nome as ClienteNome, 
+        c.Picture as ClienteFoto, 
+        c.Email as ClienteEmail,
+        p.Nome as ProdutoNome
+      FROM avaliacao a
+      JOIN cliente c ON a.ID_Cliente = c.ID_Cliente
+      JOIN produto p ON a.ID_Produto = p.ID_Produto
+      ORDER BY a.Data_Avaliacao DESC
+    `);
+    const censoredReviews = reviews.map(r => ({
+      ...r,
+      Comentario: r.Comentario ? censorText(r.Comentario) : r.Comentario
+    }));
+    res.json(censoredReviews);
+  } catch (error) {
+    console.error("Fetch admin reviews error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -4383,7 +4725,7 @@ app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
   if (!productId) return res.status(400).json({ error: "Missing product ID" });
   try {
     await db.run(
-      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      "INSERT OR IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
       [req.user.id, productId],
     );
     res.json({ success: true, message: "Added to favorites" });
@@ -4721,6 +5063,17 @@ app.get("/api/cart", authenticateToken, async (req, res) => {
        WHERE ic.ID_Carrinho = ?`,
       [cart.ID_Carrinho],
     );
+
+    for (const item of items) {
+      if (item.Quantidade > item.Stock) {
+        await db.run(
+          "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
+          [item.Stock, item.ID_itemCarrinho]
+        );
+        item.Quantidade = item.Stock;
+      }
+    }
+
     res.json(items);
   } catch (error) {
     console.error("Cart fetch error:", error);
@@ -4733,6 +5086,11 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
   const { productId, quantity } = req.body;
 
   try {
+    const product = await db.get("SELECT Nome, Stock FROM produto WHERE ID_Produto = ?", [productId]);
+    if (!product) {
+      return res.status(404).json({ error: "Produto não encontrado" });
+    }
+
     // 1. Ensure cart exists
     let cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
       req.user.id,
@@ -4755,15 +5113,25 @@ app.post("/api/cart/add", authenticateToken, async (req, res) => {
       [cartId, productId],
     );
 
+    const requestedQty = quantity || 1;
+    const currentQtyInCart = existing ? existing.Quantidade : 0;
+    const totalRequested = currentQtyInCart + requestedQty;
+
+    if (totalRequested > product.Stock) {
+      return res.status(400).json({ 
+        error: `Apenas existem ${product.Stock} unidades disponíveis em stock para o produto "${product.Nome}".` 
+      });
+    }
+
     if (existing) {
       await db.run(
         "UPDATE item_carrinho SET Quantidade = Quantidade + ? WHERE ID_itemCarrinho = ?",
-        [quantity || 1, existing.ID_itemCarrinho],
+        [requestedQty, existing.ID_itemCarrinho],
       );
     } else {
       await db.run(
         "INSERT INTO item_carrinho (ID_Carrinho, ID_Produto, Quantidade) VALUES (?, ?, ?)",
-        [cartId, productId, quantity || 1],
+        [cartId, productId, requestedQty],
       );
     }
 
@@ -4781,6 +5149,24 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
     if (quantity < 1) {
       return res.status(400).json({ error: "Quantity must be at least 1" });
     }
+
+    const item = await db.get(`
+      SELECT ic.Quantidade, p.Nome, p.Stock 
+      FROM item_carrinho ic 
+      JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+      WHERE ic.ID_itemCarrinho = ?
+    `, [itemId]);
+
+    if (!item) {
+      return res.status(404).json({ error: "Item do carrinho não encontrado" });
+    }
+
+    if (quantity > item.Stock && quantity >= item.Quantidade) {
+      return res.status(400).json({ 
+        error: `Apenas existem ${item.Stock} unidades disponíveis em stock para o produto "${item.Nome}".` 
+      });
+    }
+
     await db.run(
       "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
       [quantity, itemId],
@@ -4788,6 +5174,28 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
     res.json({ message: "Cart updated" });
   } catch (error) {
     console.error("Cart update error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Remove cart item
+app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
+  const { itemId } = req.params;
+  try {
+    const cart = await db.get("SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
+    if (!cart) {
+      return res.status(400).json({ error: "Carrinho não encontrado" });
+    }
+    
+    const item = await db.get("SELECT * FROM item_carrinho WHERE ID_itemCarrinho = ? AND ID_Carrinho = ?", [itemId, cart.ID_Carrinho]);
+    if (!item) {
+      return res.status(404).json({ error: "Item não encontrado no carrinho" });
+    }
+
+    await db.run("DELETE FROM item_carrinho WHERE ID_itemCarrinho = ?", [itemId]);
+    res.json({ message: "Item removido com sucesso" });
+  } catch (error) {
+    console.error("Cart item remove error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -4954,7 +5362,7 @@ app.post(
         }
 
         items = await db.all(
-          `SELECT ie.*, p.Nome, p.Imagem 
+          `SELECT ie.*, p.Nome, p.Imagem, p.Stock 
          FROM item_encomenda ie 
          JOIN produto p ON ie.ID_Produto = p.ID_Produto 
          WHERE ie.ID_Encomenda = ?`,
@@ -4962,6 +5370,15 @@ app.post(
         );
         // Map properties to match expected format below
         items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
+
+        // Check stock availability
+        for (const item of items) {
+          if (item.Quantidade > item.Stock) {
+            return res.status(400).json({
+              error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} disponíveis).`,
+            });
+          }
+        }
 
         subtotal = items.reduce(
           (sum, item) => sum + item.Preco * item.Quantidade,
@@ -4998,7 +5415,7 @@ app.post(
         }
 
         items = await db.all(
-          `SELECT ic.*, p.Nome, p.Preco, p.Imagem 
+          `SELECT ic.*, p.Nome, p.Preco, p.Imagem, p.Stock 
          FROM item_carrinho ic 
          JOIN produto p ON ic.ID_Produto = p.ID_Produto 
          WHERE ic.ID_Carrinho = ?`,
@@ -5008,6 +5425,15 @@ app.post(
         if (items.length === 0) {
           console.error(`[Stripe Debug] Cart empty for user ${req.user.id}`);
           return res.status(400).json({ error: "Carrinho vazio" });
+        }
+
+        // Check stock availability
+        for (const item of items) {
+          if (item.Quantidade > item.Stock) {
+            return res.status(400).json({
+              error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} disponíveis).`,
+            });
+          }
         }
 
         subtotal = items.reduce(
@@ -5054,14 +5480,6 @@ app.post(
       // 5. MOCK MODE LOGIC
       if (!stripe) {
         console.log("⚠️ STRIPE_SECRET_KEY missing. Entering MOCK MODE.");
-
-        // Update Stock (Simulated)
-        for (const item of items) {
-          await db.run(
-            "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
-            [item.Quantidade, item.ID_Produto],
-          );
-        }
 
         // Clear Cart (if applicable)
         await db.run(
@@ -5258,7 +5676,10 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
         return res.status(404).json({ error: "Encomenda não encontrada" });
 
       items = await db.all(
-        "SELECT * FROM item_encomenda WHERE ID_Encomenda = ?",
+        `SELECT ie.*, p.Nome, p.Stock 
+         FROM item_encomenda ie
+         JOIN produto p ON ie.ID_Produto = p.ID_Produto
+         WHERE ie.ID_Encomenda = ?`,
         [finalOrderId],
       );
       // Use price from item_encomenda
@@ -5290,7 +5711,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
 
       items = await db.all(
-        `SELECT ic.*, p.Nome, p.Preco
+        `SELECT ic.*, p.Nome, p.Preco, p.Stock
          FROM item_carrinho ic
          JOIN produto p ON ic.ID_Produto = p.ID_Produto
          WHERE ic.ID_Carrinho = ?`,
@@ -5336,6 +5757,15 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       phone,
     });
 
+    // Check stock availability
+    for (const item of items) {
+      if (item.Quantidade > item.Stock) {
+        return res.status(400).json({
+          error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} disponíveis).`,
+        });
+      }
+    }
+
     for (const item of items) {
       await db.run(
         "UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?",
@@ -5370,33 +5800,54 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
 // ============================================================
 const BAD_WORDS_LIST = [
   "nigger",
+  "niggers",
   "nigga",
+  "niggas",
   "faggot",
+  "faggots",
   "fag",
+  "fags",
   "chink",
   "spic",
   "kike",
   "retard",
+  "retards",
   "cunt",
+  "cunts",
   "fuck",
+  "fucking",
+  "fucker",
+  "fuckers",
   "shit",
+  "shitty",
   "bitch",
+  "bitches",
   "asshole",
+  "assholes",
   "bastard",
+  "bastards",
   "dick",
+  "dicks",
   "cock",
   "pussy",
   "whore",
+  "whores",
   "slut",
+  "sluts",
   "motherfucker",
   "crap",
   "prick",
   "twat",
   "merda",
+  "merdas",
   "caralho",
+  "caralhos",
   "puta",
+  "putas",
   "foda",
+  "fodas",
   "cona",
+  "conas",
   "fdp",
   "porra",
   "paneleiro",
@@ -5412,34 +5863,91 @@ function censorText(text) {
   let result = text;
   for (const word of BAD_WORDS_LIST) {
     const escaped = word.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-    const regex = new RegExp("\\b" + escaped + "\\b", "gi");
+    const regex = new RegExp("\\b" + escaped + "s?\\b", "gi");
     result = result.replace(regex, function (m) {
       return "*".repeat(m.length);
     });
   }
   return result;
 }
+
+async function censorExistingContent() {
+  try {
+    // 1. Censor existing reviews
+    const reviews = await db.all("SELECT ID_Avaliacao, Comentario FROM avaliacao WHERE Comentario IS NOT NULL");
+    for (const review of reviews) {
+      const original = review.Comentario;
+      const censored = censorText(original);
+      if (original !== censored) {
+        await db.run("UPDATE avaliacao SET Comentario = ? WHERE ID_Avaliacao = ?", [censored, review.ID_Avaliacao]);
+        console.log(`Censored existing review ID ${review.ID_Avaliacao} in database.`);
+      }
+    }
+
+    // 2. Censor existing private messages
+    const messages = await db.all("SELECT ID_Mensagem, Texto FROM mensagem_privada WHERE Texto IS NOT NULL");
+    for (const msg of messages) {
+      const original = msg.Texto;
+      const censored = censorText(original);
+      if (original !== censored) {
+        await db.run("UPDATE mensagem_privada SET Texto = ? WHERE ID_Mensagem = ?", [censored, msg.ID_Mensagem]);
+        console.log(`Censored existing message ID ${msg.ID_Mensagem} in database.`);
+      }
+    }
+
+    // 3. Censor existing Q&A questions
+    const questions = await db.all("SELECT ID_Pergunta, Texto FROM pergunta_comunidade WHERE Texto IS NOT NULL");
+    for (const q of questions) {
+      const original = q.Texto;
+      const censored = censorText(original);
+      if (original !== censored) {
+        await db.run("UPDATE pergunta_comunidade SET Texto = ? WHERE ID_Pergunta = ?", [censored, q.ID_Pergunta]);
+        console.log(`Censored existing question ID ${q.ID_Pergunta} in database.`);
+      }
+    }
+
+    // 4. Censor existing Q&A answers
+    const answers = await db.all("SELECT ID_Resposta, Texto FROM resposta_comunidade WHERE Texto IS NOT NULL");
+    for (const a of answers) {
+      const original = a.Texto;
+      const censored = censorText(original);
+      if (original !== censored) {
+        await db.run("UPDATE resposta_comunidade SET Texto = ? WHERE ID_Resposta = ?", [censored, a.ID_Resposta]);
+        console.log(`Censored existing answer ID ${a.ID_Resposta} in database.`);
+      }
+    }
+    console.log("Censorship audit and cleaning completed on all user-generated content.");
+  } catch (error) {
+    console.error("Error running censorship audit:", error);
+  }
+}
+
 // Get all questions (with answers and author info), sorted by votes desc
 app.get("/api/comunidade/perguntas", async (req, res) => {
   try {
     const perguntas = await db.all(`
-      SELECT p.*, c.Nome AS AutorNome, c.Picture AS AutorPicture, c.UserType AS AutorTipo
+      SELECT p.*, COALESCE(NULLIF(c.Nome, ''), NULLIF(c.Username, ''), NULLIF(c.Email, ''), 'Utilizador') AS AutorNome, c.Picture AS AutorPicture, COALESCE(c.UserType, 'client') AS AutorTipo, c.Restrito_Postar AS AutorRestrito
       FROM pergunta_comunidade p
-      JOIN cliente c ON p.ID_Cliente = c.ID_Cliente
+      LEFT JOIN cliente c ON p.ID_Cliente = c.ID_Cliente
       ORDER BY p.Votos DESC, p.Data_Criacao DESC
     `);
 
     for (const pergunta of perguntas) {
-      pergunta.respostas = await db.all(
+      pergunta.Texto = pergunta.Texto ? censorText(pergunta.Texto) : "";
+      const respostas = await db.all(
         `
-        SELECT r.*, c.Nome AS AutorNome, c.Picture AS AutorPicture, c.UserType AS AutorTipo
+        SELECT r.*, COALESCE(NULLIF(c.Nome, ''), NULLIF(c.Username, ''), NULLIF(c.Email, ''), 'Utilizador') AS AutorNome, c.Picture AS AutorPicture, COALESCE(c.UserType, 'client') AS AutorTipo, c.Restrito_Postar AS AutorRestrito
         FROM resposta_comunidade r
-        JOIN cliente c ON r.ID_Cliente = c.ID_Cliente
+        LEFT JOIN cliente c ON r.ID_Cliente = c.ID_Cliente
         WHERE r.ID_Pergunta = ?
         ORDER BY r.Melhor_Resposta DESC, r.Votos DESC, r.Data_Criacao ASC
       `,
         [pergunta.ID_Pergunta],
       );
+      pergunta.respostas = respostas.map(r => ({
+        ...r,
+        Texto: r.Texto ? censorText(r.Texto) : ""
+      }));
     }
 
     res.json(perguntas);
@@ -5459,6 +5967,12 @@ app.post("/api/comunidade/perguntas", authenticateToken, async (req, res) => {
   }
 
   try {
+    // Check if user is restricted
+    const user = await db.get("SELECT Restrito_Postar FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+    if (user && (user.Restrito_Postar === 1 || user.Restrito_Postar === true)) {
+      return res.status(403).json({ error: "A tua conta está restrita." });
+    }
+
     const safeText = censorText(texto.trim());
     const result = await db.run(
       "INSERT INTO pergunta_comunidade (ID_Cliente, Texto) VALUES (?, ?)",
@@ -5511,6 +6025,12 @@ app.post(
     }
 
     try {
+      // Check if user is restricted
+      const user = await db.get("SELECT Restrito_Postar FROM cliente WHERE ID_Cliente = ?", [req.user.id]);
+      if (user && (user.Restrito_Postar === 1 || user.Restrito_Postar === true)) {
+        return res.status(403).json({ error: "A tua conta está restrita." });
+      }
+
       const pergunta = await db.get(
         "SELECT * FROM pergunta_comunidade WHERE ID_Pergunta = ?",
         [perguntaId],
@@ -5875,6 +6395,389 @@ app.put(
     }
   },
 );
+
+// Helper: Check if maintenance mode is active (full or for specific section)
+export async function isMaintenanceActive(section = "full") {
+  try {
+    const rows = await db.all("SELECT setting_key, setting_value FROM site_settings WHERE setting_key LIKE 'maintenance_%'");
+    const settings = {};
+    for (const row of rows) {
+      settings[row.setting_key] = row.setting_value;
+    }
+    if (settings.maintenance_full === "true" || settings.maintenance_mode === "true") return true;
+    if (section && section !== "full" && settings[`maintenance_${section}`] === "true") return true;
+    return false;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Middleware: Block request if maintenance active and not admin
+export async function checkMaintenanceMode(req, res, next) {
+  try {
+    const active = await isMaintenanceActive();
+    if (active) {
+      const authHeader = req.headers["authorization"];
+      const token = authHeader && authHeader.split(" ")[1];
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          if (decoded && ((decoded.role && decoded.role.toLowerCase() === "admin") || (decoded.UserType && decoded.UserType.toLowerCase() === "admin"))) {
+            return next();
+          }
+        } catch (e) {}
+      }
+      return res.status(503).json({
+        error: "O sistema encontra-se em manutenção temporária. Por favor, tente novamente mais tarde.",
+        maintenance: true
+      });
+    }
+  } catch (e) {}
+  next();
+}
+
+// Admin: Legacy toggle route (kept for compatibility)
+app.post(
+  "/api/admin/maintenance/toggle",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const { active } = req.body;
+    const val = active ? "true" : "false";
+    try {
+      await db.run(
+        "INSERT INTO site_settings (setting_key, setting_value) VALUES ('maintenance_full', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+        [val]
+      );
+      await db.run(
+        "INSERT INTO site_settings (setting_key, setting_value) VALUES ('maintenance_mode', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+        [val]
+      );
+      res.json({
+        message: active ? "Modo de manutenção ativado!" : "Modo de manutenção desativado!",
+        maintenance_mode: active
+      });
+    } catch (error) {
+      console.error("Error toggling maintenance mode:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  }
+);
+
+// Admin: Update granular maintenance settings & trigger email broadcast if requested
+app.post(
+  "/api/admin/maintenance/update",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const {
+      maintenance_full,
+      maintenance_shop,
+      maintenance_curiosidades,
+      maintenance_aprender,
+      maintenance_hexohive,
+      maintenance_message,
+      maintenance_end_time,
+      maintenance_send_email,
+      maintenance_show_popup,
+      changed_sections // Array of section objects: { name: 'Compras/Loja', active: true/false }
+    } = req.body;
+
+    try {
+      const settingsMap = {
+        maintenance_full: String(!!maintenance_full),
+        maintenance_mode: String(!!maintenance_full),
+        maintenance_shop: String(!!maintenance_shop),
+        maintenance_curiosidades: String(!!maintenance_curiosidades),
+        maintenance_aprender: String(!!maintenance_aprender),
+        maintenance_hexohive: String(!!maintenance_hexohive),
+        maintenance_message: maintenance_message || "",
+        maintenance_end_time: maintenance_end_time || "",
+        maintenance_send_email: "true",
+        maintenance_show_popup: "true"
+      };
+
+      for (const [key, value] of Object.entries(settingsMap)) {
+        await db.run(
+          "INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+          [key, value]
+        );
+      }
+
+      let notifiedCount = 0;
+      if (Array.isArray(changed_sections) && changed_sections.length > 0 && mailTransporter) {
+        const users = await db.all("SELECT Email, Nome FROM cliente WHERE Email IS NOT NULL AND Email != ''");
+        const nowFormatted = new Date().toLocaleString("pt-PT", { dateStyle: "long", timeStyle: "short" });
+
+        for (const change of changed_sections) {
+          const isActivated = change.active;
+          const subject = isActivated
+            ? `🛠️ Hexomel - Manutenção na área: ${change.name}`
+            : `✅ Hexomel - Área Restaurada: ${change.name}`;
+
+          const content = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #f0f0f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+              <div style="background: linear-gradient(135deg, #d97706, #f59e0b); padding: 30px 20px; text-align: center; color: white;">
+                <h1 style="margin: 0; font-size: 24px; font-weight: 700;">🐝 Hexomel</h1>
+                <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Comunicado do Modo de Manutenção</p>
+              </div>
+              <div style="padding: 30px 25px; color: #334155; line-height: 1.6;">
+                <h2 style="color: ${isActivated ? '#d97706' : '#059669'}; font-size: 20px; margin-top: 0;">
+                  ${isActivated ? '🛠️ Manutenção Temporária Ativada' : '✅ Funcionalidade Concluída e Restaurada'}
+                </h2>
+                <p>Estimado(a) utilizador(a),</p>
+                <p>Informamos sobre o estado dos nossos serviços na plataforma Hexomel:</p>
+                <div style="background-color: #f8fafc; border-left: 4px solid ${isActivated ? '#f59e0b' : '#10b981'}; padding: 15px 20px; border-radius: 4px; margin: 20px 0;">
+                  <p style="margin: 4px 0;"><strong>Funcionalidade Afetada:</strong> ${change.name}</p>
+                  <p style="margin: 4px 0;"><strong>Data e Hora de Início:</strong> ${nowFormatted}</p>
+                  ${maintenance_end_time ? `<p style="margin: 4px 0;"><strong>Previsão de Conclusão:</strong> ${maintenance_end_time}</p>` : ''}
+                  ${maintenance_message ? `<p style="margin: 4px 0;"><strong>Motivo / Nota:</strong> ${maintenance_message}</p>` : ''}
+                </div>
+                <p>${isActivated 
+                  ? 'As nossas abelhas estão a trabalhar arduamente para efetuar melhorias. Será enviada uma nova comunicação assim que a manutenção estiver concluída e o acesso for restaurado.' 
+                  : 'O acesso a esta funcionalidade foi totalmente restaurado e pode continuar a navegar normalmente. Agradecemos a sua paciência!'}</p>
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;" />
+                <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">Com os melhores cumprimentos,<br><strong>Equipa Hexomel</strong> 🍯</p>
+              </div>
+            </div>
+          `;
+
+          for (const u of users) {
+            try {
+              await mailTransporter.sendMail({
+                from: process.env.SMTP_FROM || '"Hexomel" <hexomelpap@gmail.com>',
+                to: u.Email,
+                subject: subject,
+                html: content
+              });
+              notifiedCount++;
+            } catch (err) {
+              console.error(`Erro ao enviar email para ${u.Email}:`, err.message);
+            }
+          }
+        }
+      }
+
+      try {
+        await db.run("DELETE FROM site_settings WHERE setting_key = 'maintenance_expired_email_sent'");
+      } catch(e){}
+
+      res.json({
+        message: "Configurações de manutenção atualizadas com sucesso!",
+        notifiedCount
+      });
+    } catch (error) {
+      console.error("Error updating maintenance settings:", error);
+      res.status(500).json({ error: "Database error" });
+    }
+  }
+);
+
+// Triggered when countdown timer reaches zero
+app.post("/api/maintenance/timer-expired", async (req, res) => {
+  try {
+    const rows = await db.all("SELECT setting_key, setting_value FROM site_settings WHERE setting_key LIKE 'maintenance_%'");
+    const settings = {};
+    for (const r of rows) settings[r.setting_key] = r.setting_value;
+
+    if (settings.maintenance_expired_email_sent === "true") {
+      return res.json({ message: "Email de expiração já enviado anteriormente." });
+    }
+
+    await db.run(
+      "INSERT INTO site_settings (setting_key, setting_value) VALUES ('maintenance_expired_email_sent', 'true') ON DUPLICATE KEY UPDATE setting_value = 'true'"
+    );
+
+    if (mailTransporter) {
+      const admins = await db.all("SELECT Email, Nome FROM cliente WHERE UserType = 'admin'");
+      const endTime = settings.maintenance_end_time || "o horário estipulado";
+
+      for (const admin of admins) {
+        if (!admin.Email) continue;
+        try {
+          await mailTransporter.sendMail({
+            from: process.env.SMTP_FROM || '"Hexomel" <hexomelpap@gmail.com>',
+            to: admin.Email,
+            subject: "⚠️ Hexomel - A previsão do tempo de manutenção terminou!",
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #fef3c7; border-radius: 16px; background-color: #ffffff;">
+                <h2 style="color: #d97706;">⌛ Previsão de Manutenção Concluída</h2>
+                <p>Olá <strong>${admin.Nome || 'Administrador'}</strong>,</p>
+                <p>O tempo previsto para a manutenção no site (<strong>${endTime}</strong>) terminou.</p>
+                <p>Deseja adicionar mais tempo de manutenção ou concluir e reabrir o acesso aos utilizadores?</p>
+                <div style="margin: 25px 0; text-align: center;">
+                  <a href="http://localhost:5173/admin.html" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block;">Aceder ao Painel de Administração</a>
+                </div>
+              </div>
+            `
+          });
+        } catch (e) {
+          console.error("Error sending expired timer email to admin:", e);
+        }
+      }
+    }
+    res.json({ success: true, message: "Notificação de expiração enviada ao administrador." });
+  } catch (err) {
+    console.error("Timer expired API error:", err);
+    res.status(500).json({ error: "Erro interno no servidor." });
+  }
+});
+
+// Submit user complaint/contact during maintenance
+app.post("/api/maintenance/complaints", async (req, res) => {
+  const { user_name, user_email, message, section } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: "Mensagem é obrigatória." });
+  }
+
+  try {
+    try {
+      await db.exec(`
+        CREATE TABLE IF NOT EXISTS maintenance_complaints (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_name VARCHAR(255),
+          user_email VARCHAR(255),
+          message TEXT NOT NULL,
+          section VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+    } catch (tblErr) {
+      console.error("Error creating maintenance_complaints table:", tblErr.message || tblErr);
+    }
+
+    // Apply censorship filtering to message
+    const safeMessage = typeof censorText === "function" ? censorText(message.trim()) : message.trim();
+
+    await db.run(
+      "INSERT INTO maintenance_complaints (user_name, user_email, message, section) VALUES (?, ?, ?, ?)",
+      [user_name || "Anónimo", user_email || "Não especificado", safeMessage, section || "Geral"]
+    );
+
+    if (mailTransporter) {
+      const admins = await db.all("SELECT Email, Nome FROM cliente WHERE UserType = 'admin'");
+      for (const admin of admins) {
+        if (!admin.Email) continue;
+        try {
+          await mailTransporter.sendMail({
+            from: process.env.SMTP_FROM || '"Hexomel" <hexomelpap@gmail.com>',
+            to: admin.Email,
+            subject: `📬 Nova Reclamação/Mensagem de Manutenção (${section || 'Geral'})`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+                <h2 style="color: #d97706;">📬 Nova Reclamação / Contacto de Utilizador</h2>
+                <p><strong>Nome:</strong> ${user_name || 'Anónimo'}</p>
+                <p><strong>Email:</strong> ${user_email || 'Não especificado'}</p>
+                <p><strong>Secção Afetada:</strong> ${section || 'Geral'}</p>
+                <div style="background: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 8px; margin: 15px 0;">
+                  <p style="margin: 0; color: #78350f;">${safeMessage}</p>
+                </div>
+              </div>
+            `
+          });
+        } catch (e) {}
+      }
+    }
+
+    res.json({ success: true, message: "Mensagem enviada ao administrador com sucesso!" });
+  } catch (err) {
+    console.error("Error saving complaint:", err.message || err);
+    res.status(500).json({ error: "Erro ao registar mensagem no servidor. Detalhes: " + (err.message || err) });
+  }
+});
+
+// Admin: Get complaints list
+app.get("/api/admin/maintenance/complaints", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const complaints = await db.all("SELECT * FROM maintenance_complaints ORDER BY created_at DESC");
+    res.json(complaints);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao procurar reclamações." });
+  }
+});
+
+// Admin: Delete a complaint
+app.delete("/api/admin/maintenance/complaints/:id", authenticateToken, isAdmin, async (req, res) => {
+  try {
+    await db.run("DELETE FROM maintenance_complaints WHERE id = ?", [req.params.id]);
+    res.json({ success: true, message: "Mensagem eliminada com sucesso." });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao eliminar mensagem." });
+  }
+});
+
+// Admin: Block user from complaint
+app.post("/api/admin/maintenance/block-user", authenticateToken, isAdmin, async (req, res) => {
+  const { email, user_name } = req.body;
+  try {
+    let user = null;
+    if (email && email !== "Não especificado" && email.trim() !== "" && email.includes("@")) {
+      user = await db.get("SELECT ID_Cliente, Nome, Email FROM cliente WHERE Email = ?", [email.trim()]);
+    }
+    if (!user && user_name && user_name !== "Anónimo" && user_name !== "Utilizador") {
+      const cleanName = user_name.replace(/^@/, "").trim();
+      user = await db.get("SELECT ID_Cliente, Nome, Email FROM cliente WHERE Username = ? OR Nome = ?", [cleanName, cleanName]);
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "Não foi possível encontrar a conta registada deste utilizador para bloquear." });
+    }
+
+    await db.run("UPDATE cliente SET Restrito_Postar = 1 WHERE ID_Cliente = ?", [user.ID_Cliente]);
+
+    if (user.Email && mailTransporter) {
+      mailTransporter.sendMail({
+        from: process.env.SMTP_FROM || '"Hexomel" <hexomelpap@gmail.com>',
+        to: user.Email,
+        subject: "⚠️ Notificação de Moderação — Conta Restrita Hexomel",
+        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #dc2626;">⚠️ Conta Restrita / Bloqueada</h2>
+          <p>Olá <strong>${user.Nome || 'Utilizador'}</strong>,</p>
+          <p>A sua conta foi <strong>bloqueada/restrita</strong> devido a linguagem inadequada ou comportamento impróprio detetado pela administração.</p>
+        </div>`
+      }).catch(() => {});
+    }
+
+    res.json({ success: true, message: `Utilizador ${user.Nome || user.Email} foi bloqueado com sucesso!` });
+  } catch (err) {
+    console.error("Error blocking user:", err);
+    res.status(500).json({ error: "Erro ao bloquear utilizador no servidor." });
+  }
+});
+
+// Admin: Reply to user complaint by email
+app.post("/api/admin/maintenance/reply-complaint", authenticateToken, isAdmin, async (req, res) => {
+  const { to_email, user_name, subject, message_body } = req.body;
+
+  if (!to_email || !message_body || !message_body.trim()) {
+    return res.status(400).json({ error: "Email de destino e mensagem são obrigatórios." });
+  }
+
+  try {
+    if (mailTransporter) {
+      await mailTransporter.sendMail({
+        from: process.env.SMTP_FROM || '"Hexomel" <hexomelpap@gmail.com>',
+        to: to_email,
+        subject: subject || "Hexomel - Resposta à sua mensagem",
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #fef3c7; border-radius: 20px; background-color: #ffffff; color: #1e293b;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="color: #d97706; margin: 0;">Hexomel</h2>
+              <span style="font-size: 0.85rem; color: #64748b;">Apoio ao Cliente & Manutenção</span>
+            </div>
+            <div style="background: #fffdfa; border: 1px solid #fef3c7; border-radius: 12px; padding: 20px; margin-bottom: 20px; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #334155;">${message_body.trim()}</div>
+            <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin: 0;">Este é um email de resposta enviado pela administração do Hexomel.</p>
+          </div>
+        `
+      });
+    }
+
+    res.json({ success: true, message: "Email de resposta enviado com sucesso ao utilizador!" });
+  } catch (err) {
+    console.error("Error sending complaint reply email:", err);
+    res.status(500).json({ error: "Erro ao enviar email de resposta." });
+  }
+});
 
 // ============================================================
 // QUIZ API ROUTES

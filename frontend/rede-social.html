@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="src/styles/modern.css" />
   <link rel="stylesheet" href="src/styles/skeleton.css" />
   <link rel="stylesheet" href="src/styles/rede-social.css" />
+  <link rel="stylesheet" href="src/styles/comunidade.css" />
   <!-- Google Auth -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Favicon -->
@@ -77,12 +78,15 @@
     <section class="py-4" style="background-color: #fafbfc; min-height: 75vh;">
       <div class="container" style="max-width: 1280px;">
         <!-- HexoHive Switcher Buttons -->
-        <div class="d-flex justify-content-center gap-3 mb-4 border-bottom pb-3">
+        <div class="d-flex justify-content-center gap-3 mb-4 border-bottom pb-3 flex-wrap">
           <button id="btn-show-membros" class="btn rounded-pill px-4 fw-bold hive-switch-btn-active">
             <i class="fas fa-users me-2"></i>Explorar Membros
           </button>
+          <button id="btn-show-comunidade" class="btn rounded-pill px-4 fw-bold hive-switch-btn-inactive">
+            <i class="fas fa-comments me-2"></i>Fórum Comunidade
+          </button>
           <button id="btn-show-chat" class="btn rounded-pill px-4 fw-bold hive-switch-btn-inactive">
-            <i class="fas fa-comments me-2"></i>Mensagens Diretas
+            <i class="fas fa-paper-plane me-2"></i>Mensagens Diretas
           </button>
         </div>
 
@@ -143,7 +147,37 @@
           </div>
         </div>
 
-        <!-- View 2: Instagram-style Chat Hub (Hidden by default) -->
+        <!-- View 2: Fórum Comunidade Q&A (Hidden by default) -->
+        <div class="d-none" id="view-comunidade-container">
+          <div class="row justify-content-center">
+            <div class="col-lg-10">
+              <div class="qa-form-container mx-auto mb-4 p-4 rounded-4 bg-white border shadow-sm" style="max-width: 800px;">
+                <form id="qa-form">
+                  <div class="mb-3">
+                    <label for="qa-input" class="form-label fw-bold" style="color: var(--primary-green)" data-i18n="comm.question">Tem alguma dúvida ou partilha para a comunidade?</label>
+                    <textarea class="form-control bg-light" id="qa-input" rows="3" placeholder="Ex: Qual é a melhor forma de conservar o mel?" data-i18n-ph="comm.placeholder" style="resize: none; border-radius: 12px;"></textarea>
+                    <div class="invalid-feedback">A pergunta deve ter pelo menos 10 caracteres.</div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div id="qa-login-msg" class="text-danger small d-none"><i class="fas fa-exclamation-circle me-1"></i>Inicie sessão para participar.</div>
+                    <button type="submit" class="btn btn-primary" id="qa-submit-btn" style="background: var(--primary-green); border: none; border-radius: 50px; padding: 0.6rem 1.5rem;">
+                      <i class="fas fa-paper-plane me-2"></i><span data-i18n="comm.submit">Publicar Pergunta</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="qa-thread" id="qa-thread">
+                <div class="text-center py-5 opacity-50">
+                  <i class="fas fa-spinner fa-spin fa-2x mb-3 text-success"></i>
+                  <p>A carregar fórum da comunidade...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 3: Instagram-style Chat Hub (Hidden by default) -->
         <div class="row g-0 premium-card p-0 overflow-hidden border border-light shadow-sm rounded-4 d-none" id="view-chat-container" style="height: clamp(450px, 75vh, 650px); background: #ffffff;">
           <!-- Left Column: Conversations List -->
           <div class="col-4 border-end d-flex flex-column h-100 bg-light bg-opacity-25" style="max-height: 100%;">
@@ -263,10 +297,10 @@
         <div class="col-lg-2">
           <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
           <ul class="list-unstyled">
-            <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
-            <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
-            <li><a href="#" class="footer-link">FAQ</a></li>
-            <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+            <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+            <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+            <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+            <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
           </ul>
         </div>
         <div class="col-lg-3">
@@ -389,6 +423,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script type="module" src="src/beeAnimation.js"></script>
+  <script type="module" src="src/comunidade.js"></script>
   <script type="module" src="src/rede-social.js"></script>
   <script type="module" src="src/main.js"></script>
 </body>

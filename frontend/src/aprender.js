@@ -266,7 +266,7 @@ async function loadLeaderboard(score, maxScore) {
         rankBadge = `<div class="rank-badge user-rank"><span class="fw-bold small">${rank}</span></div>`;
       }
 
-      const name = entry.Nome || entry.Username || "Anónimo";
+      const name = entry.Nome || entry.Username || "Utilizador";
       const tier = getScoreTier(entry.Score, entry.Max_Score);
 
       return `
@@ -428,18 +428,8 @@ function initGlossary() {
   });
 }
 
-async function initFactsAndGlossary() {
-  const factsContainer = document.getElementById("reveal-cards-container");
+async function initGlossaryData() {
   const glossaryContainer = document.getElementById("glossary-grid");
-
-  const fallbackFacts = [
-    { Titulo: "A Produção de uma Vida", Icon_Frente: "fas fa-spoon", Icon_Verso: "fas fa-hourglass-end", Conteudo_Verso: "Durante o seu ciclo natural, uma abelha obreira produz apenas <strong>uma fração de colher de chá</strong> de mel, evidenciando o valor de cada gota." },
-    { Titulo: "Conservação Milenar", Icon_Frente: "fas fa-calendar-alt", Icon_Verso: "fas fa-infinity", Conteudo_Verso: "Pela sua baixa humidade e acidez natural, o mel puro é dos únicos alimentos que <strong>nunca se estraga</strong>, mantendo-se inalterado por séculos." },
-    { Titulo: "A Dança das Abelhas", Icon_Frente: "fas fa-music", Icon_Verso: "fas fa-compass", Conteudo_Verso: "As abelhas comunicam a localização exata das flores através de uma <strong>coreografia complexa</strong>, um padrão de movimentos único na natureza." },
-    { Titulo: "O Processo de Cristalização", Icon_Frente: "fas fa-snowflake", Icon_Verso: "fas fa-fire", Conteudo_Verso: "A cristalização atesta a <strong>pureza e qualidade</strong> do mel cru. Para o devolver ao estado líquido original, basta aquecê-lo suavemente." },
-    { Titulo: "Engenharia Natural", Icon_Frente: "fas fa-cogs", Icon_Verso: "fas fa-tachometer-alt", Conteudo_Verso: "Equipadas com quatro asas, conseguem bater as asas até <strong>200 vezes por segundo</strong>, alcançando velocidades de voo surpreendentes." },
-    { Titulo: "Propriedades Terapêuticas", Icon_Frente: "fas fa-mortar-pestle", Icon_Verso: "fas fa-spa", Conteudo_Verso: "O mel natural possui <strong>propriedades antibacterianas</strong> e antioxidantes notáveis, sendo utilizado há milénios como aliado do bem-estar." }
-  ];
 
   const fallbackGlossary = [
     { Termo: "Néctar", Definicao: "Líquido açucarado produzido pelas flores que as abelhas recolhem e transformam em mel.", Icon: "fas fa-droplet", Categoria: "substance" },
@@ -449,47 +439,6 @@ async function initFactsAndGlossary() {
     { Termo: "Alvéolo", Definicao: "Célula hexagonal de cera onde as abelhas armazenam mel, pólen ou criam as larvas.", Icon: "fas fa-th", Categoria: "hive" },
     { Termo: "Fumigador", Definicao: "Ferramenta do apicultor que produz fumo para acalmar as abelhas durante a inspeção.", Icon: "fas fa-smog", Categoria: "equipment" }
   ];
-
-  // Fetch Facts
-  let facts = [];
-  try {
-    const res = await fetch("/api/aprender/factos");
-    if (res.ok) {
-      facts = await res.json();
-    } else {
-      throw new Error("HTTP error " + res.status);
-    }
-  } catch (e) {
-    console.warn("Using fallback facts because API fetch failed:", e);
-    facts = fallbackFacts;
-  }
-
-  if (factsContainer && facts && facts.length > 0) {
-    factsContainer.innerHTML = facts.map((f, i) => `
-      <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: ${0.1 * (i + 1)}s">
-        <div class="reveal-card" onclick="this.classList.toggle('is-revealed')">
-          <div class="reveal-card-inner">
-            <div class="reveal-front">
-              <div class="icon-wrapper mb-3"><i class="${f.Icon_Frente} fa-lg"></i></div>
-              <h5>${f.Titulo}</h5>
-              <span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i> Toca para revelar</span>
-            </div>
-            <div class="reveal-back">
-              <i class="${f.Icon_Verso} mb-3"></i>
-              <p>${f.Conteudo_Verso}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    `).join("");
-    
-    // Re-trigger scroll-reveal observers
-    if (window.obs) {
-      document.querySelectorAll('#reveal-cards-container .scroll-reveal').forEach(el => window.obs.observe(el));
-    } else {
-      document.querySelectorAll('#reveal-cards-container .scroll-reveal').forEach(el => el.classList.add('is-visible'));
-    }
-  }
 
   // Fetch Glossary
   let glossary = [];
@@ -506,10 +455,48 @@ async function initFactsAndGlossary() {
   }
 
   if (glossaryContainer && glossary && glossary.length > 0) {
+    // Dynamically render filter buttons
+    const filtersContainer = document.getElementById("glossary-filters");
+    if (filtersContainer) {
+      const catLabels = {
+        substance: "Substâncias",
+        hive: "A Colmeia",
+        process: "Processos",
+        equipment: "Equipamentos"
+      };
+
+      // Get unique categories present in the glossary terms list
+      const uniqueCats = [...new Set(glossary.map(g => g.Categoria))];
+      
+      // Ensure default categories are represented first, then others
+      const defaultOrder = ["substance", "hive", "process", "equipment"];
+      const activeCategories = [
+        ...defaultOrder.filter(c => uniqueCats.includes(c)),
+        ...uniqueCats.filter(c => !defaultOrder.includes(c))
+      ];
+
+      filtersContainer.innerHTML = `
+        <button class="btn btn-filter active" data-filter="all">Todos</button>
+        ${activeCategories.map(cat => {
+          const label = catLabels[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1));
+          return `<button class="btn btn-filter" data-filter="${cat}">${label}</button>`;
+        }).join("")}
+      `;
+    }
+
+    function renderGlossaryIcon(icon) {
+      if (!icon) return '<i class="fas fa-book"></i>';
+      if (icon.startsWith('/uploads/') || icon.startsWith('uploads/') || icon.startsWith('http') || icon.startsWith('data:')) {
+        const src = icon.startsWith('uploads/') ? '/' + icon : icon;
+        return `<img src="${src}" style="width:24px;height:24px;object-fit:contain;filter:brightness(0) invert(1);" />`;
+      }
+      return `<i class="${icon}"></i>`;
+    }
+
     glossaryContainer.innerHTML = glossary.map((g, i) => `
       <div class="col-md-6 col-lg-4 scroll-reveal glossary-item-col" data-category="${g.Categoria}" style="transition-delay: ${0.1 * (i + 1)}s">
         <div class="glossary-card">
-          <div class="glossary-icon" style="background: ${getGlossaryGradient(g.Categoria)};"><i class="${g.Icon}"></i></div>
+          <div class="glossary-icon" style="background: ${getGlossaryGradient(g.Categoria)};">${renderGlossaryIcon(g.Icon)}</div>
           <h5>${g.Termo}</h5>
           <p>${g.Definicao}</p>
         </div>
@@ -528,6 +515,58 @@ async function initFactsAndGlossary() {
   }
 }
 
+async function initFactsData() {
+  const factsContainer = document.getElementById("reveal-cards-container");
+  if (!factsContainer) return;
+
+  try {
+    const res = await fetch("/api/aprender/factos");
+    if (!res.ok) throw new Error("Erro " + res.status);
+    const facts = await res.json();
+
+    if (facts && facts.length > 0) {
+      const renderFactIcon = (icon) => {
+        if (!icon) return '';
+        if (icon.startsWith('/uploads/') || icon.startsWith('uploads/') || icon.startsWith('http') || icon.startsWith('data:')) {
+          const src = icon.startsWith('uploads/') ? '/' + icon : icon;
+          return `<img src="${src}" style="width:32px;height:32px;object-fit:contain;" />`;
+        }
+        return `<i class="${icon}"></i>`;
+      };
+
+      factsContainer.innerHTML = facts.map((f, i) => `
+        <div class="col-md-6 col-lg-4 scroll-reveal" style="transition-delay: ${0.1 * (i + 1)}s">
+          <div class="reveal-card" onclick="this.classList.toggle('is-revealed')">
+            <div class="reveal-card-inner">
+              <div class="reveal-front">
+                <div class="icon-wrapper mb-2">
+                  ${renderFactIcon(f.Icon_Frente || 'fas fa-lightbulb')}
+                </div>
+                <h5>${f.Titulo}</h5>
+                <span class="small text-muted mt-auto"><i class="fas fa-hand-pointer me-1"></i>Toca para revelar</span>
+              </div>
+              <div class="reveal-back">
+                <div class="icon-wrapper mb-2" style="background:rgba(255,255,255,0.1);color:var(--secondary-gold);">
+                  ${renderFactIcon(f.Icon_Verso || f.Icon_Frente || 'fas fa-check')}
+                </div>
+                <p>${f.Conteudo_Verso}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      if (window.obs) {
+        document.querySelectorAll('#reveal-cards-container .scroll-reveal').forEach(el => window.obs.observe(el));
+      } else {
+        document.querySelectorAll('#reveal-cards-container .scroll-reveal').forEach(el => el.classList.add('is-visible'));
+      }
+    }
+  } catch (e) {
+    console.warn("Could not fetch facts for Aprender page:", e);
+  }
+}
+
 function getGlossaryGradient(category) {
   if (category === "substance") return "linear-gradient(135deg,#fbbf24,#f59e0b)";
   if (category === "hive") return "linear-gradient(135deg,#8b5cf6,#7c3aed)";
@@ -539,6 +578,7 @@ function getGlossaryGradient(category) {
 document.addEventListener("DOMContentLoaded", () => {
   initQuiz();
   setupKeyboardShortcuts();
-  initFactsAndGlossary();
+  initFactsData();
+  initGlossaryData();
   loadLeaderboard();
 });

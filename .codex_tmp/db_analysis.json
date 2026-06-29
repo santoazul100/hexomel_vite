@@ -1,0 +1,1344 @@
+{
+  "table_count": 18,
+  "tables": [
+    {
+      "name": "cliente",
+      "columns": [
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "Email",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "Username",
+          "type": "varchar(60)"
+        },
+        {
+          "name": "Senha",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Picture",
+          "type": "TEXT"
+        },
+        {
+          "name": "Morada",
+          "type": "TEXT"
+        },
+        {
+          "name": "Telefone",
+          "type": "varchar(30)"
+        },
+        {
+          "name": "UserType",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "Bio",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Resgistro",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Restrito_Postar",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "Favoritos_Publicos",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "Encomendas_Publicas",
+          "type": "BOOLEAN"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "categoria",
+      "columns": [
+        {
+          "name": "ID_Categoria",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "origem",
+      "columns": [
+        {
+          "name": "ID_Origem",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "produto",
+      "columns": [
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "Preco",
+          "type": "decimal(10"
+        },
+        {
+          "name": "Stock",
+          "type": "int(30)"
+        },
+        {
+          "name": "ID_Categoria",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Origem",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Apicultor",
+          "type": "int(10)"
+        },
+        {
+          "name": "Descricao",
+          "type": "TEXT"
+        },
+        {
+          "name": "Imagem",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Tags",
+          "type": "TEXT"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Apicultor",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE SET NULL"
+        },
+        {
+          "column": "ID_Origem",
+          "ref_table": "origem",
+          "ref_col": "ID_Origem",
+          "rule": "ON DELETE SET NULL"
+        },
+        {
+          "column": "ID_Categoria",
+          "ref_table": "categoria",
+          "ref_col": "ID_Categoria",
+          "rule": "ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "name": "carrinho",
+      "columns": [
+        {
+          "name": "ID_Carrinho",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "item_carrinho",
+      "columns": [
+        {
+          "name": "ID_itemCarrinho",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Carrinho",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "Quantidade",
+          "type": "int(30)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Carrinho",
+          "ref_table": "carrinho",
+          "ref_col": "ID_Carrinho",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "encomenda",
+      "columns": [
+        {
+          "name": "ID_Encomenda",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Encomenda",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Total",
+          "type": "decimal(10"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(50)"
+        },
+        {
+          "name": "Morada",
+          "type": "TEXT"
+        },
+        {
+          "name": "Telefone",
+          "type": "varchar(30)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "item_encomenda",
+      "columns": [
+        {
+          "name": "ID_ItemEncomenda",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Encomenda",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "Quantidade",
+          "type": "int(30)"
+        },
+        {
+          "name": "Preco_Unitario",
+          "type": "decimal(10"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Encomenda",
+          "ref_table": "encomenda",
+          "ref_col": "ID_Encomenda",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "favoritos",
+      "columns": [
+        {
+          "name": "ID_Favorito",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "avaliacao",
+      "columns": [
+        {
+          "name": "ID_Avaliacao",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nota",
+          "type": "tinyint(1)"
+        },
+        {
+          "name": "Comentario",
+          "type": "varchar(500)"
+        },
+        {
+          "name": "Data_Avaliacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "workshop",
+      "columns": [
+        {
+          "name": "ID_Workshop",
+          "type": "int(10)"
+        },
+        {
+          "name": "Titulo",
+          "type": "varchar(150)"
+        },
+        {
+          "name": "Descricao",
+          "type": "text"
+        },
+        {
+          "name": "Data_Realizacao",
+          "type": "datetime"
+        },
+        {
+          "name": "Preco",
+          "type": "decimal(10"
+        },
+        {
+          "name": "Vagas",
+          "type": "int(11)"
+        },
+        {
+          "name": "Imagem",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "ID_Apicultor",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Apicultor",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "upgrade_requests",
+      "columns": [
+        {
+          "name": "ID_Request",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Descricao",
+          "type": "TEXT"
+        },
+        {
+          "name": "Documento",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "Data_Pedido",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Data_Processamento",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "interacao",
+      "columns": [
+        {
+          "name": "ID_Interacao",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Tipo",
+          "type": "varchar(50)"
+        },
+        {
+          "name": "Pagina",
+          "type": "varchar(150)"
+        },
+        {
+          "name": "Dados",
+          "type": "JSON"
+        },
+        {
+          "name": "Data_Interacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "pergunta_comunidade",
+      "columns": [
+        {
+          "name": "ID_Pergunta",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto",
+          "type": "text"
+        },
+        {
+          "name": "Votos",
+          "type": "int(11)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "resposta_comunidade",
+      "columns": [
+        {
+          "name": "ID_Resposta",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Pergunta",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto",
+          "type": "text"
+        },
+        {
+          "name": "Votos",
+          "type": "int(11)"
+        },
+        {
+          "name": "Melhor_Resposta",
+          "type": "tinyint(1)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Pergunta",
+          "ref_table": "pergunta_comunidade",
+          "ref_col": "ID_Pergunta",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "mensagem_privada",
+      "columns": [
+        {
+          "name": "ID_Mensagem",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Remetente",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Destinatario",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Envio",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Lida",
+          "type": "BOOLEAN"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Remetente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Destinatario",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "bloqueio",
+      "columns": [
+        {
+          "name": "ID_Bloqueador",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Bloqueado",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Bloqueio",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Bloqueador",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Bloqueado",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "denuncia",
+      "columns": [
+        {
+          "name": "ID_Denuncia",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Denunciante",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Denunciado",
+          "type": "int(10)"
+        },
+        {
+          "name": "Tipo_Item",
+          "type": "VARCHAR(50)"
+        },
+        {
+          "name": "ID_Item",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto_Item",
+          "type": "TEXT"
+        },
+        {
+          "name": "Motivo",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Denuncia",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Status",
+          "type": "VARCHAR(20)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Denunciante",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Denunciado",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    }
+  ],
+  "fk_count": 25,
+  "route_count": 152,
+  "routes_by_area": {
+    "auth": [
+      {
+        "method": "POST",
+        "path": "/api/auth/forgot-password"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/reset-password"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/register"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/login"
+      },
+      {
+        "method": "GET",
+        "path": "/api/auth/verify-admin"
+      },
+      {
+        "method": "GET",
+        "path": "/api/auth/verify-email"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/checkout-2fa/generate"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/checkout-2fa/verify"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/google"
+      }
+    ],
+    "products": [
+      {
+        "method": "GET",
+        "path": "/api/categories"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/categories"
+      },
+      {
+        "method": "GET",
+        "path": "/api/origins"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/origins"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/origins/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/origins/:id"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/categories/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/categories/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/products"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/products"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/products"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/products/:id"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/products/:id/status"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/products/:id/featured"
+      },
+      {
+        "method": "POST",
+        "path": "/api/apicultor/products"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apicultor/products/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/apicultor/products/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores/:id/products"
+      },
+      {
+        "method": "GET",
+        "path": "/api/products/:id/reviews"
+      },
+      {
+        "method": "POST",
+        "path": "/api/products/:id/reviews"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/products/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/products/by-slug/:slug"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/products/:id/slug"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apicultor/products/:id/slug"
+      }
+    ],
+    "cart_checkout_orders": [
+      {
+        "method": "POST",
+        "path": "/api/auth/checkout-2fa/generate"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/checkout-2fa/verify"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultor/orders"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/orders"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/orders/:id/status"
+      },
+      {
+        "method": "GET",
+        "path": "/api/user/orders/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/user/orders/:id/items"
+      },
+      {
+        "method": "GET",
+        "path": "/api/user/orders/:id/receipt"
+      },
+      {
+        "method": "POST",
+        "path": "/api/user/orders/:id/resend-receipt"
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart"
+      },
+      {
+        "method": "POST",
+        "path": "/api/cart/add"
+      },
+      {
+        "method": "POST",
+        "path": "/api/cart/update"
+      },
+      {
+        "method": "POST",
+        "path": "/api/checkout/init"
+      },
+      {
+        "method": "POST",
+        "path": "/api/checkout/create-session"
+      },
+      {
+        "method": "GET",
+        "path": "/api/checkout/session-status"
+      },
+      {
+        "method": "POST",
+        "path": "/api/cart/checkout"
+      }
+    ],
+    "apicultor_workshops": [
+      {
+        "method": "POST",
+        "path": "/api/apicultor/products"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apicultor/bio"
+      },
+      {
+        "method": "POST",
+        "path": "/api/apicultor/workshops"
+      },
+      {
+        "method": "POST",
+        "path": "/api/workshops/:id/reserve"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apicultor/products/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/apicultor/products/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apicultor/workshops/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/apicultor/workshops/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultor/orders"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultor/stats"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores/:id/products"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores/:id/workshops"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workshops"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workshops/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/user/workshops"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/user/workshops/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/workshops"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/workshops/:id/status"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "GET",
+        "path": "/api/apicultores"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apicultor/products/:id/slug"
+      }
+    ],
+    "community_social": [
+      {
+        "method": "GET",
+        "path": "/api/admin/reports"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/reports/:id/resolve"
+      },
+      {
+        "method": "GET",
+        "path": "/api/users/blocks"
+      },
+      {
+        "method": "POST",
+        "path": "/api/users/block/:id"
+      },
+      {
+        "method": "POST",
+        "path": "/api/reports/create"
+      },
+      {
+        "method": "GET",
+        "path": "/api/messages/conversations"
+      },
+      {
+        "method": "GET",
+        "path": "/api/messages/history/:partnerId"
+      },
+      {
+        "method": "POST",
+        "path": "/api/messages/send"
+      },
+      {
+        "method": "POST",
+        "path": "/api/messages/read/:partnerId"
+      },
+      {
+        "method": "GET",
+        "path": "/api/comunidade/perguntas"
+      },
+      {
+        "method": "POST",
+        "path": "/api/comunidade/perguntas"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/comunidade/perguntas/:id"
+      },
+      {
+        "method": "POST",
+        "path": "/api/comunidade/perguntas/:id/respostas"
+      },
+      {
+        "method": "POST",
+        "path": "/api/comunidade/perguntas/:id/votar"
+      },
+      {
+        "method": "POST",
+        "path": "/api/comunidade/respostas/:id/votar"
+      }
+    ],
+    "learn": [
+      {
+        "method": "GET",
+        "path": "/api/quiz/perguntas"
+      },
+      {
+        "method": "POST",
+        "path": "/api/quiz/perguntas"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/quiz/perguntas/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/quiz/perguntas/:id"
+      },
+      {
+        "method": "POST",
+        "path": "/api/quiz/score"
+      },
+      {
+        "method": "GET",
+        "path": "/api/quiz/leaderboard"
+      },
+      {
+        "method": "GET",
+        "path": "/api/aprender/factos"
+      },
+      {
+        "method": "POST",
+        "path": "/api/aprender/factos"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/aprender/factos/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/aprender/factos/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/aprender/glossario"
+      },
+      {
+        "method": "POST",
+        "path": "/api/aprender/glossario"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/aprender/glossario/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/aprender/glossario/:id"
+      }
+    ],
+    "admin": [
+      {
+        "method": "GET",
+        "path": "/api/admin/menu"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/menu"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/menu/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/menu/:id"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/cms"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/cms"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/cms/:id"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/categories"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/origins"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/origins/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/origins/:id"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/categories/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/categories/:id"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/products"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/products"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/products/:id"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/products/:id/status"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/products/:id/featured"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/workshops"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/workshops/:id/status"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/users"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/users"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/reports"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/blocks"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/reports/:id/resolve"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/users/:id/restrict"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/analytics"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/analytics/interactions"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/upgrade-requests"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/upgrade-requests/:id"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/users/:id"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/users/:id/role"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/reviews/:reviewId"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/orders"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/orders/:id/status"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/products/:id"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/products/:id/slug"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/site-slugs"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/site-settings"
+      }
+    ]
+  }
+}

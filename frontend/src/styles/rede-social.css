@@ -180,8 +180,9 @@
 
 .member-item-name-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .member-item-name {
@@ -205,6 +206,10 @@
 
 /* Badges styling */
 .member-badge-client {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 600;
   color: #475569;
@@ -215,6 +220,10 @@
 }
 
 .member-badge-apicultor {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 600;
   color: #b45309;
@@ -225,6 +234,10 @@
 }
 
 .member-badge-admin {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 600;
   color: #b91c1c;

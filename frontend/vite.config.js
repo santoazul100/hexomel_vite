@@ -146,6 +146,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/uploads": {
+        target: "http://127.0.0.1:3000",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
@@ -177,6 +182,8 @@ export default defineConfig({
         cancel: "cancel.html",
         recuperar: "recuperar.html",
         redeSocial: "rede-social.html",
+        faq: "faq.html",
+        termos: "termos.html",
       },
     },
   },

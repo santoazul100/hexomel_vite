@@ -1,0 +1,2605 @@
+{
+  "paragraphs": [
+    {
+      "style": "Normal",
+      "text": "Curso com Plano Próprio"
+    },
+    {
+      "style": "Normal",
+      "text": "Informáticas e Tecnologias Multimédia"
+    },
+    {
+      "style": "Normal",
+      "text": "Prova de aptidão profissional"
+    },
+    {
+      "style": "Normal",
+      "text": "12.º ano de escolaridade"
+    },
+    {
+      "style": "Normal",
+      "text": "Relatório"
+    },
+    {
+      "style": "Normal",
+      "text": "Hexomel"
+    },
+    {
+      "style": "Normal",
+      "text": "Aluno"
+    },
+    {
+      "style": "Normal",
+      "text": "Rodrigo Filipe Costa Silva"
+    },
+    {
+      "style": "Normal",
+      "text": "Trabalho realizado sob a orientação do professor"
+    },
+    {
+      "style": "Normal",
+      "text": "Maria José Viera Soares da Costa"
+    },
+    {
+      "style": "Normal",
+      "text": "Vila Nova de Gaia, julho de 0000"
+    },
+    {
+      "style": "Normal",
+      "text": "Dedicatória"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
+    },
+    {
+      "style": "Normal",
+      "text": "Maecenas porttitor congue massa."
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Pode ser um texto, ou apenas uma simples frase que mencione um ente ou uma entidade."
+    },
+    {
+      "style": "Normal",
+      "text": "Não é obrigatório inserir."
+    },
+    {
+      "style": "Heading 1",
+      "text": "Agradecimentos"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem."
+    },
+    {
+      "style": "Normal",
+      "text": "Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis."
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Destina-se a referir pessoas ou entidades cuja colaboração tenha sido pertinente para a realização do trabalho."
+    },
+    {
+      "style": "Normal",
+      "text": "Não é obrigatório inserir."
+    },
+    {
+      "style": "Heading 1",
+      "text": "Resumo"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem."
+    },
+    {
+      "style": "Normal",
+      "text": "Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis."
+    },
+    {
+      "style": "Normal",
+      "text": "Palavras-chave: …"
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Apresenta de um modo sucinto, claro e objetivo, as questões ou as informações mais importantes tratadas no trabalho como o tema, os objetivos que se pretendem alcançar, os métodos usados e os resultados obtidos."
+    },
+    {
+      "style": "Normal",
+      "text": "Recomendações:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Utilizar 200 palavras no máximo."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Escrever três a cinco palavras-chave."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Não usar abreviaturas."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Não usar tabelas ou figuras."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Não usar referências bibliográficas."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Não fazer referência a tabelas ou figuras no texto."
+    },
+    {
+      "style": "Normal",
+      "text": "Exemplo de frases tipo a usar no resumo:"
+    },
+    {
+      "style": "Normal",
+      "text": "«O presente estudo tem como objetivo principal caracterizar…»"
+    },
+    {
+      "style": "Normal",
+      "text": "«Os dados foram recolhidos através de um questionário de resposta fechada com um total de n questões para avaliação de aspetos relativos a: …» [incluir secções do questionário]"
+    },
+    {
+      "style": "Normal",
+      "text": "«No contexto do trabalho a que se refere este estudo foi analisada a questão…»"
+    },
+    {
+      "style": "Normal",
+      "text": "«Realizou-se uma análise descritiva dos resultados, tendo-se concluído que…»]"
+    },
+    {
+      "style": "Heading 1",
+      "text": "Abstract"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem."
+    },
+    {
+      "style": "Normal",
+      "text": "Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis."
+    },
+    {
+      "style": "Normal",
+      "text": "Keywords: …"
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Refere-se à numeração das divisões do trabalho pela ordem em que são apresentadas, com a respetiva indicação da página em que começa essa parte do trabalho."
+    },
+    {
+      "style": "Normal",
+      "text": "Índice de Tabelas"
+    },
+    {
+      "style": "table of figures",
+      "text": "Tabela 1. As várias gerações de evolução da tecnologia 16"
+    },
+    {
+      "style": "Normal",
+      "text": "Índice de Gráficos"
+    },
+    {
+      "style": "Normal",
+      "text": "Índice de Figuras"
+    },
+    {
+      "style": "table of figures",
+      "text": "Figura 1. Plano de Estudos do curso 20"
+    },
+    {
+      "style": "table of figures",
+      "text": "Figura 1. Exemplo de um eletrocardiógrafo 25"
+    },
+    {
+      "style": "Heading 1",
+      "text": "Lista de abreviaturas"
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Esta secção consiste na relação alfabética das abreviaturas, das siglas e dos símbolos utilizados no texto, seguidos das palavras ou das expressões correspondentes, expressas por extenso. Só faz sentido efetuar listas de siglas e símbolos quando o número de cada um destes elementos for significativo em todo o trabalho."
+    },
+    {
+      "style": "Normal",
+      "text": "A sigla é sempre descodificada a primeira vez que surge, colocando-se entre parênteses ou a sigla ou a expressão por extenso. A sigla deve ser evitada nos títulos e não é usada no resumo."
+    },
+    {
+      "style": "Normal",
+      "text": "Exemplos:"
+    },
+    {
+      "style": "Normal",
+      "text": "AGD Animação e Gestão Desportiva"
+    },
+    {
+      "style": "Normal",
+      "text": "AM Administração e Marketing"
+    },
+    {
+      "style": "Normal",
+      "text": "AQB Análises Químico-Biológicas"
+    },
+    {
+      "style": "Normal",
+      "text": "CGE Contabilidade e Gestão Empresarial"
+    },
+    {
+      "style": "Normal",
+      "text": "CM Comunicação Multimédia"
+    },
+    {
+      "style": "Normal",
+      "text": "DP-AE Desenhador de Projetos – Arquitetura e Engenharia"
+    },
+    {
+      "style": "Normal",
+      "text": "EIA Eletrónica Industrial e Automação"
+    },
+    {
+      "style": "Normal",
+      "text": "ETC Eletrónica, Telecomunicações e Computadores"
+    },
+    {
+      "style": "Normal",
+      "text": "FCT Formação em contexto de trabalho"
+    },
+    {
+      "style": "Normal",
+      "text": "ITM Informática e Tecnologias Multimédia"
+    },
+    {
+      "style": "Normal",
+      "text": "MDI Mecânica e Design Industrial"
+    },
+    {
+      "style": "Normal",
+      "text": "PAA Plano anual de atividades"
+    },
+    {
+      "style": "Normal",
+      "text": "PAP Prova de aptidão profissional"
+    },
+    {
+      "style": "Normal",
+      "text": "PE Projeto educativo"
+    },
+    {
+      "style": "Normal",
+      "text": "RI Regulamento interno"
+    },
+    {
+      "style": "Normal",
+      "text": "TdS Tecnologias da Saúde"
+    },
+    {
+      "style": "Normal",
+      "text": "TSA Tecnologias e Segurança Alimentar"
+    },
+    {
+      "style": "Normal",
+      "text": "TSI Tecnologias e Sistemas de Informação"
+    },
+    {
+      "style": "Heading 1",
+      "text": "1. Introdução"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem."
+    },
+    {
+      "style": "Normal",
+      "text": "Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis."
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Tem por finalidade apresentar o tema, o enquadramento, a delimitação e a justificação da temática, as abordagens escolhidas, os objetivos, a metodologia utilizada e a estrutura do trabalho."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Apresentação das razões para se tratar este tema e não outro."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Enquadramento da problemática."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Geralmente esta parte é a última a ser redigida."
+    },
+    {
+      "style": "Normal",
+      "text": "Exemplos de frases tipo a usar na introdução:"
+    },
+    {
+      "style": "Normal",
+      "text": "«Neste trabalho, pretende dar-se conta de uma investigação/estudo que se enquadra na prova de aptidão profissional, do curso de …. Este trabalho, centrado no campo de pesquisa …, procura contribuir para uma compreensão mais aprofundada sobre os processos de …»"
+    },
+    {
+      "style": "Normal",
+      "text": "«Através da realização do presente trabalho pretende-se:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "caracterizar …;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "identificar as principais razões para …;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "comparar as expetativas …;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "apontar os fatores …;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "recolher sugestões sobre …;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "identificar …»"
+    },
+    {
+      "style": "Normal",
+      "text": "«Na primeira parte do documento enunciaremos os principais conceitos inerentes ao estudo e as principais referências na área. Na segunda parte do trabalho explicitaremos, de modo sucinto, a metodologia adotada, bem como os seus principais resultados. Na terceira parte passaremos à análise e à discussão dos dados obtidos. Por fim, serão apresentadas as conclusões do estudo, assim como as principais referências bibliográficas»."
+    },
+    {
+      "style": "Heading 1",
+      "text": "2. Capítulo do Colégio de Gaia"
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.1. História do colégio"
+    },
+    {
+      "style": "Normal",
+      "text": "Em 1933, na “Quinta do Trancoso”, nascia o Colégio Externato de Gaia por iniciativa do então Bispo do Porto, D. António Meireles. Localizada na freguesia de Mafamude, Vila Nova de Gaia, a referida Quinta foi doada à Diocese do Porto por D. Maria Margarida Guimarães e Silva."
+    },
+    {
+      "style": "Normal",
+      "text": "Em 1934 foi concedido alvará de funcionamento ao Colégio Externato de Gaia – hoje Colégio de Gaia – sendo nomeado para diretor o Sr. Pe. Nédio de Sousa."
+    },
+    {
+      "style": "Normal",
+      "text": "Nas décadas de 1960 e 1970 assistiu-se a uma significativa expansão das instalações, transformando o Colégio de Gaia no maior Colégio do país ao nível de instalações escolares e desportivas e de espaços exteriores, situação esta que se mantém até aos dias de hoje."
+    },
+    {
+      "style": "Normal",
+      "text": "Atualmente e sob a direção do Sr. Pe. António Manuel Barbosa Ferreira, o Colégio de Gaia possui um Projeto Educativo próprio, de forma a servir uma população escolar com cerca de 1500 alunos que frequenta níveis de ensino desde os 3 anos até ao 12º ano de escolaridade."
+    },
+    {
+      "style": "Normal",
+      "text": "Tendo como entidade titular a Diocese do Porto e sendo uma instituição de ensino católica, o Colégio de Gaia assegura uma educação sólida e assente em valores que fomentam um diálogo persistente e continuado com os pais e encarregados de educação centrando as nossas preocupações nos alunos e na sua formação e educação constante.~"
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.2. Níveis de ensino"
+    },
+    {
+      "style": "Normal",
+      "text": "O Colégio de Gaia oferece ensino em todos os níveis, desde o pré-escolar até ao 12º ano, com uma abordagem educativa que visa o desenvolvimento integral dos alunos."
+    },
+    {
+      "style": "Normal",
+      "text": "No pré-escolar, destinado a crianças a partir dos 3 anos, o foco é o desenvolvimento emocional, social e intelectual. A metodologia utilizada é lúdica e interativa, permitindo que as crianças desenvolvam competências essenciais para o seu crescimento pessoal e académico. Este ciclo é uma base sólida para o futuro dos alunos, onde se prioriza o aprender brincando e a interação com os colegas."
+    },
+    {
+      "style": "Normal",
+      "text": "O Ensino Básico é composto por três ciclos e prepara os alunos para o Ensino Secundário. Durante este período, os alunos adquirem conhecimentos fundamentais em áreas como Línguas, Ciências, Matemática, História, entre outras, enquanto desenvolvem competências cognitivas e sociais. Este ciclo serve como um passo importante para os desafios e exigências do Ensino Secundário."
+    },
+    {
+      "style": "Normal",
+      "text": "No Ensino Secundário, os alunos do Colégio de Gaia podem escolher entre diversas áreas de formação, de acordo com os planos curriculares estabelecidos pela Portaria n.º 272/2019, de 27 de agosto. O colégio destaca-se por oferecer cursos com dupla certificação, o que significa que os alunos estão habilitados tanto para seguir os seus estudos no ensino superior quanto para ingressar diretamente no mercado de trabalho, já com uma qualificação profissional de nível 4, conforme o Quadro Nacional de Qualificações (QNQ). Este modelo proporciona aos alunos uma flexibilidade muito importante, pois garante que, além de se prepararem academicamente, também adquirem competências práticas que lhes abrem portas no mundo profissional."
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.3. Ensino Secundário"
+    },
+    {
+      "style": "Normal",
+      "text": "Os cursos oferecidos no Ensino Secundário com dupla certificação são:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Desenho de Projetos - Arquitetura e Engenharia (DPAE)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Formação em desenho técnico e projeto, prepara os alunos para trabalhar em arquitetura e engenharia."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Animação e Gestão Desportiva (AGD)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Curso de atividades desportivas."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Eletrónica Industrial e Automação (EIA)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Desenvolve competências em eletrónica e sistemas de automação."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Eletrónica, Telecomunicações e Computadores (ETC)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Prepara os alunos nas tecnologias de eletrónica, telecomunicações e computação"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Mecânica e Design Industrial (MDI)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ensina o desenvolvimento de projetos mecânicos e industriais, foca no design, na fabricação e na manutenção de produtos e sistemas mecânicos."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Administração e Marketing (AM)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Formação nas áreas de gestão empresarial e marketing"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Contabilidade e Gestão Empresarial (CGE)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Forma os alunos em contabilidade e gestão financeira"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Comunicação Multimédia (CM)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Prepara os alunos na criação de conteúdos multimédia."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Informática e Tecnologias Multimédia (ITM)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Forma os alunos em programação e tecnologias digitais."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Tecnologias e Sistemas de Informação (TSI)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Prepara os alunos no desenvolvimento e gestão de sistemas de informação."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Análises Químico-Biológicas (AQB)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Forma os alunos em análises laboratoriais químico-biológicas."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Tecnologias da Saúde (TDS)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Prepara os alunos em tecnologias de apoio à saúde."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Tecnologias e Segurança Alimentar (TSA)"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Forma os alunos em controlo e segurança alimentar."
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.4 Curso de Informática e Tecnologias Multimédia"
+    },
+    {
+      "style": "Normal",
+      "text": "O curso de Informática de Gestão e Multimédia (ITM) do Colégio de Gaia é um curso que prepara os alunos para o mercado de trabalho e para o prosseguimento de estudos no ensino superior. O curso foca-se no desenvolvimento de competências técnicas em informática e multimédia, proporcionando uma formação equilibrada entre teoria e prática."
+    },
+    {
+      "style": "Normal",
+      "text": "O plano curricular do curso de ITM está dividido em três componentes principais: Formação Geral, Formação Científica e Formação Técnica. Este modelo permite aos alunos adquirirem conhecimentos fundamentais em diversas áreas, enquanto desenvolvem competências específicas exigidas pelo setor da informática e multimédia."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "2.4.1. Formação Geral"
+    },
+    {
+      "style": "Normal",
+      "text": "A Formação Geral inclui disciplinas que visam o desenvolvimento pessoal e académico dos alunos, como:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Português"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Inglês"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Educação Física"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Filosofia"
+    },
+    {
+      "style": "Titulo 3",
+      "text": "2.4.2. Formação Científica"
+    },
+    {
+      "style": "Normal",
+      "text": "Na Formação Científica, os alunos têm disciplinas fundamentais para compreender os conceitos matemáticos e lógicos, tais como:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Matemática"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Física e Química"
+    },
+    {
+      "style": "Titulo 3",
+      "text": "2.4.3. Formação Técnica"
+    },
+    {
+      "style": "Normal",
+      "text": "A Formação Técnica inclui as disciplinas que capacitam os alunos para o mercado de trabalho. Algumas das principais disciplinas são:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Moral, Ética e Deontologia- Disciplina que desenvolve nos alunos valores éticos e profissionais."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Aplicações informáticas- Ensina a utilizar ferramentas digitais de produtividade, comunicação e colaboração."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Microsoft Word;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Microsoft Power Point;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Microsoft Excel;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Photoshop;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Fundamentos e Arquitetura de Computadores- Apresenta o funcionamento dos componentes de hardware e software, bem como a estrutura e organização de um computador e dos sistemas de rede."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Simuladores de hardware ou circuitos;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Microsoft Power Point;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Técnicas de Programação- Introduz a lógica de programação, algoritmos e linguagens de código para desenvolver soluções informáticas."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Visual Studio;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Exercícios práticos e projetos simples para fixar lógica, estruturas condicionais e ciclos."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Linguagens de programação, Visual Basic e C#;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Implementação e Exploração de Base de Dados- Capacita os alunos a criar, gerir e manipular bases de dados utilizando linguagens e ferramentas específicas."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Linguagem SQL para consultas, criação de tabelas, índices, etc.;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Sistemas de Gestão de Base de Dados (SGBD), Acess;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Programação Internet- Foca no desenvolvimento de sites e aplicações web, explorando linguagens e tecnologias para o front-end e back-end."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Visual Studio code;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Linguagens de programação para a criação de sites, Html, Css, Java Script, PHP, etc;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Tecnologias e Desenvolvimento Multimédia- Trabalha a criação e edição de conteúdos multimédia, combinando imagem, som, vídeo e animação digital."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Microsoft Project;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Unity;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Redes e diagramas de Pert;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Projeto tecnológico- Integra os conhecimentos adquiridos no curso através do desenvolvimento de um projeto prático voltado para o mercado de trabalho."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Ferramentas utilizadas:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Wix e Wordpress para criação de sites;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Europass para criação de currículo;"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Analisar e preparar a PAP;"
+    },
+    {
+      "style": "Caption",
+      "text": "Figura 1. Primeira versão/modelo inicial da base de dados da Hexomel"
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.5. FCT (Formação em Contexto de Trabalho)"
+    },
+    {
+      "style": "Normal",
+      "text": "A Formação em Contexto de Trabalho (FCT) é uma componente essencial do curso, onde os alunos realizam estágios em empresas da área de informática e multimédia. Esta experiência permite consolidar os conhecimentos adquiridos, desenvolver competências profissionais e criar contactos no mercado de trabalho."
+    },
+    {
+      "style": "Normal",
+      "text": "No 11º os alunos têm de completar um total de 105 Horas de estágio, normalmente esta fase serve de adaptação."
+    },
+    {
+      "style": "Normal",
+      "text": "No 12º os alunos têm de completar um total de 295 Horas de estágio."
+    },
+    {
+      "style": "Normal",
+      "text": "A FCT é, portanto, um momento determinante no percurso formativo, pois:"
+    },
+    {
+      "style": "Normal",
+      "text": "Permite a transição entre o ambiente escolar e o mundo profissional;"
+    },
+    {
+      "style": "Normal",
+      "text": "Desenvolve competências de autonomia, responsabilidade e trabalho em equipa;"
+    },
+    {
+      "style": "Normal",
+      "text": "Proporciona experiências práticas que reforçam a empregabilidade dos alunos;"
+    },
+    {
+      "style": "Normal",
+      "text": "Valoriza o currículo académico, preparando os estudantes tanto para o prosseguimento de estudos no ensino superior como para a entrada imediata no mercado de trabalho."
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.6. Prosseguimento de Estudos"
+    },
+    {
+      "style": "Normal",
+      "text": "Depois de terminares o curso de Informática e Tecnologias Multimédia do ColGaia, tens várias opções para continuar a tua formação. Podes seguir para o ensino superior, escolhendo áreas ligadas à informática, ao design ou à comunicação digital."
+    },
+    {
+      "style": "Normal",
+      "text": "Entre as licenciaturas mais comuns estão Engenharia Informática, Ciências da Computação, Design Multimédia, Design Gráfico, Produção Audiovisual, Jogos Digitais ou Cibersegurança."
+    },
+    {
+      "style": "Normal",
+      "text": "Se preferires um percurso mais curto e prático, podes optar por um Curso Técnico Superior Profissional (TeSP), que dura cerca de dois anos e inclui estágio, em áreas como Desenvolvimento Web e Multimédia, Design Digital, Programação de Sistemas de Informação ou Gestão de Redes."
+    },
+    {
+      "style": "Normal",
+      "text": "Também podes apostar em formações técnicas específicas ou certificações profissionais (como as da Cisco, Adobe ou Microsoft), que valorizam muito o teu currículo."
+    },
+    {
+      "style": "Normal",
+      "text": "Por fim, há sempre a possibilidade de seguires um caminho mais empreendedor, criando o teu próprio projeto digital ou trabalhando como freelancer em design, programação ou multimédia."
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.7. Saídas profissionais"
+    },
+    {
+      "style": "Normal",
+      "text": "Os alunos podem exercer atividades em empresas especializadas na conceção, desenvolvimento e instalação de software, aplicações para dispositivos móveis e sistemas operativos; departamentos de informática; empresas de comercialização e/ou manutenção de programas e equipamentos informáticos; empresas de instalação, reparação e manutenção de redes informáticas; empresas de desenvolvimento de produtos multimédia, outras empresas ou entidades do setor público ou privado."
+    },
+    {
+      "style": "Heading 1",
+      "text": "3. Prova de Aptidão Profissional"
+    },
+    {
+      "style": "Normal",
+      "text": "A Prova de Aptidão Profissional (ou PAP) consiste na execução e apresentação de um projeto final prático no qual o aluno pretende demonstrar as competências e conhecimentos que desenvolveu e adquiriu ao longo da formação proposta pelo curso que frequentou, incidindo sobre um tema específico."
+    },
+    {
+      "style": "Normal",
+      "text": "Segundo o preceituado na Portaria 74A/2013 de 15 de fevereiro (artigo 17o, no3), a concretização do projeto compreende quatro momentos essenciais: conceção, desenvolvimento, autoavaliação e elaboração do relatório final."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.1. Evolução do Projeto"
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.1. Contextualização: O Ponto de Partida"
+    },
+    {
+      "style": "Normal",
+      "text": "O projeto Hexomel, tal como se apresenta hoje, não nasceu como uma plataforma de e-commerce completa. A sua origem remonta a uma necessidade real e concreta: ajudar o meu pai a vender mel online."
+    },
+    {
+      "style": "Normal",
+      "text": "A família sempre esteve ligada à produção artesanal de mel, mas a comercialização dependia quase exclusivamente de vendas porta a porta e de contactos pessoais. Este modelo, embora funcional numa escala local, apresentava limitações evidentes: alcance geográfico reduzido, dependência do contacto presencial, ausência de visibilidade digital da marca e impossibilidade de crescimento escalável."
+    },
+    {
+      "style": "Normal",
+      "text": "Foi neste contexto que surgiu a ideia inicial do projeto — criar um website simples que permitisse apresentar os produtos da família e facilitar as encomendas. Esta ideia foi formalizada no documento de Formalização da PAP, entregue no início do ano letivo."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.2. A Formalização Original da PAP"
+    },
+    {
+      "style": "Normal",
+      "text": "O documento de formalização da Prova de Aptidão Profissional, submetido antes do início do desenvolvimento, definia o projeto nos seguintes termos:"
+    },
+    {
+      "style": "Normal",
+      "text": "As ferramentas previstas na formalização original eram:"
+    },
+    {
+      "style": "Normal",
+      "text": "• HTML — para a estrutura das páginas web."
+    },
+    {
+      "style": "Normal",
+      "text": "• JavaScript — para a interatividade e comportamento dinâmico."
+    },
+    {
+      "style": "Normal",
+      "text": "• PHP — para o backend e comunicação com a base de dados."
+    },
+    {
+      "style": "Normal",
+      "text": "Esta formalização refletia um projeto modesto e adequado ao contexto inicial: um website informativo com algumas funcionalidades de encomenda, pensado especificamente para a empresa familiar do meu pai. Não contemplava autenticação de utilizadores, perfis diferenciados, pagamentos integrados com gateway profissional, comunidade, dashboards, analytics nem qualquer componente multimédia avançada."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.3. A Versão Inicial: O que Foi Construído Primeiro"
+    },
+    {
+      "style": "Normal",
+      "text": "Com base na formalização, a primeira versão do projeto foi desenvolvida como uma aplicação web simples, direcionada exclusivamente à empresa do meu pai. As suas características eram:"
+    },
+    {
+      "style": "Normal",
+      "text": "• Páginas estáticas: apresentação dos produtos com imagens, nomes e preços fixos, sem carregamento dinâmico a partir de base de dados."
+    },
+    {
+      "style": "Normal",
+      "text": "• Página informativa: secção \"Sobre\" com breve descrição da empresa e da atividade apícola da família."
+    },
+    {
+      "style": "Normal",
+      "text": "• Formulário de contacto: formulário básico sem backend funcional — não enviava emails nem guardava mensagens."
+    },
+    {
+      "style": "Normal",
+      "text": "• Sem autenticação: qualquer pessoa via os mesmos conteúdos, sem login, registo ou diferenciação de perfis."
+    },
+    {
+      "style": "Normal",
+      "text": "• Sem carrinho de compras: não existia mecanismo para adicionar produtos a um carrinho, calcular totais ou finalizar compras."
+    },
+    {
+      "style": "Normal",
+      "text": "• Sem pagamentos: não existia integração com qualquer gateway de pagamento."
+    },
+    {
+      "style": "Normal",
+      "text": "• Base de dados rudimentar: apenas 5 tabelas (cliente, produto, encomenda, categoria, workshop) sem relações complexas nem integridade referencial completa."
+    },
+    {
+      "style": "Normal",
+      "text": "• Design funcional, mas básico: layout simples sem efeitos visuais avançados, animações, glassmorphism ou skeleton loaders."
+    },
+    {
+      "style": "Normal",
+      "text": "• Stack tecnológico limitado: HTML, CSS, JavaScript e PHP, conforme previsto na formalização."
+    },
+    {
+      "style": "Normal",
+      "text": "Esta versão cumpria o objetivo original de apresentar os produtos da família, mas não ia além disso. Funcionava mais como uma montra digital do que como uma plataforma de comércio eletrónico."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.4. A Decisão de Reconstruir o Projeto"
+    },
+    {
+      "style": "Normal",
+      "text": "Após completar a versão inicial e analisar o resultado com espírito crítico, tornou-se evidente que o projeto, tal como estava, apresentava limitações significativas enquanto Prova de Aptidão Profissional do curso de Informática e Tecnologias de Multimédia:"
+    },
+    {
+      "style": "Heading 4",
+      "text": "3.1.4.1. Limitações Identificadas"
+    },
+    {
+      "style": "Normal",
+      "text": "• Complexidade técnica insuficiente: o uso de PHP com páginas estáticas não permitia demonstrar competências em áreas como autenticação avançada, APIs REST, integração de serviços externos, segurança multi-camada ou visualização 3D — áreas fundamentais do curso."
+    },
+    {
+      "style": "Normal",
+      "text": "• Funcionalidades demasiado básicas: a ausência de carrinho persistente, checkout com pagamento real, sistema de perfis, comunidade interativa e painel administrativo tornava a aplicação inadequada para um projeto final de curso."
+    },
+    {
+      "style": "Normal",
+      "text": "• Design sem ambição: o aspeto visual da versão inicial não explorava as competências de design multimédia e UX adquiridas ao longo de três anos de formação."
+    },
+    {
+      "style": "Normal",
+      "text": "• Stack desatualizado: a combinação HTML/CSS/JS/PHP, embora válida, não refletia as tendências atuais do mercado de desenvolvimento web, onde Node.js, APIs REST e frontends modulares são o padrão."
+    },
+    {
+      "style": "Normal",
+      "text": "• Âmbito demasiado estreito: um site feito exclusivamente para uma empresa familiar limitava o potencial de demonstração técnica e a aplicabilidade das competências aprendidas."
+    },
+    {
+      "style": "Heading 4",
+      "text": "3.1.4.2. A Decisão"
+    },
+    {
+      "style": "Normal",
+      "text": "Face a estas limitações, tomei uma decisão estruturante para o projeto: reconstruir a Hexomel de raiz, transformando-a de um website simples para uma empresa familiar numa plataforma completa de e-commerce com múltiplas dimensões."
+    },
+    {
+      "style": "Normal",
+      "text": "Esta decisão implicou:"
+    },
+    {
+      "style": "Normal",
+      "text": "• Mudança de stack tecnológico: de PHP para Node.js/Express.js no backend, mantendo JavaScript como linguagem unificadora de todo o projeto."
+    },
+    {
+      "style": "Normal",
+      "text": "• Mudança de base de dados: de um esquema rudimentar para MySQL 8.0 com InnoDB, integridade referencial completa, foreign keys com ON DELETE CASCADE e suporte a JSON nativo."
+    },
+    {
+      "style": "Normal",
+      "text": "• Mudança de ambição: de um website informativo para uma plataforma full-stack com autenticação, pagamentos, comunidade, analytics, visualização 3D, internacionalização e painel administrativo."
+    },
+    {
+      "style": "Normal",
+      "text": "• Mudança de público-alvo: de uma ferramenta exclusiva para o meu pai para uma plataforma aberta a múltiplos apicultores e consumidores."
+    },
+    {
+      "style": "Normal",
+      "text": "O tema e o nome mantiveram-se — a Hexomel continua a ser sobre mel e apicultura — mas o projeto deixou de ser uma página para uma empresa e passou a ser uma plataforma de e-commerce profissional."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.5 O Que Mudou: Comparação Detalhada"
+    },
+    {
+      "style": "Normal",
+      "text": "A tabela seguinte apresenta uma comparação exaustiva entre a versão inicial (pensada para a empresa do meu pai) e a versão final da Hexomel:"
+    },
+    {
+      "style": "Caption",
+      "text": "Tabela 1- Comparação detalhada entre a versão inicial (empresa do pai) e a versão final da Hexomel."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.6. O Que a Hexomel É Agora"
+    },
+    {
+      "style": "Normal",
+      "text": "A Hexomel, na sua versão final, é uma plataforma de comércio eletrónico premium dedicada ao mel português artesanal. Trata-se de uma aplicação web full-stack, construída de raiz sem recurso a plataformas pré-fabricadas como Shopify, WooCommerce ou WordPress, o que demonstra domínio completo sobre cada camada da solução."
+    },
+    {
+      "style": "Heading 4",
+      "text": "3.1.6.1. Arquitetura"
+    },
+    {
+      "style": "Normal",
+      "text": "A plataforma segue uma Arquitetura de Três Camadas:"
+    },
+    {
+      "style": "Normal",
+      "text": "• Camada de Apresentação (Frontend): HTML5 semântico, CSS3 com design system centralizado (variáveis, Grid, Flexbox, glassmorphism), JavaScript ES6+ modular compilado por Vite, animações procedurais, skeleton loaders e View Transitions API para transições fluidas entre páginas."
+    },
+    {
+      "style": "Normal",
+      "text": "• Camada de Lógica de Negócio (Backend): servidor Node.js com Express.js, API REST com mais de 80 rotas, middleware de autenticação JWT, middleware de autorização por roles, integração Stripe, Nodemailer, Google OAuth, Multer para uploads e sistema de migrações automáticas."
+    },
+    {
+      "style": "Normal",
+      "text": "• Camada de Dados: MySQL 8.0 com motor InnoDB, 15+ tabelas com integridade referencial completa, suporte a JSON nativo para analytics e pool de conexões assíncronas via mysql2."
+    },
+    {
+      "style": "Heading 4",
+      "text": "3.1.6.2. Perfis de Utilizador"
+    },
+    {
+      "style": "Normal",
+      "text": "A plataforma suporta três perfis com permissões diferenciadas:"
+    },
+    {
+      "style": "Normal",
+      "text": "• Cliente: pode explorar o catálogo, filtrar produtos por categoria/origem/preço, adicionar ao carrinho, comprar com Stripe, avaliar produtos (1-5 estrelas), adicionar favoritos, participar no fórum Q&A, editar perfil com avatar e bio, e consultar histórico de encomendas com recibos."
+    },
+    {
+      "style": "Normal",
+      "text": "• Apicultor: dispõe de um dashboard dedicado para registar e gerir produtos, acompanhar vendas, criar e gerir workshops presenciais. Os clientes podem solicitar upgrade para apicultor através de submissão de documentação, sujeita a aprovação."
+    },
+    {
+      "style": "Normal",
+      "text": "• Administrador: acede a um painel centralizado com KPIs em tempo real (receita, encomendas, utilizadores, produtos), gráficos Chart.js (vendas por mês, categorias, estados de encomendas, crescimento), gestão de utilizadores, moderação da comunidade, aprovação de workshops e processamento de pedidos de upgrade."
+    },
+    {
+      "style": "Heading 4",
+      "text": "3.1.6.3. Funcionalidades Principais"
+    },
+    {
+      "style": "Normal",
+      "text": "A versão final inclui as seguintes funcionalidades:"
+    },
+    {
+      "style": "Normal",
+      "text": "• Loja com catálogo dinâmico: produtos carregados da BD com filtros cruzados de categoria, origem, preço e pesquisa textual, paginação dinâmica, ordenação e slugs SEO amigáveis."
+    },
+    {
+      "style": "Normal",
+      "text": "• Carrinho dual: sincronização entre localStorage (acesso imediato offline) e base de dados MySQL (persistência entre dispositivos quando autenticado)."
+    },
+    {
+      "style": "Normal",
+      "text": "• Checkout com 2FA: fluxo em dois passos — dados de envio com verificação OTP por email, seguido de redirecionamento para Stripe Checkout."
+    },
+    {
+      "style": "Normal",
+      "text": "• Pagamentos reais via Stripe: integração com a API Stripe Checkout para processamento de cartões, com imagens dinâmicas dos produtos e suporte para ambiente local (placeholders) e produção (URLs absolutas)."
+    },
+    {
+      "style": "Normal",
+      "text": "• Recibos automáticos: após pagamento, o sistema gera e envia automaticamente um email com recibo HTML formatado com logótipo, detalhes da encomenda, subtotal, portes e total."
+    },
+    {
+      "style": "Normal",
+      "text": "• Sistema de comunidade Q&A: fórum interativo onde clientes fazem perguntas e apicultores verificados respondem, com sistema de votos, seleção de melhor resposta e moderação por administradores."
+    },
+    {
+      "style": "Normal",
+      "text": "• Visualização 3D: página de curiosidades com frasco de mel 3D renderizado em Three.js com materiais PBR que mudam conforme a origem botânica selecionada."
+    },
+    {
+      "style": "Normal",
+      "text": "• Analytics comportamental: registo silencioso de interações (page_view, product_view, add_to_cart, search, checkout_step) em formato JSON na tabela interacao, permitindo análise detalhada do comportamento dos utilizadores."
+    },
+    {
+      "style": "Normal",
+      "text": "• Internacionalização: sistema i18n completo com suporte PT/EN, usando atributos data-i18n, com troca dinâmica de idioma e persistência no localStorage."
+    },
+    {
+      "style": "Normal",
+      "text": "• Workshops: apicultores podem criar workshops presenciais com título, descrição, data, preço, vagas e imagem. Clientes podem reservar vagas. Administradores aprovam ou rejeitam workshops."
+    },
+    {
+      "style": "Heading 4",
+      "text": "3.1.6.4. Stack Tecnológico Final"
+    },
+    {
+      "style": "Caption",
+      "text": "Tabela 2- Stack tecnológico completo da versão final da Hexomel."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.7. A Hexomel em Números"
+    },
+    {
+      "style": "Normal",
+      "text": "Para dimensionar a escala da transformação, apresentam-se alguns indicadores quantitativos do projeto na sua versão final:"
+    },
+    {
+      "style": "Caption",
+      "text": "Tabela 3- Indicadores quantitativos da Hexomel na versão final."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.1.8. Síntese"
+    },
+    {
+      "style": "Normal",
+      "text": "A Hexomel percorreu um caminho de evolução significativo. O projeto começou como uma resposta simples a uma necessidade familiar — ajudar o meu pai a vender mel online, substituindo as vendas porta a porta por uma presença digital. As ferramentas previstas eram básicas (HTML, JavaScript e PHP) e o âmbito era limitado a uma montra digital com contacto."
+    },
+    {
+      "style": "Normal",
+      "text": "Contudo, ao avaliar criticamente essa versão inicial, identifiquei que não demonstrava a profundidade técnica esperada numa PAP, nem explorava as competências adquiridas ao longo de três anos de formação em Informática e Tecnologias de Multimédia."
+    },
+    {
+      "style": "Normal",
+      "text": "A decisão de reconstruir o projeto de raiz foi o ponto de viragem. O resultado é uma plataforma full-stack com 18+ páginas, 28+ módulos JavaScript, 15+ tabelas relacionais, autenticação multi-fator, pagamentos Stripe, comunidade Q&A, visualização 3D, analytics comportamental, internacionalização e design premium — tudo construído sem plataformas pré-fabricadas."
+    },
+    {
+      "style": "Normal",
+      "text": "O tema manteve-se — o mel e a apicultura continuam a ser o centro da experiência. Mas a escala, a complexidade e a qualidade técnica são incomparáveis com o ponto de partida. A Hexomel deixou de ser a página de uma empresa familiar e tornou-se uma plataforma de e-commerce profissional que demonstra, de forma concreta, as competências esperadas de um técnico de informática e multimédia."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.2 Título do Projeto"
+    },
+    {
+      "style": "Normal",
+      "text": "O projeto desenvolvido no âmbito da Prova de Aptidão Profissional tem como título Hexomel. Este nome já se encontrava associado à empresa familiar de produção e comercialização de mel, sendo utilizado como identidade da marca antes do desenvolvimento do website. A escolha de manter a designação Hexomel permitiu preservar o reconhecimento da marca e a sua ligação ao setor da apicultura. O logótipo existente foi adaptado e integrado na plataforma, garantindo uma identidade visual consistente entre a marca e o website. Desta forma, o projeto contribui para reforçar a presença digital da Hexomel, mantendo os elementos visuais e a identidade que já caracterizavam a empresa."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.3 Tema do Projeto"
+    },
+    {
+      "style": "Normal",
+      "text": "O tema do projeto centra-se na criação de uma plataforma web para comércio eletrónico, divulgação e valorização do mel português artesanal. A solução não se limita a apresentar produtos: integra perfis de utilizador, catálogo filtrável, carrinho de compras, checkout, pagamentos, comunidade, área de apicultor, painel administrativo, workshops e conteúdos educativos."
+    },
+    {
+      "style": "Normal",
+      "text": "A Hexomel combina três dimensões complementares. A primeira é comercial, ligada à venda de produtos e gestão de encomendas. A segunda é informativa, através de páginas de curiosidades, aprendizagem e explicações sobre tipos de mel, origem botânica, produção e boas práticas. A terceira é comunitária, permitindo perguntas e respostas entre clientes e apicultores verificados."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.4 Motivação para o Projeto"
+    },
+    {
+      "style": "Normal",
+      "text": "A motivação inicial para este projeto surgiu da necessidade de criar uma presença digital para a empresa familiar de produção e comercialização de mel. Numa fase inicial, o objetivo era desenvolver um website simples que permitisse divulgar os produtos, aumentar a visibilidade da marca e facilitar o contacto com os clientes, contribuindo para a modernização do negócio e para a sua adaptação às novas formas de comércio digital."
+    },
+    {
+      "style": "Normal",
+      "text": "Contudo, durante a fase de planeamento e desenvolvimento, verificou-se que a implementação de um website básico não representava um desafio técnico suficientemente exigente para uma Prova de Aptidão Profissional. Perante esta situação, decidiu-se reformular e expandir o conceito inicial, transformando-o num projeto mais ambicioso e completo, capaz de demonstrar um conjunto mais alargado de competências técnicas adquiridas ao longo do curso."
+    },
+    {
+      "style": "Normal",
+      "text": "Desta forma, a Hexomel evoluiu de um simples website institucional para uma plataforma web mais complexa, integrando funcionalidades avançadas de comércio eletrónico, gestão de utilizadores, autenticação segura, processamento de pagamentos, área administrativa e conteúdos informativos relacionados com a apicultura. Esta evolução permitiu aproximar o projeto de um cenário real de desenvolvimento de software e proporcionar uma experiência mais rica aos utilizadores."
+    },
+    {
+      "style": "Normal",
+      "text": "Do ponto de vista técnico, o projeto possibilitou a aplicação de conhecimentos em desenvolvimento frontend e backend, bases de dados, segurança informática, integração de APIs, design de interfaces, experiência do utilizador (UX/UI), responsividade e documentação técnica. A diversidade de tecnologias e funcionalidades implementadas tornou a PAP mais desafiante e enriquecedora, contribuindo significativamente para o desenvolvimento das minhas competências profissionais."
+    },
+    {
+      "style": "Normal",
+      "text": "Com este projeto pretendeu-se:"
+    },
+    {
+      "style": "Normal",
+      "text": "Valorizar o mel português e a produção artesanal através de uma presença digital moderna e profissional;"
+    },
+    {
+      "style": "Normal",
+      "text": "Desenvolver uma plataforma funcional de comércio eletrónico;"
+    },
+    {
+      "style": "Normal",
+      "text": "Aplicar conhecimentos de programação e desenvolvimento web adquiridos ao longo do curso;"
+    },
+    {
+      "style": "Normal",
+      "text": "Implementar mecanismos de autenticação e segurança adequados a aplicações modernas;"
+    },
+    {
+      "style": "Normal",
+      "text": "Integrar diferentes tecnologias e serviços externos num único sistema;"
+    },
+    {
+      "style": "Normal",
+      "text": "Produzir documentação técnica que demonstre a evolução, arquitetura e decisões tomadas durante o desenvolvimento do projeto."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.5. Contextualização no Mercado (Análise SWOT/FOFA)"
+    },
+    {
+      "style": "Normal",
+      "text": "O mercado do mel tem uma forte componente de confiança, origem e qualidade. O consumidor tende a valorizar produtos naturais, artesanais e rastreáveis, mas encontra muitas vezes estes produtos dispersos em feiras, redes sociais, pequenas lojas locais ou marketplaces genéricos."
+    },
+    {
+      "style": "Normal",
+      "text": "Neste contexto, a Hexomel posiciona-se como uma solução especializada. Em vez de competir apenas pelo preço, procura competir pela experiência, pela informação, pela relação com o produtor e pela organização digital do processo de compra."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.4.1 Pontos Fortes (Strengths)"
+    },
+    {
+      "style": "Normal",
+      "text": "A principal força da Hexomel é a especialização. O projeto foi desenhado especificamente para o mel português e para a relação entre cliente, apicultor e administrador. Isto permite uma comunicação mais focada do que numa plataforma generalista."
+    },
+    {
+      "style": "Normal",
+      "text": "Catálogo com filtros dinâmicos por categoria, origem geográfica, vendedor e preço."
+    },
+    {
+      "style": "Normal",
+      "text": "Perfis de utilizador distintos: cliente, apicultor e administrador, cada um com permissões próprias."
+    },
+    {
+      "style": "Normal",
+      "text": "Área de apicultor com gestão de produtos, workshops, reservas e bio profissional."
+    },
+    {
+      "style": "Normal",
+      "text": "Checkout em duas etapas, com validação de dados, escolha de envio e pagamento por Stripe ou método manual."
+    },
+    {
+      "style": "Normal",
+      "text": "2FA obrigatório antes da compra, com código OTP por email para reforçar a segurança da transação."
+    },
+    {
+      "style": "Normal",
+      "text": "Comunidade Q&A com upvotes, respostas de apicultores, destaque visual para especialistas e moderação."
+    },
+    {
+      "style": "Normal",
+      "text": "Dashboard administrativo com KPIs, gráficos Chart.js, vendas por categoria, top products e crescimento de utilizadores."
+    },
+    {
+      "style": "Normal",
+      "text": "Sistema de analytics comportamental para page views, product views, add to cart e etapas do checkout funnel."
+    },
+    {
+      "style": "Normal",
+      "text": "Experiência visual premium com BeeAnimator, skeleton loaders, SweetAlert2, toasts e transições nativas."
+    },
+    {
+      "style": "Normal",
+      "text": "Internacionalização PT/EN nas páginas públicas, aumentando potencial de alcance turístico e comercial."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.4.2 Pontos Fracos (Weaknesses)"
+    },
+    {
+      "style": "Normal",
+      "text": "Apesar da sua riqueza funcional, a Hexomel continua a ser um projeto académico. Isto significa que algumas áreas que seriam obrigatórias numa empresa real ainda dependem de validação, testes prolongados e infraestrutura externa. Necessidade de alojamento estável, domínio, certificados HTTPS e monitorização permanente."
+    },
+    {
+      "style": "Normal",
+      "text": "Dependência de APIs externas, como Stripe, Google OAuth, Gmail SMTP, PurgoMalum e Ngrok em ambiente de testes."
+    },
+    {
+      "style": "Normal",
+      "text": "Catálogo inicial limitado e dependente da adesão de produtores reais."
+    },
+    {
+      "style": "Normal",
+      "text": "Necessidade de enquadramento legal para faturação, devoluções, RGPD, termos de utilização e política de privacidade."
+    },
+    {
+      "style": "Normal",
+      "text": "Gestão logística ainda não automatizada, sobretudo em envios, stock real, embalamento e acompanhamento pós-venda."
+    },
+    {
+      "style": "Normal",
+      "text": "Complexidade técnica elevada para manutenção por pessoas sem conhecimentos de desenvolvimento web."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.4.3 Oportunidades (Opportunities)"
+    },
+    {
+      "style": "Normal",
+      "text": "A Hexomel pode aproveitar várias tendências atuais: crescimento do comércio eletrónico, interesse por produtos naturais, valorização de produtores locais e procura por experiências educativas ligadas à sustentabilidade."
+    },
+    {
+      "style": "Normal",
+      "text": "Criação de uma rede de apicultores parceiros por região, reforçando a rastreabilidade do produto."
+    },
+    {
+      "style": "Normal",
+      "text": "Expansão de workshops presenciais e experiências de turismo apícola."
+    },
+    {
+      "style": "Normal",
+      "text": "Integração futura de newsletters, cupões, recomendações e programas de fidelização."
+    },
+    {
+      "style": "Normal",
+      "text": "Utilização dos dados de analytics para perceber produtos mais vistos, abandono no checkout e preferências dos clientes."
+    },
+    {
+      "style": "Normal",
+      "text": "Aposta em conteúdos educativos sobre polinização, origem botânica, cristalização e conservação do mel."
+    },
+    {
+      "style": "Normal",
+      "text": "Internacionalização para clientes estrangeiros interessados em produtos portugueses."
+    },
+    {
+      "style": "Normal",
+      "text": "Possibilidade de ligação a feiras locais, produtores certificados e associações apícolas."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.4.4 Ameaças (Threats)"
+    },
+    {
+      "style": "Normal",
+      "text": "A maior ameaça está na concorrência de plataformas com maior escala. Supermercados online e marketplaces têm tráfego, meios logísticos e reputação já estabelecidos. Além disso, o comércio alimentar exige confiança, segurança e cumprimento legal."
+    },
+    {
+      "style": "Normal",
+      "text": "Marketplaces generalistas podem vender produtos semelhantes com maior visibilidade e logística integrada."
+    },
+    {
+      "style": "Normal",
+      "text": "Consumidores podem preferir marcas conhecidas ou compras presenciais por desconfiança em lojas novas."
+    },
+    {
+      "style": "Normal",
+      "text": "Pequenos produtores podem ter dificuldade em manter produtos, imagens, stock e descrições atualizadas."
+    },
+    {
+      "style": "Normal",
+      "text": "Alterações em APIs externas podem obrigar a mudanças técnicas no checkout, autenticação ou emails."
+    },
+    {
+      "style": "Normal",
+      "text": "Falhas de segurança, indisponibilidade do servidor ou problemas de pagamento afetariam diretamente a confiança. Regras de comércio eletrónico alimentar, faturação e proteção de dados podem aumentar a complexidade operacional."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.4.5 Comparação da Hexomel com Soluções Estabelecidas"
+    },
+    {
+      "style": "Normal",
+      "text": "A Hexomel diferencia-se de uma loja criada em plataformas prontas, como Shopify ou WooCommerce, porque foi desenvolvida de raiz. Isto exigiu mais trabalho técnico, mas permitiu controlar a arquitetura, a base de dados, a autenticação, os perfis, os dashboards e as funcionalidades específicas para apicultores."
+    },
+    {
+      "style": "Normal",
+      "text": "Comparando com marketplaces generalistas, a Hexomel não teria inicialmente a mesma escala, tráfego ou logística. No entanto, teria uma vantagem na especialização: todo o site está orientado para o mel, para a origem, para a história do produtor e para a educação do consumidor."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.4.6 Conclusão do Estudo de Mercado"
+    },
+    {
+      "style": "Normal",
+      "text": "A análise SWOT sugere que existe espaço para uma solução online especializada em mel português, especialmente ao aproveitar tendências de confiança na origem e na produção artesanal. A Hexomel apresenta pontos fortes relevantes (especialização, plataforma tecnicamente robusta, foco em segurança e comunidade) que podem atrair um segmento de consumidores dispostos a valorizar experiência sobre preço. No entanto, enfrenta desafios típicos de um projeto em fase inicial, como a necessidade de validação legal, expansão do catálogo e consolidação da infraestrutura."
+    },
+    {
+      "style": "Normal",
+      "text": "A proposta de valor da Hexomel está em oferecer uma experiência de compra diferenciada: conhecer a história do produto e do produtor, aprender sobre apicultura, interagir numa comunidade temática e comprar de forma segura. Isso a distingue de uma simples loja online de mercearia. Para concretizar esse potencial, será crucial avançar nos seguintes pontos críticos:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Validação legal e fiscal: Definir e implementar sistemas de faturação oficiais, termos de uso e políticas de privacidade alinhadas ao RGPD, bem como rotulagem adequada para mel."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Segurança e testes: Realizar auditorias de segurança, testes de usabilidade e simulações de carga para garantir confiança e estabilidade em ambiente de produção."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Infraestrutura de produção: Migrar o site para um servidor dedicado ou serviço de cloud escalável, registrando domínio próprio e configurando certificados SSL."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Integração logística: Estabelecer parcerias com transportadoras para automatizar envios, bem como processos para gestão de stock e embalagens."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Captação de apicultores: Expandir a rede de produtores parceiros, incentivando adesões através de campanhas de marketing e benefícios claros (novos canais de venda)."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Marketing digital: Desenvolver estratégias de SEO, redes sociais e campanhas publicitárias que destaquem a autenticidade e qualidade do mel português, visando atrair clientes e aumentar a notoriedade da marca."
+    },
+    {
+      "style": "Normal",
+      "text": "Em síntese, embora o projeto ainda seja académico, a Hexomel tem potencial para preencher uma lacuna de mercado, oferecendo uma plataforma especializada que alia comércio eletrónico, conteúdo e comunidade num mesmo espaço. Com os ajustes adequados, poderá posicionar-se como referência no nicho de mel artesanal, focando-se em atributos de experiência e confiança mais do que em competição de preço puro."
+    },
+    {
+      "style": "Heading 2",
+      "text": "3.6. Ferramentas"
+    },
+    {
+      "style": "Normal",
+      "text": "O desenvolvimento da Hexomel exigiu um conjunto amplo de ferramentas, selecionadas para responder a necessidades concretas do projeto: interface, lógica de servidor, persistência de dados, autenticação, pagamentos, envio de emails, testes, documentação e experiência do utilizador."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.1. Visual Studio Code"
+    },
+    {
+      "style": "Normal",
+      "text": "Editor principal, usado para organizar HTML, CSS, JS, backend e documentação."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.2. HTML5"
+    },
+    {
+      "style": "Normal",
+      "text": "Estrutura semântica das páginas públicas, autenticação, checkout, perfil, admin e apicultor."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.3. JavaScript ES6+"
+    },
+    {
+      "style": "Normal",
+      "text": "DOM dinâmico, fetch API, carrinho, filtros, comunidade, dashboards e estados de carregamento."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.4. Vite"
+    },
+    {
+      "style": "Normal",
+      "text": "Servidor de desenvolvimento e organização modular dos assets e scripts frontend."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.5. Node.js"
+    },
+    {
+      "style": "Normal",
+      "text": "Execução do servidor, lógica de negócio, autenticação, pagamentos e envio de emails."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.6. MySQL"
+    },
+    {
+      "style": "Normal",
+      "text": "Armazenamento relacional de clientes, produtos, encomendas, itens, avaliações, workshops e interações."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.6.7. npm"
+    },
+    {
+      "style": "Normal",
+      "text": "3.7. Bibliotecas e Dependências"
+    },
+    {
+      "style": "Normal",
+      "text": "Para além das linguagens e ferramentas principais, o projeto Hexomel utiliza várias bibliotecas e dependências que permitiram acelerar o desenvolvimento, melhorar a segurança, enriquecer a interface e aproximar a aplicação de um cenário real de comércio eletrónico."
+    },
+    {
+      "style": "Normal",
+      "text": "Estas dependências estão organizadas em três zonas: dependências do frontend, dependências do backend e dependências auxiliares de desenvolvimento/documentação. A escolha de cada biblioteca foi feita com base na sua utilidade prática dentro do projeto, evitando dependências sem função concreta."
+    },
+    {
+      "style": "Normal",
+      "text": "No frontend, as bibliotecas estão ligadas sobretudo à experiência do utilizador, à construção do projeto e à componente multimédia."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.1. SweetAlert2"
+    },
+    {
+      "style": "Normal",
+      "text": "Modais de erro, sucesso, confirmação, sessão expirada, checkout, eliminações e feedback ao utilizador."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.2. Three.js"
+    },
+    {
+      "style": "Normal",
+      "text": "Visualização 3D do frasco de mel na página de curiosidades, com materiais físicos, luzes e alteração visual conforme a origem botânica."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.3. Chart.js"
+    },
+    {
+      "style": "Normal",
+      "text": "Gráficos de vendas, categorias, estados de encomenda, crescimento de utilizadores, produtos mais vendidos e analytics comportamental."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.4. Google Identity Services"
+    },
+    {
+      "style": "Normal",
+      "text": "Botão e fluxo de login Google nas páginas públicas e de autenticação."
+    },
+    {
+      "style": "Normal",
+      "text": "No backend, as bibliotecas têm maior foco em segurança, comunicação com a base de dados, rotas da API, pagamentos, emails e uploads."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.5. Express.js"
+    },
+    {
+      "style": "Normal",
+      "text": "Criação das rotas do servidor para autenticação, produtos, encomendas, comunidade, workshops, pagamentos e administração."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.6. Bcryptjs"
+    },
+    {
+      "style": "Normal",
+      "text": "Hashing de passwords antes de serem guardadas e comparação segura no login."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.7. Nodemailer"
+    },
+    {
+      "style": "Normal",
+      "text": "Envio de códigos OTP 2FA, notificações e recibos em HTML através de SMTP."
+    },
+    {
+      "style": "Titulo 3",
+      "text": "3.7.8. Stripe"
+    },
+    {
+      "style": "Normal",
+      "text": "Criação de sessões Stripe Checkout, consulta de pagamentos e preparação para webhooks."
+    },
+    {
+      "style": "Normal",
+      "text": "Para além das bibliotecas externas, o projeto também possui módulos internos criados de raiz. Estes módulos funcionam como pequenas bibliotecas próprias, reutilizadas em várias páginas para manter o código mais organizado."
+    },
+    {
+      "style": "Normal",
+      "text": "Também existem dependências auxiliares usadas no desenvolvimento e na documentação do projeto."
+    },
+    {
+      "style": "Normal",
+      "text": "A utilização destas bibliotecas demonstra que a Hexomel não é apenas uma página estática, mas uma aplicação web completa. Cada dependência resolve uma necessidade real: segurança, pagamentos, emails, uploads, gráficos, experiência visual, desenvolvimento local ou organização interna do código."
+    },
+    {
+      "style": "Normal",
+      "text": "O frontend usa bibliotecas para melhorar a experiência visual e interativa do utilizador."
+    },
+    {
+      "style": "Normal",
+      "text": "O backend usa bibliotecas para garantir segurança, persistência, autenticação e integração com serviços externos."
+    },
+    {
+      "style": "Normal",
+      "text": "Os módulos internos reduzem repetição de código e tornam a aplicação mais organizada."
+    },
+    {
+      "style": "Normal",
+      "text": "As dependências de desenvolvimento facilitam testes, execução local e documentação."
+    },
+    {
+      "style": "Normal",
+      "text": "Assim, as bibliotecas e dependências escolhidas contribuem diretamente para a qualidade final da plataforma, mantendo equilíbrio entre código próprio, aprendizagem técnica e utilização de soluções profissionais já consolidadas no ecossistema JavaScript."
+    },
+    {
+      "style": "Normal",
+      "text": "3.8. Abordagem Histórica"
+    },
+    {
+      "style": "Normal",
+      "text": "A evolução das ferramentas utilizadas no projeto acompanha a própria evolução da web. Inicialmente, os websites eram constituídos por páginas HTML estáticas, com pouca interação e sem ligação dinâmica a bases de dados. O CSS veio separar apresentação de conteúdo, permitindo criar interfaces mais organizadas e visualmente consistentes."
+    },
+    {
+      "style": "Normal",
+      "text": "Com a evolução do JavaScript, a web passou a permitir experiências mais próximas de aplicações. No caso da Hexomel, esta evolução está presente na utilização de JavaScript moderno, módulos ES6, Fetch API, renderização dinâmica, skeleton loaders, filtros em tempo real e navegação com View Transitions API."
+    },
+    {
+      "style": "Normal",
+      "text": "No backend, Node.js representou uma mudança importante ao permitir usar JavaScript também no servidor. Esta escolha simplifica a comunicação entre frontend e backend, porque ambas as camadas partilham a mesma linguagem base. O Express.js complementa esta abordagem ao fornecer uma estrutura clara para rotas, middlewares e APIs REST."
+    },
+    {
+      "style": "Normal",
+      "text": "As bases de dados relacionais, como MySQL, continuam fundamentais em sistemas comerciais. Mesmo com a evolução de bases de dados NoSQL, um projeto de e-commerce beneficia de tabelas relacionais, chaves estrangeiras, consistência e transações, especialmente quando lida com utilizadores, encomendas, produtos e pagamentos."
+    },
+    {
+      "style": "Normal",
+      "text": "Mais recentemente, o desenvolvimento web passou a integrar serviços externos especializados. Em vez de criar dos zero sistemas complexos de pagamentos, autenticação social ou envio de email, é comum usar APIs profissionais como Stripe, Google OAuth e Gmail SMTP. A Hexomel segue essa lógica, aproximando o projeto de práticas reais de mercado."
+    },
+    {
+      "style": "Normal",
+      "text": "3.9. Justificação da Utilização das Ferramentas"
+    },
+    {
+      "style": "Normal",
+      "text": "A escolha das ferramentas foi feita com base em três critérios: adequação técnica, aprendizagem e proximidade com o mundo profissional. A opção por HTML, CSS e JavaScript puro permitiu compreender a base da web sem depender totalmente de frameworks como React ou Vue. Esta decisão deu maior controlo sobre a estrutura, performance e comportamento da interface."
+    },
+    {
+      "style": "Normal",
+      "text": "O Vite foi utilizado para tornar o desenvolvimento mais rápido e organizado, permitindo trabalhar com módulos modernos e assets de forma eficiente. No design, o CSS foi centralizado em ficheiros como modern.css, skeleton.css e estilos específicos por página, garantindo uma identidade visual consistente."
+    },
+    {
+      "style": "Normal",
+      "text": "No backend, Node.js e Express.js foram escolhidos por serem adequados à criação de APIs REST e por se integrarem naturalmente com JavaScript no frontend. Esta combinação permitiu implementar autenticação, roles, validações, checkout, comunidade, dashboard, uploads e comunicação com a base de dados."
+    },
+    {
+      "style": "Normal",
+      "text": "O MySQL foi escolhido pela robustez e pela clareza do modelo relacional. Num e-commerce, a relação entre clientes, produtos, encomendas, itens de encomenda, avaliações, workshops e interações exige consistência. O uso de MySQL Workbench também contribuiu para uma gestão mais profissional da base de dados."
+    },
+    {
+      "style": "Normal",
+      "text": "As ferramentas de segurança foram essenciais. O bcryptjs protege passwords através de hashing; o JWT gere sessões autenticadas; o Google OAuth facilita login seguro; e o 2FA por email acrescenta uma camada adicional antes da compra. Esta combinação reforça a credibilidade da plataforma."
+    },
+    {
+      "style": "Normal",
+      "text": "As integrações externas aproximam a Hexomel de uma aplicação real. O Stripe permite pagamentos seguros; o Nodemailer permite emails transacionais; o Ngrok facilita testes com serviços externos; o Chart.js transforma dados em gráficos úteis; e o Three.js acrescenta uma componente multimédia avançada ligada à origem e aparência do mel."
+    },
+    {
+      "style": "Normal",
+      "text": "No conjunto, as ferramentas escolhidas permitiram construir um projeto tecnicamente completo, visualmente cuidado e coerente com o curso de Informática e Tecnologias de Multimédia. A Hexomel demonstra competências de programação, design, base de dados, segurança, integração de serviços, documentação e pensamento crítico sobre mercado."
+    },
+    {
+      "style": "Normal",
+      "text": "3.6 Evolução da Base de Dados"
+    },
+    {
+      "style": "Normal",
+      "text": "A base de dados foi uma das partes que mais evoluiu durante o desenvolvimento da Hexomel. A primeira versão, apresentada no ficheiro antigo Relatorio de pap.docx, representava sobretudo aquilo que eu pensava inicialmente construir: uma loja online com entidades principais como Cliente, Produto, Encomenda, Categoria, Stock e Fatura."
+    },
+    {
+      "style": "Normal",
+      "text": "Essa primeira abordagem foi importante porque serviu como ponto de partida conceptual. O objetivo inicial era garantir que a loja tivesse uma estrutura mínima para registar produtos, clientes e encomendas. No entanto, à medida que o projeto cresceu, percebi que uma plataforma real precisava de muito mais detalhe para suportar funcionalidades como carrinho persistente, histórico de produtos comprados, perfis de apicultor, avaliações, favoritos, workshops, comunidade e analytics."
+    },
+    {
+      "style": "Caption",
+      "text": "Figura 17. Primeira versão/modelo inicial da base de dados da Hexomel"
+    },
+    {
+      "style": "Normal",
+      "text": "3.6.1 Primeira Versão Pensada"
+    },
+    {
+      "style": "Normal",
+      "text": "A base de dados estava descrita de forma mais teórica e simples. A modelação apresentava relações fundamentais de uma loja online: um cliente podia fazer várias encomendas, uma encomenda podia conter vários produtos, uma categoria podia agrupar vários produtos e cada produto teria controlo de stock."
+    },
+    {
+      "style": "Normal",
+      "text": "Cliente: entidade responsável por guardar dados do utilizador e associar encomendas."
+    },
+    {
+      "style": "Normal",
+      "text": "Produto: entidade central do catálogo, com preço, descrição e stock."
+    },
+    {
+      "style": "Normal",
+      "text": "Categoria: organização básica dos produtos da loja."
+    },
+    {
+      "style": "Normal",
+      "text": "Encomenda: registo da compra realizada por um cliente."
+    },
+    {
+      "style": "Normal",
+      "text": "Stock/Fatura: conceitos previstos inicialmente para controlo de quantidade e comprovativo de compra."
+    },
+    {
+      "style": "Normal",
+      "text": "Esta versão era suficiente para imaginar uma loja online básica, mas ainda não respondia totalmente às necessidades que surgiram durante a implementação prática da Hexomel."
+    },
+    {
+      "style": "Normal",
+      "text": "3.6.2 Nova Versão Implementada"
+    },
+    {
+      "style": "Normal",
+      "text": "A versão final da base de dados passou a ser mais completa e próxima de um sistema comercial. Em vez de guardar apenas produtos e encomendas de forma simples, o modelo atual separa responsabilidades, cria tabelas intermédias, melhora a integridade dos dados e suporta funcionalidades avançadas do projeto."
+    },
+    {
+      "style": "Caption",
+      "text": "Figura 18. Versão final do esquema relacional da base de dados Hexomel"
+    },
+    {
+      "style": "Normal",
+      "text": "3.6.3 Comparação e Melhorias Realizadas"
+    },
+    {
+      "style": "Normal",
+      "text": "A maior melhoria foi a passagem de um modelo pensado apenas para uma loja online simples para um modelo relacional capaz de sustentar uma plataforma completa. A versão antiga tinha uma função principalmente conceptual; a versão nova foi construída de acordo com problemas reais encontrados durante o desenvolvimento."
+    },
+    {
+      "style": "Normal",
+      "text": "A base de dados deixou de guardar apenas entidades principais e passou a representar fluxos reais de compra."
+    },
+    {
+      "style": "Normal",
+      "text": "A relação muitos-para-muitos entre encomendas e produtos foi resolvida com item_encomenda."
+    },
+    {
+      "style": "Normal",
+      "text": "O preço unitário passou a ser guardado no momento da compra, evitando incoerências históricas."
+    },
+    {
+      "style": "Normal",
+      "text": "Foram adicionados papéis de utilizador para suportar cliente, apicultor e administrador."
+    },
+    {
+      "style": "Normal",
+      "text": "O catálogo ficou mais rico com categoria, origem, tags, estado e associação ao apicultor."
+    },
+    {
+      "style": "Normal",
+      "text": "Foram adicionadas funcionalidades de comunidade, avaliações, favoritos e analytics."
+    },
+    {
+      "style": "Normal",
+      "text": "A base de dados passou a apoiar diretamente segurança, gestão, dashboards e experiência do utilizador."
+    },
+    {
+      "style": "Normal",
+      "text": "Assim, a nova base de dados representa uma evolução técnica significativa. A primeira versão mostrou a intenção inicial; a versão final demonstra a adaptação do projeto às funcionalidades que realmente foram implementadas."
+    },
+    {
+      "style": "Heading 1",
+      "text": "2. Capítulo…"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem."
+    },
+    {
+      "style": "Heading 2",
+      "text": "2.1. Subcapítulo…"
+    },
+    {
+      "style": "Normal",
+      "text": "Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis."
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Engloba o desenvolvimento sequencial dos temas, onde se desenvolve a descrição, a análise, a sistematização e a explicação da temática."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Pode ser subdividida em partes, capítulos, subcapítulos, de acordo com as exigências do tema e as opções do autor."
+    },
+    {
+      "style": "Normal",
+      "text": "As tabelas devem ser numeradas com algarismos arábicos (1, 2, 3, …). O título deve ser escrito no topo, centrado (Arial Narrow, 9 pt). Os cabeçalhos das tabelas devem ser descritivos, embora breves. Sempre que possível, as tabelas devem aparecer referenciadas no corpo do texto. Por exemplo:"
+    },
+    {
+      "style": "Normal",
+      "text": "«A Tabela 1 apresenta as gerações de evolução da Tecnologia …»"
+    },
+    {
+      "style": "Caption",
+      "text": "Tabela 4. As várias gerações de evolução da tecnologia"
+    },
+    {
+      "style": "Normal",
+      "text": "As figuras devem ser numeradas com algarismos arábicos (1, 2, 3, …). A legenda deve ser colocada a seguir à imagem, centrada (Arial Narrow, 9 pt). As legendas das figuras devem ser descritivas, embora breves. Sempre que possível, as figuras devem aparecer referenciadas no corpo do texto. Por exemplo:"
+    },
+    {
+      "style": "Normal",
+      "text": "«O eletrocardiógrafo (Figura 1) é um aparelho…»"
+    },
+    {
+      "style": "Caption",
+      "text": "Figura 19. Exemplo de um eletrocardiógrafo"
+    },
+    {
+      "style": "Heading 1",
+      "text": "Conclusão"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem."
+    },
+    {
+      "style": "Normal",
+      "text": "Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis."
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Pode ser apresentada sob a forma parcial, por exemplo no final de cada capítulo. Tal não invalida a existência de uma conclusão geral que não deve repetir as conclusões parcelares já apresentadas ao longo do trabalho."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "É elaborada na conclusão dos estudos, representa a síntese do trabalho, sendo clara e breve (máximo 1/10 das páginas do corpo do trabalho)."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Está intimamente relacionada com a introdução fornecendo respostas às questões aí levantadas, apresentando as conclusões e os resultados."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Contém um balanço dos objetivos (referindo os que foram alcançados e os que ficaram por cumprir), bem como das dúvidas, das indicações e dos constrangimentos surgidos ao longo da sua elaboração."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Inclui as consequências dos resultados para a resolução dos problemas e as perspetivas para investigações futuras."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Não se usam citações e nem referências bibliográficas."
+    },
+    {
+      "style": "Heading 1",
+      "text": "Referências bibliográficas"
+    },
+    {
+      "style": "Normal",
+      "text": "Almeida, A. C. P. de. (2019). Implementação de uma academia de conhecimento em contexto industrial: Uma proposta metodológica [Tese de Mestrado, Universidade de Aveiro]. Repositório Institucional da Universidade de Aveiro. https://ria.ua.pt/handle/10773/26809"
+    },
+    {
+      "style": "Normal",
+      "text": "Ashwin, P. (2006). Changing higher education: The development of learning and teaching. Routledge."
+    },
+    {
+      "style": "Normal",
+      "text": "Barlow, D. H. (2014). Clinical handbook of psychological disorders: A step-by-step treatment manual. The Guilford Press. http://books.google.pt/books?id=FCTyAgAAQBAJ"
+    },
+    {
+      "style": "Normal",
+      "text": "Craik, F., & Lockhart, R. (1972). Levels of processing: A framework for memory research. Journal of Verbal Learning and Verbal Behavior, 11(6), 671-684. https://d0i.0rg/l 0.1016/S0022- 5371(72)80001-X"
+    },
+    {
+      "style": "Normal",
+      "text": "Despacho n.° 17169/2011 do Ministério da Educação e Ciência. (2011). Diário da República: II série, n.° 245. https://dre.pt/application/file/1010956"
+    },
+    {
+      "style": "Normal",
+      "text": "Giovanetti, F. (2019, novembro 16). Why we are so obsessed with personality types. Medium. https://medium.com/the-business-of-wellness/why-we-are- so-obsessed-with-personality-types-577450f9aee9"
+    },
+    {
+      "style": "Normal",
+      "text": "Universidade de Aveiro. (2020). Apoio ao ensino. https://www.ua.pt/pt/apoio- ensino"
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Para a realização da lista de referências bibliográficas devem ser seguidas as seguintes indicações:"
+    },
+    {
+      "style": "List Paragraph",
+      "text": "A lista de referências bibliográficas deve figurar no final do documento, antes do glossário e dos apêndices/anexos (caso existam), e respeitar um formato apresentação (normas APA)."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "A lista de referências bibliográficas deve ser organizada por ordem alfabética do apelido do primeiro autor de cada uma das referências."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Apenas figuram na lista de referências bibliográficas os documentos citados ao longo do texto, a não ser que a sua menção seja de particular importância. Neste caso faz-se a distinção entre Bibliografia (lista de todas as fontes consultadas durante o trabalho de pesquisa) e Referências bibliográficas (lista de fontes citadas no relatório)."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Todas as entradas de citações no texto devem corresponder a uma referência bibliográfica."
+    },
+    {
+      "style": "List Paragraph",
+      "text": "Não devem referir-se dicionários a não ser que sejam especializados."
+    },
+    {
+      "style": "Heading 1",
+      "text": "Glossário"
+    },
+    {
+      "style": "Normal",
+      "text": "Lorem: Ipsum dolor sit amet, consectetuer adipiscing elit."
+    },
+    {
+      "style": "Normal",
+      "text": "Maecenas: Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna."
+    },
+    {
+      "style": "Normal",
+      "text": "Pellentesque: Habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas."
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "Relação em ordem alfabética de palavras ou expressões técnicas de uso restrito, acompanhadas das respetivas definições."
+    },
+    {
+      "style": "Normal",
+      "text": "Não é obrigatório inserir."
+    },
+    {
+      "style": "Heading 1",
+      "text": "Apêndices/Anexos"
+    },
+    {
+      "style": "Normal",
+      "text": "— Apagar —"
+    },
+    {
+      "style": "Normal",
+      "text": "O apêndice funciona como um texto de prolongamento da obra e é da autoria do autor da obra."
+    },
+    {
+      "style": "Normal",
+      "text": "O anexo é a compilação de dados, gráficos, ilustrações e outros elementos que não são da responsabilidade do autor da obra."
+    },
+    {
+      "style": "Normal",
+      "text": "Não é obrigatório inserir."
+    }
+  ],
+  "tables": [
+    [
+      [
+        "Título do Projeto: Hexomel"
+      ]
+    ],
+    [
+      [
+        "Objetivos: Desenvolver um website de vendas de mel, produzido pela família, com gestão fácil de produtos, pagamentos online e exposição da marca."
+      ]
+    ],
+    [
+      [
+        "Descrição: O projeto consiste na criação de um site para ajudar o meu pai a vender mel online. Atualmente, as vendas são feitas principalmente de porta em porta, o que limita o número de clientes e a visibilidade da marca. Com o novo site, queremos facilitar as encomendas, chegar a mais pessoas e expandir a marca do nosso mel."
+      ]
+    ],
+    [
+      [
+        "Aspeto",
+        "Versão Inicial (Empresa do Pai)",
+        "Versão Final (Hexomel)"
+      ],
+      [
+        "Objetivo",
+        "Vender mel da família online",
+        "Plataforma de e-commerce completa para mel português artesanal"
+      ],
+      [
+        "Público-alvo",
+        "Clientes locais do meu pai",
+        "Consumidores, apicultores e administradores"
+      ],
+      [
+        "Stack backend",
+        "PHP",
+        "Node.js + Express.js (API REST)"
+      ],
+      [
+        "Base de dados",
+        "5 tabelas simples, sem relações",
+        "15+ tabelas com FK, CASCADE, JSON nativo e migrações automáticas"
+      ],
+      [
+        "Autenticação",
+        "Sem login",
+        "JWT + Google OAuth 2.0 + 2FA por email (OTP)"
+      ],
+      [
+        "Perfis",
+        "Sem diferenciação",
+        "3 roles: client, beekeeper, admin"
+      ],
+      [
+        "Catálogo",
+        "Produtos estáticos no HTML",
+        "Catálogo dinâmico com filtros, pesquisa, paginação e slugs SEO"
+      ],
+      [
+        "Carrinho",
+        "Inexistente",
+        "Dual: localStorage (offline) + MySQL (persistente)"
+      ],
+      [
+        "Pagamentos",
+        "Inexistente",
+        "Stripe Checkout com recibos HTML por email"
+      ],
+      [
+        "Segurança",
+        "Nenhuma",
+        "bcrypt, JWT, roles, middleware, 2FA, verificação de email"
+      ],
+      [
+        "Comunidade",
+        "Inexistente",
+        "Fórum Q&A com votos, melhor resposta e moderação"
+      ],
+      [
+        "Workshops",
+        "Listagem estática",
+        "CRUD completo com reservas, vagas e aprovação admin"
+      ],
+      [
+        "Dashboard admin",
+        "Inexistente",
+        "KPIs, Chart.js, gestão de utilizadores e produtos"
+      ],
+      [
+        "Visualização 3D",
+        "Inexistente",
+        "Three.js com materiais PBR por tipo de mel"
+      ],
+      [
+        "Analytics",
+        "Inexistente",
+        "Tracking comportamental com JSON (page views, funnel)"
+      ],
+      [
+        "i18n",
+        "Apenas português",
+        "Sistema PT/EN com data-i18n e persistência"
+      ],
+      [
+        "UX/Design",
+        "Básico e funcional",
+        "Premium: glassmorphism, skeleton loaders, View Transitions, toasts, animações"
+      ],
+      [
+        "Emails",
+        "Inexistente",
+        "Nodemailer: OTP, verificação, recibos automáticos"
+      ],
+      [
+        "Build tool",
+        "Nenhuma",
+        "Vite (HMR, ES modules, build otimizado)"
+      ],
+      [
+        "Nº de ficheiros JS",
+        "~2-3",
+        "28+ módulos especializados"
+      ],
+      [
+        "Nº de páginas HTML",
+        "~3-4",
+        "18+ páginas com funcionalidades distintas"
+      ]
+    ],
+    [
+      [
+        "Camada",
+        "Tecnologia",
+        "Função no Projeto"
+      ],
+      [
+        "Frontend",
+        "HTML5, CSS3, JS ES6+",
+        "Estrutura semântica, design system com variáveis, lógica de interação modular"
+      ],
+      [
+        "Build",
+        "Vite",
+        "Servidor de dev com HMR, suporte a módulos ES6, build otimizado para produção"
+      ],
+      [
+        "Backend",
+        "Node.js + Express.js",
+        "API REST com 80+ rotas, middleware de auth e roles, lógica de negócio"
+      ],
+      [
+        "Base de dados",
+        "MySQL 8.0 (InnoDB)",
+        "15+ tabelas, FK, CASCADE, JSON nativo, pool assíncrono"
+      ],
+      [
+        "Autenticação",
+        "JWT + bcrypt + Google OAuth",
+        "Tokens com expiração, hash de passwords, login social"
+      ],
+      [
+        "2FA",
+        "Nodemailer (SMTP)",
+        "Códigos OTP com expiração, verificação de email no registo"
+      ],
+      [
+        "Pagamentos",
+        "Stripe API",
+        "Checkout seguro, recibos automáticos, suporte local/produção"
+      ],
+      [
+        "3D",
+        "Three.js + OrbitControls",
+        "Visualização WebGL com materiais PBR por tipo de mel"
+      ],
+      [
+        "Gráficos",
+        "Chart.js",
+        "Dashboards com gráficos de vendas, categorias e crescimento"
+      ],
+      [
+        "UI/UX",
+        "Bootstrap 5, SweetAlert2",
+        "Grid responsivo, modais premium, feedback visual"
+      ],
+      [
+        "Uploads",
+        "Multer",
+        "Imagens de produtos, avatares e documentos de upgrade"
+      ]
+    ],
+    [
+      [
+        "Indicador",
+        "Valor"
+      ],
+      [
+        "Páginas HTML no frontend",
+        "18+"
+      ],
+      [
+        "Módulos JavaScript no frontend",
+        "28+"
+      ],
+      [
+        "Ficheiros CSS dedicados",
+        "9"
+      ],
+      [
+        "Linhas de código no server.js (backend)",
+        "6.000+"
+      ],
+      [
+        "Rotas da API REST",
+        "80+"
+      ],
+      [
+        "Tabelas na base de dados",
+        "15+"
+      ],
+      [
+        "Dependências npm (frontend + backend)",
+        "15+"
+      ],
+      [
+        "Perfis de utilizador",
+        "3 (cliente, apicultor, admin)"
+      ],
+      [
+        "Idiomas suportados",
+        "2 (PT, EN)"
+      ],
+      [
+        "Gateway de pagamento integrado",
+        "Stripe"
+      ],
+      [
+        "Motor 3D utilizado",
+        "Three.js (WebGL)"
+      ]
+    ],
+    [
+      [
+        "Dimensão",
+        "Aplicação no projeto",
+        "Exemplos concretos"
+      ],
+      [
+        "Comercial",
+        "Venda online e gestão de compras.",
+        "Loja, filtros, carrinho, checkout, Stripe, histórico de encomendas."
+      ],
+      [
+        "Educativa",
+        "Explicação do produto e da apicultura.",
+        "Curiosidades do mel, origem botânica, visualização 3D, referências científicas."
+      ],
+      [
+        "Comunitária",
+        "Interação entre utilizadores e produtores.",
+        "Sistema Q&A, respostas de apicultores, votos, moderação e melhor resposta."
+      ],
+      [
+        "Administrativa",
+        "Gestão interna e análise de dados.",
+        "Dashboard, KPIs, Chart.js, gestão de produtos, utilizadores e upgrades."
+      ]
+    ],
+    [
+      [
+        "Forças Especialização no mel português; identidade visual premium; e-commerce completo; perfis de cliente, apicultor e administrador; checkout com Stripe; comunidade Q&A; analytics comportamental; conteúdos educativos sobre apicultura.",
+        "Fraquezas Projeto académico ainda sem operação real; catálogo dependente de adesão de apicultores; manutenção contínua de APIs externas; necessidade de validação legal para produção; ausência de equipa comercial/logística permanente."
+      ],
+      [
+        "Oportunidades Crescimento do comércio eletrónico; valorização de produtos locais e naturais; procura por rastreabilidade; expansão para workshops e turismo apícola; internacionalização PT/EN; parcerias regionais com produtores.",
+        "Ameaças Concorrência de marketplaces e supermercados online; custos de alojamento, pagamentos e manutenção; resistência de produtores à digitalização; exigências de RGPD, faturação e segurança; alterações em serviços como Stripe ou Google."
+      ]
+    ],
+    [
+      [
+        "Critério",
+        "Hexomel",
+        "Soluções estabelecidas"
+      ],
+      [
+        "Especialização",
+        "Foco total em mel português, apicultores, origem e comunidade.",
+        "Catálogos amplos onde o mel é apenas mais um produto."
+      ],
+      [
+        "Controlo técnico",
+        "Código, base de dados e fluxos desenvolvidos de raiz.",
+        "Maior dependência de templates, plugins ou regras da plataforma."
+      ],
+      [
+        "Escala inicial",
+        "Projeto académico com crescimento gradual.",
+        "Maior tráfego, suporte e infraestrutura comercial."
+      ],
+      [
+        "Experiência",
+        "UX premium adaptada ao produto, com 3D, Q&A, workshops e conteúdo educativo.",
+        "Experiência padronizada e menos orientada ao setor apícola."
+      ],
+      [
+        "Manutenção",
+        "Exige conhecimento técnico para evoluir e corrigir.",
+        "Muitas tarefas são abstraídas pela plataforma."
+      ]
+    ],
+    [
+      [
+        "Ferramenta/Tecnologia",
+        "Área",
+        "Utilização específica na Hexomel"
+      ],
+      [
+        "Visual Studio Code",
+        "Desenvolvimento",
+        "Editor principal, usado para organizar HTML, CSS, JS, backend e documentação."
+      ],
+      [
+        "HTML5",
+        "Frontend",
+        "Estrutura semântica das páginas públicas, autenticação, checkout, perfil, admin e apicultor."
+      ],
+      [
+        "CSS3 / modern.css",
+        "Design system",
+        "Paleta Golden & White, componentes reutilizáveis, responsividade, badges, tabelas e modais."
+      ],
+      [
+        "JavaScript ES6+",
+        "Interatividade",
+        "DOM dinâmico, fetch API, carrinho, filtros, comunidade, dashboards e estados de carregamento."
+      ],
+      [
+        "Vite",
+        "Build/frontend",
+        "Servidor de desenvolvimento e organização modular dos assets e scripts frontend."
+      ],
+      [
+        "Node.js",
+        "Backend",
+        "Execução do servidor, lógica de negócio, autenticação, pagamentos e envio de emails."
+      ],
+      [
+        "Express.js",
+        "API REST",
+        "Rotas para produtos, clientes, encomendas, comunidade, workshops, admin e autenticação."
+      ],
+      [
+        "MySQL 8.0",
+        "Base de dados",
+        "Armazenamento relacional de clientes, produtos, encomendas, itens, avaliações, workshops e interações."
+      ],
+      [
+        "MySQL Workbench",
+        "Gestão BD",
+        "Modelação, visualização e execução de queries na base de dados hexomel."
+      ],
+      [
+        "bcryptjs",
+        "Segurança",
+        "Hashing de passwords antes de serem guardadas na base de dados."
+      ],
+      [
+        "JWT",
+        "Sessões",
+        "Tokens de autenticação e proteção de rotas conforme o papel do utilizador."
+      ],
+      [
+        "Google OAuth",
+        "Login social",
+        "Entrada por conta Google para reduzir fricção no registo/login."
+      ],
+      [
+        "Nodemailer/Gmail SMTP",
+        "Emails",
+        "Envio de OTP 2FA, notificações e recibos em HTML com logótipo incorporado."
+      ],
+      [
+        "Stripe Checkout",
+        "Pagamentos",
+        "Criação de sessões de pagamento seguras e ligação a fluxo real de e-commerce."
+      ],
+      [
+        "Ngrok",
+        "Testes externos",
+        "Exposição temporária do localhost para testar imagens e checkout com Stripe."
+      ],
+      [
+        "Chart.js",
+        "Analytics",
+        "Gráficos do dashboard: receita, categorias, estados, crescimento, top produtos e parceiros."
+      ],
+      [
+        "Three.js",
+        "3D/interatividade",
+        "Visualização interativa do mel e simulação de diferenças de cor/origem botânica."
+      ],
+      [
+        "SweetAlert2",
+        "UX",
+        "Alertas e confirmações visuais para erros, eliminações, sessão expirada e ações críticas."
+      ],
+      [
+        "Multer",
+        "Uploads",
+        "Gestão de imagens, avatares, produtos e documentos de upgrade para apicultor."
+      ],
+      [
+        "Git/GitHub",
+        "Versionamento",
+        "Controlo de versões, evolução do código e recuperação de alterações."
+      ]
+    ],
+    [
+      [
+        "Biblioteca",
+        "Área",
+        "Aplicação na Hexomel"
+      ],
+      [
+        "SweetAlert2",
+        "Interface/UX",
+        "Modais de erro, sucesso, confirmação, sessão expirada, checkout, eliminações e feedback ao utilizador."
+      ],
+      [
+        "Three.js",
+        "3D/WebGL",
+        "Visualização 3D do frasco de mel na página de curiosidades, com materiais físicos, luzes e alteração visual conforme a origem botânica."
+      ],
+      [
+        "OrbitControls",
+        "Interação 3D",
+        "Permite ao utilizador interagir com a câmara da cena 3D de forma mais natural."
+      ],
+      [
+        "Chart.js",
+        "Dashboards",
+        "Gráficos de vendas, categorias, estados de encomenda, crescimento de utilizadores, produtos mais vendidos e analytics comportamental."
+      ],
+      [
+        "Google Identity Services",
+        "Autenticação",
+        "Botão e fluxo de login Google nas páginas públicas e de autenticação."
+      ],
+      [
+        "Google Fonts",
+        "Tipografia",
+        "Utilização da fonte Outfit para reforçar a identidade visual premium da plataforma."
+      ]
+    ],
+    [
+      [
+        "Biblioteca",
+        "Área",
+        "Aplicação na Hexomel"
+      ],
+      [
+        "Express.js",
+        "API REST",
+        "Criação das rotas do servidor para autenticação, produtos, encomendas, comunidade, workshops, pagamentos e administração."
+      ],
+      [
+        "MySQL2",
+        "Base de dados",
+        "Ligação à base de dados MySQL através de pool de conexões e queries assíncronas com promises."
+      ],
+      [
+        "bcryptjs",
+        "Segurança",
+        "Hashing de passwords antes de serem guardadas e comparação segura no login."
+      ],
+      [
+        "jsonwebtoken",
+        "Sessões/JWT",
+        "Criação e validação de tokens para proteger rotas e identificar o papel do utilizador."
+      ],
+      [
+        "google-auth-library",
+        "OAuth",
+        "Validação do token recebido no login com conta Google."
+      ],
+      [
+        "Nodemailer",
+        "Email",
+        "Envio de códigos OTP 2FA, notificações e recibos em HTML através de SMTP."
+      ],
+      [
+        "Multer",
+        "Uploads",
+        "Receção de imagens de produtos, avatares e documentos enviados em pedidos de upgrade para apicultor."
+      ],
+      [
+        "Stripe",
+        "Pagamentos",
+        "Criação de sessões Stripe Checkout, consulta de pagamentos e preparação para webhooks."
+      ],
+      [
+        "dotenv",
+        "Configuração",
+        "Leitura de variáveis de ambiente, como secrets, credenciais, portas e chaves de APIs."
+      ],
+      [
+        "cors",
+        "Comunicação",
+        "Controlo dos pedidos entre frontend e backend durante o desenvolvimento e integração."
+      ],
+      [
+        "compression",
+        "Performance",
+        "Compressão das respostas HTTP para reduzir tráfego e melhorar tempos de resposta."
+      ]
+    ],
+    [
+      [
+        "Módulo interno",
+        "Localização",
+        "Função"
+      ],
+      [
+        "api.js",
+        "frontend/src",
+        "Centraliza API_URL, verificação do backend e parsing seguro de respostas JSON."
+      ],
+      [
+        "auth.js",
+        "frontend/src",
+        "Gere login, registo, Google Sign-In, sessão do utilizador e atualização da navegação."
+      ],
+      [
+        "cart.js",
+        "frontend/src",
+        "Controla carrinho, localStorage, sincronização e ações de compra."
+      ],
+      [
+        "analytics.js",
+        "frontend/src",
+        "Regista page views, product views, add to cart e etapas do checkout funnel."
+      ],
+      [
+        "skeleton.js",
+        "frontend/src",
+        "Gera placeholders de carregamento para loja, comunidade, workshops e estados vazios/erro."
+      ],
+      [
+        "i18n.js",
+        "frontend/src",
+        "Sistema de tradução PT/EN com data-i18n e persistência da língua no localStorage."
+      ],
+      [
+        "toast.js",
+        "frontend/src",
+        "Mostra notificações rápidas e discretas para ações do utilizador."
+      ],
+      [
+        "config/db.js",
+        "backend/config",
+        "Cria a pool MySQL e abstrai operações de acesso à base de dados."
+      ],
+      [
+        "middleware/auth.js",
+        "backend/middleware",
+        "Valida tokens JWT e permissões de acesso, incluindo rotas de administrador."
+      ],
+      [
+        "config/env.js",
+        "backend/config",
+        "Centraliza a configuração do ambiente e leitura de variáveis sensíveis."
+      ]
+    ],
+    [
+      [
+        "Dependência",
+        "Função"
+      ],
+      [
+        "nodemon",
+        "Reinicia automaticamente o servidor backend durante o desenvolvimento."
+      ],
+      [
+        "concurrently",
+        "Permite executar processos em paralelo, como frontend e backend em ambiente local."
+      ],
+      [
+        "docx",
+        "Apoia a geração automática de documentos Word usados na documentação do projeto."
+      ],
+      [
+        "pdf-parse / pdfjs-dist",
+        "Ferramentas auxiliares para leitura e tratamento de PDFs em tarefas de documentação."
+      ]
+    ],
+    [
+      [
+        "Área",
+        "Versão inicial pensada",
+        "Versão final implementada",
+        "Melhoria obtida"
+      ],
+      [
+        "Utilizadores",
+        "Cliente simples associado a encomendas.",
+        "Tabela cliente com email, username, password com hash, imagem, morada, telefone, bio e UserType.",
+        "Permite distinguir cliente, apicultor e administrador, suportando permissões diferentes."
+      ],
+      [
+        "Produtos",
+        "Produto com dados essenciais e stock.",
+        "Produto ligado a categoria, origem e apicultor, com descrição, imagem, tags e estado.",
+        "Melhor organização do catálogo, rastreabilidade regional e gestão por produtores."
+      ],
+      [
+        "Encomendas",
+        "Relação Cliente-Encomenda-Produto pensada de forma conceptual.",
+        "Encomenda separada de item_encomenda, guardando quantidade e preço unitário histórico.",
+        "Mantém histórico correto mesmo que o preço do produto mude no futuro."
+      ],
+      [
+        "Carrinho",
+        "Não estava detalhado no modelo inicial.",
+        "Tabelas carrinho e item_carrinho.",
+        "Permite persistência do carrinho e melhor controlo do fluxo de compra."
+      ],
+      [
+        "Favoritos",
+        "Não previsto inicialmente.",
+        "Tabela favoritos com relação cliente-produto.",
+        "Permite lista de desejos e personalização da experiência do cliente."
+      ],
+      [
+        "Avaliações",
+        "Não previsto inicialmente.",
+        "Tabela avaliacao com nota, comentário e data.",
+        "Adiciona feedback social e confiança aos produtos."
+      ],
+      [
+        "Workshops",
+        "Ideia simples de evento/formação.",
+        "Workshop associado ao apicultor, com vagas, preço, data, imagem e estado.",
+        "Transforma a plataforma numa solução comercial e educativa."
+      ],
+      [
+        "Comunidade",
+        "Não existia no modelo inicial.",
+        "pergunta_comunidade e resposta_comunidade.",
+        "Cria interação entre clientes e apicultores, reforçando a vertente educativa."
+      ],
+      [
+        "Analytics",
+        "Não previsto inicialmente.",
+        "Tabela interacao com tipo, página, dados JSON e data.",
+        "Permite analisar comportamento do utilizador e melhorar decisões."
+      ],
+      [
+        "Upgrades",
+        "Não previsto inicialmente.",
+        "upgrade_requests com documento, descrição, estado e datas.",
+        "Permite gerir pedidos para clientes se tornarem apicultores."
+      ]
+    ],
+    [
+      [
+        "Colaborativa",
+        "Administrativa"
+      ],
+      [
+        "Abc",
+        "Abc"
+      ]
+    ]
+  ]
+}

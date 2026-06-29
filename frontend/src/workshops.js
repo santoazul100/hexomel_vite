@@ -106,10 +106,10 @@ function renderWorkshops() {
           </div>
           <div class="workshop-card-body p-4 d-flex flex-column flex-grow-1">
             <div class="d-flex align-items-center gap-2 mb-3">
-              <img src="${w.ApicultorFoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome)}&background=random`}" 
+              <img src="${(w.ApicultorFoto && w.ApicultorFoto.trim() !== '' && w.ApicultorFoto !== 'null' && w.ApicultorFoto !== 'undefined') ? w.ApicultorFoto : `https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome || 'A')}&background=random`}" 
                    class="rounded-circle" style="width:32px;height:32px;object-fit:cover" 
                    referrerpolicy="no-referrer"
-                   onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome)}&background=random'" alt="">
+                   onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome || 'A')}&background=random'" alt="">
               <span class="small text-muted">${w.ApicultorNome}</span>
             </div>
             <h5 class="fw-bold mb-2">${w.Titulo}</h5>
@@ -161,10 +161,10 @@ window.openWorkshopDetail = function (id) {
       </div>
       <div class="p-4 p-md-5">
         <div class="d-flex align-items-center gap-2 mb-3">
-          <img src="${w.ApicultorFoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome)}&background=random`}" 
+          <img src="${(w.ApicultorFoto && w.ApicultorFoto.trim() !== '' && w.ApicultorFoto !== 'null' && w.ApicultorFoto !== 'undefined') ? w.ApicultorFoto : `https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome || 'A')}&background=random`}" 
                class="rounded-circle" style="width:40px;height:40px;object-fit:cover" 
                referrerpolicy="no-referrer"
-               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome)}&background=random'" alt="">
+               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(w.ApicultorNome || 'A')}&background=random'" alt="">
           <div>
             <div class="fw-bold small">${w.ApicultorNome}</div>
             <div class="text-muted" style="font-size:0.75rem">Apicultor</div>

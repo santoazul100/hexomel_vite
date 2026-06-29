@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recuperar Palavra-passe — Hexomel</title>
+    <title data-i18n="auth.rec.title">Recuperar Palavra-passe — Hexomel</title>
     <meta name="description" content="Recupere a sua palavra-passe da conta Hexomel de forma segura." />
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -96,7 +96,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -125,10 +124,9 @@
 
     <!-- Main Content -->
     <main class="py-5 mt-5 position-relative overflow-hidden">
-      <!-- Floating Bees -->
-      <div class="bee-container z-0" style="position: absolute; width: 100%; height: 100vh; pointer-events: none; top: 0; left: 0;">
-        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 8%; width: 55px;" />
-        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 35%; right: 10%; width: 40px;" />
+      <div class="bee-container z-0">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
       </div>
 
       <div class="container py-5 mt-4 position-relative z-1">
@@ -140,25 +138,26 @@
               <div id="request-view">
                 <div class="text-center mb-4">
                   <i class="fas fa-envelope-open-text fs-1 mb-2" style="color: var(--primary-green);"></i>
-                  <h2 class="fw-bold" style="color: var(--primary-green);">Recuperar Palavra-passe</h2>
-                  <p class="text-muted small">Introduza o seu email ou nome de utilizador.<br />Enviaremos um link seguro para redefinir o acesso.</p>
+                  <h2 class="fw-bold" style="color: var(--primary-green);" data-i18n="auth.rec.h2">Recuperar Palavra-passe</h2>
+                  <p class="text-muted small" data-i18n="auth.rec.desc">Introduza o seu email ou nome de utilizador.<br />Enviaremos um link seguro para redefinir o acesso.</p>
                 </div>
 
                 <form id="forgotPasswordForm" autocomplete="off">
                   <div class="form-group mb-4">
-                    <label class="form-label small fw-bold opacity-75">EMAIL OU USERNAME</label>
+                    <label class="form-label small fw-bold opacity-75" data-i18n="auth.rec.email_label">EMAIL OU USERNAME</label>
                     <input
                       type="text"
                       id="identity-input"
                       class="auth-input mb-0"
                       placeholder="Email ou nome de utilizador"
+                      data-i18n-ph="auth.rec.email_ph"
                       required
                       autocomplete="username"
                     />
                   </div>
 
                   <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
-                    <i class="fas fa-paper-plane me-2"></i> Enviar Link de Recuperação
+                    <i class="fas fa-paper-plane me-2"></i> <span data-i18n="auth.rec.btn_send">Enviar Link de Recuperação</span>
                   </button>
                 </form>
               </div>
@@ -167,19 +166,20 @@
               <div id="reset-view" style="display: none;">
                 <div class="text-center mb-4">
                   <i class="fas fa-shield-alt fs-1 mb-2" style="color: var(--primary-green);"></i>
-                  <h2 class="fw-bold" style="color: var(--primary-green);">Nova Palavra-passe</h2>
-                  <p class="text-muted small">Escolha uma palavra-passe forte para proteger a sua conta Hexomel.</p>
+                  <h2 class="fw-bold" style="color: var(--primary-green);" data-i18n="auth.rec.reset_h2">Nova Palavra-passe</h2>
+                  <p class="text-muted small" data-i18n="auth.rec.reset_desc">Escolha uma palavra-passe forte para proteger a sua conta Hexomel.</p>
                 </div>
 
                 <form id="resetPasswordForm" autocomplete="off">
                   <div class="form-group mb-3 position-relative">
-                    <label class="form-label small fw-bold opacity-75">NOVA PALAVRA-PASSE</label>
+                    <label class="form-label small fw-bold opacity-75" data-i18n="auth.rec.new_pass_label">NOVA PALAVRA-PASSE</label>
                     <div class="position-relative">
                       <input
                         type="password"
                         id="new-password"
                         class="auth-input mb-0"
                         placeholder="Nova palavra-passe"
+                        data-i18n-ph="auth.rec.new_pass_ph"
                         required
                         autocomplete="new-password"
                       />
@@ -194,17 +194,18 @@
                     <div class="strength-track">
                       <div class="strength-fill" id="strength-fill"></div>
                     </div>
-                    <span class="strength-label" id="strength-label">Mínimo 6 caracteres</span>
+                    <span class="strength-label" id="strength-label" data-i18n="auth.rec.pass_min">Mínimo 6 caracteres</span>
                   </div>
 
                   <div class="form-group mb-4 position-relative">
-                    <label class="form-label small fw-bold opacity-75">CONFIRMAR PALAVRA-PASSE</label>
+                    <label class="form-label small fw-bold opacity-75" data-i18n="auth.rec.conf_pass_label">CONFIRMAR PALAVRA-PASSE</label>
                     <div class="position-relative">
                       <input
                         type="password"
                         id="confirm-password"
                         class="auth-input mb-0"
                         placeholder="Confirmar palavra-passe"
+                        data-i18n-ph="auth.rec.conf_pass_ph"
                         required
                         autocomplete="new-password"
                       />
@@ -212,10 +213,11 @@
                         <i class="far fa-eye"></i>
                       </button>
                     </div>
+                    <small id="password-match-message" class="fw-semibold mt-2 d-block" style="font-size: 0.82rem; display: none;"></small>
                   </div>
 
                   <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
-                    <i class="fas fa-check-circle me-2"></i> Guardar Nova Palavra-passe
+                    <i class="fas fa-check-circle me-2"></i> <span data-i18n="auth.rec.btn_save">Guardar Nova Palavra-passe</span>
                   </button>
                 </form>
               </div>
@@ -258,10 +260,10 @@
           <div class="col-lg-2">
             <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">
@@ -307,41 +309,68 @@
         });
       });
 
-      // Password strength meter
+      // Password strength & match validation
       const newPwInput = document.getElementById('new-password');
+      const confirmPwInput = document.getElementById('confirm-password');
       const strengthContainer = document.getElementById('strength-container');
       const strengthFill = document.getElementById('strength-fill');
       const strengthLabel = document.getElementById('strength-label');
+      const matchMsg = document.getElementById('password-match-message');
+
+      function updateMatchMessage() {
+        if (!confirmPwInput || !matchMsg) return;
+        const newVal = newPwInput ? newPwInput.value : '';
+        const confirmVal = confirmPwInput.value;
+
+        if (!confirmVal) {
+          matchMsg.style.display = 'none';
+          return;
+        }
+
+        matchMsg.style.display = 'block';
+        if (newVal === confirmVal) {
+          matchMsg.style.color = '#198754';
+          matchMsg.innerHTML = '<i class="fas fa-check-circle me-1"></i> As palavras-passe coincidem!';
+        } else {
+          matchMsg.style.color = '#dc3545';
+          matchMsg.innerHTML = '<i class="fas fa-times-circle me-1"></i> A palavra-passe está diferente!';
+        }
+      }
 
       if (newPwInput) {
         newPwInput.addEventListener('input', () => {
           const val = newPwInput.value;
           if (!val) {
             strengthContainer.style.display = 'none';
-            return;
+          } else {
+            strengthContainer.style.display = 'block';
+
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 10) score++;
+            if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            const levels = [
+              { cls: 'weak', text: 'Fraca — adicione letras e números' },
+              { cls: 'weak', text: 'Fraca — continue a melhorar' },
+              { cls: 'fair', text: 'Razoável — adicione caracteres especiais' },
+              { cls: 'good', text: 'Forte — excelente escolha!' },
+              { cls: 'strong', text: 'Muito Forte — segurança máxima 🛡️' },
+            ];
+
+            const level = levels[Math.min(score, 4)];
+            strengthFill.className = 'strength-fill ' + level.cls;
+            strengthLabel.className = 'strength-label ' + level.cls;
+            strengthLabel.textContent = level.text;
           }
-          strengthContainer.style.display = 'block';
-
-          let score = 0;
-          if (val.length >= 6) score++;
-          if (val.length >= 10) score++;
-          if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
-          if (/[0-9]/.test(val)) score++;
-          if (/[^A-Za-z0-9]/.test(val)) score++;
-
-          const levels = [
-            { cls: 'weak', text: 'Fraca — adicione letras e números' },
-            { cls: 'weak', text: 'Fraca — continue a melhorar' },
-            { cls: 'fair', text: 'Razoável — adicione caracteres especiais' },
-            { cls: 'good', text: 'Forte — excelente escolha!' },
-            { cls: 'strong', text: 'Muito Forte — segurança máxima 🛡️' },
-          ];
-
-          const level = levels[Math.min(score, 4)];
-          strengthFill.className = 'strength-fill ' + level.cls;
-          strengthLabel.className = 'strength-label ' + level.cls;
-          strengthLabel.textContent = level.text;
+          updateMatchMessage();
         });
+      }
+
+      if (confirmPwInput) {
+        confirmPwInput.addEventListener('input', updateMatchMessage);
       }
     </script>
   </body>

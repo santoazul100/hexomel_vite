@@ -1,0 +1,150 @@
+{
+  "server_lines": 6333,
+  "routes_total": 152,
+  "methods": {
+    "POST": 44,
+    "GET": 68,
+    "PUT": 13,
+    "DELETE": 15,
+    "PATCH": 12
+  },
+  "areas": {
+    "Autenticação e conta": 23,
+    "Catálogo e produtos": 24,
+    "Carrinho, checkout e encomendas": 16,
+    "Apicultor e workshops": 35,
+    "Administração e CMS": 44,
+    "Comunidade e chat": 15,
+    "Aprender e quiz": 14,
+    "Sistema e analytics": 5
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "google-auth-library": "^10.5.0",
+    "jsonwebtoken": "^9.0.0",
+    "multer": "^2.0.2",
+    "mysql2": "^3.16.1",
+    "nodemailer": "^7.0.12",
+    "stripe": "^22.0.1"
+  },
+  "imports": [
+    "express",
+    "cors",
+    "./config/db.js",
+    "bcryptjs",
+    "jsonwebtoken",
+    "google-auth-library",
+    "./middleware/auth.js",
+    "nodemailer",
+    "multer",
+    "path",
+    "url",
+    "fs",
+    "stripe",
+    "crypto",
+    "compression"
+  ],
+  "found_functions": [
+    "slugify",
+    "generateUniqueSlug",
+    "initMailTransporter",
+    "generateReceiptHTML",
+    "runDatabaseMigrations",
+    "authenticateToken",
+    "isAdmin"
+  ],
+  "sql_ops": {
+    "SELECT": 173,
+    "INSERT": 45,
+    "UPDATE": 100,
+    "DELETE": 77,
+    "CREATE TABLE": 18,
+    "ALTER TABLE": 19
+  },
+  "routes_sample": [
+    {
+      "method": "POST",
+      "path": "/api/upload"
+    },
+    {
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config/public"
+    },
+    {
+      "method": "GET",
+      "path": "/api/menu"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/menu"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/menu"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/menu/:id"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/menu/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/forgot-password"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/reset-password"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cms"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cms/:pageKey"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/cms"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/cms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/cms/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/verify-admin"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/verify-email"
+    }
+  ]
+}

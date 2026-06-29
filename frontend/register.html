@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Criar Conta — Hexomel</title>
+    <title data-i18n="auth.reg.title">Criar Conta — Hexomel</title>
     <meta name="description" content="Crie a sua conta Hexomel de forma rápida e segura." />
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -81,7 +81,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -110,10 +109,9 @@
 
     <!-- Main Content -->
     <main class="py-5 mt-5 position-relative overflow-hidden">
-      <!-- Floating Bees -->
-      <div class="bee-container z-0" style="position: absolute; width: 100%; height: 100vh; pointer-events: none; top: 0; left: 0;">
-        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 8%; width: 55px;" />
-        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 35%; right: 10%; width: 40px;" />
+      <div class="bee-container z-0">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
       </div>
 
       <div class="container py-5 mt-4 position-relative z-1">
@@ -123,52 +121,56 @@
               
               <div class="text-center mb-4">
                 <i class="fas fa-user-plus fs-1 mb-2" style="color: var(--primary-green);"></i>
-                <h2 class="fw-bold" style="color: var(--primary-green);">Criar Conta</h2>
-                <p class="text-muted small">Registe-se e desfrute do mel 100% puro e das nossas novidades.</p>
+                <h2 class="fw-bold" style="color: var(--primary-green);" data-i18n="auth.reg.title">Criar Conta</h2>
+                <p class="text-muted small" data-i18n="auth.reg.desc">Registe-se e desfrute do mel 100% puro e das nossas novidades.</p>
               </div>
 
               <form id="registerFormV2">
                 <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">NOME COMPLETO</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.reg.name">NOME COMPLETO</label>
                   <input
                     type="text"
                     id="register-name-v2"
                     class="auth-input mb-0"
                     placeholder="Como deseja aparecer"
+                    data-i18n-ph="auth.reg.name_ph"
                     required
                   />
                 </div>
 
                 <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">NOME DE UTILIZADOR</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.reg.username">NOME DE UTILIZADOR</label>
                   <input
                     type="text"
                     id="register-username-v2"
                     class="auth-input mb-0"
                     placeholder="Ex: joao_silva"
+                    data-i18n-ph="auth.reg.username_ph"
                     required
                   />
                 </div>
 
                 <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">EMAIL</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.email">EMAIL</label>
                   <input
                     type="email"
                     id="register-email-v2"
                     class="auth-input mb-0"
                     placeholder="nome@exemplo.com"
+                    data-i18n-ph="auth.reg.email_ph"
                     required
                   />
                 </div>
 
                 <div class="form-group mb-3 position-relative">
-                  <label class="form-label small fw-bold opacity-75">PASSWORD</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.reg.pass_label">PASSWORD</label>
                   <div class="position-relative">
                     <input
                       type="password"
                       id="register-password-v2"
                       class="auth-input mb-0"
                       placeholder="Mínimo 6 caracteres"
+                      data-i18n-ph="auth.reg.pass_ph"
                       data-password-strength-input
                       required
                     />
@@ -182,17 +184,18 @@
                   <div class="strength-track">
                     <div class="strength-fill" data-password-strength-fill></div>
                   </div>
-                  <span class="strength-label" data-password-strength-label>Mínimo 6 caracteres</span>
+                  <span class="strength-label" data-password-strength-label data-i18n="auth.reg.pass_min">Mínimo 6 caracteres</span>
                 </div>
 
                 <div class="form-group mb-4 position-relative">
-                  <label class="form-label small fw-bold opacity-75">CONFIRMAR PASSWORD</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.reg.confpass_label">CONFIRMAR PASSWORD</label>
                   <div class="position-relative">
                     <input
                       type="password"
                       id="register-confirm-v2"
                       class="auth-input mb-0"
                       placeholder="Repita a password"
+                      data-i18n-ph="auth.reg.confpass_ph"
                       required
                     />
                     <button type="button" class="password-toggle-btn btn border-0 position-absolute end-0 top-50 translate-middle-y text-muted px-3" data-target="register-confirm-v2" style="z-index: 10;">
@@ -203,18 +206,18 @@
 
                 <label class="terms-label-v2">
                   <input type="checkbox" id="terms-checkbox-v2" required />
-                  <span>Aceito os <a href="#" class="terms-link">Termos e Condições</a></span>
+                  <span><span data-i18n="auth.reg.accept">Aceito os </span><a href="#" class="terms-link" data-i18n="auth.reg.terms_link">Termos e Condições</a></span>
                 </label>
 
-                <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
+                <button type="submit" class="btn btn-auth-enhanced register w-100 py-3" data-i18n="auth.reg.btn">
                   Criar Conta
                 </button>
               </form>
 
               <!-- Footer Links -->
               <div class="text-center mt-4 pt-3 border-top">
-                <span class="text-muted small">Já tem uma conta? </span>
-                <a href="login.html" class="text-decoration-none hover-success fw-bold" style="color: var(--primary-green);">
+                <span class="text-muted small" data-i18n="auth.reg.already">Já tem uma conta? </span>
+                <a href="login.html" class="text-decoration-none hover-success fw-bold" style="color: var(--primary-green);" data-i18n="auth.login">
                   Iniciar Sessão
                 </a>
               </div>
@@ -255,10 +258,10 @@
           <div class="col-lg-2">
             <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">

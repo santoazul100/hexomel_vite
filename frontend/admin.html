@@ -16,7 +16,7 @@
           user = JSON.parse(localStorage.getItem("user"));
         } catch(e){}
         if (!token || !user) {
-          window.location.replace("/login");
+          window.location.replace("/login?admin=true");
         } else {
           const role = user.role || user.userType || user.UserType;
           if (role?.toLowerCase() !== "admin") {
@@ -933,7 +933,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -1033,6 +1032,12 @@
           <a class="admin-nav-link" data-section="seo">
             <i class="fas fa-globe"></i> <span>SEO & URLs</span>
           </a>
+          <a class="admin-nav-link" data-section="vendas">
+            <i class="fas fa-cash-register"></i> <span>Vendas & Lucro</span>
+          </a>
+          <a class="admin-nav-link" data-section="monetizacao">
+            <i class="fas fa-hand-holding-usd"></i> <span>Monetização</span>
+          </a>
 
           <p class="sidebar-section-title">Configurações</p>
           <a class="admin-nav-link" data-section="appearance">
@@ -1043,6 +1048,9 @@
           </a>
           <a class="admin-nav-link" data-section="cms">
             <i class="fas fa-edit"></i> <span>Conteúdo (CMS)</span>
+          </a>
+          <a class="admin-nav-link" data-section="maintenance">
+            <i class="fas fa-tools"></i> <span>Manutenção</span>
           </a>
         </nav>
       </aside>
@@ -1057,9 +1065,11 @@
               </h4>
               <p class="text-muted mb-0" style="font-size: 0.8rem;">Visão geral e gestão dos dados principais.</p>
             </div>
-            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-              <i class="fas fa-circle text-success me-1" style="font-size: 0.45rem; vertical-align: middle;"></i> SISTEMA ONLINE
-            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span id="system-status-badge" class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                <i id="system-status-icon" class="fas fa-circle text-success me-1" style="font-size: 0.45rem; vertical-align: middle;"></i> <span id="system-status-text">SISTEMA ONLINE</span>
+              </span>
+            </div>
           </div>
 
           <!-- Stats Grid -->
@@ -1123,7 +1133,10 @@
                   <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="dash-stat-info">
-                  <span class="dash-stat-label">Ticket Médio</span>
+                  <span class="dash-stat-label">
+                    Ticket Médio
+                    <i class="fas fa-info-circle ms-1" style="cursor: help; color: #a0aec0; font-size: 0.85em;" title="O valor médio gasto por cada encomenda (Receita Total ÷ Número de Encomendas)."></i>
+                  </span>
                   <span id="dash-avg-order-value" class="dash-stat-value">0.00€</span>
                 </div>
               </div>
@@ -1332,7 +1345,6 @@
                     <th>Email</th>
                     <th>Tipo</th>
                     <th>Data Registo</th>
-                    <th>E-mail Verif.</th>
                     <th>Checkout 2FA</th>
                     <th>Restrição</th>
                     <th class="text-end">Ações</th>
@@ -1748,12 +1760,12 @@
               <table class="table align-middle product-table">
                 <thead>
                   <tr>
-                    <th style="width: 25%">Autor</th>
-                    <th style="width: 35%">Publicação</th>
+                    <th style="width: 23%">Autor</th>
+                    <th style="width: 30%">Publicação</th>
                     <th style="width: 15%">Tipo</th>
                     <th style="width: 10%">Likes</th>
                     <th style="width: 10%">Data</th>
-                    <th style="width: 5%" class="text-end">Ações</th>
+                    <th style="width: 12%" class="text-end">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="comunidade-list-body"></tbody>
@@ -1774,23 +1786,23 @@
           </header>
 
           <!-- Denúncias Card -->
-          <div class="admin-card mb-4">
-            <div class="card-header bg-transparent border-0 pt-3 pb-0">
-              <h5 class="fw-bold text-dark mb-0"><i class="fas fa-flag text-danger me-2"></i>Denúncias Recentes</h5>
+          <div class="admin-card mb-4 shadow-sm rounded-4 border-0 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+              <h5 class="fw-bold text-dark mb-1"><i class="fas fa-flag text-danger me-2"></i>Denúncias Recentes</h5>
               <p class="text-muted small mb-0">Lista de reports efetuados por utilizadores na rede social e comunidade.</p>
             </div>
-            <div class="table-responsive p-3">
-              <table class="table align-middle product-table">
+            <div class="table-responsive px-4 pb-4">
+              <table class="table align-middle admin-mod-table mb-0">
                 <thead>
-                  <tr>
-                    <th>Denunciante</th>
-                    <th>Denunciado</th>
-                    <th>Tipo</th>
-                    <th>Conteúdo / Detalhes</th>
-                    <th>Motivo</th>
-                    <th>Data</th>
-                    <th>Estado</th>
-                    <th class="text-end">Ações</th>
+                  <tr class="text-uppercase text-muted smaller border-bottom" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Denunciante</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Denunciado</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Tipo</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Conteúdo</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Motivo</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Data</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Estado</th>
+                    <th class="py-3 fw-bold text-end" style="white-space: nowrap;">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="moderacao-denuncias-body">
@@ -1803,18 +1815,18 @@
           </div>
 
           <!-- Bloqueios Card -->
-          <div class="admin-card">
-            <div class="card-header bg-transparent border-0 pt-3 pb-0">
-              <h5 class="fw-bold text-dark mb-0"><i class="fas fa-ban text-secondary me-2"></i>Relações de Bloqueio</h5>
+          <div class="admin-card shadow-sm rounded-4 border-0 bg-white">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+              <h5 class="fw-bold text-dark mb-1"><i class="fas fa-ban text-secondary me-2"></i>Relações de Bloqueio</h5>
               <p class="text-muted small mb-0">Consulte quem bloqueou quem no sistema.</p>
             </div>
-            <div class="table-responsive p-3">
-              <table class="table align-middle product-table">
+            <div class="table-responsive px-4 pb-4">
+              <table class="table align-middle admin-mod-table mb-0">
                 <thead>
-                  <tr>
-                    <th>Bloqueador (Cliente A)</th>
-                    <th>Bloqueado (Cliente B)</th>
-                    <th>Data do Bloqueio</th>
+                  <tr class="text-uppercase text-muted smaller border-bottom" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Bloqueador (Cliente A)</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Bloqueado (Cliente B)</th>
+                    <th class="py-3 fw-bold" style="white-space: nowrap;">Data do Bloqueio</th>
                   </tr>
                 </thead>
                 <tbody id="moderacao-bloqueios-body">
@@ -2036,26 +2048,24 @@
                     Crie, edite e elimine blocos de texto do Frontoffice sem alterar código.
                   </p>
                 </div>
-                <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.openCMSBlockModal()">
-                  <i class="fas fa-plus me-2"></i><span>Novo Bloco</span>
-                </button>
               </header>
 
               <div class="admin-card border-0 shadow-sm p-4">
                 <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-4">
-                  <div style="min-width: 250px; max-width: 350px;">
-                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Selecionar Página do Frontoffice</label>
-                    <select class="form-select" id="cms-page-selector" onchange="adminUI.loadCMSBlocks()" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500;">
-                      <option value="home">Página Inicial (Home)</option>
-                      <option value="about">Página Sobre Nós (About)</option>
-                      <option value="contact">Página Contactos (Contact)</option>
-                    </select>
-                  </div>
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="cms-tech-mode" onchange="adminUI.toggleCmsTechMode(this.checked)" style="cursor: pointer;" />
-                    <label class="form-check-label small fw-bold text-muted text-uppercase cursor-pointer" for="cms-tech-mode">
-                      <i class="fas fa-code me-1 text-success"></i> Modo Programador (Ver Chaves)
-                    </label>
+                  <div class="d-flex align-items-end gap-3 flex-wrap" style="min-width: 250px;">
+                    <div>
+                      <label class="form-label fw-bold small text-muted text-uppercase mb-2">Selecionar Página do Frontoffice</label>
+                      <select class="form-select" id="cms-page-selector" onchange="adminUI.loadCMSBlocks()" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500; min-width: 260px;">
+                        <option value="home">🏠 Página Inicial (Home)</option>
+                        <option value="shop">🛒 Loja & Catálogo (Shop)</option>
+                        <option value="workshops">🐝 Workshops & Experiências</option>
+                        <option value="about">📖 Sobre Nós (About)</option>
+                        <option value="contact">✉️ Contactos & Suporte (Contact)</option>
+                      </select>
+                    </div>
+                    <a id="cms-preview-btn" href="/inicio" target="_blank" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold small d-inline-flex align-items-center gap-2 mb-0.5" title="Ver como esta página fica no site real">
+                      <i class="fas fa-external-link-alt"></i> Ver no Site
+                    </a>
                   </div>
                 </div>
 
@@ -2100,6 +2110,677 @@
                   <h5 class="fw-bold small text-uppercase text-muted mb-3"><i class="far fa-star text-muted me-2"></i>Outros Produtos Disponíveis</h5>
                   <div class="row g-3" id="carousel-others-list">
                     <!-- Rendered dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Modo de Manutenção Section -->
+        <section id="maintenance-section" class="admin-section">
+          <header class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+              <h4 class="fw-bold text-dark mb-1" style="font-size: 1.15rem;">
+                <i class="fas fa-tools text-success me-2" style="font-size: 0.95rem;"></i>Modo de Manutenção
+              </h4>
+              <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                Controle a disponibilidade das várias áreas da plataforma, mensagens de aviso e notificações por email.
+              </p>
+            </div>
+            <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.saveMaintenanceSettings()">
+              <i class="fas fa-save me-2"></i><span>Guardar Configurações</span>
+            </button>
+          </header>
+
+          <!-- Master Global Toggle Card -->
+          <div class="admin-card border-0 shadow-sm p-4 mb-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+              <div class="d-flex align-items-center gap-3">
+                <i class="fas fa-globe text-secondary fs-4" style="width: 32px; text-align: center;"></i>
+                <div>
+                  <h5 class="fw-bold text-dark mb-1" style="font-size: 1rem;">Modo Global (Site Inteiro)</h5>
+                  <p class="text-muted small mb-0">Ativar esta opção coloca toda a plataforma sob manutenção imediatamente, independentemente das secções individuais abaixo.</p>
+                </div>
+              </div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input maint-toggle" type="checkbox" id="maint-toggle-full" role="switch" style="cursor: pointer; width: 2.5em; height: 1.25em;" />
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <!-- Granular Toggles Card -->
+            <div class="col-lg-6">
+              <div class="admin-card border-0 shadow-sm p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+                  <h5 class="fw-bold text-dark mb-0" style="font-size: 1rem;">
+                    <i class="fas fa-toggle-on text-muted me-2"></i>Ativação por Secção (Granular)
+                  </h5>
+                  <span class="badge bg-light text-muted border px-2 py-1 rounded-pill fw-normal" style="font-size: 0.7rem;">Por Tópico</span>
+                </div>
+                <p class="text-muted small mb-4">Selecione individualmente as áreas específicas que pretende suspender temporariamente.</p>
+
+                <div class="d-flex flex-column gap-2">
+                  <!-- Compras / Loja -->
+                  <div class="p-3 rounded-3 border bg-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <i class="fas fa-shopping-cart text-secondary fs-5" style="width: 24px; text-align: center;"></i>
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">Compras / Loja</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">Páginas de produtos, carrinho e checkout</div>
+                      </div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input maint-toggle" type="checkbox" id="maint-toggle-shop" role="switch" style="cursor: pointer; width: 2.5em; height: 1.25em;" />
+                    </div>
+                  </div>
+
+                  <!-- Curiosidades -->
+                  <div class="p-3 rounded-3 border bg-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <i class="fas fa-lightbulb text-secondary fs-5" style="width: 24px; text-align: center;"></i>
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">Curiosidades</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">Secção de artigos e factos apícolas</div>
+                      </div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input maint-toggle" type="checkbox" id="maint-toggle-curiosidades" role="switch" style="cursor: pointer; width: 2.5em; height: 1.25em;" />
+                    </div>
+                  </div>
+
+                  <!-- Aprender -->
+                  <div class="p-3 rounded-3 border bg-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <i class="fas fa-graduation-cap text-secondary fs-5" style="width: 24px; text-align: center;"></i>
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">Aprender</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">Artigos educativos, workshops e FAQ</div>
+                      </div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input maint-toggle" type="checkbox" id="maint-toggle-aprender" role="switch" style="cursor: pointer; width: 2.5em; height: 1.25em;" />
+                    </div>
+                  </div>
+
+                  <!-- HexoHive -->
+                  <div class="p-3 rounded-3 border bg-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <i class="fas fa-users text-secondary fs-5" style="width: 24px; text-align: center;"></i>
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">HexoHive</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">Rede social e comunidade de apicultores</div>
+                      </div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input maint-toggle" type="checkbox" id="maint-toggle-hexohive" role="switch" style="cursor: pointer; width: 2.5em; height: 1.25em;" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Messages & Behavior Config Card -->
+            <div class="col-lg-6">
+              <div class="admin-card border-0 shadow-sm p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+                  <h5 class="fw-bold text-dark mb-0" style="font-size: 1rem;">
+                    <i class="fas fa-sliders-h text-muted me-2"></i>Mensagens e Comportamento
+                  </h5>
+                  <span class="badge bg-light text-muted border px-2 py-1 rounded-pill fw-normal" style="font-size: 0.7rem;">Definições</span>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-uppercase text-muted mb-2">Mensagem Personalizada (Pop-Up e Página)</label>
+                  <textarea id="maint-message-input" class="form-control" rows="3" placeholder="Ex: Estamos a efetuar atualizações nos nossos servidores para servir melhor o seu mel preferido..." style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500; font-size: 0.88rem;"></textarea>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label small fw-bold text-uppercase text-muted mb-2">Previsão de Conclusão / Regresso (Data e Hora)</label>
+                  <input type="datetime-local" id="maint-endtime-input" class="form-control" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); padding: 10px 15px; font-weight: 500; font-size: 0.88rem;" />
+                </div>
+
+                <div class="mt-auto pt-2">
+                  <button type="button" class="btn btn-outline-secondary w-100 py-2 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2" style="font-size: 0.85rem;" onclick="adminUI.previewMaintenancePopup()">
+                    <i class="fas fa-eye"></i><span>Pré-visualizar Pop-Up Informativo</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Complaints & Feedback Card -->
+          <div class="admin-card border-0 shadow-sm p-4 mt-4">
+            <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
+              <h5 class="fw-bold text-dark mb-0" style="font-size: 1rem;">
+                <i class="fas fa-inbox text-success me-2"></i>Reclamações e Mensagens de Utilizadores
+              </h5>
+            </div>
+            <p class="text-muted small mb-3">Mensagens e reclamações enviadas por utilizadores quando a previsão de conclusão da manutenção termina.</p>
+
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th>Data / Hora</th>
+                    <th>Utilizador</th>
+                    <th>Email</th>
+                    <th>Secção Afetada</th>
+                    <th>Mensagem / Reclamação</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="maint-complaints-tbody">
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-3">A carregar mensagens...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VENDAS & LUCRO SECTION -->
+        <section id="vendas-section" class="admin-section">
+          <header class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+              <h4 class="fw-bold text-dark mb-1" style="font-size: 1.15rem;">
+                <i class="fas fa-cash-register text-success me-2" style="font-size: 0.95rem;"></i>Vendas & Lucro
+              </h4>
+              <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                Monitorize o volume de negócios, comissões cobradas e simule o crescimento do seu marketplace.
+              </p>
+            </div>
+            <div id="badge-taxa-comissao" class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem;">
+              <i class="fas fa-percent text-success me-1"></i> TAXA COMISSÃO: 10%
+            </div>
+          </header>
+
+          <!-- HERO BANNER: EXPLICADOR SUPER SIMPLES DA PLATAFORMA -->
+          <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #1a4d2e 0%, #2e7d32 100%); color: white; border-radius: 16px; overflow: hidden;">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                <div>
+                  <span class="badge bg-warning text-dark px-3 py-1 fw-bold mb-2" style="font-size: 0.75rem;"><i class="fas fa-lightbulb me-1"></i> RESUMO PARA QUALQUER PESSOA ENTENDER</span>
+                  <h4 class="fw-bold mb-1 text-white"><i class="fas fa-store text-warning me-2"></i>Como é que o Hexomel Ganha Dinheiro? 🍯</h4>
+                  <p class="mb-0 text-white-50 small">O Hexomel funciona exatamente como o <strong>Uber Eats</strong>, mas dedicado ao Mel e apicultores de Portugal!</p>
+                </div>
+                <button class="btn btn-sm btn-light text-success fw-bold px-3 py-2 rounded-pill shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#guiaRapidoCollapse">
+                  <i class="fas fa-microphone me-1"></i> Guia de Apresentação Rápida
+                </button>
+              </div>
+
+              <!-- 3 Step Visual Flow -->
+              <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                  <div class="p-3 rounded-3 h-100" style="background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold fs-5" style="width:44px; height:44px; flex-shrink:0;">1</div>
+                      <div>
+                        <strong class="d-block text-white">O Cliente Compra</strong>
+                        <small class="text-white-50" style="font-size: 0.78rem;">Encomenda mel na loja online (Exemplo: 100€).</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 rounded-3 h-100" style="background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold fs-5" style="width:44px; height:44px; flex-shrink:0;">2</div>
+                      <div>
+                        <strong class="d-block text-white">Apicultor Fica com 90%</strong>
+                        <small class="text-white-50" style="font-size: 0.78rem;">O produtor recebe a maior fatia (90€) direta.</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 rounded-3 h-100" style="background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold fs-5" style="width:44px; height:44px; flex-shrink:0;">3</div>
+                      <div>
+                        <strong class="d-block text-white">Hexomel Fica com 10%</strong>
+                        <small class="text-white-50" style="font-size: 0.78rem;">10€ comissão (8€ lucro limpo + 2€ taxas banco).</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Collapsible Quick Presentation Script -->
+              <div class="collapse mt-3 pt-3 border-top border-white-50" id="guiaRapidoCollapse">
+                <div class="p-3 rounded-3 bg-white text-dark shadow-sm">
+                  <h6 class="fw-bold text-success mb-2"><i class="fas fa-comment-dots me-2"></i>Como Explicar Isto Numa Apresentação (Script de 1 Minuto):</h6>
+                  <ul class="mb-0 ps-3 small text-muted">
+                    <li class="mb-1"><strong>Conceito:</strong> "O Hexomel é um marketplace. Nós não produzimos mel; ligamos quem produz a quem quer comprar e retemos uma taxa."</li>
+                    <li class="mb-1"><strong>Exemplo Prático:</strong> "Numa compra de 100€, 90€ vão inteiros para o apicultor. Dos 10€ da nossa comissão, 2€ pagam o processador de pagamento (cartão/MB Way) e 8€ é a receita líquida do Hexomel."</li>
+                    <li><strong>Sustentabilidade:</strong> "Para cobrir os nossos 2.000€ de custos fixos de servidores e marketing, precisamos que passem 25.000€ em vendas por mês pelo site (Ponto de Equilíbrio)."</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GRÁFICOS VISUAIS DE VENDAS -->
+          <div class="row g-3 mb-4">
+            <div class="col-lg-5">
+              <div class="admin-card border-0 shadow-sm h-100 p-3">
+                <h6 class="fw-bold mb-1 text-dark"><i class="fas fa-chart-pie text-success me-2"></i>Divisão Visual de 1 Venda (Ex: 100€)</h6>
+                <p class="text-muted small mb-2" style="font-size: 0.75rem;">Como cada euro de uma venda é repartido automaticamente.</p>
+                <div style="height: 200px; position: relative;">
+                  <canvas id="vendasSplitChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-7">
+              <div class="admin-card border-0 shadow-sm h-100 p-3">
+                <h6 class="fw-bold mb-1 text-dark"><i class="fas fa-chart-bar text-success me-2"></i>Balanço Global: Vendas vs Comissões vs Lucro Líquido</h6>
+                <p class="text-muted small mb-2" style="font-size: 0.75rem;">Comparativo entre volume bruto transacionado e margem retida.</p>
+                <div style="height: 200px; position: relative;">
+                  <canvas id="vendasBreakdownChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales Cards -->
+          <div class="row g-3 mb-4">
+            <!-- Gross Sales (GMV) -->
+            <div class="col-md-3 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #fff7ed; color: #f97316;">
+                  <i class="fas fa-euro-sign"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-label">Vendas Brutas (GMV) <i class="fas fa-circle-info text-muted ms-1" title="Volume total de negócios processados na plataforma (soma de todas as encomendas pagas/ativas)."></i></span>
+                  <span id="vendas-total-gross" class="dash-stat-value">0.00€</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Platform Commission (10%) -->
+            <div class="col-md-3 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #f0fdf4; color: #16a34a;">
+                  <i class="fas fa-hand-holding-dollar"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span id="vendas-platform-commission-label" class="dash-stat-label">Comissão Bruta (10%) <i class="fas fa-circle-info text-muted ms-1" title="Percentagem cobrada sobre as vendas dos apicultores. Esta comissão é a receita bruta da plataforma."></i></span>
+                  <span id="vendas-platform-commission" class="dash-stat-value">0.00€</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gateway Fees (2%) -->
+            <div class="col-md-3 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #fef2f2; color: #dc2626;">
+                  <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span id="vendas-gateway-fees-label" class="dash-stat-label">Custos Gateway (2%) <i class="fas fa-circle-info text-muted ms-1" title="Despesas financeiras de processamento cobradas pela entidade bancária ou gateway de pagamentos."></i></span>
+                  <span id="vendas-gateway-fees" class="dash-stat-value">0.00€</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contribution Margin (8% net platform fee) -->
+            <div class="col-md-3 col-sm-6">
+              <div class="dash-stat-card">
+                <div class="dash-stat-icon" style="background: #eff6ff; color: #2563eb;">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="dash-stat-info">
+                  <span id="vendas-platform-net-label" class="dash-stat-label">Receita Líquida (8%) <i class="fas fa-circle-info text-muted ms-1" title="Receita retida pela plataforma após deduzir os custos do gateway de pagamento (Comissão Bruta - Custos Gateway)."></i></span>
+                  <span id="vendas-platform-net" class="dash-stat-value">0.00€</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <!-- Detailed Financial Table -->
+            <div class="col-lg-8">
+              <div class="admin-card border-0 shadow-sm h-100">
+                <h5 class="fw-bold mb-3"><i class="fas fa-list-check text-success me-2"></i>Histórico Financeiro das Encomendas</h5>
+                <div class="table-responsive" style="max-height: 780px; overflow-y: auto;">
+                  <table class="table align-middle product-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Data</th>
+                        <th>Bruto (€) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Valor total faturado (pago pelo cliente)."></i></th>
+                        <th id="th-vendas-comm">Comissão (10%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Taxa cobrada pela plataforma (Bruto * Taxa Comissão)."></i></th>
+                        <th id="th-vendas-gate">Gateway (2%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Custos do gateway de pagamento (Bruto * 2%)."></i></th>
+                        <th id="th-vendas-plat">Plataforma (8%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Margem líquida da plataforma (Comissão - Gateway)."></i></th>
+                        <th id="th-vendas-vend">Vendedor (90%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Valor líquido recebido pelo apicultor (Bruto - Comissão)."></i></th>
+                      </tr>
+                    </thead>
+                    <tbody id="vendas-table-body">
+                      <!-- Populated dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Scaling Simulator -->
+            <div class="col-lg-4 d-flex flex-column gap-3">
+              <div class="admin-card border-0 shadow-sm">
+                <h5 class="fw-bold mb-3"><i class="fas fa-calculator text-success me-2"></i>Parâmetros & Simulação</h5>
+                <p class="text-muted small">Ajuste os parâmetros abaixo para atualizar as comissões e margens em todo o painel e simular o lucro líquido.</p>
+                
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small fw-bold opacity-75">COMISSÃO (%) <i class="fas fa-circle-info text-muted ms-1" title="Taxa percentual que a plataforma cobra sobre o valor total da venda do apicultor."></i></label>
+                    <div class="input-group">
+                      <input type="number" id="sim-rate" class="form-control fw-bold" value="10" min="0" max="100" step="1">
+                      <span class="input-group-text bg-light fw-bold">%</span>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small fw-bold opacity-75">GATEWAY (%) <i class="fas fa-circle-info text-muted ms-1" title="Taxa cobrada pelo processador de pagamentos para efetuar a transação financeira."></i></label>
+                    <div class="input-group">
+                      <input type="number" id="sim-gateway" class="form-control fw-bold" value="2" min="0" max="10" step="0.1">
+                      <span class="input-group-text bg-light fw-bold">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold opacity-75">CUSTOS FIXOS MENSAIS <i class="fas fa-circle-info text-muted ms-1" title="Custos operacionais fixos mensais da plataforma (ex: servidores, manutenção)."></i></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light fw-bold">€</span>
+                    <input type="number" id="sim-fixed-costs" class="form-control fw-bold text-danger" value="2000" min="0" step="100">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold opacity-75">META VENDAS MENSAIS (GMV) <i class="fas fa-circle-info text-muted ms-1" title="Volume bruto total de vendas faturadas na plataforma por mês."></i></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light fw-bold">€</span>
+                    <input type="number" id="sim-gmv" class="form-control fw-bold" value="10000" min="0" step="500">
+                  </div>
+                </div>
+
+                <div class="d-flex flex-column gap-2 mb-3 bg-light p-3 rounded-3 border">
+                  <div class="d-flex justify-content-between small">
+                    <span class="text-muted" id="lbl-sim-commission">Comissão (10%):</span>
+                    <span id="sim-commission-val" class="fw-bold text-success">€0.00</span>
+                  </div>
+                  <div class="d-flex justify-content-between small">
+                    <span class="text-muted" id="lbl-sim-gateway">Custos Gateway (2%):</span>
+                    <span id="sim-gateway-val" class="fw-bold text-danger">€0.00</span>
+                  </div>
+                  <div class="d-flex justify-content-between small border-top pt-2">
+                    <span class="fw-bold text-dark" id="lbl-sim-net">Margem Líquida (8%):</span>
+                    <span id="sim-net-val" class="fw-bold text-success">€0.00</span>
+                  </div>
+                </div>
+
+                <div class="text-center p-3 rounded-3" id="sim-result-box" style="background: #fef2f2; border: 1px solid #fee2e2;">
+                  <span class="d-block small text-muted">LUCRO LÍQUIDO SIMULADO</span>
+                  <h4 class="fw-bold mb-1" id="sim-profit-title">-€1,200.00</h4>
+                  <span class="smaller" id="sim-profit-text" style="color: #dc2626; font-weight: 600;">(Abaixo do Ponto de Equilíbrio)</span>
+                </div>
+
+                <div class="mt-3 text-muted small p-2.5 rounded-3 bg-light border" style="font-size: 0.72rem; line-height: 1.3;" id="sim-breakeven-help">
+                  <i class="fas fa-info-circle me-1 text-primary"></i> <strong>Break-Even:</strong> Vendas mensais necessárias para cobrir custos.
+                </div>
+              </div>
+
+              <!-- Individual Transaction Simulator -->
+              <div class="admin-card border-0 shadow-sm">
+                <h5 class="fw-bold mb-3"><i class="fas fa-scale-balanced text-success me-2"></i>Simulador de Venda Individual</h5>
+                <p class="text-muted small">Simule a divisão exata de ganhos por venda individual entre o Apicultor e a plataforma.</p>
+                
+                <div class="mb-3">
+                  <label class="form-label small fw-bold opacity-75">VALOR BRUTO DA VENDA <i class="fas fa-circle-info text-muted ms-1" title="Preço de venda total do produto listado na loja."></i></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light fw-bold">€</span>
+                    <input type="number" id="sim-single-gross" class="form-control fw-bold" value="100.00" min="0" step="5">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold opacity-75">GANHO LÍQUIDO DO APICULTOR <i class="fas fa-circle-info text-muted ms-1" title="Valor líquido que o apicultor recebe na sua conta após a dedução da comissão da plataforma."></i></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light fw-bold">€</span>
+                    <input type="number" id="sim-single-apicultor" class="form-control fw-bold text-success" value="90.00" min="0" step="5">
+                  </div>
+                </div>
+
+                <hr class="opacity-50">
+
+                <div class="d-flex flex-column gap-2 bg-light p-3 rounded-3 border">
+                  <div class="d-flex justify-content-between small">
+                    <span class="text-muted" id="lbl-single-commission">Comissão Bruta (10%):</span>
+                    <span id="sim-single-comm-val" class="fw-bold text-success">€10.00</span>
+                  </div>
+                  <div class="d-flex justify-content-between small">
+                    <span class="text-muted" id="lbl-single-gateway">Custo Gateway (2%):</span>
+                    <span id="sim-single-gate-val" class="fw-bold text-danger">€2.00</span>
+                  </div>
+                  <div class="d-flex justify-content-between small border-top pt-2">
+                    <span class="fw-bold text-dark" id="lbl-single-net">Lucro Plataforma (8%):</span>
+                    <span id="sim-single-net-val" class="fw-bold text-primary">€8.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MONETIZAÇÃO SECTION -->
+        <section id="monetizacao-section" class="admin-section">
+          <div class="row justify-content-center">
+            <div class="col-lg-11">
+              <header class="mb-4">
+                <h2 class="fw-bold mb-1" style="font-size: 1.05rem;"><i class="fas fa-hand-holding-usd text-success me-2"></i><span>Estudo de Monetização e Propostas de Lucro</span></h2>
+                <p class="text-muted small">
+                  Simule cenários financeiros e consulte a estratégia de rentabilização da plataforma Hexomel.
+                </p>
+              </header>
+
+              <!-- Simulation Parameters & Live Simulator -->
+              <div class="row g-4 mb-4">
+                <div class="col-xl-4">
+                  <div class="admin-card border-0 shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-sliders-h text-success me-2"></i>Parâmetros da Simulação</h5>
+                    <p class="text-muted small mb-4">Ajuste os valores abaixo para projetar os lucros da plataforma em tempo real.</p>
+                    
+                    <div class="mb-3">
+                      <label for="sim-gmv-monet" class="form-label small fw-bold text-uppercase text-muted">GMV Mensal Estimado (€)</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-shopping-cart text-muted"></i></span>
+                        <input type="number" id="sim-gmv-monet" class="form-control" value="50000" min="0" step="1000" oninput="adminUI.calculateMonetization()" />
+                      </div>
+                      <div class="form-text small">Volume total transacionado pelas vendas de mel.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="sim-fixed-monet" class="form-label small fw-bold text-uppercase text-muted">Custos Fixos Mensais (€)</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-building text-muted"></i></span>
+                        <input type="number" id="sim-fixed-monet" class="form-control" value="2000" min="0" step="100" oninput="adminUI.calculateMonetization()" />
+                      </div>
+                      <div class="form-text small">Servidores, marketing digital e salários.</div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="sim-gateway-monet" class="form-label small fw-bold text-uppercase text-muted">Taxa do Gateway de Pagamento (%)</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-credit-card text-muted"></i></span>
+                        <input type="number" id="sim-gateway-monet" class="form-control" value="2" min="0" max="100" step="0.1" oninput="adminUI.calculateMonetization()" />
+                      </div>
+                      <div class="form-text small">Custo por transação (ex: Stripe, MB Way).</div>
+                    </div>
+
+                    <div class="mb-2">
+                      <label for="sim-custom-rate" class="form-label small fw-bold text-uppercase text-muted d-flex justify-content-between">
+                        <span>Taxa Personalizada (%)</span>
+                        <span id="sim-custom-rate-badge" class="badge bg-success">15%</span>
+                      </label>
+                      <input type="range" class="form-range" id="sim-custom-rate" min="1" max="50" value="15" step="0.5" oninput="adminUI.updateCustomRateValue(this.value)" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-xl-8">
+                  <div class="admin-card border-0 shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-calculator text-success me-2"></i>Comparação de Cenários</h5>
+                    <p class="text-muted small mb-3">Matriz financeira detalhada e gráfico comparativo entre taxas de comissão (Take Rate).</p>
+                    
+                    <!-- Visual Chart for Scenarios -->
+                    <div class="mb-4 p-3 bg-light rounded-3 border">
+                      <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-chart-column text-success me-2"></i>Gráfico Comparativo: Lucro Líquido Simultâneo por Cenário</h6>
+                      <div style="height: 190px; position: relative;">
+                        <canvas id="monetizationScenarioChart"></canvas>
+                      </div>
+                    </div>
+
+                    <div class="table-responsive">
+                      <table class="table align-middle table-hover" id="monetization-table" style="border-collapse: separate; border-spacing: 0 10px;">
+                        <thead>
+                          <tr class="text-muted text-uppercase small fw-bold" style="border-bottom: 2px solid rgba(0,0,0,0.05);">
+                            <th class="ps-3">Taxa (%)</th>
+                            <th>Receita Comissão</th>
+                            <th>Custos Gateway</th>
+                            <th>Lucro Bruto</th>
+                            <th>Custos Fixos</th>
+                            <th>Lucro Líquido</th>
+                            <th class="pe-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Dynamic Rows for 5%, 10%, 20%, and Custom -->
+                          <tr id="row-5pct" style="background: rgba(0,0,0,0.01); border-radius: 8px;">
+                            <td class="fw-bold ps-3">5%</td>
+                            <td id="val-5-revenue">0.00€</td>
+                            <td id="val-5-gateway">0.00€</td>
+                            <td id="val-5-gross">0.00€</td>
+                            <td id="val-5-fixed">0.00€</td>
+                            <td id="val-5-net" class="fw-bold">0.00€</td>
+                            <td class="pe-3" id="val-5-status">---</td>
+                          </tr>
+                          <tr id="row-10pct" style="background: rgba(244, 180, 0, 0.05); border-radius: 8px; border-left: 4px solid #f4b400;">
+                            <td class="fw-bold ps-3 text-warning">10% <span class="badge bg-warning text-dark text-uppercase small" style="font-size:0.6rem;">Recomendado</span></td>
+                            <td id="val-10-revenue">0.00€</td>
+                            <td id="val-10-gateway">0.00€</td>
+                            <td id="val-10-gross">0.00€</td>
+                            <td id="val-10-fixed">0.00€</td>
+                            <td id="val-10-net" class="fw-bold">0.00€</td>
+                            <td class="pe-3" id="val-10-status">---</td>
+                          </tr>
+                          <tr id="row-20pct" style="background: rgba(0,0,0,0.01); border-radius: 8px;">
+                            <td class="fw-bold ps-3">20%</td>
+                            <td id="val-20-revenue">0.00€</td>
+                            <td id="val-20-gateway">0.00€</td>
+                            <td id="val-20-gross">0.00€</td>
+                            <td id="val-20-fixed">0.00€</td>
+                            <td id="val-20-net" class="fw-bold">0.00€</td>
+                            <td class="pe-3" id="val-20-status">---</td>
+                          </tr>
+                          <tr id="row-custompct" style="background: rgba(25, 135, 84, 0.04); border-radius: 8px; border-left: 4px solid #198754;">
+                            <td class="fw-bold ps-3 text-success">Personalizado (<span id="val-custom-title-rate">15%</span>)</td>
+                            <td id="val-custom-revenue">0.00€</td>
+                            <td id="val-custom-gateway">0.00€</td>
+                            <td id="val-custom-gross">0.00€</td>
+                            <td id="val-custom-fixed">0.00€</td>
+                            <td id="val-custom-net" class="fw-bold">0.00€</td>
+                            <td class="pe-3" id="val-custom-status">---</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <!-- Formula tip -->
+                    <div class="p-3 bg-light rounded mt-3 d-flex align-items-center gap-3">
+                      <div class="icon-box bg-white text-success p-2 rounded shadow-sm"><i class="fas fa-percentage"></i></div>
+                      <div class="small text-muted">
+                        <span class="fw-bold text-dark d-block">Dica de Margem para Vendedores:</span>
+                        Para proteger a margem, os apicultores podem ajustar o preço com a fórmula:
+                        <code class="fw-bold text-success d-inline-block mt-1 bg-white px-2 py-0.5 rounded">PV = (Custo + Lucro Desejado) / (1 - %comissão)</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Extra Monetization Information -->
+              <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                  <div class="admin-card border-0 shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-coins text-warning me-2"></i>Fontes Alternativas de Receita</h5>
+                    <div class="d-flex flex-column gap-3 mt-3">
+                      <div class="d-flex gap-3">
+                        <div class="icon-box bg-light text-primary p-2 rounded" style="width: 40px; height: 40px; text-align: center;"><i class="fas fa-tag"></i></div>
+                        <div>
+                          <h6 class="fw-bold mb-1">Taxas Fixas por Venda</h6>
+                          <p class="text-muted small mb-0">Cobrar um valor fixo (ex: €0.50) por item vendido. Adequado para tickets de compra baixos para garantir uma receita base de transação.</p>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-3">
+                        <div class="icon-box bg-light text-success p-2 rounded" style="width: 40px; height: 40px; text-align: center;"><i class="fas fa-gem"></i></div>
+                        <div>
+                          <h6 class="fw-bold mb-1">Subscrições Premium para Produtores</h6>
+                          <p class="text-muted small mb-0">Mensalidades para apicultores (ex: €15/mês) que oferecem taxas reduzidas, relatórios de vendas avançados ou destaque prioritário.</p>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-3">
+                        <div class="icon-box bg-light text-danger p-2 rounded" style="width: 40px; height: 40px; text-align: center;"><i class="fas fa-ad"></i></div>
+                        <div>
+                          <h6 class="fw-bold mb-1">Publicidade Não Intrusiva (Upsells)</h6>
+                          <p class="text-muted small mb-0">Destaque de produtos na homepage ou banners integrados. O apicultor paga uma taxa direta para obter mais visualizações e cliques.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="admin-card border-0 shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-balance-scale text-primary me-2"></i>Recomendações Legais & Fiscais</h5>
+                    <ul class="text-muted small ps-3 mt-3 d-flex flex-column gap-2">
+                      <li><strong>IVA sobre Comissões:</strong> Em Portugal, a comissão cobrada pelo marketplace está sujeita à taxa normal de IVA de 21%. O imposto é cobrado apenas sobre o serviço prestado (comissão), e não sobre o mel.</li>
+                      <li><strong>Clareza Contratual:</strong> Definir se a comissão incide sobre o valor líquido do produto ou o total bruto com portes de envio (geralmente sobre o total para evitar fraude de custos de frete).</li>
+                      <li><strong>Conformidade Registo OSS (One Stop Shop):</strong> Essencial registar a plataforma caso ocorram vendas de mel transfronteiriças para simplificar obrigações declarativas europeias.</li>
+                      <li><strong>UX Transparente:</strong> Manter transparência total nas taxas no painel do apicultor e apresentar preços finais com IVA/comissões já incorporados no checkout do cliente final.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+
+
+              <!-- KPIs Grid -->
+              <div class="admin-card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-chart-line text-success me-2"></i>Métricas de Performance (KPIs) a Monitorizar</h5>
+                <div class="row g-3 mt-1">
+                  <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                      <span class="d-block fw-bold text-dark small">Take Rate</span>
+                      <span class="text-muted" style="font-size:0.75rem;">% retida do GMV (Alvo: 10%)</span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                      <span class="d-block fw-bold text-dark small">CAC / CLTV</span>
+                      <span class="text-muted" style="font-size:0.75rem;">Relação de custo/retorno</span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                      <span class="d-block fw-bold text-dark small">Margens de Lucro</span>
+                      <span class="text-muted" style="font-size:0.75rem;">Lucro líquido do operador</span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="p-3 bg-light rounded text-center">
+                      <span class="d-block fw-bold text-dark small">MAU / DAU</span>
+                      <span class="text-muted" style="font-size:0.75rem;">Engajamento da comunidade</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2474,12 +3155,24 @@
 
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone da Frente (FontAwesome)</label>
-                  <input type="text" id="factIconFront" class="form-control form-control-v2" placeholder="Ex: fas fa-calendar-alt" required />
+                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone da Frente (FontAwesome ou Ficheiro)</label>
+                  <div class="input-group">
+                    <input type="text" id="factIconFront" class="form-control form-control-v2" placeholder="Ex: fas fa-calendar-alt" required />
+                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('factIconFrontFile').click()" title="Carregar ficheiro de imagem">
+                      <i class="fas fa-upload"></i>
+                    </button>
+                  </div>
+                  <input type="file" id="factIconFrontFile" class="d-none" accept="image/*" onchange="adminUI.uploadFactIcon(this, 'factIconFront')" />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone do Verso (FontAwesome)</label>
-                  <input type="text" id="factIconBack" class="form-control form-control-v2" placeholder="Ex: fas fa-infinity" required />
+                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone do Verso (FontAwesome ou Ficheiro)</label>
+                  <div class="input-group">
+                    <input type="text" id="factIconBack" class="form-control form-control-v2" placeholder="Ex: fas fa-infinity" required />
+                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('factIconBackFile').click()" title="Carregar ficheiro de imagem">
+                      <i class="fas fa-upload"></i>
+                    </button>
+                  </div>
+                  <input type="file" id="factIconBackFile" class="d-none" accept="image/*" onchange="adminUI.uploadFactIcon(this, 'factIconBack')" />
                 </div>
               </div>
 
@@ -2517,8 +3210,14 @@
 
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone (FontAwesome)</label>
-                  <input type="text" id="glossaryIcon" class="form-control form-control-v2" placeholder="Ex: fas fa-droplet" required />
+                  <label class="form-label small fw-bold text-uppercase text-muted">Ícone (FontAwesome ou Ficheiro)</label>
+                  <div class="input-group">
+                    <input type="text" id="glossaryIcon" class="form-control form-control-v2" placeholder="Ex: fas fa-droplet" required />
+                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('glossaryIconFile').click()" title="Carregar ficheiro de imagem">
+                      <i class="fas fa-upload"></i>
+                    </button>
+                  </div>
+                  <input type="file" id="glossaryIconFile" class="d-none" accept="image/*" onchange="adminUI.uploadFactIcon(this, 'glossaryIcon')" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small fw-bold text-uppercase text-muted">Categoria</label>

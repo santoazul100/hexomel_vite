@@ -1,0 +1,43 @@
+﻿Figura 2. Logo (Hexomel)Figura 2. Logo (Hexomel)3.1 TÃ­tulo do Projeto
+Figura 2. Logo (Hexomel)
+Figura 2. Logo (Hexomel)
+O projeto desenvolvido no Ã¢mbito da Prova de AptidÃ£o Profissional tem como tÃ­tulo Hexomel.
+A designaÃ§Ã£o Hexomel foi escolhida para associar imediatamente a plataforma ao universo do mel, da apicultura e da organizaÃ§Ã£o natural das colmeias. O nome transmite uma identidade curta, memorÃ¡vel e adequada a uma marca digital, mantendo ligaÃ§Ã£o ao produto principal e ao posicionamento premium pretendido.
+
+3.2 Tema do Projeto
+O tema do projeto centra-se na criaÃ§Ã£o de uma plataforma web para comÃ©rcio eletrÃ³nico, divulgaÃ§Ã£o e valorizaÃ§Ã£o do mel portuguÃªs artesanal. A soluÃ§Ã£o nÃ£o se limita a apresentar produtos: integra perfis de utilizador, catÃ¡logo filtrÃ¡vel, carrinho de compras, checkout, pagamentos, comunidade, Ã¡rea de apicultor, painel administrativo, workshops e conteÃºdos educativos.
+A Hexomel combina trÃªs dimensÃµes complementares. A primeira Ã© comercial, ligada Ã  venda de produtos e gestÃ£o de encomendas. A segunda Ã© informativa, atravÃ©s de pÃ¡ginas de curiosidades, aprendizagem e explicaÃ§Ãµes sobre tipos de mel, origem botÃ¢nica, produÃ§Ã£o e boas prÃ¡ticas. A terceira Ã© comunitÃ¡ria, permitindo perguntas e respostas entre clientes e apicultores verificados.
+
+DimensÃ£o
+AplicaÃ§Ã£o no projeto
+Exemplos concretos
+Comercial
+Venda online e gestÃ£o de compras.
+Loja, filtros, carrinho, checkout, Stripe, histÃ³rico de encomendas.
+Educativa
+ExplicaÃ§Ã£o do produto e da apicultura.
+Curiosidades do mel, origem botÃ¢nica, visualizaÃ§Ã£o 3D, referÃªncias cientÃ­ficas.
+ComunitÃ¡ria
+InteraÃ§Ã£o entre utilizadores e produtores.
+Sistema Q&A, respostas de apicultores, votos, moderaÃ§Ã£o e melhor resposta.
+Administrativa
+GestÃ£o interna e anÃ¡lise de dados.
+Dashboard, KPIs, Chart.js, gestÃ£o de produtos, utilizadores e upgrades.
+
+
+
+
+
+3.3 MotivaÃ§Ã£o para o Projeto
+A motivaÃ§Ã£o principal foi desenvolver um projeto completo, com utilidade prÃ¡tica e capaz de demonstrar competÃªncias tÃ©cnicas adquiridas ao longo do curso. A apicultura Ã© uma atividade tradicional com importÃ¢ncia econÃ³mica, ambiental e cultural, mas muitos pequenos produtores continuam com pouca presenÃ§a digital, o que limita a divulgaÃ§Ã£o dos seus produtos e reduz o contacto direto com o consumidor final.
+A Hexomel surge como resposta a essa realidade, propondo uma plataforma onde o mel nÃ£o Ã© tratado como um produto genÃ©rico, mas como o centro da experiÃªncia. O objetivo foi criar uma soluÃ§Ã£o que valorizasse a origem, o produtor, a qualidade e a informaÃ§Ã£o associada ao produto.
+Do ponto de vista tÃ©cnico, o projeto permitiu trabalhar vÃ¡rias Ã¡reas fundamentais: desenvolvimento frontend, backend, bases de dados, autenticaÃ§Ã£o, seguranÃ§a, APIs externas, UX/UI, responsividade, internacionalizaÃ§Ã£o, analytics e documentaÃ§Ã£o tÃ©cnica. Esta diversidade tornou a PAP mais completa e aproximou o trabalho de um cenÃ¡rio real de desenvolvimento de software.
+Valorizar o mel portuguÃªs e a produÃ§Ã£o artesanal atravÃ©s de uma presenÃ§a digital cuidada.
+Criar uma ponte direta entre apicultores e consumidores, reduzindo dependÃªncia de intermediÃ¡rios.
+Construir uma aplicaÃ§Ã£o full-stack funcional, com frontend, backend e base de dados prÃ³prios.
+Explorar seguranÃ§a real com bcrypt, JWT, Google OAuth e verificaÃ§Ã£o 2FA por email.
+Integrar pagamentos e fluxos comerciais prÃ³ximos de uma loja online profissional.
+Aplicar princÃ­pios de UX premium, como skeleton loaders, View Transitions API, toasts e micro-interaÃ§Ãµes.
+Produzir documentaÃ§Ã£o tÃ©cnica que explique decisÃµes, ferramentas, arquitetura e evoluÃ§Ã£o do sistema.
+
+

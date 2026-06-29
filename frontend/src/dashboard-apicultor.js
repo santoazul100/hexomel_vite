@@ -78,6 +78,21 @@ class ApicultorUI {
     const toggleHide = document.getElementById("sidebar-hide");
     const sectionLinks = document.querySelectorAll(".admin-nav-link[data-section]");
 
+    // Dynamic navbar height calculation to prevent page overlap
+    const updateNavbarHeight = () => {
+      const nav = document.querySelector(".navbar-enhanced");
+      if (nav) {
+        const height = nav.getBoundingClientRect().height;
+        document.documentElement.style.setProperty("--navbar-height", `${height}px`);
+      }
+    };
+    updateNavbarHeight();
+    window.addEventListener("resize", updateNavbarHeight);
+    window.addEventListener("scroll", updateNavbarHeight);
+    window.addEventListener("load", updateNavbarHeight);
+    setTimeout(updateNavbarHeight, 100);
+    setTimeout(updateNavbarHeight, 500);
+
     const applySidebarState = () => {
       if (!adminLayout) return;
 
@@ -116,6 +131,16 @@ class ApicultorUI {
       mobileQuery.addEventListener("change", applySidebarState);
     } else if (mobileQuery.addListener) {
       mobileQuery.addListener(applySidebarState);
+    }
+
+    // Close on backdrop click for mobile
+    const backdrop = document.getElementById("sidebar-backdrop");
+    if (backdrop) {
+      backdrop.addEventListener("click", () => {
+        if (adminLayout) {
+          adminLayout.classList.add("sidebar-collapsed");
+        }
+      });
     }
   }
 
@@ -282,7 +307,17 @@ class ApicultorUI {
       if (response.ok) {
         const stats = await response.json();
 
-        document.getElementById("dash-total-earnings").innerText = `${stats.summary.totalEarnings.toFixed(2)}€`;
+        const totalEarnings = stats.summary.totalEarnings || 0;
+        const commission = totalEarnings * 0.10;
+        const netEarnings = totalEarnings * 0.90;
+
+        document.getElementById("dash-total-earnings").innerText = `${totalEarnings.toFixed(2)}€`;
+        
+        const commEl = document.getElementById("dash-commission-value");
+        if (commEl) commEl.innerText = `${commission.toFixed(2)}€`;
+        
+        const netEl = document.getElementById("dash-net-earnings");
+        if (netEl) netEl.innerText = `${netEarnings.toFixed(2)}€`;
         document.getElementById("dash-total-products").innerText = stats.summary.products;
         document.getElementById("dash-pending-products").innerText = stats.summary.pendingProducts;
         document.getElementById("dash-total-workshops").innerText = stats.summary.workshops;
@@ -627,6 +662,7 @@ class ApicultorUI {
     document.getElementById("product-id").value = p.ID_Produto;
     document.getElementById("prod-nome").value = p.Nome || "";
     document.getElementById("prod-preco").value = p.Preco || "";
+    this.updateProductNetEarningsPreview(p.Preco);
     document.getElementById("prod-stock").value = p.Stock || 0;
     document.getElementById("prod-descricao").value = p.Descricao || "";
     
@@ -753,6 +789,7 @@ class ApicultorUI {
     document.getElementById("ws-id").value = w.ID_Workshop;
     document.getElementById("ws-titulo").value = w.Titulo || "";
     document.getElementById("ws-preco").value = w.Preco || "";
+    this.updateWorkshopNetEarningsPreview(w.Preco);
     document.getElementById("ws-vagas").value = w.Vagas || "";
     document.getElementById("ws-descricao").value = w.Descricao || "";
     document.getElementById("ws-imagem").value = w.Imagem || "";
@@ -833,6 +870,12 @@ class ApicultorUI {
     this.currentTags.clear();
     this.renderTagPills();
     this.renderSuggestions();
+
+    const previewEl = document.getElementById("prod-preco-preview");
+    if (previewEl) {
+      previewEl.style.display = "none";
+      previewEl.innerText = "";
+    }
   }
 
   resetWorkshopForm() {
@@ -844,6 +887,11 @@ class ApicultorUI {
     if (preview) {
       preview.src = "";
       preview.style.display = "none";
+    }
+    const wsPreviewEl = document.getElementById("ws-preco-preview");
+    if (wsPreviewEl) {
+      wsPreviewEl.style.display = "none";
+      wsPreviewEl.innerText = "";
     }
   }
 
@@ -1191,6 +1239,34 @@ class ApicultorUI {
           row.style.display = text.includes(term) ? "" : "none";
         });
       });
+    }
+  }
+
+  updateProductNetEarningsPreview(val) {
+    const previewEl = document.getElementById("prod-preco-preview");
+    if (!previewEl) return;
+    const preco = parseFloat(val);
+    if (isNaN(preco) || preco <= 0) {
+      previewEl.style.display = "none";
+      previewEl.innerText = "";
+    } else {
+      const net = preco * 0.90;
+      previewEl.style.display = "block";
+      previewEl.innerText = `Receberá ${net.toFixed(2)}€ líquidos (após 10% comissão).`;
+    }
+  }
+
+  updateWorkshopNetEarningsPreview(val) {
+    const previewEl = document.getElementById("ws-preco-preview");
+    if (!previewEl) return;
+    const preco = parseFloat(val);
+    if (isNaN(preco) || preco <= 0) {
+      previewEl.style.display = "none";
+      previewEl.innerText = "";
+    } else {
+      const net = preco * 0.90;
+      previewEl.style.display = "block";
+      previewEl.innerText = `Receberá ${net.toFixed(2)}€ líquidos (após 10% comissão).`;
     }
   }
 }

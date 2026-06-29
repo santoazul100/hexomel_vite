@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Checkout | Hexomel</title>
+    <title data-i18n="check.title">Checkout | Hexomel</title>
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
@@ -40,7 +40,7 @@
         </div>
         <div class="checkout-secure">
           <i class="fas fa-shield-alt"></i>
-          <span>Checkout 100% Seguro</span>
+          <span data-i18n="check.secure_checkout">Checkout 100% Seguro</span>
         </div>
       </div>
     </header>
@@ -50,11 +50,11 @@
         <div class="worten-stepper">
           <div class="worten-step active" id="step-1" style="cursor: pointer;" onclick="if(window.checkoutManager.currentStep > 1) window.checkoutManager.prevStep()" title="Voltar aos Dados de Envio">
             <div class="worten-step-circle">1</div>
-            <span class="worten-step-label">Dados de Envio</span>
+            <span class="worten-step-label" data-i18n="check.step_shipping">Dados de Envio</span>
           </div>
           <div class="worten-step" id="step-2">
             <div class="worten-step-circle">2</div>
-            <span class="worten-step-label">Confirmacao e Pagamento</span>
+            <span class="worten-step-label" data-i18n="check.step_payment">Confirmacao e Pagamento</span>
           </div>
         </div>
       </div>
@@ -67,6 +67,7 @@
             class="checkout-title"
             id="page-title"
             style="color: var(--primary-green); letter-spacing: -0.5px; font-weight: 800"
+            data-i18n="check.billing_details"
           >
             Dados de Faturacao
           </h1>
@@ -90,6 +91,7 @@
                       color: var(--text-medium);
                       margin-bottom: 0;
                     "
+                    data-i18n="check.personal_id"
                   >
                     Identificacao Pessoal
                   </h5>
@@ -105,29 +107,29 @@
                       transition: all 0.3s;
                     "
                   >
-                    <i class="fas fa-magic me-1"></i>Preencher com os meus dados
+                    <i class="fas fa-magic me-1"></i><span data-i18n="check.autofill">Preencher com os meus dados</span>
                   </button>
                 </div>
 
                 <div class="checkout-inline-grid checkout-inline-grid--equal">
                   <div class="worten-form-group">
                     <input type="text" id="nome" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Nome</label>
+                    <label class="worten-label" data-i18n="check.first_name">Nome</label>
                   </div>
                   <div class="worten-form-group">
                     <input type="text" id="apelido" class="worten-input" placeholder=" " />
-                    <label class="worten-label">Apelido</label>
+                    <label class="worten-label" data-i18n="check.last_name">Apelido</label>
                   </div>
                 </div>
 
                 <div class="checkout-inline-grid checkout-inline-grid--equal">
                   <div class="worten-form-group">
                     <input type="text" id="nif" class="worten-input" placeholder=" " />
-                    <label class="worten-label">NIF (opcional)</label>
+                    <label class="worten-label" data-i18n="check.nif">NIF (opcional)</label>
                   </div>
                   <div class="worten-form-group">
                     <input type="tel" id="telemovel" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Telemovel</label>
+                    <label class="worten-label" data-i18n="check.phone">Telemovel</label>
                   </div>
                 </div>
 
@@ -144,22 +146,23 @@
                     border-bottom: 1px solid var(--border-color);
                     padding-bottom: 10px;
                   "
+                  data-i18n="check.delivery_address_title"
                 >
                   Morada de Entrega
                 </h5>
                 <div class="worten-form-group">
                   <input type="text" id="morada" class="worten-input" placeholder=" " required />
-                  <label class="worten-label">Morada completa</label>
+                  <label class="worten-label" data-i18n="check.full_address">Morada completa</label>
                 </div>
 
                 <div class="checkout-inline-grid checkout-inline-grid--address">
                   <div class="worten-form-group">
                     <input type="text" id="cod-postal" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Codigo postal</label>
+                    <label class="worten-label" data-i18n="check.zip_code">Codigo postal</label>
                   </div>
                   <div class="worten-form-group">
                     <input type="text" id="cidade" class="worten-input" placeholder=" " required />
-                    <label class="worten-label">Cidade</label>
+                    <label class="worten-label" data-i18n="check.city">Cidade</label>
                   </div>
                 </div>
 
@@ -176,6 +179,7 @@
                     border-bottom: 1px solid var(--border-color);
                     padding-bottom: 10px;
                   "
+                  data-i18n="check.shipping_method"
                 >
                   Metodo de Envio
                 </h5>
@@ -189,8 +193,8 @@
                       style="accent-color: var(--primary-green); width: 22px; height: 22px"
                     />
                     <div style="flex: 1">
-                      <div style="font-weight: 700">CTT Expresso</div>
-                      <div style="font-size: 0.85rem; color: var(--text-medium)">
+                      <div style="font-weight: 700" data-i18n="check.ctt">CTT Expresso</div>
+                      <div style="font-size: 0.85rem; color: var(--text-medium)" data-i18n="check.ctt_desc">
                         Entrega em casa (2-3 dias uteis)
                       </div>
                     </div>
@@ -206,12 +210,12 @@
                       style="accent-color: var(--primary-green); width: 22px; height: 22px"
                     />
                     <div style="flex: 1">
-                      <div style="font-weight: 700">Levantamento no Apiario</div>
-                      <div style="font-size: 0.85rem; color: var(--text-medium)">
+                      <div style="font-weight: 700" data-i18n="check.pickup">Levantamento no Apiario</div>
+                      <div style="font-size: 0.85rem; color: var(--text-medium)" data-i18n="check.pickup_desc">
                         Disponivel imediatamente (Gratis)
                       </div>
                     </div>
-                    <div style="font-weight: 700; color: var(--success-color)">Gratis</div>
+                    <div style="font-weight: 700; color: var(--success-color)" data-i18n="check.free">Gratis</div>
                   </label>
                 </div>
 
@@ -221,6 +225,7 @@
                   class="btn-worten-primary"
                   style="border-radius: 50px; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px"
                   onclick="window.checkoutManager.nextStep()"
+                  data-i18n="check.continue_payment"
                 >
                   Continuar para Pagamento
                 </button>
@@ -232,8 +237,8 @@
                   <div class="step2-icon">
                     <i class="fas fa-lock"></i>
                   </div>
-                  <h3 class="step2-heading">Tudo pronto para pagar</h3>
-                  <p class="step2-copy">
+                  <h3 class="step2-heading" data-i18n="check.ready_pay">Tudo pronto para pagar</h3>
+                  <p class="step2-copy" data-i18n="check.pay_desc">
                     Confirma os detalhes da encomenda no painel ao lado e clica em
                     <strong>Finalizar e Pagar</strong> para seres redirecionado para a pagina segura da Stripe.
                   </p>
@@ -251,7 +256,7 @@
                     style="border-radius: 50px; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px"
                     onclick="window.checkoutManager.prevStep()"
                   >
-                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                    <i class="fas fa-arrow-left me-2"></i><span data-i18n="check.back">Voltar</span>
                   </button>
                 </div>
               </div>
@@ -261,21 +266,21 @@
 
         <aside class="checkout-sidebar">
           <div class="order-summary-card" id="order-summary-card">
-            <h2 class="summary-title">Resumo do Pedido</h2>
+            <h2 class="summary-title" data-i18n="check.order_summary">Resumo do Pedido</h2>
 
             <div id="summary-items-list"></div>
 
             <div class="summary-total-section">
               <div class="summary-row">
-                <span>Subtotal</span>
+                <span data-i18n="check.subtotal">Subtotal</span>
                 <span id="subtotal-val">EUR 0.00</span>
               </div>
               <div class="summary-row">
-                <span>Envio</span>
+                <span data-i18n="check.shipping">Envio</span>
                 <span id="shipping-val">EUR 0.00</span>
               </div>
               <div class="summary-total">
-                <span>Total (IVA incl.)</span>
+                <span data-i18n="check.total_tax_incl">Total (IVA incl.)</span>
                 <span class="total-price" id="total-val">EUR 0.00</span>
               </div>
             </div>
@@ -290,7 +295,7 @@
                     <i class="fas fa-user"></i>
                   </div>
                   <div>
-                    <span class="confirm-detail-label">Cliente</span>
+                    <span class="confirm-detail-label" data-i18n="check.client">Cliente</span>
                     <strong id="confirm-name" class="confirm-detail-value">-</strong>
                   </div>
                 </div>
@@ -300,7 +305,7 @@
                     <i class="fas fa-phone"></i>
                   </div>
                   <div>
-                    <span class="confirm-detail-label">Telefone</span>
+                    <span class="confirm-detail-label" data-i18n="check.telephone">Telefone</span>
                     <strong id="confirm-phone" class="confirm-detail-value">-</strong>
                   </div>
                 </div>
@@ -310,7 +315,7 @@
                     <i class="fas fa-map-marker-alt"></i>
                   </div>
                   <div>
-                    <span class="confirm-detail-label">Morada</span>
+                    <span class="confirm-detail-label" data-i18n="check.address">Morada</span>
                     <strong id="confirm-address" class="confirm-detail-value">-</strong>
                   </div>
                 </div>
@@ -320,7 +325,7 @@
                     <i class="fas fa-truck"></i>
                   </div>
                   <div>
-                    <span class="confirm-detail-label">Envio</span>
+                    <span class="confirm-detail-label" data-i18n="check.shipping_label">Envio</span>
                     <strong id="confirm-shipping" class="confirm-detail-value">-</strong>
                   </div>
                 </div>
@@ -330,7 +335,7 @@
                     <i class="fas fa-credit-card"></i>
                   </div>
                   <div>
-                    <span class="confirm-detail-label">Pagamento</span>
+                    <span class="confirm-detail-label" data-i18n="check.payment_label">Pagamento</span>
                     <strong id="confirm-payment" class="confirm-detail-value">Stripe Checkout</strong>
                   </div>
                 </div>
@@ -338,8 +343,8 @@
 
               <p class="confirm-redirect-note">
                 <i class="fas fa-shield-alt"></i>
-                Vais ser redirecionado para a pagina segura da Stripe para introduzir os dados do
-                cartao e concluir a compra.
+                <span data-i18n="check.redirect_note">Vais ser redirecionado para a pagina segura da Stripe para introduzir os dados do
+                cartao e concluir a compra.</span>
               </p>
 
               <button
@@ -348,7 +353,7 @@
                 class="btn-confirm-pay"
                 id="final-submit-btn"
               >
-                <i class="fas fa-lock me-2"></i>Finalizar e Pagar
+                <i class="fas fa-lock me-2"></i><span data-i18n="check.finish_pay">Finalizar e Pagar</span>
               </button>
             </div>
 
@@ -362,7 +367,7 @@
             >
               <p>
                 <i class="fas fa-check-circle" style="color: var(--success-color)"></i>
-                Devolucoes gratis ate 30 dias
+                <span data-i18n="check.returns">Devolucoes gratis ate 30 dias</span>
               </p>
             </div>
           </div>
@@ -384,6 +389,7 @@
             <p
               class="mb-4 text-white-50"
               style="max-width: 300px; font-size: 0.95rem; line-height: 1.6"
+              data-i18n="check.footer_desc"
             >
               Dedicados a producao de mel 100% natural, preservando a pureza e a tradicao apicola
               em cada gota.
@@ -401,27 +407,27 @@
             </div>
           </div>
           <div class="col-lg-2 ms-lg-auto">
-            <h5 class="footer-heading">Navegacao</h5>
+            <h5 class="footer-heading" data-i18n="check.footer_nav">Navegacao</h5>
             <ul class="list-unstyled">
-              <li><a href="index.html" class="footer-link">Inicio</a></li>
-              <li><a href="shop.html" class="footer-link">Produtos</a></li>
-              <li><a href="about.html" class="footer-link">Sobre</a></li>
-              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+              <li><a href="index.html" class="footer-link" data-i18n="check.footer_home">Inicio</a></li>
+              <li><a href="shop.html" class="footer-link" data-i18n="check.footer_products">Produtos</a></li>
+              <li><a href="about.html" class="footer-link" data-i18n="check.footer_about">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link" data-i18n="check.footer_contacts">Contactos</a></li>
             </ul>
           </div>
           <div class="col-lg-2">
-            <h5 class="footer-heading">Pedido</h5>
+            <h5 class="footer-heading" data-i18n="check.footer_order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link">Carrinho</a></li>
-              <li><a href="#" class="footer-link">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">
-            <h5 class="footer-heading">Contactos</h5>
+            <h5 class="footer-heading" data-i18n="check.footer_contact_heading">Contactos</h5>
             <p class="small mb-2 text-white">
-              <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da Estrela, Portugal
+              <i class="fas fa-map-marker-alt me-2 text-warning"></i> <span data-i18n="check.footer_location">Serra da Estrela, Portugal</span>
             </p>
             <p class="small mb-2 text-white">
               <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
@@ -433,7 +439,7 @@
         </div>
         <hr class="my-5 opacity-10" />
         <div class="text-center small opacity-50">
-          <p class="mb-0">
+          <p class="mb-0" data-i18n="check.footer_rights">
             &copy; 2026 Hexomel - Excelencia em Mel Artesanal. Todos os direitos reservados.
           </p>
         </div>

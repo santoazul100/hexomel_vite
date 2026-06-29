@@ -73,21 +73,16 @@
 html {
   scroll-behavior: smooth;
   scrollbar-gutter: stable; /* Previne o salto de layout ao esconder o scroll */
-  font-size: 16px; /* Default base for large desktops */
+  font-size: 16px; /* Base legível para telemóveis e tablets */
 }
 
-/* Fluid base scaling — prevents "zoomed in" look on laptops */
-@media (max-width: 1600px) {
-  html { font-size: 15.5px; }
-}
-@media (max-width: 1400px) {
-  html { font-size: 15px; }
-}
-@media (max-width: 1200px) {
-  html { font-size: 14px; }
-}
-@media (max-width: 992px) {
-  html { font-size: 13.5px; }
+/* Escalonamento Fluido para Desktop:
+   - Previne o efeito "demasiado grande" em portáteis (desce até ~13px)
+   - Aumenta até 120% (19.2px) em grandes monitores desktop para melhor legibilidade */
+@media (min-width: 992px) {
+  html {
+    font-size: clamp(13px, 0.9vw + 2px, 19.2px);
+  }
 }
 
 /* Modal Scroll Lock */
@@ -1092,7 +1087,7 @@ p {
 
 /* ===== RESPONSIVE HARDENING ===== */
 body {
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 img,
@@ -1331,4 +1326,26 @@ canvas {
   .success-card {
     padding: 2rem 1.25rem !important;
   }
+}
+
+/* Offset content to clear the fixed navbar on non-hero pages */
+main.mt-5,
+main.py-5.mt-5,
+.profile-main.mt-5 {
+  margin-top: clamp(100px, 8vw, 130px) !important;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+/* Styling for Auth main wrappers to vertically center the login/register/recovery cards cleanly */
+.auth-main {
+  margin-top: 85px !important;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0 !important;
 }

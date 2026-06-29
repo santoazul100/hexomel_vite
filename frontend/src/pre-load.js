@@ -16,6 +16,38 @@
     document.documentElement.classList.add("cart-items-present");
   }
 
+  // Instant Maintenance Anti-Flicker Check
+  const path = window.location.pathname.toLowerCase();
+  if (!path.includes("admin")) {
+    try {
+      const rawCache = localStorage.getItem("hexomel_maint_cache");
+      if (rawCache) {
+        const settings = JSON.parse(rawCache);
+        const isTrue = (val) => val === "true" || val === true || val === "1" || val === 1;
+        let currentSection = "full";
+        if (path.includes("shop") || path.includes("loja") || path.includes("produto") || path.includes("checkout") || path.includes("cart")) {
+          currentSection = "shop";
+        } else if (path.includes("curiosidades")) {
+          currentSection = "curiosidades";
+        } else if (path.includes("aprender") || path.includes("workshops") || path.includes("faq")) {
+          currentSection = "aprender";
+        } else if (path.includes("rede-social") || path.includes("comunidade") || path.includes("hexohive")) {
+          currentSection = "hexohive";
+        }
+
+        const isFull = isTrue(settings.maintenance_full) || isTrue(settings.maintenance_mode);
+        const isSection = currentSection !== "full" && isTrue(settings[`maintenance_${currentSection}`]);
+
+        if (isFull || isSection) {
+          const style = document.createElement("style");
+          style.id = "hexomel-anti-flicker-maint";
+          style.textContent = `main, #app, body > div.container, body > div.container-fluid, .products-section, .hero { opacity: 0 !important; visibility: hidden !important; }`;
+          (document.head || document.documentElement).appendChild(style);
+        }
+      }
+    } catch(e) {}
+  }
+
   // Anti-flicker: Inject Navigation Auth State immediately upon DOM parsing
   const observer = new MutationObserver((mutations, obs) => {
     const authSection = document.getElementById('authSection');

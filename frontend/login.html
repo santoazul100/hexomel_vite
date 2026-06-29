@@ -81,7 +81,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -110,10 +109,9 @@
 
     <!-- Main Content -->
     <main class="py-5 mt-5 position-relative overflow-hidden">
-      <!-- Floating Bees -->
-      <div class="bee-container z-0" style="position: absolute; width: 100%; height: 100vh; pointer-events: none; top: 0; left: 0;">
-        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 8%; width: 55px;" />
-        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 35%; right: 10%; width: 40px;" />
+      <div class="bee-container z-0">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
       </div>
 
       <div class="container py-5 mt-4 position-relative z-1">
@@ -123,31 +121,33 @@
               
               <div class="text-center mb-4">
                 <i class="fas fa-sign-in-alt fs-1 mb-2" style="color: var(--primary-green);"></i>
-                <h2 class="fw-bold" style="color: var(--primary-green);">Iniciar Sessão</h2>
-                <p class="text-muted small">Bem-vindo de volta! Introduza os seus dados para aceder.</p>
+                <h2 class="fw-bold" style="color: var(--primary-green);" data-i18n="auth.login">Iniciar Sessão</h2>
+                <p class="text-muted small" data-i18n="auth.login.desc">Bem-vindo de volta! Introduza os seus dados para aceder.</p>
               </div>
 
               <form id="loginFormV2">
                 <div class="form-group mb-3">
-                  <label class="form-label small fw-bold opacity-75">EMAIL OU USERNAME</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.email">EMAIL OU USERNAME</label>
                   <input
                     type="text"
                     id="login-email-v2"
                     class="auth-input mb-0"
                     placeholder="email@exemplo.com ou username"
+                    data-i18n-ph="auth.email.ph"
                     required
                     autocomplete="username"
                   />
                 </div>
 
                 <div class="form-group mb-3 position-relative">
-                  <label class="form-label small fw-bold opacity-75">PASSWORD</label>
+                  <label class="form-label small fw-bold opacity-75" data-i18n="auth.password">PASSWORD</label>
                   <div class="position-relative">
                     <input
                       type="password"
                       id="login-password-v2"
                       class="auth-input mb-0"
                       placeholder="Sua password"
+                      data-i18n-ph="auth.password.ph"
                       required
                     />
                     <button type="button" class="password-toggle-btn btn border-0 position-absolute end-0 top-50 translate-middle-y text-muted px-3" data-target="login-password-v2" style="z-index: 10;">
@@ -157,23 +157,23 @@
                 </div>
 
                 <div class="text-end mb-4">
-                  <a href="recuperar.html" class="small text-muted text-decoration-none hover-success">Esqueceu-se da palavra-passe?</a>
+                  <a href="recuperar.html" class="small text-muted text-decoration-none hover-success" data-i18n="auth.forgot">Esqueceu-se da palavra-passe?</a>
                 </div>
 
-                <button type="submit" class="btn btn-auth-enhanced register w-100 py-3">
+                <button type="submit" class="btn btn-auth-enhanced register w-100 py-3" data-i18n="auth.enter">
                   Entrar
                 </button>
               </form>
 
-              <div class="auth-divider-v2 my-4 text-center">ou entrar com</div>
+              <div class="auth-divider-v2 my-4 text-center" data-i18n="auth.or">ou entrar com</div>
 
               <!-- Google Login Button -->
               <div id="google-signin-button-v2" class="d-flex justify-content-center mb-4"></div>
 
               <!-- Footer Links -->
               <div class="text-center mt-4 pt-3 border-top">
-                <span class="text-muted small">Não tem uma conta? </span>
-                <a href="register.html" class="text-decoration-none hover-success fw-bold" style="color: var(--primary-green);">
+                <span class="text-muted small" data-i18n="auth.noaccount">Não tem uma conta? </span>
+                <a href="register.html" class="text-decoration-none hover-success fw-bold" style="color: var(--primary-green);" data-i18n="auth.create">
                   Criar conta
                 </a>
               </div>
@@ -214,10 +214,10 @@
           <div class="col-lg-2">
             <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">
@@ -260,6 +260,32 @@
             icon.classList.replace('fa-eye-slash', 'fa-eye');
           }
         });
+      });
+
+      // Se for a página de admin, esconder opções extra (Google, registo)
+      document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("admin") === "true") {
+          const divider = document.querySelector(".auth-divider-v2");
+          const googleBtn = document.getElementById("google-signin-button-v2");
+          const footerLinks = document.querySelector(".text-center.mt-4.pt-3.border-top");
+          const forgotPassword = document.querySelector(".text-end.mb-4 a");
+
+          if (divider) divider.style.display = "none";
+          if (googleBtn) googleBtn.style.display = "none";
+          if (footerLinks) footerLinks.style.display = "none";
+          if (forgotPassword) forgotPassword.parentElement.style.display = "none";
+          
+          const title = document.querySelector(".auth-card-v2 h2, h2.fw-bold");
+          if (title) {
+            import('./src/i18n.js').then(({ getLang }) => {
+              title.innerText = getLang() === 'en' ? "Admin Login" : "Login Administração";
+            }).catch(() => {
+              title.innerText = "Login Administração";
+            });
+            title.removeAttribute("data-i18n");
+          }
+        }
       });
     </script>
   </body>

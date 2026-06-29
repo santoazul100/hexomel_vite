@@ -1,0 +1,301 @@
+--- 6b3bb693-8eba-440d-bad4-ade5c413b99b ---
+Created At: 2026-06-27T16:34:01Z
+Completed At: 2026-06-27T16:34:01Z
+The following changes were made by the multi_replace_file_content tool to: c:\escola\pap\code\hexomel_vite\frontend\src\recuperar.js. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -1,5 +1,6 @@
+ import Swal from "sweetalert2";
+ import { ensureBackendReady, parseJsonSafely } from "./api.js";
++import { getLang } from "./i18n.js";
+ 
+ document.addEventListener("DOMContentLoaded", () => {
+   const urlParams = new URLSearchParams(window.location.search);
+@@ -49,18 +49,18 @@
+       if (submitBtn) submitBtn.disabled = true;
+ 
+       Swal.fire({
+-        title: "A processar...",
+-        text: "Por favor, aguarde enquanto validamos o seu pedido.",
+-        allowOutsideClick: false,
+-        didOpen: () => {
+-          Swal.showLoading();
+-        }
+-      });
+-
+-      try {
+-        const backendAvailable = await ensureBackendReady();
+-        if (!backendAvailable) {
+-          throw new Error("O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos.");
++        title: getLang() === "pt" ? "A processar..." : "Processing...",
++        text: getLang() === "pt" ? "Por favor, aguarde enquanto validamos o seu pedido." : "Please wait while we validate your request.",
++        allowOutsideClick: false,
++        didOpen: () => {
++          Swal.showLoading();
++        }
++      });
++
++      try {
++        const backendAvailable = await ensureBackendReady();
++        if (!backendAvailable) {
++          throw new Error(getLang() === "pt" ? "O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos." : "The server is still starting. Try again in a few seconds.");
+         }
+ 
+         const response = await fetch("/api/auth/forgot-password", {
+@@ -73,7 +73,7 @@
+         const data = await parseJsonSafely(response);
+ 
+         if (!response.ok) {
+-          throw new Error(data.error || "Erro ao solicitar rede
+<truncated 3534 bytes>
+ken and user info, save immediately!
+@@ -165,9 +165,9 @@
+ 
+           Swal.fire({
+             icon: "success",
+-            title: "Sucesso!",
+-            text: "A sua palavra-passe foi redefinida e a sua sessão foi iniciada automaticamente!",
+-            confirmButtonText: "Entrar na Minha Conta",
++            title: getLang() === "pt" ? "Sucesso!" : "Success!",
++            text: getLang() === "pt" ? "A sua palavra-passe foi redefinida e a sua sessão foi iniciada automaticamente!" : "Your password has been reset and you have been logged in automatically!",
++            confirmButtonText: getLang() === "pt" ? "Entrar na Minha Conta" : "Enter My Account",
+             confirmButtonColor: "#2d5f3f"
+           }).then(() => {
+             window.location.href = "/";
+@@ -174,9 +174,9 @@
+         } else {
+           Swal.fire({
+             icon: "success",
+-            title: "Sucesso!",
++            title: getLang() === "pt" ? "Sucesso!" : "Success!",
+             text: data.message,
+-            confirmButtonText: "Iniciar Sessão",
++            confirmButtonText: getLang() === "pt" ? "Iniciar Sessão" : "Log In",
+             confirmButtonColor: "#2d5f3f"
+           }).then(() => {
+             // Redirect back home and open the login screen automatically
+@@ -185,9 +185,9 @@
+       } catch (error) {
+         Swal.fire({
+           icon: "error",
+-          title: "Falha na Redefinição",
+-          text: error.message,
+-          confirmButtonText: "Tentar novamente",
++          title: getLang() === "pt" ? "Falha na Redefinição" : "Reset Failed",
++          text: error.message,
++          confirmButtonText: getLang() === "pt" ? "Tentar novamente" : "Try again",
+           confirmButtonColor: "#d33"
+         });
+       } finally {
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+--- 6966f59c-cab5-4ab6-9196-d7196d1d8e2d ---
+Created At: 2026-06-27T16:33:51Z
+Completed At: 2026-06-27T16:33:52Z
+The following changes were made by the multi_replace_file_content tool to: c:\escola\pap\code\hexomel_vite\frontend\checkout.html. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -266,7 +266,7 @@
+ 
+         <aside class="checkout-sidebar">
+           <div class="order-summary-card" id="order-summary-card">
+-            <h2 class="summary-title">Resumo do Pedido</h2>
++            <h2 class="summary-title" data-i18n="check.order_summary">Resumo do Pedido</h2>
+ 
+             <div id="summary-items-list"></div>
+ 
+@@ -273,13 +273,13 @@
+               <div class="summary-row">
+-                <span>Subtotal</span>
++                <span data-i18n="check.subtotal">Subtotal</span>
+                 <span id="subtotal-val">EUR 0.00</span>
+               </div>
+               <div class="summary-row">
+-                <span>Envio</span>
++                <span data-i18n="check.shipping">Envio</span>
+                 <span id="shipping-val">EUR 0.00</span>
+               </div>
+               <div class="summary-total">
+-                <span>Total (IVA incl.)</span>
++                <span data-i18n="check.total_tax_incl">Total (IVA incl.)</span>
+                 <span class="total-price" id="total-val">EUR 0.00</span>
+               </div>
+             </div>
+@@ -293,7 +293,7 @@
+                     <i class="fas fa-user"></i>
+                   </div>
+                   <div>
+-                    <span class="confirm-detail-label">Cliente</span>
++                    <span class="confirm-detail-label" data-i18n="check.client">Cliente</span>
+                     <strong id="confirm-name" class="confirm-detail-value">-</strong>
+                   </div>
+                 </div>
+@@ -302,7 +302,7 @@
+                     <i class="fas fa-phone"></i>
+                   </div>
+                   <div>
+-                    <span class="confirm-detail-
+<truncated 4488 bytes>
+li>
+-              <li><a href="#" class="footer-link">A minha conta</a></li>
+-              <li><a href="#" class="footer-link">FAQ</a></li>
+-              <li><a href="#" class="footer-link">Termos</a></li>
++            <h5 class="footer-heading" data-i18n="check.footer_order">Pedido</h5>
++            <ul class="list-unstyled">
++              <li><a href="#" class="footer-link" data-i18n="check.footer_cart">Carrinho</a></li>
++              <li><a href="#" class="footer-link" data-i18n="check.footer_account">A minha conta</a></li>
++              <li><a href="#" class="footer-link" data-i18n="check.footer_faq">FAQ</a></li>
++              <li><a href="#" class="footer-link" data-i18n="check.footer_terms">Termos</a></li>
+             </ul>
+           </div>
+           <div class="col-lg-3">
+-            <h5 class="footer-heading">Contactos</h5>
+-            <p class="small mb-2 text-white">
+-              <i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da Estrela, Portugal
++            <h5 class="footer-heading" data-i18n="check.footer_contact_heading">Contactos</h5>
++            <p class="small mb-2 text-white">
++              <i class="fas fa-map-marker-alt me-2 text-warning"></i> <span data-i18n="check.footer_location">Serra da Estrela, Portugal</span>
+             </p>
+             <p class="small mb-2 text-white">
+               <i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678
+@@ -426,7 +426,7 @@
+         </div>
+         <hr class="my-5 opacity-10" />
+         <div class="text-center small opacity-50">
+-          <p class="mb-0">
++          <p class="mb-0" data-i18n="check.footer_rights">
+             &copy; 2026 Hexomel - Excelencia em Mel Artesanal. Todos os direitos reservados.
+           </p>
+         </div>
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+--- f8763c26-e34c-4996-8d9d-95ac436ea6ca ---
+Created At: 2026-06-27T16:34:03Z
+Completed At: 2026-06-27T16:34:03Z
+The following changes were made by the multi_replace_file_content tool to: C:\escola\pap\code\hexomel_vite\frontend\dashboard-apicultor.html. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -970,8 +970,8 @@
+         <section id="workshops-section" class="admin-section">
+           <header class="d-flex justify-content-between align-items-center mb-4">
+             <div>
+-              <h2 class="fw-bold mb-1">Meus Workshops</h2>
+-              <p class="text-muted small">
++              <h2 class="fw-bold mb-1" data-i18n="dash.workshops.title">Meus Workshops</h2>
++              <p class="text-muted small" data-i18n="dash.workshops.desc">
+                 Gira as suas experiências e ensinamentos abertos à comunidade.
+               </p>
+             </div>
+@@ -978,22 +978,22 @@
+                <div class="search-box-premium me-2">
+                 <i class="fas fa-search"></i>
+-                <input type="text" id="workshop-search" placeholder="Pesquisar workshop...">
++                <input type="text" id="workshop-search" data-i18n-ph="dash.workshops.search_ph" placeholder="Pesquisar workshop...">
+               </div>
+               <button class="btn btn-add-product" data-bs-toggle="modal" data-bs-target="#workshopModal" onclick="apicultorUI.resetWorkshopForm()">
+-                <i class="fas fa-plus me-2"></i> Novo Workshop
+-              </button>
+-            </div>
+-          </header>
+-          <div class="admin-card">
+-            <div class="table-responsive">
+-              <table class="table-premium w-100">
+-                <thead>
+-                  <tr>
+-                    <th style="width: 40%">Título</th>
+-                    <th>Data</th>
+-                    <th>Preço</th>
+-                    <th>Vagas</th>
+-                    <th class="text-end">Ações</th>
++                <i class="fas fa-plus me-2"></i
+<truncated 8846 bytes>
+lass="text-muted fw-600">Clique para carregar</span>
+-                      <small class="text-muted opacity-50 d-block mt-1">PNG, JPG até 5MB</small>
++                      <span class="text-muted fw-600" data-i18n="dash.modal.image_click">Clique para carregar</span>
++                      <small class="text-muted opacity-50 d-block mt-1" data-i18n="dash.modal.image_req">PNG, JPG até 5MB</small>
+                       <img id="prod-image-preview" src="" class="img-fluid rounded-4 w-100 h-100 object-fit-cover position-absolute top-0 start-0" style="display: none;" />
+                       <div class="upload-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center rounded-4" style="background: rgba(26, 77, 46, 0.6); color: white; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;">
+                         <i class="fas fa-camera mb-2"></i>
+-                        <span class="small fw-600">Alterar</span>
+-                      </div>
+-                    </div>
+-                  </div>
+-                </div>
+-              </div>
+-              <div class="mt-4 pt-3 border-top text-end">
+-                <button type="submit" class="btn btn-add-product px-5 py-2">Guardar Produto</button>
++                        <span class="small fw-600" data-i18n="dash.modal.image_change">Alterar</span>
++                      </div>
++                    </div>
++                  </div>
++                </div>
++              </div>
++              <div class="mt-4 pt-3 border-top text-end">
++                <button type="submit" class="btn btn-add-product px-5 py-2" data-i18n="dash.modal.product.btn_save">Guardar Produto</button>
+               </div>
+             </form>
+           </div>
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+--- 905b259c-c68e-4557-8090-65d72a4489e5 ---
+I have successfully added the `data-i18n` attributes to all hardcoded Portuguese text in `apicultor.html`, `apicultores.html`, `success.html`, and `cancel.html`.
+
+Here are the dictionaries you can add directly to your `i18n.js` translations file:
+
+### Portuguese (`pt`)
+
+```javascript
+  "apic.title": "Perfil do Apicultor - Hexomel",
+  "apic.loading": "Carregando...",
+  "apic.bio": "\"A nossa paixão é cuidar das abelhas e trazer até si o melhor da natureza.\"",
+  "apic.productsTitle": "Produtos do Apicultor",
+  "apic.workshopsTitle": "Experiências e Workshops",
+
+  "apis.title": "Apicultores - Hexomel",
+  "apis.badge": "NOSSOS PRODUTORES",
+  "apis.heading": "Nossos Apicultores",
+  "apis.subtitle": "Conheça os apicultores que dedicam a sua vida à produção do melhor mel artesanal.",
+
+  "succ.title": "Sucesso | Hexomel 🐝",
+  "succ.heading": "Encomenda Recebida!",
+  "succ.message": "A tua encomenda foi processada com sucesso pela nossa colmeia.",
+  "succ.loadingOrder": "A carregar pedido...",
+  "succ.emailInfo": "Enviámos um email de confirmação com todos os detalhes. Podes acompanhar o estado no teu perfil.",
+  "succ.goHome": "Voltar ao Início",
+
+  "canc.title": "Pagamento Cancelado | Hexomel 🐝",
+  "canc.heading": "Pagamento Cancelado",
+  "canc.message": "Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.",
+  "canc.retry": "Tentar Novamente",
+  "canc.backToShop": "Voltar à Loja",
+```
+
+### English (`en`)
+
+```javascript
+  "apic.title": "Beekeeper Profile - Hexomel",
+  "apic.loading": "Loading...",
+  "apic.bio": "\"Our passion is caring for bees and bringing you the best of nature.\"",
+  "apic.productsTitle": "Beekeeper's Products",
+  "apic.workshopsTitle": "Experiences and Workshops",
+
+  "apis.title": "Beekeepers - Hexomel",
+  "apis.badge": "OUR PRODUCERS",
+  "apis.heading": "Our Beekeepers",
+  "apis.subtitle": "Meet the beekeepers who dedicate their lives to producing the best artisanal honey.",
+
+  "succ.title": "Success | Hexomel 🐝",
+  "succ.heading": "Order Received!",
+  "succ.message": "Your order was successfully processed by our hive.",
+  "succ.loadingOrder": "Loading order...",
+  "succ.emailInfo": "We've sent a confirmation email with all the details. You can track the status in your profile.",
+  "succ.goHome": "Back to Home",
+
+  "canc.title": "Payment Canceled | Hexomel 🐝",
+  "canc.heading": "Payment Canceled",
+  "canc.message": "It looks like the payment was not completed. Don't worry, your items are still in the cart.",
+  "canc.retry": "Try Again",
+  "canc.backToShop": "Back to Shop",
+```
+
+Simply copy and paste these key-value pairs into the respective language objects in your `i18n.js` file. Let me know if you need help adjusting or translating anything else!

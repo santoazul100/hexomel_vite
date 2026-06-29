@@ -123,7 +123,17 @@ class ComunidadeQA {
     try {
       const res = await fetch("/api/comunidade/perguntas");
       if (!res.ok) throw new Error("Fetch failed");
-      const perguntas = await res.json();
+      let perguntas = await res.json();
+      if (this.token) {
+        try {
+          const blocksRes = await fetch("/api/users/blocks", { headers: { Authorization: `Bearer ${this.token}` } });
+          if (blocksRes.ok) {
+            const blocks = await blocksRes.json();
+            const blockedSet = new Set(blocks.map(b => Number(b.id)));
+            perguntas = perguntas.filter(p => !blockedSet.has(Number(p.ID_Cliente)));
+          }
+        } catch(e){}
+      }
       this.renderPerguntas(perguntas);
     } catch (err) {
       console.error("Error loading Q&A:", err);
@@ -222,9 +232,12 @@ class ComunidadeQA {
 
     let socialActionsHtml = "";
     if (this.token && this.user && this.user.id !== p.ID_Cliente && !isAuthorAdmin) {
+      const chatHref = window.socialUI 
+        ? `javascript:window.socialUI.startChatWith(${p.ID_Cliente})` 
+        : `rede-social.html?chatWith=${p.ID_Cliente}`;
       socialActionsHtml = `
         <div class="qa-social-actions ms-2 d-inline-flex gap-2">
-          <a href="rede-social.html?chatWith=${p.ID_Cliente}" class="btn btn-sm btn-link p-0 text-success" style="font-size: 0.9rem;" title="Enviar Mensagem Privada"><i class="fas fa-comment-dots"></i></a>
+          <a href="${chatHref}" class="btn btn-sm btn-link p-0 text-success" style="font-size: 0.9rem;" title="Enviar Mensagem Privada"><i class="fas fa-comment-dots"></i></a>
           <button class="btn btn-sm btn-link p-0 text-danger qa-report-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${p.ID_Cliente}" data-item-type="pergunta" data-item-id="${p.ID_Pergunta}" data-item-text="${this.escapeHTML(p.Texto)}" title="Denunciar"><i class="fas fa-flag"></i></button>
           <button class="btn btn-sm btn-link p-0 text-secondary qa-block-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${p.ID_Cliente}" title="Bloquear"><i class="fas fa-ban"></i></button>
         </div>
@@ -241,13 +254,13 @@ class ComunidadeQA {
       <div class="qa-item animate-fade-up" style="animation-delay: ${0.1 + idx * 0.08}s">
         <div class="qa-question">
           ${authorLinkStart}
-            <img src="${avatarUrl}" alt="${p.AutorNome || 'U'}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${p.AutorNome || 'U'}') + '&background=1a4d2e&color=fff&size=80';" />
+            <img src="${avatarUrl}" alt="${p.AutorNome || 'Utilizador'}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${p.AutorNome || 'Utilizador'}') + '&background=1a4d2e&color=fff&size=80';" />
           ${authorLinkEnd}
           <div class="qa-content">
             <div class="qa-meta d-flex w-100 align-items-center">
               ${isAuthorAdmin 
-                ? `<span class="qa-author fw-bold text-dark me-2">${p.AutorNome || "Anónimo"}</span>` 
-                : `<a href="profile.html?id=${p.ID_Cliente}" class="qa-author text-decoration-none fw-bold text-dark me-2">${p.AutorNome || "Anónimo"}</a>`}
+                ? `<span class="qa-author fw-bold text-dark me-2">${p.AutorNome || "Utilizador"}</span>` 
+                : `<a href="profile.html?id=${p.ID_Cliente}" class="qa-author text-decoration-none fw-bold text-dark me-2">${p.AutorNome || "Utilizador"}</a>`}
               <span class="qa-role ${roleClass}">${roleLabel}</span>
               ${authorBadge}
               ${socialActionsHtml}
@@ -298,9 +311,12 @@ class ComunidadeQA {
 
     let socialActionsHtml = "";
     if (this.token && this.user && this.user.id !== r.ID_Cliente && !isAuthorAdmin) {
+      const chatHref = window.socialUI 
+        ? `javascript:window.socialUI.startChatWith(${r.ID_Cliente})` 
+        : `rede-social.html?chatWith=${r.ID_Cliente}`;
       socialActionsHtml = `
         <div class="qa-social-actions ms-2 d-inline-flex gap-2">
-          <a href="rede-social.html?chatWith=${r.ID_Cliente}" class="btn btn-sm btn-link p-0 text-success" style="font-size: 0.9rem;" title="Enviar Mensagem Privada"><i class="fas fa-comment-dots"></i></a>
+          <a href="${chatHref}" class="btn btn-sm btn-link p-0 text-success" style="font-size: 0.9rem;" title="Enviar Mensagem Privada"><i class="fas fa-comment-dots"></i></a>
           <button class="btn btn-sm btn-link p-0 text-danger qa-report-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${r.ID_Cliente}" data-item-type="resposta" data-item-id="${r.ID_Resposta}" data-item-text="${this.escapeHTML(r.Texto)}" title="Denunciar"><i class="fas fa-flag"></i></button>
           <button class="btn btn-sm btn-link p-0 text-secondary qa-block-btn" style="font-size: 0.9rem; border: none; background: none;" data-user-id="${r.ID_Cliente}" title="Bloquear"><i class="fas fa-ban"></i></button>
         </div>
@@ -317,13 +333,13 @@ class ComunidadeQA {
       <div class="qa-answer ${isAuthorBeekeeper ? "qa-answer-beekeeper" : ""}">
         <div class="qa-answer-line"></div>
         ${authorLinkStart}
-          <img src="${avatarUrl}" alt="${r.AutorNome || 'U'}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${r.AutorNome || 'U'}') + '&background=1a4d2e&color=fff&size=80';" />
+          <img src="${avatarUrl}" alt="${r.AutorNome || 'Utilizador'}" class="qa-avatar-img ${avatarClass}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${r.AutorNome || 'Utilizador'}') + '&background=1a4d2e&color=fff&size=80';" />
         ${authorLinkEnd}
         <div class="qa-content">
           <div class="qa-meta d-flex w-100 align-items-center">
             ${isAuthorAdmin 
-              ? `<span class="qa-author fw-bold text-dark me-2">${r.AutorNome || "Anónimo"}</span>` 
-              : `<a href="profile.html?id=${r.ID_Cliente}" class="qa-author text-decoration-none fw-bold text-dark me-2">${r.AutorNome || "Anónimo"}</a>`}
+              ? `<span class="qa-author fw-bold text-dark me-2">${r.AutorNome || "Utilizador"}</span>` 
+              : `<a href="profile.html?id=${r.ID_Cliente}" class="qa-author text-decoration-none fw-bold text-dark me-2">${r.AutorNome || "Utilizador"}</a>`}
             <span class="qa-role ${roleClass}">${roleLabel}</span>
             ${authorBadge}
             ${socialActionsHtml}
@@ -458,7 +474,7 @@ class ComunidadeQA {
             } else {
               Swal.fire({
                 icon: "error",
-                title: "Erro",
+                title: "Ops...",
                 text: data.error || "Erro ao publicar resposta",
                 confirmButtonColor: "#1a4d2e"
               });

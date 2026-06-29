@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Verificar Email — Hexomel</title>
+    <title data-i18n="auth.ver.title">Verificar Email — Hexomel</title>
     <meta name="description" content="Verifique o seu email para ativar a sua conta Hexomel." />
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -59,7 +59,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -88,10 +87,9 @@
 
     <!-- Main Content -->
     <main class="py-5 mt-5 position-relative overflow-hidden">
-      <!-- Floating Bees -->
-      <div class="bee-container z-0" style="position: absolute; width: 100%; height: 100vh; pointer-events: none; top: 0; left: 0;">
-        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" style="top: 10%; left: 8%; width: 55px;" />
-        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" style="top: 35%; right: 10%; width: 40px;" />
+      <div class="bee-container z-0">
+        <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
+        <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
       </div>
 
       <div class="container py-5 mt-4 position-relative z-1">
@@ -99,17 +97,17 @@
           <div class="col-lg-5 mx-auto">
             <div class="premium-card p-4 p-md-5 animate-fade-up text-center">
               
-              <h2 class="fw-bold mb-4" style="color: var(--primary-green); font-family: var(--font-heading);">Verificação de Email</h2>
+              <h2 class="fw-bold mb-4" style="color: var(--primary-green); font-family: var(--font-heading);" data-i18n="auth.ver.h2">Verificação de Email</h2>
               
               <div id="verify-content" class="message-container">
                 <div class="spinner"></div>
-                <p class="auth-subtitle">A verificar a sua conta, aguarde um momento...</p>
+                <p class="auth-subtitle" data-i18n="auth.ver.verifying">A verificar a sua conta, aguarde um momento...</p>
               </div>
 
               <!-- Footer Links -->
               <div id="verify-footer" class="text-center mt-4 pt-3 border-top">
                 <a href="/" class="text-muted text-decoration-none hover-success">
-                  <i class="fas fa-home me-1"></i> Voltar à Página Inicial
+                  <i class="fas fa-home me-1"></i> <span data-i18n="auth.ver.back_home">Voltar à Página Inicial</span>
                 </a>
               </div>
 
@@ -149,10 +147,10 @@
           <div class="col-lg-2">
             <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">

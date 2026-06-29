@@ -35,12 +35,12 @@ INSERT INTO `origem` (`ID_Origem`, `Nome`) VALUES
 
 -- Seed Products (Linked to Beekeepers: ID_Apicultor)
 INSERT INTO `produto` (`ID_Produto`, `Nome`, `Preco`, `Stock`, `ID_Categoria`, `ID_Origem`, `ID_Apicultor`, `Descricao`, `Imagem`, `Tags`) VALUES
-(1, 'Mel de Rosmaninho Premium', 13.50, 50, 1, 1, 3, 'Mel suave e aromático colhido nas encostas da Serra da Estrela.', '/images/wildflower.png', 'organic,premium,flower'),
-(2, 'Mel de Eucalipto Puro', 12.00, 30, 1, 2, 4, 'Mel com traços balsâmicos e sabor intenso.', '/images/acacia.png', 'puro,natural,eucalipto'),
-(3, 'Mel de Urze da Serra', 15.50, 40, 1, 3, 3, 'Sabor forte e persistente com notas florais profundas.', '/images/lavender.png', 'mountain,raw,wild'),
-(4, 'Pólen de Abelha Natural', 8.50, 25, 2, 4, 4, 'Superalimento rico em proteínas e vitaminas.', '/images/bee.png', 'superfood,protein,natural'),
-(5, 'Própolis Gotas Reais', 10.00, 20, 2, 1, 3, 'Antibiótico natural produzido pelas abelhas.', '/images/bee.png', 'health,propolis,bio'),
-(6, 'Mel com Favo de Ouro', 18.00, 15, 1, 5, 4, 'Mel virgem diretamente dentro do favo de cera natural.', '/images/wildflower.png', 'favo,vintage,gold');
+(1, 'Mel de Rosmaninho Premium', 13.50, 50, 1, 1, 3, 'Mel suave e aromático colhido nas encostas da Serra da Estrela.', '/images/mel_rosmaninho_ai.png', 'organic,premium,flower'),
+(2, 'Mel de Eucalipto Puro', 12.00, 30, 1, 2, 4, 'Mel com traços balsâmicos e sabor intenso.', '/images/mel_eucalipto_ai.png', 'puro,natural,eucalipto'),
+(3, 'Mel de Urze da Serra', 15.50, 40, 1, 3, 3, 'Sabor forte e persistente com notas florais profundas.', '/images/mel_urze_ai.png', 'mountain,raw,wild'),
+(4, 'Pólen de Abelha Natural', 8.50, 25, 2, 4, 4, 'Superalimento rico em proteínas e vitaminas.', '/images/mel_polen_ai.png', 'superfood,protein,natural'),
+(5, 'Própolis Gotas Reais', 10.00, 20, 2, 1, 3, 'Antibiótico natural produzido pelas abelhas.', '/images/mel_propolis_ai.png', 'health,propolis,bio'),
+(6, 'Mel com Favo de Ouro', 18.00, 15, 1, 5, 4, 'Mel virgem diretamente dentro do favo de cera natural.', '/images/mel_favo_ai.png', 'favo,vintage,gold');
 
 -- Seed Orders (encomenda)
 -- Dates relative to March 12, 2026

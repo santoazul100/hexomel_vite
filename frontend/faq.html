@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hexomel — Perguntas Frequentes (FAQ)</title>
+    <meta name="description" content="Tire todas as suas dúvidas sobre o mel 100% artesanal Hexomel, processos de envio, encomendas e workshops." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <script src="src/pre-load.js"></script>
+    <meta name="view-transition" content="same-origin" />
+    <style>
+      .faq-hero {
+        background: linear-gradient(180deg, #fefdf8 0%, #f4f7f5 100%);
+        padding: 130px 0 60px;
+      }
+      .faq-accordion .accordion-item {
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 16px !important;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+      }
+      .faq-accordion .accordion-button {
+        font-family: var(--font-heading, "Outfit", sans-serif);
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-green, #1a4d2e);
+        background: white;
+        padding: 1.25rem 1.5rem;
+        box-shadow: none !important;
+      }
+      .faq-accordion .accordion-button:not(.collapsed) {
+        background: rgba(26, 77, 46, 0.04);
+        color: var(--primary-green, #1a4d2e);
+      }
+      .faq-accordion .accordion-body {
+        padding: 1.25rem 1.5rem;
+        color: #555;
+        line-height: 1.7;
+        background: white;
+      }
+      .faq-category-badge {
+        background: rgba(244, 180, 0, 0.15);
+        color: #d97706;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        display: inline-block;
+        margin-bottom: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" />
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav mx-auto gap-4">
+            <li class="nav-item"><a class="nav-link" href="index.html" data-i18n="nav.home">Início</a></li>
+            <li class="nav-item"><a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a></li>
+            <li class="nav-item"><a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
+              <ul class="dropdown-menu dropdown-menu-hexomel">
+                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
+                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a></li>
+            <li class="nav-item"><a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a></li>
+          </ul>
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+              <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+              </button>
+            </div>
+            <div class="d-flex align-items-center gap-3" id="authSection"></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- Hero -->
+      <section class="faq-hero position-relative text-center">
+        <div class="bee-container">
+          <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
+          <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
+        </div>
+        <div class="container position-relative z-1">
+          <span class="product-badge-premium mb-3 d-inline-block px-4 py-2" style="background:rgba(26,77,46,0.08);color:var(--primary-green);"><i class="fas fa-question-circle me-2"></i>SUPORTE & AJUDA</span>
+          <h1 class="display-4 fw-bold mb-3" style="color:var(--primary-green)">Perguntas Frequentes (FAQ)</h1>
+          <p class="text-muted fs-5 mx-auto mb-4" style="max-width: 600px;">Encontre respostas rápidas para as suas dúvidas sobre o nosso mel puro, encomendas, pagamentos e apicultura.</p>
+        </div>
+      </section>
+
+      <!-- FAQ Accordion Sections -->
+      <section class="py-5 bg-white">
+        <div class="container py-3" style="max-width: 860px;">
+          
+          <!-- Category 1 -->
+          <div class="mb-5">
+            <span class="faq-category-badge"><i class="fas fa-jar me-2"></i>Produtos & Qualidade</span>
+            <div class="accordion faq-accordion" id="faqCat1">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                    O mel Hexomel é 100% puro e natural?
+                  </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqCat1">
+                  <div class="accordion-body">
+                    <strong>Sim, absolutamente!</strong> Todo o nosso mel é extraído diretamente dos favos das nossas colmeias na Serra da Estrela e Alentejo. Não adicionamos açúcares, conservantes nem submetemos o mel a processos térmicos de alta temperatura que destruam os seus nutrientes naturais.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                    O meu mel cristalizou. Isso significa que está estragado?
+                  </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqCat1">
+                  <div class="accordion-body">
+                    <strong>Não! Pelo contrário:</strong> a cristalização é a maior garantia de que o mel é 100% puro e cru. O mel de alta qualidade cristaliza naturalmente com o tempo e temperaturas mais baixas. Se preferir na forma líquida, basta aquecer o frasco ligeiramente em banho-maria (sem ultrapassar os 40ºC).
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                    Qual é a validade do mel?
+                  </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqCat1">
+                  <div class="accordion-body">
+                    O mel puro é um dos únicos alimentos do mundo que <strong>nunca se estraga</strong>. Devido à sua baixa humidade e acidez natural, microorganismos não conseguem proliferar. Recomendamos apenas mantê-lo num local seco e abrigado da luz solar direta.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category 2 -->
+          <div class="mb-5">
+            <span class="faq-category-badge"><i class="fas fa-truck me-2"></i>Encomendas & Entregas</span>
+            <div class="accordion faq-accordion" id="faqCat2">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                    Quais são os prazos de entrega em Portugal?
+                  </button>
+                </h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqCat2">
+                  <div class="accordion-body">
+                    Para Portugal Continental, as encomendas são entregues em <strong>24 a 48 horas úteis</strong> após a confirmação do pagamento. Para as Ilhas (Madeira e Açores), o envio demora entre 3 a 7 dias úteis.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                    Quais os métodos de pagamento aceites?
+                  </button>
+                </h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqCat2">
+                  <div class="accordion-body">
+                    Aceitamos pagamentos seguros via <strong>Cartão de Crédito/Débito (Stripe), MB WAY, Multibanco e Google Pay</strong>. Todas as transações cumprem os mais rigorosos padrões de segurança encriptada.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category 3 -->
+          <div class="mb-4">
+            <span class="faq-category-badge"><i class="fas fa-graduation-cap me-2"></i>Workshops & Visitas</span>
+            <div class="accordion faq-accordion" id="faqCat3">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                    Como me posso inscrever nos workshops apícolas?
+                  </button>
+                </h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqCat3">
+                  <div class="accordion-body">
+                    Pode consultar as próximas datas e fazer a sua reserva diretamente na página de <a href="workshops.html" class="text-success fw-bold">Workshops</a>. Fornecemos todo o equipamento de proteção necessário para uma experiência segura e inesquecível no apiário.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-premium">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <a href="index.html" class="footer-brand"><img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" /></a>
+            <p class="mb-4 text-white-50" style="max-width: 300px; font-size: 0.95rem; line-height: 1.6">Dedicados à produção de mel 100% natural, preservando a pureza e a tradição apícola em cada gota.</p>
+            <div class="social-links">
+              <a href="https://instagram.com" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+              <a href="https://facebook.com" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+              <a href="https://wa.me/351912345678" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-2 ms-lg-auto">
+            <h5 class="footer-heading">Navegação</h5>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="footer-link">Início</a></li>
+              <li><a href="shop.html" class="footer-link">Produtos</a></li>
+              <li><a href="workshops.html" class="footer-link">Workshops</a></li>
+              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2">
+            <h5 class="footer-heading">Pedido</h5>
+            <ul class="list-unstyled">
+              <li><a href="#" onclick="document.getElementById('cart-btn')?.click(); return false;" class="footer-link">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" style="color:#f4b400 !important">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link">Termos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3">
+            <h5 class="footer-heading">Contactos</h5>
+            <p class="small mb-2 text-white"><i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da Estrela, Portugal</p>
+            <p class="small mb-2 text-white"><i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678</p>
+            <p class="small mb-4 text-white"><i class="fas fa-envelope me-2 text-warning"></i> hexomelpap@gmail.com</p>
+          </div>
+        </div>
+        <hr class="my-5 opacity-10" />
+        <div class="text-center small opacity-50"><p class="mb-0">&copy; 2026 Hexomel — Todos os direitos reservados.</p></div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

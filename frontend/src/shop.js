@@ -470,9 +470,9 @@ function renderProducts() {
             </div>
             <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
           </div>
-          <div class="p-4 d-flex flex-column flex-grow-1">
-            <div onclick="window.location.href='/produto/${product.slug || product.id}'" style="cursor: pointer" class="mb-3">
-                <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${product.name}</h5>
+          <div class="p-3 d-flex flex-column flex-grow-1">
+            <div onclick="window.location.href='/produto/${product.slug || product.id}'" style="cursor: pointer" class="mb-2">
+                <h5 class="fw-bold mb-1" style="min-height: 2.2rem; font-size: 1.1rem;">${product.name}</h5>
                 <div class="star-rating">
                   ${generateStars(product.rating)} 
                   <span class="text-muted small">(${product.reviewCount})</span>
@@ -756,7 +756,7 @@ window.openProductDetails = async function (productId) {
           <!-- Seller Badge -->
           ${product.apicultorId ? `
             <a href="profile.html?id=${product.apicultorId}" class="apicultor-badge mb-4 d-inline-flex" style="text-decoration: none;">
-              <img src="${product.apicultorFoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.apicultorName || 'A')}&background=random`}" 
+              <img src="${(product.apicultorFoto && product.apicultorFoto.trim() !== '' && product.apicultorFoto !== 'null' && product.apicultorFoto !== 'undefined') ? product.apicultorFoto : `https://ui-avatars.com/api/?name=${encodeURIComponent(product.apicultorName || 'A')}&background=random`}" 
                    alt="${product.apicultorName}" 
                    referrerpolicy="no-referrer" 
                    style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(244, 180, 0, 0.3);"
@@ -781,9 +781,9 @@ window.openProductDetails = async function (productId) {
           <!-- Actions -->
           <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
             <div class="qty-selector d-flex align-items-center" style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 0;">
-               <button class="qty-btn" onclick="window.updateModalQty(-1)" style="width: 38px; height: 38px; border: none; background: #f8fafc; font-weight: bold; margin: 0;">-</button>
+               <button class="qty-btn" onclick="window.updateModalQty(-1, ${product.stock})" style="width: 38px; height: 38px; border: none; background: #f8fafc; font-weight: bold; margin: 0;">-</button>
                <input type="number" id="modal-qty" class="qty-input" value="1" min="1" readonly style="width: 38px; height: 38px; text-align: center; border: none; font-weight: bold; margin: 0;">
-               <button class="qty-btn" onclick="window.updateModalQty(1)" style="width: 38px; height: 38px; border: none; background: #f8fafc; font-weight: bold; margin: 0;">+</button>
+               <button class="qty-btn" onclick="window.updateModalQty(1, ${product.stock})" style="width: 38px; height: 38px; border: none; background: #f8fafc; font-weight: bold; margin: 0;">+</button>
             </div>
             
             <button class="btn-minimal-add" onclick="window.addToCartFromDetails(${product.id})" ${product.stock <= 0 ? "disabled" : ""} style="background: var(--primary-green, #1a4d2e); border: none; color: white; border-radius: 8px; padding: 10px 24px; font-weight: bold; height: 40px; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 0.5px; margin: 0;">
@@ -903,10 +903,20 @@ window.openProductDetails = async function (productId) {
   }, 10);
 };
 
-window.updateModalQty = function (change) {
+window.updateModalQty = function (change, maxStock = 999) {
   const input = document.getElementById("modal-qty");
   let val = parseInt(input.value) + change;
   if (val < 1) val = 1;
+  if (val > maxStock) {
+    val = maxStock;
+    Swal.fire({
+      icon: "warning",
+      title: "Limite de Stock",
+      text: `Apenas existem ${maxStock} unidades disponíveis em stock.`,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  }
   input.value = val;
 };
 
@@ -925,7 +935,12 @@ window.closeProductDetails = function () {
 };
 
 window.addToCartFromDetails = function (id) {
+  const product = products.find((p) => p.id === id);
   const qty = parseInt(document.getElementById("modal-qty").value);
+  if (product && qty > product.stock) {
+    Swal.fire("Limite de Stock", `Apenas existem ${product.stock} unidades em stock.`, "warning");
+    return;
+  }
   cart.addItem(id, qty);
   window.closeProductDetails();
   // cart.toggle(true); // Optional: open cart after add

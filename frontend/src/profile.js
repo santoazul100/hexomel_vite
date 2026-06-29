@@ -128,6 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
         panel.classList.add("active");
         panel.style.display = "block";
       }
+      // Trigger data load for security tab opened via URL
+      if (tab === "security") {
+        // Defer until after fetchProfileData sets up auth
+        setTimeout(() => fetchBlockedUsers(), 600);
+      }
     }
   }
   loadUserFavorites();
@@ -206,6 +211,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Initialize Change Password Form & Live Validation
+  const changePwdForm = document.getElementById("changePasswordForm");
+  if (changePwdForm) {
+    changePwdForm.addEventListener("submit", handlePasswordUpdate);
+    initProfilePasswordValidation();
+  }
 
   const deleteBtn = document.getElementById("delete-account-btn");
   if (deleteBtn) {
@@ -262,6 +273,7 @@ function initializeTabs() {
           if (target === "workshops") fetchUserWorkshops();
           if (target === "favorites") fetchFavorites();
           if (target === "orders") fetchProfileData(); // Refresh full profile for orders
+          if (target === "security") fetchBlockedUsers();
         }
       }
     });
@@ -647,35 +659,20 @@ function renderPublicProfile(data) {
   // Account Verification Badge
   const badgeVerify = document.getElementById("account-verify-badge");
   if (badgeVerify) {
-    badgeVerify.style.cssText = "";
-    const applyBadgeStyles = (el) => {
-      el.style.display = "inline-flex";
-      el.style.alignItems = "center";
-      el.style.justifyContent = "center";
-      el.style.gap = "6px";
-      el.style.height = "28px";
-      el.style.minHeight = "28px";
-      el.style.padding = "4px 14px";
-      el.style.borderRadius = "50px";
-      el.style.fontSize = "0.78rem";
-      el.style.fontWeight = "700";
-      el.style.lineHeight = "1";
-      el.style.textTransform = "none";
-      el.style.letterSpacing = "0";
-      el.style.whiteSpace = "nowrap";
-      el.style.verticalAlign = "middle";
-      el.style.overflow = "visible";
-    };
+    badgeVerify.style.cssText = "display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; vertical-align: middle;";
     
-    badgeVerify.className = "verify-badge-premium verified";
-    if (member.role === "apicultor") {
-      badgeVerify.innerHTML = '<i class="fas fa-certificate" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Apicultor</span>';
-    } else if (member.role === "admin") {
-      badgeVerify.innerHTML = '<i class="fas fa-shield-alt" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Admin</span>';
-    } else {
-      badgeVerify.innerHTML = '<i class="fas fa-check-circle" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Cliente</span>';
-    }
-    applyBadgeStyles(badgeVerify);
+    const isRestricted = Boolean(Number(member.restrictedToPost) === 1 || member.restrictedToPost === true || Number(member.Restrito_Postar) === 1 || member.Restrito_Postar === true);
+    const is2faVerified = Boolean(Number(member.checkoutVerified) === 1 || member.checkoutVerified === true || Number(member.Checkout_Verified) === 1 || member.Checkout_Verified === true);
+
+    const statusBadgeHtml = isRestricted
+      ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-ban"></i>Conta Restrita</span>`
+      : `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-check-circle"></i>Conta Ativa</span>`;
+
+    const twoFaBadgeHtml = is2faVerified
+      ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-shield-alt"></i>2FA Verificado</span>`
+      : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-exclamation-triangle"></i>Requer 2FA</span>`;
+
+    badgeVerify.innerHTML = `${statusBadgeHtml}${twoFaBadgeHtml}`;
   }
 
   // Avatar Handling
@@ -1317,40 +1314,23 @@ function renderProfile(data) {
     }
   }
 
-  // Account Verification Badge
+  // Account Status & 2FA Badges
   const badgeVerify = document.getElementById("account-verify-badge");
   if (badgeVerify) {
-    badgeVerify.style.cssText = "";
-    
-    const applyBadgeStyles = (el) => {
-      el.style.display = "inline-flex";
-      el.style.alignItems = "center";
-      el.style.justifyContent = "center";
-      el.style.gap = "6px";
-      el.style.height = "28px";
-      el.style.minHeight = "28px";
-      el.style.padding = "4px 14px";
-      el.style.borderRadius = "50px";
-      el.style.fontSize = "0.78rem";
-      el.style.fontWeight = "700";
-      el.style.lineHeight = "1";
-      el.style.textTransform = "none";
-      el.style.letterSpacing = "0";
-      el.style.whiteSpace = "nowrap";
-      el.style.verticalAlign = "middle";
-      el.style.overflow = "visible";
-    };
+    badgeVerify.style.cssText = "display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; vertical-align: middle;";
 
-    if (data.isVerified) {
-      badgeVerify.className = "verify-badge-premium verified";
-      badgeVerify.innerHTML = '<i class="fas fa-check-circle" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Conta Verificada</span>';
-      applyBadgeStyles(badgeVerify);
-    } else {
-      badgeVerify.className = "verify-badge-premium pending";
-      badgeVerify.innerHTML = '<i class="fas fa-clock" style="font-size: 0.85rem; line-height: 1; display: inline-flex; align-items: center; margin-right: 4px;"></i><span>Verificação Pendente</span>';
-      badgeVerify.title = "Por favor, verifique o seu email.";
-      applyBadgeStyles(badgeVerify);
-    }
+    const isRestricted = Boolean(Number(data.restrictedToPost) === 1 || data.restrictedToPost === true || Number(data.Restrito_Postar) === 1 || data.Restrito_Postar === true);
+    const is2faVerified = Boolean(Number(data.checkoutVerified) === 1 || data.checkoutVerified === true || Number(data.Checkout_Verified) === 1 || data.Checkout_Verified === true);
+
+    const statusBadgeHtml = isRestricted
+      ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-ban"></i>Conta Restrita</span>`
+      : `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-check-circle"></i>Conta Ativa</span>`;
+
+    const twoFaBadgeHtml = is2faVerified
+      ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-shield-alt"></i>2FA Verificado</span>`
+      : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-exclamation-triangle"></i>Requer 2FA</span>`;
+
+    badgeVerify.innerHTML = `${statusBadgeHtml}${twoFaBadgeHtml}`;
   }
 
     // Show Upgrade tab if role is client
@@ -1585,6 +1565,79 @@ window.removeFromFavorites = async function (productId) {
   }
 };
 
+function getProfilePasswordStrength(value) {
+  let score = 0;
+  if (value.length >= 6) score++;
+  if (value.length >= 10) score++;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+  if (/[0-9]/.test(value)) score++;
+  if (/[^A-Za-z0-9]/.test(value)) score++;
+
+  const levels = [
+    { width: "20%", color: "#dc3545", text: "Fraca - adicione letras e números" },
+    { width: "40%", color: "#dc3545", text: "Fraca - continue a melhorar" },
+    { width: "60%", color: "#ffc107", text: "Razoável - adicione caracteres especiais" },
+    { width: "80%", color: "#198754", text: "Forte - excelente escolha!" },
+    { width: "100%", color: "#20c997", text: "Muito forte - segurança máxima" },
+  ];
+
+  return levels[Math.min(score, levels.length - 1)];
+}
+
+function initProfilePasswordValidation() {
+  const newPwdInput = document.getElementById("new-password");
+  const confirmPwdInput = document.getElementById("confirm-new-password");
+  const strengthContainer = document.getElementById("profile-strength-container");
+  const strengthFill = document.getElementById("profile-strength-fill");
+  const strengthLabel = document.getElementById("profile-strength-label");
+  const matchMsg = document.getElementById("password-match-message");
+
+  function updateMatchMessage() {
+    if (!confirmPwdInput || !matchMsg) return;
+    const newVal = newPwdInput ? newPwdInput.value : "";
+    const confirmVal = confirmPwdInput.value;
+
+    if (!confirmVal) {
+      matchMsg.style.display = "none";
+      return;
+    }
+
+    matchMsg.style.display = "block";
+    if (newVal === confirmVal) {
+      matchMsg.style.color = "#198754";
+      matchMsg.innerHTML = '<i class="fas fa-check-circle me-1"></i> As palavras-passe coincidem!';
+    } else {
+      matchMsg.style.color = "#dc3545";
+      matchMsg.innerHTML = '<i class="fas fa-times-circle me-1"></i> A palavra-passe está diferente!';
+    }
+  }
+
+  if (newPwdInput) {
+    newPwdInput.addEventListener("input", () => {
+      const val = newPwdInput.value;
+      if (!val) {
+        if (strengthContainer) strengthContainer.style.display = "none";
+      } else {
+        if (strengthContainer) strengthContainer.style.display = "block";
+        const res = getProfilePasswordStrength(val);
+        if (strengthFill) {
+          strengthFill.style.width = res.width;
+          strengthFill.style.backgroundColor = res.color;
+        }
+        if (strengthLabel) {
+          strengthLabel.style.color = res.color;
+          strengthLabel.textContent = res.text;
+        }
+      }
+      updateMatchMessage();
+    });
+  }
+
+  if (confirmPwdInput) {
+    confirmPwdInput.addEventListener("input", updateMatchMessage);
+  }
+}
+
 async function handlePasswordUpdate(e) {
   e.preventDefault();
   const token = getAuthToken();
@@ -1600,7 +1653,7 @@ async function handlePasswordUpdate(e) {
   const confirmPassword = document.getElementById("confirm-new-password").value;
 
   if (newPassword !== confirmPassword) {
-    return Swal.fire("Erro", "As novas passwords não coincidem", "error");
+    return Swal.fire("Erro", "A palavra-passe está diferente. As passwords não coincidem.", "error");
   }
 
   if (newPassword.length < 6) {
@@ -1636,6 +1689,10 @@ async function handlePasswordUpdate(e) {
         confirmButtonColor: "#f4b400",
       }).then(() => {
         e.target.reset();
+        const strengthContainer = document.getElementById("profile-strength-container");
+        const matchMsg = document.getElementById("password-match-message");
+        if (strengthContainer) strengthContainer.style.display = "none";
+        if (matchMsg) matchMsg.style.display = "none";
       });
     } else {
       Swal.fire(
@@ -2368,6 +2425,89 @@ window.cancelWorkshop = async function (reservationId) {
   } catch (err) {
     console.error("Cancel workshop error:", err);
     Swal.fire("Erro", err.message || "Erro de ligação ao servidor.", "error");
+  }
+};
+
+async function fetchBlockedUsers() {
+  const token = getAuthToken();
+  const listEl = document.getElementById("blocked-users-list");
+  const countBadge = document.getElementById("blocked-count-badge");
+  if (!token || !listEl) return;
+
+  try {
+    const res = await fetch("/api/users/blocks", {
+      headers: buildAuthHeaders(),
+    });
+    if (!res.ok) throw new Error("Erro ao carregar bloqueios.");
+    const blocks = await res.json();
+    
+    if (countBadge) countBadge.textContent = blocks.length;
+
+    if (blocks.length === 0) {
+      listEl.innerHTML = `<div class="p-3 text-center text-muted small bg-light rounded-4 border"><i class="fas fa-check-circle text-success me-2"></i>Não tens utilizadores bloqueados.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = blocks.map(b => {
+      const avatarUrl = b.picture && b.picture.trim() !== "" && b.picture !== "null" && b.picture !== "undefined"
+        ? b.picture
+        : "/images/default-user.png";
+      const roleText = b.role === "apicultor" ? "Apicultor" : (b.role === "admin" ? "Admin" : "Cliente");
+      return `
+        <div class="p-2.5 px-3 bg-light rounded-4 border d-flex align-items-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-3 min-width-0">
+            <img src="${avatarUrl}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null; this.src='/images/default-user.png';">
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark small text-truncate">${b.name}</div>
+              <div class="smaller text-muted text-truncate" style="font-size: 0.75rem;">${b.email} • <span class="badge bg-secondary-subtle text-secondary px-1.5 py-0.5" style="font-size:0.65rem;">${roleText}</span></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-semibold flex-shrink-0" style="font-size: 0.75rem;" onclick="unblockUserFromProfile(${b.id})">
+            <i class="fas fa-unlock me-1"></i>Desbloquear
+          </button>
+        </div>
+      `;
+    }).join("");
+  } catch (err) {
+    console.error("Fetch blocked users error:", err);
+    if (listEl) listEl.innerHTML = `<div class="text-danger small p-2">Erro ao carregar lista de bloqueios.</div>`;
+  }
+}
+
+window.unblockUserFromProfile = async function(id) {
+  const token = getAuthToken();
+  if (!token) return;
+
+  const confirmResult = await Swal.fire({
+    title: "Desbloquear Utilizador?",
+    text: "Poderá voltar a receber mensagens deste utilizador.",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#1a4d2e",
+    confirmButtonText: "Sim, desbloquear",
+    cancelButtonText: "Cancelar"
+  });
+
+  if (confirmResult.isConfirmed) {
+    try {
+      const res = await fetch(`/api/users/unblock/${id}`, {
+        method: "POST",
+        headers: buildAuthHeaders(),
+      });
+      if (res.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Utilizador Desbloqueado",
+          timer: 1200,
+          showConfirmButton: false
+        });
+        fetchBlockedUsers();
+      } else {
+        Swal.fire("Erro", "Falha ao desbloquear utilizador.", "error");
+      }
+    } catch(e) {
+      Swal.fire("Erro", "Erro de ligação.", "error");
+    }
   }
 };
 

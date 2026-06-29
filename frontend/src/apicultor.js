@@ -2,6 +2,63 @@ import { updateNav, getLoggedUser, getAuthToken, buildAuthHeaders } from "./auth
 import Swal from "sweetalert2";
 import { toast } from "./toast.js";
 import { Skeleton } from "./skeleton.js";
+import { getLang } from "./i18n.js";
+
+const localTranslations = {
+  // Favorites auth info
+  favLoginTitle: { pt: "Iniciar Sessão", en: "Sign In" },
+  favLoginText: { pt: "Precisas de estar logado para guardar favoritos.", en: "You must be signed in to save favorites." },
+  favLoginBtn: { pt: "Entrar", en: "Sign In" },
+
+  // Workshop reservation
+  reserveLoginWarning: { pt: "Inicie sessão para reservar a sua vaga!", en: "Sign in to reserve your spot!" },
+  reserveLoginTitle: { pt: "Autenticação Necessária", en: "Authentication Required" },
+  reserveSuccess: { pt: "Reserva efetuada com sucesso!", en: "Reservation completed successfully!" },
+  reserveError: { pt: "Não foi possível efetuar a reserva.", en: "Could not complete reservation." },
+  networkError: { pt: "Erro de ligação ao servidor.", en: "Server connection error." },
+
+  // Block/Unblock
+  blockTitle: { pt: "Bloquear Apicultor?", en: "Block Beekeeper?" },
+  blockText: { pt: "Não poderás enviar ou receber mensagens privadas deste apicultor.", en: "You won't be able to send or receive private messages from this beekeeper." },
+  blockConfirmBtn: { pt: "Sim, bloquear", en: "Yes, block" },
+  blockCancelBtn: { pt: "Cancelar", en: "Cancel" },
+  blockSuccess: { pt: "Apicultor bloqueado com sucesso!", en: "Beekeeper blocked successfully!" },
+  blockError: { pt: "Erro ao bloquear apicultor.", en: "Error blocking beekeeper." },
+  unblockSuccess: { pt: "Apicultor desbloqueado com sucesso!", en: "Beekeeper unblocked successfully!" },
+  unblockError: { pt: "Erro ao desbloquear apicultor.", en: "Error unblocking beekeeper." },
+  connError: { pt: "Erro de ligação.", en: "Connection error." },
+
+  // Report
+  reportTitle: { pt: "Denunciar Apicultor", en: "Report Beekeeper" },
+  reportInputLabel: { pt: "Qual é o motivo da denúncia?", en: "What is the reason for the report?" },
+  reportInputPlaceholder: { pt: "Escreve aqui o motivo...", en: "Write the reason here..." },
+  reportConfirmBtn: { pt: "Enviar Denúncia", en: "Send Report" },
+  reportCancelBtn: { pt: "Cancelar", en: "Cancel" },
+  reportItemText: { pt: "Denúncia de perfil de apicultor", en: "Beekeeper profile report" },
+  reportSuccessTitle: { pt: "Denúncia Enviada!", en: "Report Sent!" },
+  reportSuccessText: { pt: "A tua denúncia foi registada e será analisada pela moderação.", en: "Your report has been registered and will be analyzed by moderators." },
+  reportError: { pt: "Erro ao enviar denúncia", en: "Error sending report" },
+
+  // Profile data
+  defaultBio: { pt: "Este apicultor ainda não definiu a sua biografia, mas garante o melhor mel da região!", en: "This beekeeper has not set a biography yet, but guarantees the best honey in the region!" },
+  sendMsg: { pt: "Enviar Mensagem", en: "Send Message" },
+  reportBtn: { pt: "Denunciar", en: "Report" },
+  blockBtn: { pt: "Bloquear", en: "Block" },
+  unblockBtn: { pt: "Desbloquear", en: "Unblock" },
+
+  // Products & Workshops
+  loadingProductsError: { pt: "Falha ao carregar produtos do apicultor", en: "Failed to load beekeeper's products" },
+  noProducts: { pt: "Ainda não há produtos listados por este apicultor.", en: "No products listed by this beekeeper yet." },
+  semCategoria: { pt: "Sem Categoria", en: "Uncategorized" },
+  adicionarAoCarrinho: { pt: "Adicionar ao Carrinho", en: "Add to Cart" },
+  
+  loadingWorkshopsError: { pt: "Falha ao carregar workshops do apicultor", en: "Failed to load beekeeper's workshops" },
+  noWorkshops: { pt: "Não há workshops ou experiências agendadas de momento.", en: "No workshops or experiences scheduled at the moment." },
+  vagasDisponiveis: { pt: "vagas disponíveis", en: "spots available" },
+  inscrito: { pt: "Inscrito", en: "Registered" },
+  reservarVaga: { pt: "Reservar Vaga", en: "Book Spot" },
+  esgotado: { pt: "Esgotado", en: "Sold Out" }
+};
 
 let userFavorites = [];
 async function loadUserFavorites() {
@@ -25,12 +82,13 @@ function isFavorited(productId) {
 
 window.toggleFavorite = async function (productId) {
   const token = getAuthToken();
+  const lang = getLang();
   if (!token) {
     Swal.fire({
-      title: "Iniciar Sessão",
-      text: "Precisas de estar logado para guardar favoritos.",
+      title: localTranslations.favLoginTitle[lang],
+      text: localTranslations.favLoginText[lang],
       icon: "info",
-      confirmButtonText: "Entrar",
+      confirmButtonText: localTranslations.favLoginBtn[lang],
       confirmButtonColor: "var(--primary-green)"
     });
     return;
@@ -102,8 +160,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Global functions for the onclick handlers
   window.reserveWorkshop = async (id) => {
     const activeUser = getLoggedUser();
+    const lang = getLang();
     if (!activeUser) {
-        toast.warning("Inicie sessão para reservar a sua vaga!", "Autenticação Necessária");
+        toast.warning(localTranslations.reserveLoginWarning[lang], localTranslations.reserveLoginTitle[lang]);
         return;
     }
 
@@ -118,27 +177,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = await res.json();
         
         if (res.ok) {
-            toast.success(data.message || "Reserva efetuada com sucesso!");
+            toast.success(data.message || localTranslations.reserveSuccess[lang]);
             // Reload workshops to update vacancy count
             fetchWorkshops(apicultorId);
         } else {
-            toast.error(data.error || "Não foi possível efetuar a reserva.");
+            toast.error(data.error || localTranslations.reserveError[lang]);
         }
     } catch (err) {
-        toast.error("Erro de ligação ao servidor.");
+        toast.error(localTranslations.networkError[lang]);
     }
   };
 
   window.blockApicultor = async (id) => {
+    const lang = getLang();
     const result = await Swal.fire({
-      title: "Bloquear Apicultor?",
-      text: "Não poderás enviar ou receber mensagens privadas deste apicultor.",
+      title: localTranslations.blockTitle[lang],
+      text: localTranslations.blockText[lang],
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#dc3545",
       cancelButtonColor: "#6c757d",
-      confirmButtonText: "Sim, bloquear",
-      cancelButtonText: "Cancelar"
+      confirmButtonText: localTranslations.blockConfirmBtn[lang],
+      cancelButtonText: localTranslations.blockCancelBtn[lang]
     });
 
     if (result.isConfirmed) {
@@ -149,19 +209,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
-          toast.success("Apicultor bloqueado com sucesso!");
+          toast.success(localTranslations.blockSuccess[lang]);
           location.reload();
         } else {
           const data = await res.json();
-          toast.error(data.error || "Erro ao bloquear apicultor.");
+          toast.error(data.error || localTranslations.blockError[lang]);
         }
       } catch (err) {
-        toast.error("Erro de ligação.");
+        toast.error(localTranslations.connError[lang]);
       }
     }
   };
 
   window.unblockApicultor = async (id) => {
+    const lang = getLang();
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       const res = await fetch(`/api/users/unblock/${id}`, {
@@ -169,28 +230,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        toast.success("Apicultor desbloqueado com sucesso!");
+        toast.success(localTranslations.unblockSuccess[lang]);
         location.reload();
       } else {
         const data = await res.json();
-        toast.error(data.error || "Erro ao desbloquear apicultor.");
+        toast.error(data.error || localTranslations.unblockError[lang]);
       }
     } catch (err) {
-      toast.error("Erro de ligação.");
+      toast.error(localTranslations.connError[lang]);
     }
   };
 
   window.reportApicultor = async (id) => {
+    const lang = getLang();
     const { value: reason } = await Swal.fire({
-      title: 'Denunciar Apicultor',
+      title: localTranslations.reportTitle[lang],
       input: 'textarea',
-      inputLabel: 'Qual é o motivo da denúncia?',
-      inputPlaceholder: 'Escreve aqui o motivo...',
+      inputLabel: localTranslations.reportInputLabel[lang],
+      inputPlaceholder: localTranslations.reportInputPlaceholder[lang],
       showCancelButton: true,
       confirmButtonColor: '#dc3545',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Enviar Denúncia',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: localTranslations.reportConfirmBtn[lang],
+      cancelButtonText: localTranslations.reportCancelBtn[lang]
     });
 
     if (reason) {
@@ -207,23 +269,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             itemType: "perfil",
             itemId: id,
             reason,
-            itemText: "Denúncia de perfil de apicultor"
+            itemText: localTranslations.reportItemText[lang]
           }),
         });
 
         if (res.ok) {
           Swal.fire({
             icon: "success",
-            title: "Denúncia Enviada!",
-            text: "A tua denúncia foi registada e será analisada pela moderação.",
+            title: localTranslations.reportSuccessTitle[lang],
+            text: localTranslations.reportSuccessText[lang],
             confirmButtonColor: "#1a4d2e"
           });
         } else {
           const data = await res.json();
-          Swal.fire("Erro", data.error || "Erro ao enviar denúncia", "error");
+          Swal.fire("Erro", data.error || localTranslations.reportError[lang], "error");
         }
       } catch (err) {
-        toast.error("Erro de ligação.");
+        toast.error(localTranslations.connError[lang]);
       }
     }
   };
@@ -247,12 +309,13 @@ async function fetchProfile(id) {
   const res = await fetch(`/api/apicultores/${id}`);
   if (!res.ok) throw new Error("Apicultor não encontrado");
   const data = await res.json();
+  const lang = getLang();
 
   document.title = `${data.name} - Hexomel`;
   document.getElementById("api-name").textContent = data.name;
   document.getElementById("api-bio").textContent =
     data.bio ||
-    "Este apicultor ainda não definiu a sua biografia, mas garante o melhor mel da região!";
+    localTranslations.defaultBio[lang];
   if (data.picture) {
     document.getElementById("api-photo").src = data.picture;
   }
@@ -264,13 +327,13 @@ async function fetchProfile(id) {
     if (activeUser && String(activeUser.id) !== String(id)) {
       socialActionsContainer.innerHTML = `
         <a href="rede-social.html?chatWith=${id}" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm fw-bold">
-          <i class="fas fa-comment-dots me-2"></i> Enviar Mensagem
+          <i class="fas fa-comment-dots me-2"></i> ${localTranslations.sendMsg[lang]}
         </a>
         <button onclick="window.reportApicultor(${id})" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold">
-          <i class="fas fa-flag me-2"></i> Denunciar
+          <i class="fas fa-flag me-2"></i> ${localTranslations.reportBtn[lang]}
         </button>
         <button id="btn-block-api" onclick="window.blockApicultor(${id})" class="btn btn-sm btn-secondary rounded-pill px-3 shadow-sm fw-bold">
-          <i class="fas fa-ban me-2"></i> Bloquear
+          <i class="fas fa-ban me-2"></i> ${localTranslations.blockBtn[lang]}
         </button>
       `;
       
@@ -286,7 +349,7 @@ async function fetchProfile(id) {
           if (isBlocked) {
             const btnBlock = document.getElementById("btn-block-api");
             if (btnBlock) {
-              btnBlock.innerHTML = `<i class="fas fa-check me-2"></i> Desbloquear`;
+              btnBlock.innerHTML = `<i class="fas fa-check me-2"></i> ${localTranslations.unblockBtn[lang]}`;
               btnBlock.className = "btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm fw-bold";
               btnBlock.setAttribute("onclick", `window.unblockApicultor(${id})`);
             }
@@ -303,17 +366,18 @@ async function fetchProfile(id) {
 
 async function fetchProducts(id) {
   const grid = document.getElementById("api-products-grid");
+  const lang = getLang();
 
   // Mostrar skeleton placeholders enquanto carrega
   if (grid) grid.innerHTML = Skeleton.productGrid(4);
 
   const res = await fetch(`/api/apicultores/${id}/products`);
-  if (!res.ok) throw new Error(`Falha ao carregar produtos do apicultor: ${res.status}`);
+  if (!res.ok) throw new Error(`${localTranslations.loadingProductsError[lang]}: ${res.status}`);
   const products = await res.json();
   grid.innerHTML = "";
 
   if (products.length === 0) {
-    grid.innerHTML = Skeleton.stateEmpty('Ainda não há produtos listados por este apicultor.', 'fa-box-open');
+    grid.innerHTML = Skeleton.stateEmpty(localTranslations.noProducts[lang], 'fa-box-open');
     return;
   }
 
@@ -335,7 +399,7 @@ async function fetchProducts(id) {
               ${generateStars(p.Rating || 0)}
               <span class="text-muted small">(${p.ReviewCount || 0})</span>
             </div>
-            <p class="text-muted small mb-0">${p.CategoriaNome || 'Sem Categoria'} • 500g</p>
+            <p class="text-muted small mb-0">${p.CategoriaNome || localTranslations.semCategoria[lang]} • 500g</p>
             ${p.OrigemNome ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${p.OrigemNome}</p>` : ''}
           </div>
           <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
@@ -344,7 +408,7 @@ async function fetchProducts(id) {
               <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect" 
                       style="width: 30px; height: 30px; min-width: 30px !important; font-size: 0.85rem; padding: 0 !important; flex-shrink: 0;" 
                       onclick="event.stopPropagation(); window.addToCart(${p.ID_Produto})"
-                      title="Adicionar ao Carrinho">
+                      title="${localTranslations.adicionarAoCarrinho[lang]}">
                 <i class="fas fa-shopping-cart" style="font-size: 0.75rem;"></i>
               </button>
               <button class="btn btn-soft-primary rounded-circle d-flex align-items-center justify-content-center icon-hover-effect ${isFavorited(p.ID_Produto) ? "active" : ""}" 
@@ -364,6 +428,7 @@ async function fetchProducts(id) {
 
 async function fetchWorkshops(id) {
   const grid = document.getElementById("api-workshops-grid");
+  const lang = getLang();
 
   // Mostrar skeleton placeholders enquanto carrega
   if (grid) grid.innerHTML = Skeleton.genericGrid(3, 'col-lg-4 col-md-6 mb-4');
@@ -386,17 +451,19 @@ async function fetchWorkshops(id) {
   }
 
   const res = await fetch(`/api/apicultores/${id}/workshops`);
-  if (!res.ok) throw new Error(`Falha ao carregar workshops do apicultor: ${res.status}`);
+  if (!res.ok) throw new Error(`${localTranslations.loadingWorkshopsError[lang]}: ${res.status}`);
   const workshops = await res.json();
   grid.innerHTML = "";
 
   if (workshops.length === 0) {
-    grid.innerHTML = Skeleton.stateEmpty('Não há workshops ou experiências agendadas de momento.', 'fa-chalkboard-teacher');
+    grid.innerHTML = Skeleton.stateEmpty(localTranslations.noWorkshops[lang], 'fa-chalkboard-teacher');
     return;
   }
 
+  const locale = lang === 'pt' ? 'pt-PT' : 'en-GB';
+
   workshops.forEach((w) => {
-    const date = new Date(w.Data_Realizacao).toLocaleDateString("pt-PT", {
+    const date = new Date(w.Data_Realizacao).toLocaleDateString(locale, {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -412,7 +479,7 @@ async function fetchWorkshops(id) {
     if (isReserved) {
       buttonHtml = `
         <button class="btn btn-success w-100 mt-4 rounded-pill fw-bold disabled" disabled>
-          <i class="fas fa-check-circle me-1"></i> Inscrito
+          <i class="fas fa-check-circle me-1"></i> ${localTranslations.inscrito[lang]}
         </button>
       `;
     } else {
@@ -420,7 +487,7 @@ async function fetchWorkshops(id) {
         <button class="btn btn-warning w-100 mt-4 rounded-pill fw-bold" 
                 onclick="window.reserveWorkshop(${w.ID_Workshop})" 
                 ${!hasVagas ? 'disabled' : ''}>
-            ${hasVagas ? 'Reservar Vaga' : 'Esgotado'}
+            ${hasVagas ? localTranslations.reservarVaga[lang] : localTranslations.esgotado[lang]}
         </button>
       `;
     }
@@ -429,7 +496,7 @@ async function fetchWorkshops(id) {
             <div class="workshop-card h-100">
                 <div class="position-relative">
                   <img src="${w.Imagem || "assets/default-workshop.png"}" class="workshop-img w-100" alt="${w.Titulo}">
-                  ${isReserved ? '<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> Inscrito</div>' : ''}
+                  ${isReserved ? `<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> ${localTranslations.inscrito[lang]}</div>` : ''}
                 </div>
                 <div class="p-4">
                     <span class="badge badge-date mb-2"><i class="far fa-calendar-alt me-1"></i> ${date}</span>
@@ -437,7 +504,7 @@ async function fetchWorkshops(id) {
                     <p class="text-muted small mb-4">${w.Descricao}</p>
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <span class="fs-4 fw-bold text-warning">${parseFloat(w.Preco).toFixed(2)}€</span>
-                        <span class="text-muted small">${w.Vagas} vagas disponíveis</span>
+                        <span class="text-muted small">${w.Vagas} ${localTranslations.vagasDisponiveis[lang]}</span>
                     </div>
                     ${buttonHtml}
                 </div>

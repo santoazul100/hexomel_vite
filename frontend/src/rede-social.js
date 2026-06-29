@@ -51,13 +51,19 @@ class SocialNetworkUI {
     const tabParam = urlParams.get("tab");
     const chatWithParam = urlParams.get("chatWith");
 
-    if (tabParam === "chat" || tabParam === "messages" || chatWithParam) {
+    if (tabParam === "comunidade" || tabParam === "forum") {
+      const btnShowComunidade = document.getElementById("btn-show-comunidade");
+      if (btnShowComunidade) btnShowComunidade.click();
+    } else if (tabParam === "chat" || tabParam === "messages" || chatWithParam) {
       if (chatWithParam) {
         this.startChatWith(chatWithParam);
       } else {
         const btnShowChat = document.getElementById("btn-show-chat");
         if (btnShowChat) btnShowChat.click();
       }
+    } else {
+      const btnShowMembros = document.getElementById("btn-show-membros");
+      if (btnShowMembros) btnShowMembros.click();
     }
   }
 
@@ -113,19 +119,52 @@ class SocialNetworkUI {
 
     // Switcher buttons
     const btnShowMembros = document.getElementById("btn-show-membros");
+    const btnShowComunidade = document.getElementById("btn-show-comunidade");
     const btnShowChat = document.getElementById("btn-show-chat");
+    
     const viewMembros = document.getElementById("view-membros-container");
+    const viewComunidade = document.getElementById("view-comunidade-container");
     const viewChat = document.getElementById("view-chat-container");
 
-    if (btnShowMembros && btnShowChat && viewMembros && viewChat) {
+    if (btnShowMembros && btnShowComunidade && btnShowChat && viewMembros && viewComunidade && viewChat) {
+      const updateUrlTab = (tabName) => {
+        const url = new URL(window.location);
+        url.searchParams.set("tab", tabName);
+        window.history.replaceState({}, document.title, url);
+      };
+
       btnShowMembros.addEventListener("click", () => {
         // Toggle view
         viewMembros.classList.remove("d-none");
+        viewComunidade.classList.add("d-none");
         viewChat.classList.add("d-none");
         // Toggle active button style
         btnShowMembros.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-active";
+        btnShowComunidade.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-inactive";
         btnShowChat.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-inactive";
         
+        updateUrlTab("membros");
+
+        // Stop polling
+        if (window.chatPollInterval) {
+          clearInterval(window.chatPollInterval);
+          window.chatPollInterval = null;
+        }
+        window.activeChatPartnerId = null;
+      });
+
+      btnShowComunidade.addEventListener("click", () => {
+        // Toggle view
+        viewComunidade.classList.remove("d-none");
+        viewMembros.classList.add("d-none");
+        viewChat.classList.add("d-none");
+        // Toggle active button style
+        btnShowComunidade.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-active";
+        btnShowMembros.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-inactive";
+        btnShowChat.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-inactive";
+        
+        updateUrlTab("comunidade");
+
         // Stop polling
         if (window.chatPollInterval) {
           clearInterval(window.chatPollInterval);
@@ -142,10 +181,14 @@ class SocialNetworkUI {
         // Toggle view
         viewChat.classList.remove("d-none");
         viewMembros.classList.add("d-none");
+        viewComunidade.classList.add("d-none");
         // Toggle active button style
         btnShowChat.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-active";
         btnShowMembros.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-inactive";
+        btnShowComunidade.className = "btn rounded-pill px-4 fw-bold hive-switch-btn-inactive";
         
+        updateUrlTab("chat");
+
         // Load conversations
         window.fetchConversations();
       });
@@ -314,10 +357,11 @@ class SocialNetworkUI {
     const lang = getLang();
     let candidates = [...this.members];
 
-    // Exclude currently logged user
+    // Exclude currently logged user and blocked users
     if (this.currentUser) {
       candidates = candidates.filter(m => Number(m.id) !== Number(this.currentUser.id));
     }
+    candidates = candidates.filter(m => !this.blockedUsers.has(Number(m.id)));
 
     // Sort to prioritize Beekeepers (apicultores)
     candidates.sort((a, b) => {
@@ -377,10 +421,11 @@ class SocialNetworkUI {
     // Filter members list
     let filtered = this.members;
 
-    // Filter out self
+    // Filter out self and blocked users
     if (this.currentUser) {
       filtered = filtered.filter((m) => Number(m.id) !== Number(this.currentUser.id));
     }
+    filtered = filtered.filter((m) => !this.blockedUsers.has(Number(m.id)));
 
     // Filter by type
     if (this.currentFilter !== "all") {
@@ -1007,7 +1052,8 @@ class SocialNetworkUI {
           hasChatWithInConversations = true;
         }
         
-        const avatarUrl = c.partner.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.partner.name)}&background=1a4d2e&color=fff&size=80`;
+        const hasPartnerPic = c.partner.picture && c.partner.picture.trim() !== "" && c.partner.picture !== "null" && c.partner.picture !== "undefined";
+        const avatarUrl = hasPartnerPic ? c.partner.picture : `https://ui-avatars.com/api/?name=${encodeURIComponent(c.partner.name)}&background=1a4d2e&color=fff&size=80`;
         const unreadBadge = c.unreadCount > 0 ? `<span class="badge bg-success rounded-pill">${c.unreadCount}</span>` : "";
         const lastMsgText = c.lastMessage ? c.lastMessage.text : "Nenhuma mensagem.";
         const isActive = window.activeChatPartnerId === c.partner.id ? "active" : "";
@@ -1042,7 +1088,8 @@ class SocialNetworkUI {
           const userRes = await fetch(`/api/users/${chatWithId}`);
           if (userRes.ok) {
             const userData = await userRes.json();
-            const avatarUrl = userData.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=1a4d2e&color=fff&size=80`;
+            const hasUserPic = userData.picture && userData.picture.trim() !== "" && userData.picture !== "null" && userData.picture !== "undefined";
+            const avatarUrl = hasUserPic ? userData.picture : `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=1a4d2e&color=fff&size=80`;
             
             const tempItem = document.createElement("div");
             tempItem.className = "conversation-item p-3 border-bottom d-flex align-items-center gap-3 cursor-pointer active";
@@ -1142,7 +1189,8 @@ class SocialNetworkUI {
 
     if (!headerEl || !messagesArea || !inputArea) return;
 
-    const avatarUrl = partnerPicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=1a4d2e&color=fff&size=80`;
+    const hasPartnerPic = partnerPicture && partnerPicture.trim() !== "" && partnerPicture !== "null" && partnerPicture !== "undefined";
+    const avatarUrl = hasPartnerPic ? partnerPicture : `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=1a4d2e&color=fff&size=80`;
 
     headerEl.innerHTML = `
       <div class="d-flex align-items-center gap-2">
@@ -1313,7 +1361,7 @@ class SocialNetworkUI {
         const data = await res.json();
         Swal.fire({
           icon: "error",
-          title: "Erro",
+          title: "Ops...",
           text: data.error || "Erro ao enviar mensagem.",
           confirmButtonColor: "#1a4d2e"
         });
@@ -1321,7 +1369,12 @@ class SocialNetworkUI {
       }
     } catch (err) {
       console.error("Send message error:", err);
-      Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
+      Swal.fire({
+        icon: "error",
+        title: "Ops...",
+        text: "Erro ao comunicar com o servidor.",
+        confirmButtonColor: "#1a4d2e"
+      });
       inputEl.value = text;
     }
   }

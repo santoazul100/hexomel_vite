@@ -125,7 +125,7 @@ class CartManager {
     }
   }
 
-  async addItem(productId, quantity = 1) {
+  async addItem(productId, quantity = 1, shouldOpen = true) {
     const token = localStorage.getItem("token");
     if (!token) {
       window.closeAllPopups();
@@ -144,7 +144,7 @@ class CartManager {
           }
         }
       });
-      return;
+      return false;
     }
 
     try {
@@ -160,10 +160,23 @@ class CartManager {
       if (res.ok) {
         await this.syncWithBackend();
         this.render();
-        this.toggle(true);
+        if (shouldOpen) {
+          this.toggle(true);
+        }
+        return true;
+      } else {
+        const data = await res.json();
+        Swal.fire({
+          icon: "warning",
+          title: "Limite de Stock",
+          text: data.error || "Não é possível adicionar esta quantidade ao carrinho.",
+          confirmButtonColor: "#f4b400",
+        });
+        return false;
       }
     } catch (error) {
       console.error("Add to cart failed:", error);
+      return false;
     }
   }
 
@@ -214,7 +227,7 @@ class CartManager {
     if (newQuantity < 1) return;
     const token = localStorage.getItem("token");
     try {
-      await fetch(`${API_URL}/cart/update`, {
+      const res = await fetch(`${API_URL}/cart/update`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -222,6 +235,15 @@ class CartManager {
         },
         body: JSON.stringify({ itemId, quantity: newQuantity }),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        Swal.fire({
+          icon: "warning",
+          title: "Limite de Stock",
+          text: data.error || "Não é possível alterar para esta quantidade.",
+          confirmButtonColor: "#f4b400",
+        });
+      }
       await this.syncWithBackend();
       this.render();
     } catch (error) {
@@ -269,6 +291,8 @@ class CartManager {
     container.innerHTML = this.items
       .map((item) => {
         total += item.Preco * item.Quantidade;
+        const isMinQty = item.Quantidade <= 1;
+        const isMaxStock = item.Quantidade >= item.Stock;
         return `
             <div class="cart-item" style="display: flex; gap: 15px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); align-items: stretch;">
                 <img src="${item.Imagem || '/img/produtos/' + item.ID_Produto + '.webp'}" onerror="this.src='/images/default-product.png'" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 5px;" alt="${item.Nome}">
@@ -281,9 +305,9 @@ class CartManager {
                     
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
                         <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 50px; overflow: hidden; background: #fff;">
-                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: pointer; color: #64748b; font-weight: bold; font-size: 1.1rem;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
+                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: ${isMinQty ? 'not-allowed' : 'pointer'}; color: ${isMinQty ? '#cbd5e1' : '#64748b'}; font-weight: bold; font-size: 1.1rem;" ${isMinQty ? 'disabled' : ''} onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
                             <span style="padding: 4px 12px; font-weight: 700; font-size: 0.95rem; font-family: 'Outfit', sans-serif; color: #1e293b;">${item.Quantidade}</span>
-                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: pointer; color: #64748b; font-weight: bold; font-size: 1.1rem;" onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: ${isMaxStock ? 'not-allowed' : 'pointer'}; color: ${isMaxStock ? '#cbd5e1' : '#64748b'}; font-weight: bold; font-size: 1.1rem;" ${isMaxStock ? 'disabled' : ''} onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
                         </div>
                         
                         <button onclick="cart.removeItem(${item.ID_itemCarrinho})" style="background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;" title="Remover item">

@@ -1,7 +1,9 @@
 // Hexomel Admin Logic
 const API_URL = "/api";
+import Swal from "sweetalert2";
 import { initI18n, createLangToggle } from "./i18n.js";
 import { loadSiteSlugsCache, loadDynamicMenu } from "./main.js";
+import "./styles/maintenance.css";
 
 
 
@@ -22,13 +24,27 @@ class AdminUI {
     this.userData = JSON.parse(localStorage.getItem("user"));
     this.currentTags = new Set(); // Stores active tags for the modal
     this.layoutAnimationStyle = "fade";
+
+    // Load monetization parameters from localStorage with defaults
+    const savedComm = localStorage.getItem("adminCommissionRate");
+    this.commissionRate = savedComm !== null ? parseFloat(savedComm) : 10;
+    if (isNaN(this.commissionRate)) this.commissionRate = 10;
+
+    const savedGate = localStorage.getItem("adminGatewayRate");
+    this.gatewayRate = savedGate !== null ? parseFloat(savedGate) : 2;
+    if (isNaN(this.gatewayRate)) this.gatewayRate = 2;
+
+    const savedFixed = localStorage.getItem("adminFixedCosts");
+    this.fixedCosts = savedFixed !== null ? parseFloat(savedFixed) : 2000;
+    if (isNaN(this.fixedCosts)) this.fixedCosts = 2000;
+
     this.init();
   }
 
   async init() {
     // Security Check
     if (!this.token || !this.userData) {
-      window.location.replace("/login");
+      window.location.replace("/login?admin=true");
       return;
     }
 
@@ -55,7 +71,7 @@ class AdminUI {
       console.error("Admin verification failed:", e);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.replace("/login");
+      window.location.replace("/login?admin=true");
       return;
     }
 
@@ -88,6 +104,7 @@ class AdminUI {
       console.warn("Could not load friendly URLs cache in admin:", e);
     }
 
+    this.prefillMonetizationInputs();
     this.switchSection("dashboard"); // Default view
   }
 
@@ -113,6 +130,21 @@ class AdminUI {
     const sectionLinks = document.querySelectorAll(
       ".admin-nav-link[data-section]",
     );
+
+    // Dynamic navbar height calculation to prevent page overlap
+    const updateNavbarHeight = () => {
+      const nav = document.querySelector(".navbar-enhanced");
+      if (nav) {
+        const height = nav.getBoundingClientRect().height;
+        document.documentElement.style.setProperty("--navbar-height", `${height}px`);
+      }
+    };
+    updateNavbarHeight();
+    window.addEventListener("resize", updateNavbarHeight);
+    window.addEventListener("scroll", updateNavbarHeight);
+    window.addEventListener("load", updateNavbarHeight);
+    setTimeout(updateNavbarHeight, 100);
+    setTimeout(updateNavbarHeight, 500);
 
     const applySidebarState = () => {
       if (!adminLayout) return;
@@ -140,6 +172,7 @@ class AdminUI {
     if (toggleMain) toggleMain.addEventListener("click", toggleLogic);
     if (toggleHide) toggleHide.addEventListener("click", toggleLogic);
 
+    // Close on link click for mobile
     sectionLinks.forEach((link) => {
       link.addEventListener("click", () => {
         if (mobileQuery.matches && adminLayout) {
@@ -147,6 +180,16 @@ class AdminUI {
         }
       });
     });
+
+    // Close on backdrop click for mobile
+    const backdrop = document.getElementById("sidebar-backdrop");
+    if (backdrop) {
+      backdrop.addEventListener("click", () => {
+        if (adminLayout) {
+          adminLayout.classList.add("sidebar-collapsed");
+        }
+      });
+    }
 
     if (mobileQuery.addEventListener) {
       mobileQuery.addEventListener("change", applySidebarState);
@@ -177,6 +220,12 @@ class AdminUI {
 
 
   setupEventListeners() {
+    // Maintenance mode toggle button
+    const maintenanceBtn = document.getElementById("toggle-maintenance-btn");
+    if (maintenanceBtn) {
+      maintenanceBtn.addEventListener("click", () => this.toggleMaintenanceMode());
+    }
+
     // Nav switching
     const navLinks = document.querySelectorAll(".admin-nav-link[data-section]");
     navLinks.forEach((link) => {
@@ -185,6 +234,64 @@ class AdminUI {
         this.switchSection(section);
       });
     });
+
+    // Simulator inputs
+    const simRate = document.getElementById("sim-rate");
+    const simGateway = document.getElementById("sim-gateway");
+    const simFixed = document.getElementById("sim-fixed-costs");
+    const simGmv = document.getElementById("sim-gmv");
+
+    if (simRate) {
+      simRate.addEventListener("input", () => {
+        const val = parseFloat(simRate.value);
+        if (!isNaN(val) && val >= 0 && val <= 100) {
+          this.commissionRate = val;
+          localStorage.setItem("adminCommissionRate", val);
+          this.updateUIPercentages();
+          this.loadVendasData();
+          this.loadAnalytics();
+        }
+      });
+    }
+
+    if (simGateway) {
+      simGateway.addEventListener("input", () => {
+        const val = parseFloat(simGateway.value);
+        if (!isNaN(val) && val >= 0 && val <= 100) {
+          this.gatewayRate = val;
+          localStorage.setItem("adminGatewayRate", val);
+          this.updateUIPercentages();
+          this.loadVendasData();
+          this.loadAnalytics();
+        }
+      });
+    }
+
+    if (simFixed) {
+      simFixed.addEventListener("input", () => {
+        const val = parseFloat(simFixed.value);
+        if (!isNaN(val) && val >= 0) {
+          this.fixedCosts = val;
+          localStorage.setItem("adminFixedCosts", val);
+          this.loadAnalytics();
+          this.runSimulator();
+        }
+      });
+    }
+
+    if (simGmv) {
+      simGmv.addEventListener("input", () => this.runSimulator());
+    }
+
+    const simSingleGross = document.getElementById("sim-single-gross");
+    const simSingleApicultor = document.getElementById("sim-single-apicultor");
+
+    if (simSingleGross) {
+      simSingleGross.addEventListener("input", () => this.runSingleSimulator("gross"));
+    }
+    if (simSingleApicultor) {
+      simSingleApicultor.addEventListener("input", () => this.runSingleSimulator("apicultor"));
+    }
 
     // Product Form
     const productForm = document.getElementById("productForm");
@@ -208,6 +315,132 @@ class AdminUI {
 
     this.setupImagePreview();
     this.setupLayoutToggle();
+  }
+
+  prefillMonetizationInputs() {
+    const simRateInput = document.getElementById("sim-rate");
+    const simGatewayInput = document.getElementById("sim-gateway");
+    const simFixedInput = document.getElementById("sim-fixed-costs");
+
+    if (simRateInput) simRateInput.value = this.commissionRate;
+    if (simGatewayInput) simGatewayInput.value = this.gatewayRate;
+    if (simFixedInput) simFixedInput.value = this.fixedCosts;
+
+    this.updateUIPercentages();
+  }
+
+  updateUIPercentages() {
+    const netRate = this.commissionRate - this.gatewayRate;
+    const sellerRate = 100 - this.commissionRate;
+
+    // 1. Badge "TAXA COMISSÃO: X%"
+    const badgeEl = document.getElementById("badge-taxa-comissao");
+    if (badgeEl) {
+      badgeEl.innerHTML = `<i class="fas fa-percent text-success me-1"></i> TAXA COMISSÃO: ${this.commissionRate}%`;
+    }
+
+    // 2. Dashboard Card platforms commission label
+    const dashCommLabelEl = document.getElementById("dash-platform-commission-label");
+    if (dashCommLabelEl) {
+      dashCommLabelEl.innerHTML = `Comissões (${this.commissionRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Receita total proveniente das comissões cobradas sobre as vendas da plataforma."></i>`;
+    }
+
+    // 3. Sales Cards Labels
+    const commLabelEl = document.getElementById("vendas-platform-commission-label");
+    if (commLabelEl) {
+      commLabelEl.innerHTML = `Comissão Bruta (${this.commissionRate}%) <i class="fas fa-circle-info text-muted ms-1" title="Percentagem cobrada sobre as vendas dos apicultores. Esta comissão é a receita bruta da plataforma."></i>`;
+    }
+
+    const gateLabelEl = document.getElementById("vendas-gateway-fees-label");
+    if (gateLabelEl) {
+      gateLabelEl.innerHTML = `Custos Gateway (${this.gatewayRate}%) <i class="fas fa-circle-info text-muted ms-1" title="Despesas financeiras de processamento cobradas pela entidade bancária ou gateway de pagamentos."></i>`;
+    }
+
+    const netLabelEl = document.getElementById("vendas-platform-net-label");
+    if (netLabelEl) {
+      netLabelEl.innerHTML = `Receita Líquida (${netRate.toFixed(1)}%) <i class="fas fa-circle-info text-muted ms-1" title="Receita retida pela plataforma após deduzir os custos do gateway de pagamento (Comissão Bruta - Custos Gateway)."></i>`;
+    }
+
+    // 4. Sales Table Headers
+    const thComm = document.getElementById("th-vendas-comm");
+    if (thComm) {
+      thComm.innerHTML = `Comissão (${this.commissionRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Taxa cobrada pela plataforma (Bruto * Taxa Comissão)."></i>`;
+    }
+
+    const thGate = document.getElementById("th-vendas-gate");
+    if (thGate) {
+      thGate.innerHTML = `Gateway (${this.gatewayRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Custos cobrados pelo processador de pagamentos (Bruto * 2%)."></i>`;
+    }
+
+    const thPlat = document.getElementById("th-vendas-plat");
+    if (thPlat) {
+      thPlat.innerHTML = `Plataforma (${netRate.toFixed(1)}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Lucro retido pela plataforma (Comissão - Gateway)."></i>`;
+    }
+
+    const thVend = document.getElementById("th-vendas-vend");
+    if (thVend) {
+      thVend.innerHTML = `Vendedor (${sellerRate.toFixed(1)}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Valor líquido a transferir para o apicultor (Bruto - Comissão)."></i>`;
+    }
+    
+    // 5. Simulator labels (inside the simulator card)
+    const lblSimComm = document.getElementById("lbl-sim-commission");
+    if (lblSimComm) lblSimComm.innerText = `Comissão (${this.commissionRate}%):`;
+
+    const lblSimGate = document.getElementById("lbl-sim-gateway");
+    if (lblSimGate) lblSimGate.innerText = `Custos Gateway (${this.gatewayRate}%):`;
+
+    const lblSimNet = document.getElementById("lbl-sim-net");
+    if (lblSimNet) lblSimNet.innerText = `Margem Líquida (${netRate.toFixed(1)}%):`;
+
+    // 6. Individual Transaction Simulator labels
+    const lblSingleComm = document.getElementById("lbl-single-commission");
+    if (lblSingleComm) lblSingleComm.innerText = `Comissão Bruta (${this.commissionRate}%):`;
+
+    const lblSingleGate = document.getElementById("lbl-single-gateway");
+    if (lblSingleGate) lblSingleGate.innerText = `Custo Gateway (${this.gatewayRate}%):`;
+
+    const lblSingleNet = document.getElementById("lbl-single-net");
+    if (lblSingleNet) lblSingleNet.innerText = `Lucro Plataforma (${netRate.toFixed(1)}%):`;
+
+    // Trigger single simulator recalculation
+    this.runSingleSimulator("gross");
+
+    // Re-initialize tooltips since label HTML was updated
+    this.initTooltips();
+  }
+
+  runSingleSimulator(changedSource = "gross") {
+    const grossInput = document.getElementById("sim-single-gross");
+    const apicultorInput = document.getElementById("sim-single-apicultor");
+
+    if (!grossInput || !apicultorInput) return;
+
+    let gross = 0;
+    if (changedSource === "gross") {
+      gross = parseFloat(grossInput.value) || 0;
+      const apicultorGain = gross * (1 - this.commissionRate / 100);
+      apicultorInput.value = apicultorGain.toFixed(2);
+    } else {
+      const apicultorGain = parseFloat(apicultorInput.value) || 0;
+      if (this.commissionRate < 100) {
+        gross = apicultorGain / (1 - this.commissionRate / 100);
+      } else {
+        gross = 0;
+      }
+      grossInput.value = gross.toFixed(2);
+    }
+
+    const commission = gross * (this.commissionRate / 100);
+    const gateway = gross * (this.gatewayRate / 100);
+    const netMargin = commission - gateway;
+
+    const commVal = document.getElementById("sim-single-comm-val");
+    const gateVal = document.getElementById("sim-single-gate-val");
+    const netVal = document.getElementById("sim-single-net-val");
+
+    if (commVal) commVal.innerText = `€${commission.toFixed(2)}`;
+    if (gateVal) gateVal.innerText = `€${gateway.toFixed(2)}`;
+    if (netVal) netVal.innerText = `€${netMargin.toFixed(2)}`;
   }
 
   setupImagePreview() {
@@ -321,6 +554,12 @@ class AdminUI {
       console.warn(`Section ${sectionId}-section not found`);
     }
 
+    // Fix scroll locking issues from modals/sweetalerts
+    document.body.classList.remove("modal-open");
+    document.documentElement.classList.remove("modal-open");
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+
     // Load Data
     if (sectionId === "dashboard") this.loadDashboardStats();
     if (sectionId === "products") {
@@ -345,11 +584,17 @@ class AdminUI {
       this.loadCMSBlocks();
       this.loadCarouselProducts();
     }
+    if (sectionId === "maintenance") {
+      this.loadMaintenanceSectionSettings();
+      this.loadMaintenanceComplaints();
+    }
     if (sectionId === "moderacao") {
       this.loadModerationData();
     }
     if (sectionId === "aprender-factos") this.loadFacts();
     if (sectionId === "aprender-glossario") this.loadGlossaryTerms();
+    if (sectionId === "monetizacao") this.loadMonetization();
+    if (sectionId === "vendas") this.loadVendasData();
   }
 
   // ============================================================
@@ -808,6 +1053,18 @@ class AdminUI {
     if (!selector) return;
     const pageKey = selector.value;
 
+    const previewBtn = document.getElementById("cms-preview-btn");
+    if (previewBtn) {
+      const routeMap = {
+        home: "/inicio",
+        shop: "/shop.html",
+        workshops: "/workshops.html",
+        about: "/about.html",
+        contact: "/contact.html"
+      };
+      previewBtn.href = routeMap[pageKey] || "/inicio";
+    }
+
     try {
       const response = await fetch(`${API_URL}/cms/${pageKey}`);
       if (!response.ok) throw new Error("Falha ao carregar conteúdos CMS.");
@@ -838,51 +1095,153 @@ class AdminUI {
     }
 
     const blockDescriptions = {
-      hero_title: {
-        title: "Título de Boas-vindas (Topo da Página)",
-        desc: "O grande título chamativo exibido no topo da página.",
+      home_hero_title: {
+        title: "Título de Boas-vindas (Topo da Home)",
+        desc: "O grande título chamativo exibido no topo da página inicial.",
         icon: "fas fa-heading",
         badge: "Título Principal"
       },
-      hero_subtitle: {
-        title: "Mensagem de Apresentação (Subtítulo do Topo)",
+      home_hero_subtitle: {
+        title: "Mensagem de Apresentação (Subtítulo da Home)",
         desc: "O texto explicativo por baixo do título principal do cabeçalho.",
         icon: "fas fa-align-left",
         badge: "Subtítulo / Introdução"
       },
-      featured_title: {
+      home_featured_title: {
         title: "Título da Secção de Destaques",
         desc: "O título que introduz a vitrine de produtos em destaque.",
         icon: "fas fa-star",
         badge: "Título Secundário"
       },
-      featured_subtitle: {
+      home_featured_subtitle: {
         title: "Subtítulo da Secção de Destaques",
         desc: "A frase de apoio colocada por baixo do título de destaques.",
         icon: "fas fa-comment-alt",
         badge: "Subtítulo"
       },
-      legacy_text: {
-        title: "História Hexomel (Nosso Legado)",
-        desc: "O texto completo que narra a nossa história e o legado tradicional.",
+      about_hero_title: {
+        title: "Título da Página Sobre Nós",
+        desc: "O título de apresentação da secção sobre a história da empresa.",
         icon: "fas fa-book-open",
+        badge: "Título Principal"
+      },
+      about_hero_subtitle: {
+        title: "Subtítulo da Página Sobre Nós",
+        desc: "Frase introdutória sobre a missão e valores da Hexomel.",
+        icon: "fas fa-align-left",
+        badge: "Subtítulo"
+      },
+      about_legacy_text: {
+        title: "História Hexomel (Nosso Legado)",
+        desc: "O texto completo que narra a história e o legado tradicional da marca.",
+        icon: "fas fa-history",
         badge: "Texto Narrativo Longo"
+      },
+      contact_hero_title: {
+        title: "Título da Página de Contactos",
+        desc: "Título principal exibido no cabeçalho da página de contactos.",
+        icon: "fas fa-envelope",
+        badge: "Título Principal"
+      },
+      contact_hero_subtitle: {
+        title: "Subtítulo da Página de Contactos",
+        desc: "Mensagem de acolhimento para incentivar os clientes a entrarem em contacto.",
+        icon: "fas fa-comment-dots",
+        badge: "Subtítulo"
+      },
+      shop_hero_title: {
+        title: "Título da Loja de Mel",
+        desc: "Título principal no topo do catálogo de produtos.",
+        icon: "fas fa-store",
+        badge: "Título Principal"
+      },
+      shop_hero_subtitle: {
+        title: "Subtítulo da Loja de Mel",
+        desc: "Descrição introdutória sob o título da loja.",
+        icon: "fas fa-align-left",
+        badge: "Subtítulo"
+      },
+      workshops_hero_title: {
+        title: "Título da Secção de Workshops",
+        desc: "Título principal no cabeçalho da página de experiências apícolas.",
+        icon: "fas fa-graduation-cap",
+        badge: "Título Principal"
+      },
+      workshops_hero_subtitle: {
+        title: "Subtítulo de Workshops",
+        desc: "Descrição sobre a experiência de aprender com apicultores.",
+        icon: "fas fa-user-graduate",
+        badge: "Subtítulo"
+      },
+      home_hero_image: {
+        title: "Imagem Principal (Topo)",
+        desc: "A imagem grande em destaque na página inicial.",
+        icon: "fas fa-image",
+        badge: "Imagem",
+        defaultImage: "/images/hero.png"
+      },
+      about_hero_image: {
+        title: "Imagem Principal (Sobre Nós)",
+        desc: "A imagem fotográfica ao lado do texto de apresentação.",
+        icon: "fas fa-image",
+        badge: "Imagem",
+        defaultImage: "/images/mel-jar-premium.png"
       }
     };
 
-    listContainer.innerHTML = this.cmsBlocks
+    const blockOrder = {
+      hero_title: 1,
+      hero_subtitle: 2,
+      featured_title: 3,
+      featured_subtitle: 4,
+      legacy_text: 5,
+      hero_image: 6
+    };
+
+    const sortedBlocks = [...this.cmsBlocks].sort((a, b) => {
+      const orderA = blockOrder[a.Block_Key] || 99;
+      const orderB = blockOrder[b.Block_Key] || 99;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.Block_Key.localeCompare(b.Block_Key);
+    });
+
+    listContainer.innerHTML = sortedBlocks
       .map((b) => {
-        // Fallback or custom friendly details if key is not predefined
-        const info = blockDescriptions[b.Block_Key] || {
+        const compositeKey = `${b.Page_Key}_${b.Block_Key}`;
+        const info = blockDescriptions[compositeKey] || blockDescriptions[b.Block_Key] || {
           title: b.Block_Key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
           desc: "Bloco de texto personalizado do site.",
           icon: "fas fa-edit",
           badge: b.Type.toUpperCase()
         };
-        const inputField =
-          b.Content_Value.length > 80
+        let inputField = "";
+        if (b.Type === "image_url") {
+          inputField = `
+            <div class="d-flex align-items-center gap-4 mt-2 mb-3 p-3 shadow-sm" style="background: #fffcf2; border-radius: 12px; border: 1px solid #fde68a;">
+              <div style="width: 100px; height: 100px; border-radius: 10px; overflow: hidden; background: #ffffff; border: 1px solid #fde68a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);">
+                <img id="cms-img-preview-${b.ID_Content}" src="${b.Content_Value}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.src='https://via.placeholder.com/80?text=Sem+Img'" />
+              </div>
+              <div class="flex-grow-1">
+                <div class="input-group shadow-sm mb-2" style="border-radius: 8px; overflow: hidden;">
+                  <input type="text" id="cms-value-${b.ID_Content}" class="form-control border-0" value="${b.Content_Value}" placeholder="URL da Imagem (Ex: /images/banner.png)" style="font-size: 0.95rem; background: #ffffff;" required />
+                  <input type="file" id="cms-file-${b.ID_Content}" accept="image/*" style="display: none;" onchange="window.uploadCMSImage('${b.ID_Content}', this)" />
+                  <label for="cms-file-${b.ID_Content}" class="btn d-flex align-items-center gap-2 px-3 m-0" style="background: #f59e0b; color: #fff; font-weight: 600; cursor: pointer; border: none; transition: background 0.2s;">
+                    <i class="fas fa-upload"></i> Escolher Ficheiro
+                  </label>
+                  ${info.defaultImage ? `
+                    <button type="button" class="btn btn-light text-muted d-flex align-items-center justify-content-center px-3 m-0 border-start" onclick="document.getElementById('cms-value-${b.ID_Content}').value='${info.defaultImage}'; document.getElementById('cms-img-preview-${b.ID_Content}').src='${info.defaultImage}';" title="Repor imagem original (Hexomel)" style="background: #f8f9fa;">
+                      <i class="fas fa-undo"></i>
+                    </button>
+                  ` : ''}
+                </div>
+                <small class="text-muted d-block" style="font-size: 0.85rem;"><i class="fas fa-lightbulb text-warning me-1"></i>Pode enviar uma imagem do computador ou colar um link web diretamente.</small>
+              </div>
+            </div>`;
+        } else {
+          inputField = b.Content_Value.length > 80
             ? `<textarea id="cms-value-${b.ID_Content}" class="form-control form-control-v2" rows="4" style="border-radius: 8px; font-size: 0.95rem; line-height: 1.5;" required>${b.Content_Value}</textarea>`
             : `<input type="text" id="cms-value-${b.ID_Content}" class="form-control form-control-v2" value="${b.Content_Value}" style="border-radius: 8px; font-size: 0.95rem;" required />`;
+        }
 
         return `
           <div class="card mb-4 border border-light-subtle shadow-sm overflow-hidden" style="border-radius: 16px; background: #ffffff; transition: all 0.2s;">
@@ -914,7 +1273,7 @@ class AdminUI {
             <div class="card-body px-4 pb-4 pt-2">
               <div class="mb-3">
                 <label class="form-label small fw-bold text-uppercase text-muted" style="letter-spacing: 0.5px;">
-                  O que deve aparecer no site?
+                  ${b.Type === 'image_url' ? 'Imagem a apresentar no site' : 'O que deve aparecer no site?'}
                 </label>
                 ${inputField}
               </div>
@@ -934,7 +1293,7 @@ class AdminUI {
                       : ""
                   }
                   <button type="button" class="btn btn-add-product px-4 py-2 fw-bold btn-sm rounded-pill" onclick="adminUI.saveCMSBlock(${b.ID_Content}, '${b.Page_Key}', '${b.Block_Key}', '${b.Type}')" style="box-shadow: 0 4px 6px rgba(26, 77, 46, 0.15);">
-                    <i class="fas fa-save me-2"></i>Guardar Texto
+                    <i class="fas fa-save me-2"></i>${b.Type === 'image_url' ? 'Guardar Imagem' : 'Guardar Texto'}
                   </button>
                 </div>
               </div>
@@ -1017,9 +1376,11 @@ class AdminUI {
           
           <label class="form-label small fw-bold text-uppercase text-muted">Página</label>
           <select id="swal-cms-page" class="form-select mb-3 form-control-v2" style="border-radius: 8px;">
-            <option value="home" ${currentPage === "home" ? "selected" : ""}>Página Inicial (Home)</option>
-            <option value="about" ${currentPage === "about" ? "selected" : ""}>Página Sobre Nós (About)</option>
-            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>Página Contactos (Contact)</option>
+            <option value="home" ${currentPage === "home" ? "selected" : ""}>🏠 Página Inicial (Home)</option>
+            <option value="shop" ${currentPage === "shop" ? "selected" : ""}>🛒 Loja & Catálogo (Shop)</option>
+            <option value="workshops" ${currentPage === "workshops" ? "selected" : ""}>🐝 Workshops & Experiências</option>
+            <option value="about" ${currentPage === "about" ? "selected" : ""}>📖 Página Sobre Nós (About)</option>
+            <option value="contact" ${currentPage === "contact" ? "selected" : ""}>✉️ Página Contactos (Contact)</option>
           </select>
           
           <label class="form-label small fw-bold text-uppercase text-muted">Chave Técnica (Identificador no Código)</label>
@@ -1182,7 +1543,7 @@ class AdminUI {
   }
 
   renderCarouselProductCard(p, isFeatured) {
-    const category = this.categories?.find(c => c.ID_Categoria === p.ID_Categoria)?.Nome || `Categoria ${p.ID_Categoria}`;
+    const category = p.Nome_Categoria || this.categories?.find(c => c.ID_Categoria === p.ID_Categoria)?.Nome || `Categoria ${p.ID_Categoria}`;
     return `
       <div class="col-md-6 col-lg-4">
         <div class="admin-card border p-3 d-flex align-items-center justify-content-between gap-3 h-100" style="border-radius: 12px; background: ${isFeatured ? 'rgba(26, 77, 46, 0.02)' : 'white'}; border-color: ${isFeatured ? 'rgba(26, 77, 46, 0.15) !important' : 'rgba(0,0,0,0.08) !important'};">
@@ -1251,10 +1612,19 @@ class AdminUI {
         this.loadOrders(),
       ]);
 
-      // Update Users
-      const userCount = this.users.length;
+      // Update Users (Apicultores & Clientes)
+      const apicultoresCount = this.users.filter(u => u.UserType === 'apicultor').length;
+      const clientesCount = this.users.filter(u => u.UserType === 'client').length;
+      const totalUsers = this.users.length;
+
       const totalUsersEl = document.getElementById("dash-total-users");
-      if (totalUsersEl) totalUsersEl.innerText = userCount;
+      if (totalUsersEl) totalUsersEl.innerText = totalUsers;
+
+      const totalApicultoresEl = document.getElementById("dash-total-apicultores");
+      if (totalApicultoresEl) totalApicultoresEl.innerText = apicultoresCount;
+
+      const totalClientesEl = document.getElementById("dash-total-clientes");
+      if (totalClientesEl) totalClientesEl.innerText = clientesCount;
 
       // Update Products
       const prodCount = this.products.length;
@@ -1273,8 +1643,568 @@ class AdminUI {
 
       // Load Charts
       this.loadAnalytics();
+      this.loadMaintenanceStatus();
     } catch (e) {
       console.error("Error loading dashboard stats", e);
+    }
+  }
+
+  async loadMaintenanceStatus() {
+    try {
+      const res = await fetch("/api/site-settings");
+      if (!res.ok) return;
+      const settings = await res.json();
+      const isMaintenance = settings.maintenance_mode === "true";
+      this.updateMaintenanceUI(isMaintenance);
+    } catch (e) {
+      console.error("Error loading maintenance status:", e);
+    }
+  }
+
+  updateMaintenanceUI(isMaintenance) {
+    const badge = document.getElementById("system-status-badge");
+    const icon = document.getElementById("system-status-icon");
+    const text = document.getElementById("system-status-text");
+    const btn = document.getElementById("toggle-maintenance-btn");
+    const btnText = document.getElementById("toggle-maintenance-text");
+
+    if (isMaintenance) {
+      if (badge) {
+        badge.className = "badge bg-danger text-white border border-danger px-3 py-2 rounded-pill fw-bold shadow-sm";
+      }
+      if (icon) {
+        icon.className = "fas fa-exclamation-triangle me-1 text-white";
+      }
+      if (text) {
+        text.innerText = "SISTEMA EM MANUTENÇÃO";
+      }
+      if (btn) {
+        btn.className = "btn btn-outline-success btn-sm rounded-pill fw-bold d-flex align-items-center gap-1 px-3";
+      }
+      if (btnText) {
+        btnText.innerText = "Desativar Modo de Manutenção";
+      }
+    } else {
+      if (badge) {
+        badge.className = "badge bg-light text-muted border px-3 py-2 rounded-pill fw-bold";
+      }
+      if (icon) {
+        icon.className = "fas fa-circle text-success me-1";
+      }
+      if (text) {
+        text.innerText = "SISTEMA ONLINE";
+      }
+      if (btn) {
+        btn.className = "btn btn-outline-warning btn-sm rounded-pill fw-bold d-flex align-items-center gap-1 px-3";
+      }
+      if (btnText) {
+        btnText.innerText = "Ativar Modo de Manutenção";
+      }
+    }
+  }
+
+  async toggleMaintenanceMode() {
+    const text = document.getElementById("system-status-text")?.innerText;
+    const isCurrentlyActive = text && text.includes("MANUTENÇÃO");
+    const willActivate = !isCurrentlyActive;
+
+    const confirmRes = await Swal.fire({
+      title: willActivate ? "Ativar Modo de Manutenção?" : "Desativar Modo de Manutenção?",
+      text: willActivate ? "Ao ativar, os utilizadores verão o aviso e a página de manutenção." : "Pretende desativar a manutenção e restaurar o acesso normal?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#f59e0b",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sim, Confirmar",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (!confirmRes.isConfirmed) return;
+
+    Swal.fire({
+      title: "A processar...",
+      text: willActivate ? "A ativar manutenção e a notificar utilizadores..." : "A atualizar definições...",
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+      const res = await fetch("/api/admin/maintenance/toggle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.token}`
+        },
+        body: JSON.stringify({ active: willActivate })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao alterar estado.");
+
+      this.updateMaintenanceUI(willActivate);
+
+      Swal.fire({
+        title: "Sucesso!",
+        text: data.message + (data.notifiedCount ? ` (${data.notifiedCount} e-mails enviados/agendados)` : ""),
+        icon: "success"
+      });
+    } catch (e) {
+      console.error(e);
+      Swal.fire("Erro", e.message, "error");
+    }
+  }
+
+  async loadMaintenanceSectionSettings() {
+    try {
+      const res = await fetch("/api/site-settings");
+      if (!res.ok) return;
+      const settings = await res.json();
+
+      this.currentMaintenanceStates = {
+        full: settings.maintenance_full === "true" || settings.maintenance_mode === "true",
+        shop: settings.maintenance_shop === "true",
+        curiosidades: settings.maintenance_curiosidades === "true",
+        aprender: settings.maintenance_aprender === "true",
+        hexohive: settings.maintenance_hexohive === "true"
+      };
+
+      const toggleFull = document.getElementById("maint-toggle-full");
+      const toggleShop = document.getElementById("maint-toggle-shop");
+      const toggleCuriosidades = document.getElementById("maint-toggle-curiosidades");
+      const toggleAprender = document.getElementById("maint-toggle-aprender");
+      const toggleHexohive = document.getElementById("maint-toggle-hexohive");
+
+      if (toggleFull) toggleFull.checked = this.currentMaintenanceStates.full;
+      if (toggleShop) toggleShop.checked = this.currentMaintenanceStates.shop;
+      if (toggleCuriosidades) toggleCuriosidades.checked = this.currentMaintenanceStates.curiosidades;
+      if (toggleAprender) toggleAprender.checked = this.currentMaintenanceStates.aprender;
+      if (toggleHexohive) toggleHexohive.checked = this.currentMaintenanceStates.hexohive;
+
+      const msgInput = document.getElementById("maint-message-input");
+      const endInput = document.getElementById("maint-endtime-input");
+
+      if (msgInput) msgInput.value = settings.maintenance_message || "Estamos a realizar melhorias importantes nesta área do site.";
+      if (endInput) {
+        const now = new Date();
+        const toLocalIso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        endInput.min = toLocalIso(now);
+
+        let validEndTime = null;
+        if (settings.maintenance_end_time) {
+          const parsed = new Date(settings.maintenance_end_time);
+          if (!isNaN(parsed.getTime()) && parsed.getTime() > now.getTime()) {
+            validEndTime = settings.maintenance_end_time;
+          }
+        }
+
+        if (validEndTime) {
+          endInput.value = validEndTime;
+        } else {
+          const future = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+          endInput.value = toLocalIso(future);
+        }
+      }
+    } catch (e) {
+      console.error("Error loading maintenance section settings:", e);
+    }
+  }
+
+  async saveMaintenanceSettings() {
+    const fullActive = document.getElementById("maint-toggle-full")?.checked || false;
+    const shopActive = document.getElementById("maint-toggle-shop")?.checked || false;
+    const curiosidadesActive = document.getElementById("maint-toggle-curiosidades")?.checked || false;
+    const aprenderActive = document.getElementById("maint-toggle-aprender")?.checked || false;
+    const hexohiveActive = document.getElementById("maint-toggle-hexohive")?.checked || false;
+
+    const message = document.getElementById("maint-message-input")?.value || "Estamos a realizar melhorias importantes nesta área do site.";
+    const endTime = document.getElementById("maint-endtime-input")?.value || "";
+
+    if (endTime) {
+      const selectedDate = new Date(endTime);
+      if (!isNaN(selectedDate.getTime()) && selectedDate.getTime() < Date.now() - 60000) {
+        Swal.fire("Data Inválida", "Não é possível definir uma data ou hora de regresso no passado. Por favor, selecione um horário futuro.", "warning");
+        return;
+      }
+    }
+
+    const prev = this.currentMaintenanceStates || {};
+    const changedSections = [];
+
+    if (prev.full !== fullActive) changedSections.push({ name: "Site Inteiro", active: fullActive });
+    if (prev.shop !== shopActive) changedSections.push({ name: "Compras / Loja", active: shopActive });
+    if (prev.curiosidades !== curiosidadesActive) changedSections.push({ name: "Curiosidades", active: curiosidadesActive });
+    if (prev.aprender !== aprenderActive) changedSections.push({ name: "Aprender", active: aprenderActive });
+    if (prev.hexohive !== hexohiveActive) changedSections.push({ name: "HexoHive", active: hexohiveActive });
+
+    Swal.fire({
+      title: "A guardar definições...",
+      text: "A guardar alterações de manutenção...",
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+      const res = await fetch("/api/admin/maintenance/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.token}`
+        },
+        body: JSON.stringify({
+          maintenance_full: fullActive,
+          maintenance_shop: shopActive,
+          maintenance_curiosidades: curiosidadesActive,
+          maintenance_aprender: aprenderActive,
+          maintenance_hexohive: hexohiveActive,
+          maintenance_message: message,
+          maintenance_end_time: endTime,
+          changed_sections: changedSections
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao guardar configurações.");
+
+      try {
+        localStorage.setItem("hexomel_maint_cache", JSON.stringify({
+          maintenance_full: String(fullActive),
+          maintenance_shop: String(shopActive),
+          maintenance_curiosidades: String(curiosidadesActive),
+          maintenance_aprender: String(aprenderActive),
+          maintenance_hexohive: String(hexohiveActive),
+          maintenance_message: message,
+          maintenance_end_time: endTime
+        }));
+      } catch(e){}
+
+      this.currentMaintenanceStates = {
+        full: fullActive,
+        shop: shopActive,
+        curiosidades: curiosidadesActive,
+        aprender: aprenderActive,
+        hexohive: hexohiveActive
+      };
+
+      this.updateMaintenanceUI(fullActive);
+
+      Swal.fire({
+        title: "Sucesso!",
+        text: "Definições de manutenção guardadas com sucesso.",
+        icon: "success"
+      });
+    } catch (e) {
+      console.error(e);
+      Swal.fire("Erro", e.message, "error");
+    }
+  }
+
+  previewMaintenancePopup() {
+    const existing = document.getElementById("hexomel-maint-popup-overlay");
+    if (existing) existing.remove();
+
+    const message = document.getElementById("maint-message-input")?.value || "Estamos a realizar melhorias importantes nesta área do site.";
+    const rawEndTime = document.getElementById("maint-endtime-input")?.value || "";
+    
+    let formattedEnd = rawEndTime;
+    if (rawEndTime && rawEndTime.includes("T")) {
+      const d = new Date(rawEndTime);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        formattedEnd = `${day}/${month}/${d.getFullYear()} às ${hours}:${mins}`;
+      }
+    }
+
+    const overlay = document.createElement("div");
+    overlay.id = "hexomel-maint-popup-overlay";
+    overlay.className = "hexomel-maint-overlay";
+
+    overlay.innerHTML = `
+      <div class="hexomel-maint-modal">
+        <div class="hexomel-maint-popup-stage">
+          <svg width="76" height="76" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto; filter: drop-shadow(0 6px 12px rgba(245, 158, 11, 0.25));">
+            <path d="M50 12 L85 32 L15 32 Z" fill="#d97706" />
+            <rect x="18" y="32" width="64" height="13" rx="4" fill="#f59e0b" />
+            <rect x="22" y="47" width="56" height="13" rx="4" fill="#fbbf24" />
+            <rect x="26" y="62" width="48" height="13" rx="4" fill="#f59e0b" />
+            <rect x="30" y="77" width="40" height="10" rx="3" fill="#d97706" />
+            <ellipse cx="50" cy="70" rx="7" ry="5" fill="#78350f" />
+          </svg>
+          <img src="/images/bee/abelha.webp" alt="Abelha" class="hexomel-maint-real-bee hexomel-maint-popup-bee-1" />
+          <img src="/images/bee/abelha_inverso.webp" alt="Abelha" class="hexomel-maint-real-bee hexomel-maint-popup-bee-2" />
+          <img src="/images/bee/abelha.webp" alt="Abelha" class="hexomel-maint-real-bee hexomel-maint-popup-bee-3" />
+        </div>
+        <h2 class="hexomel-maint-modal-title">Em Manutenção</h2>
+        <div class="hexomel-maint-modal-badge">🛠️ [Pré-visualização do Pop-Up]</div>
+        <p class="hexomel-maint-modal-desc">${message}</p>
+        
+        ${formattedEnd ? `
+          <div class="hexomel-maint-modal-meta">
+            <strong>🕒 Previsão de Regresso:</strong> ${formattedEnd}
+          </div>
+        ` : ''}
+
+        <div>
+          <button id="hexomel-maint-close-btn" class="btn btn-warning rounded-pill px-4 py-2.5 fw-bold text-white shadow-sm w-100" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; font-size: 1rem;">
+            Fechar Pré-visualização
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.getElementById("hexomel-maint-close-btn").addEventListener("click", () => {
+      overlay.remove();
+    });
+  }
+
+  async loadMaintenanceComplaints() {
+    const tbody = document.getElementById("maint-complaints-tbody");
+    if (!tbody) return;
+
+    try {
+      const res = await fetch("/api/admin/maintenance/complaints", {
+        headers: { "Authorization": `Bearer ${this.token}` }
+      });
+      if (!res.ok) throw new Error("Erro ao carregar reclamações.");
+      const complaints = await res.json();
+
+      if (!Array.isArray(complaints) || complaints.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              <i class="fas fa-check-circle text-success me-2"></i>Nenhuma reclamação ou mensagem recebida até ao momento.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = complaints.map(c => {
+        const dateStr = new Date(c.created_at).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" });
+        const isCensored = c.message && (c.message.includes('*') || /\*{2,}/.test(c.message) || /nigger/i.test(c.message));
+        const hasEmail = c.user_email && c.user_email !== 'Não especificado' && c.user_email.includes('@');
+        const emailHTML = hasEmail 
+          ? `<a href="mailto:${c.user_email}" class="text-success text-decoration-none fw-semibold" style="font-size: 0.88rem;">${c.user_email}</a>` 
+          : `<span class="text-muted fst-italic" style="font-size: 0.88rem;">Não especificado</span>`;
+
+        const dangerBadge = isCensored 
+          ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-2 px-2 py-1 rounded-pill" style="font-size:0.75rem; vertical-align: middle;"><i class="fas fa-exclamation-triangle me-1"></i>Linguagem Ofensiva</span>` 
+          : '';
+
+        const blockBtn = isCensored 
+          ? `<button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-semibold me-1" style="font-size: 0.78rem;" title="Bloquear Utilizador" onclick="adminUI.blockUserFromComplaint('${encodeURIComponent(c.user_email || '')}', '${encodeURIComponent(c.user_name || '')}')">
+               <i class="fas fa-user-slash me-1"></i>Bloquear
+             </button>` 
+          : '';
+
+        return `
+          <tr class="${isCensored ? 'table-danger-subtle' : ''}" style="${isCensored ? 'background-color: #fff8f8;' : ''}">
+            <td class="fw-medium text-muted align-middle" style="white-space: nowrap; font-size: 0.85rem;">${dateStr}</td>
+            <td class="fw-bold text-dark align-middle" style="font-size: 0.88rem;">${c.user_name || 'Anónimo'}</td>
+            <td class="align-middle">${emailHTML}</td>
+            <td class="align-middle"><span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill" style="font-size: 0.78rem; font-weight: 600;">${c.section || 'Geral'}</span></td>
+            <td class="align-middle" style="max-width: 340px; word-wrap: break-word; font-size: 0.88rem;">
+              <span class="${isCensored ? 'fw-semibold text-danger' : 'text-dark'}">${c.message}</span>
+              ${dangerBadge}
+            </td>
+            <td class="text-end align-middle" style="white-space: nowrap;">
+              ${blockBtn}
+              <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-semibold me-1" style="font-size: 0.78rem;" title="Responder por Email" onclick="adminUI.openReplyComplaintModal(${c.id}, '${encodeURIComponent(c.user_name || '')}', '${encodeURIComponent(c.user_email || '')}', '${encodeURIComponent(c.section || 'Geral')}')">
+                <i class="fas fa-reply me-1"></i>Responder
+              </button>
+              <button type="button" class="btn-action-premium delete align-middle" title="Eliminar Mensagem" onclick="adminUI.deleteMaintenanceComplaint(${c.id})">
+                <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    } catch (e) {
+      console.error("Error loading complaints:", e);
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Erro ao carregar reclamações.</td></tr>`;
+    }
+  }
+
+  async blockUserFromComplaint(emailEnc, nameEnc) {
+    const email = decodeURIComponent(emailEnc) || "";
+    const userName = decodeURIComponent(nameEnc) || "Utilizador";
+
+    const result = await Swal.fire({
+      title: "Bloquear Utilizador?",
+      text: `Tem a certeza que pretende restringir/bloquear a conta associada a ${userName} (${email || 'sem email registrado'})?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sim, Bloquear",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch("/api/admin/maintenance/block-user", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, user_name: userName })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire("Bloqueado!", data.message || "Utilizador bloqueado com sucesso.", "success");
+        this.loadMaintenanceComplaints();
+      } else {
+        Swal.fire("Aviso", data.error || "Não foi possível bloquear este utilizador.", "warning");
+      }
+    } catch (e) {
+      console.error("Error blocking user:", e);
+      Swal.fire("Erro", "Erro ao comunicar com o servidor.", "error");
+    }
+  }
+
+  openReplyComplaintModal(id, nameEnc, emailEnc, sectionEnc) {
+    const userName = decodeURIComponent(nameEnc) || "Utilizador";
+    const userEmail = decodeURIComponent(emailEnc) || "";
+    const section = decodeURIComponent(sectionEnc) || "Geral";
+
+    const oldModal = document.getElementById("hexomel-reply-complaint-modal-overlay");
+    if (oldModal) oldModal.remove();
+
+    const defaultSubject = `Hexomel - Resposta à sua mensagem sobre a manutenção de ${section}`;
+    const defaultMsg = `Olá ${userName},\n\nAgradecemos o seu contacto relativamente à manutenção da secção "${section}".\n\nInformamos que a nossa equipa está a trabalhar ativamente para concluir as melhorias e restabelecer o serviço o mais brevemente possível.\n\nCom os melhores cumprimentos,\nAdministração Hexomel`;
+
+    const overlay = document.createElement("div");
+    overlay.id = "hexomel-reply-complaint-modal-overlay";
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;";
+
+    overlay.innerHTML = `
+      <div style="background: #ffffff; border: 1px solid #fef3c7; border-radius: 20px; max-width: 550px; width: 100%; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: left; position: relative;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; pb-3;">
+          <h5 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #1e293b; margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-paper-plane text-warning" style="color: #f59e0b;"></i> Responder a ${userName}
+          </h5>
+          <button type="button" id="reply-modal-close-btn" style="background: none; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.88rem; color: #334155;">
+          <strong>Para:</strong> ${userEmail ? `<span class="text-primary">${userEmail}</span>` : '<span class="text-danger">Sem email registado</span>'}
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Assunto do Email:</label>
+          <input type="text" id="reply-email-subject" value="${defaultSubject}" style="width: 100%; padding: 0.6rem 0.85rem; font-size: 0.9rem; border: 1px solid #cbd5e1; border-radius: 10px;" />
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block;">Mensagem de Resposta (Editável):</label>
+          <textarea id="reply-email-body" rows="6" style="width: 100%; padding: 0.75rem; font-size: 0.9rem; border: 1px solid #cbd5e1; border-radius: 10px; line-height: 1.5; color: #1e293b; font-family: inherit;">${defaultMsg}</textarea>
+        </div>
+
+        <div id="reply-modal-status" style="margin-bottom: 1rem; font-size: 0.88rem; font-weight: 600; text-align: center;"></div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" id="reply-modal-cancel-btn" class="btn btn-light rounded-pill px-4 fw-bold">Cancelar</button>
+          <button type="button" id="reply-modal-send-btn" class="btn btn-warning rounded-pill px-4 fw-bold text-white" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none;">
+            <i class="fas fa-paper-plane me-1.5"></i>Mandar Email de Resposta
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeBtn = document.getElementById("reply-modal-close-btn");
+    const cancelBtn = document.getElementById("reply-modal-cancel-btn");
+    const sendBtn = document.getElementById("reply-modal-send-btn");
+
+    const closeModal = () => overlay.remove();
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+
+    if (sendBtn) {
+      sendBtn.onclick = async () => {
+        const subjectVal = document.getElementById("reply-email-subject")?.value || "";
+        const bodyVal = document.getElementById("reply-email-body")?.value || "";
+        const statusEl = document.getElementById("reply-modal-status");
+
+        if (!userEmail) {
+          if (statusEl) { statusEl.style.color = "#dc2626"; statusEl.textContent = "❌ Este utilizador não tem um email válido para contacto."; }
+          return;
+        }
+        if (!bodyVal.trim()) {
+          if (statusEl) { statusEl.style.color = "#dc2626"; statusEl.textContent = "❌ Escreva uma mensagem para enviar."; }
+          return;
+        }
+
+        if (statusEl) { statusEl.style.color = "#d97706"; statusEl.textContent = "A enviar email de resposta..."; }
+        sendBtn.disabled = true;
+
+        try {
+          const res = await fetch("/api/admin/maintenance/reply-complaint", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${this.token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              to_email: userEmail,
+              user_name: userName,
+              subject: subjectVal,
+              message_body: bodyVal
+            })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            if (statusEl) { statusEl.style.color = "#059669"; statusEl.textContent = "✅ " + (data.message || "Email enviado!"); }
+            setTimeout(() => closeModal(), 1500);
+          } else {
+            throw new Error(data.error || "Erro ao enviar resposta.");
+          }
+        } catch (err) {
+          if (statusEl) { statusEl.style.color = "#dc2626"; statusEl.textContent = "❌ " + err.message; }
+          sendBtn.disabled = false;
+        }
+      };
+    }
+  }
+
+  async deleteMaintenanceComplaint(id) {
+    const result = await Swal.fire({
+      title: "Eliminar Mensagem?",
+      text: "Tem a certeza que pretende eliminar esta mensagem? Esta ação não pode ser desfeita.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sim, Eliminar",
+      cancelButtonText: "Cancelar"
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/maintenance/complaints/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${this.token}` }
+      });
+      if (res.ok) {
+        Swal.fire({
+          title: "Eliminada!",
+          text: "A mensagem foi eliminada com sucesso.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false
+        });
+        this.loadMaintenanceComplaints();
+      } else {
+        Swal.fire("Erro", "Erro ao eliminar mensagem.", "error");
+      }
+    } catch (e) {
+      console.error("Error deleting complaint:", e);
+      Swal.fire("Erro", "Ocorreu uma falha na comunicação.", "error");
     }
   }
 
@@ -1289,7 +2219,33 @@ class AdminUI {
       // Update Revenue Card
       const revenueEl = document.getElementById("dash-total-revenue");
       if (revenueEl && data.stats) {
-        revenueEl.innerText = `${data.stats.totalRevenue}€`;
+        const totalRevenue = parseFloat(data.stats.totalRevenue) || 0;
+        revenueEl.innerText = `${totalRevenue.toFixed(2)}€`;
+
+        const commission = totalRevenue * (this.commissionRate / 100);
+        const commEl = document.getElementById("dash-platform-commission");
+        if (commEl) commEl.innerText = `${commission.toFixed(2)}€`;
+
+        const gatewayCost = totalRevenue * (this.gatewayRate / 100);
+        const balance = commission - gatewayCost;
+        const balEl = document.getElementById("dash-platform-balance");
+        const balIcon = document.getElementById("dash-platform-balance-icon");
+        if (balEl) {
+          balEl.innerText = `${balance.toFixed(2)}€`;
+          if (balance < 0) {
+            balEl.style.color = "#dc2626";
+            if (balIcon) {
+              balIcon.style.background = "#fef2f2";
+              balIcon.style.color = "#dc2626";
+            }
+          } else {
+            balEl.style.color = "#16a34a";
+            if (balIcon) {
+              balIcon.style.background = "#f0fdf4";
+              balIcon.style.color = "#16a34a";
+            }
+          }
+        }
       }
 
       // Update AOV Card
@@ -1551,7 +2507,9 @@ class AdminUI {
       });
       if (!response.ok) throw new Error("Falha ao carregar produtos");
       this.products = await response.json();
+      this.carouselProducts = [...this.products];
       this.renderProducts();
+      this.renderCarouselProducts();
     } catch (error) {
       Swal.fire("Erro", "Não foi possível carregar os produtos.", "error");
     }
@@ -1761,33 +2719,29 @@ class AdminUI {
   renderUsers() {
     const container = document.getElementById("customer-list-body");
 
-    if (this.users.length === 0) {
-      container.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum utilizador registado.</td></tr>`;
+    const filteredUsers = (this.users || []).filter((u) => u.UserType?.toLowerCase() !== "admin");
+
+    if (filteredUsers.length === 0) {
+      container.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Nenhum utilizador registado.</td></tr>`;
       return;
     }
 
-    container.innerHTML = this.users
+    container.innerHTML = filteredUsers
       .map((u) => {
         const initials = u.Nome
-          ? u.Nome.split(" ")
+          ? u.Nome.trim().split(/\s+/)
               .map((n) => n[0])
               .join("")
               .toUpperCase()
               .substring(0, 2)
           : "??";
 
-        // Email Verification Badge
-        const emailVerified = Boolean(u.Is_Verified);
-        const emailBadge = emailVerified
-          ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'isVerified', ${emailVerified ? 1 : 0})" title="Clique para alterar"><i class="fas fa-check-circle me-1"></i>Verificado</span>`
-          : `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'isVerified', ${emailVerified ? 1 : 0})" title="Clique para alterar"><i class="fas fa-envelope-open-text me-1"></i>Pendente</span>`;
-
-        // Checkout 2FA Status Badge
-        const checkoutVerified = Boolean(u.Checkout_Verified);
+        // Checkout 2FA Status Badge (static status indicator)
+        const checkoutVerified = Boolean(Number(u.Checkout_Verified) === 1 || u.checkoutVerified === true || u.checkoutVerified === 1);
         let checkout2faBadge = "";
         
         if (checkoutVerified) {
-          checkout2faBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 1)" title="Clique para alterar"><i class="fas fa-shield-alt me-1"></i>2FA Verificado</span>`;
+          checkout2faBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-shield-alt me-1"></i>2FA Verificado</span>`;
         } else if (u.Checkout_OTP) {
           // Check if expired
           const expiresAt = new Date(u.Checkout_OTP_Expires);
@@ -1795,28 +2749,41 @@ class AdminUI {
           const formattedTime = expiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           
           if (isExpired) {
-            checkout2faBadge = `<span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer d-inline-flex flex-column align-items-start gap-0.5" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 0)" title="Clique para forçar verificação"><span class="d-flex align-items-center"><i class="fas fa-hourglass-end me-1"></i>Código Expirado</span><span class="smaller opacity-75">Expirou às ${formattedTime}</span></span>`;
+            checkout2faBadge = `<span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill px-2.5 py-1.5 small fw-semibold d-inline-flex flex-column align-items-start gap-0.5"><span class="d-flex align-items-center"><i class="fas fa-hourglass-end me-1"></i>Código Expirado</span><span class="smaller opacity-75">Expirou às ${formattedTime}</span></span>`;
           } else {
-            checkout2faBadge = `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer d-inline-flex flex-column align-items-start gap-0.5" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 0)" title="Clique para forçar verificação"><span class="d-flex align-items-center"><i class="fas fa-key me-1"></i>Código: <strong class="ms-1 font-monospace text-dark">${u.Checkout_OTP}</strong></span><span class="smaller opacity-75">Expira às ${formattedTime}</span></span>`;
+            checkout2faBadge = `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1.5 small fw-semibold d-inline-flex flex-column align-items-start gap-0.5"><span class="d-flex align-items-center"><i class="fas fa-key me-1"></i>Código: <strong class="ms-1 font-monospace text-dark">${u.Checkout_OTP}</strong></span><span class="smaller opacity-75">Expira às ${formattedTime}</span></span>`;
           }
         } else {
-          checkout2faBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserVerification('${u.ID_Cliente}', 'checkoutVerified', 0)" title="Clique para forçar verificação"><i class="fas fa-exclamation-triangle me-1"></i>Requer 2FA</span>`;
+          checkout2faBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-exclamation-triangle me-1"></i>Requer 2FA</span>`;
         }
 
-        // Restrito_Postar Status Badge
-        const isRestricted = Boolean(u.Restrito_Postar);
+        // Restrito_Postar Status Badge (static status indicator)
+        const isRestricted = Boolean(Number(u.Restrito_Postar) === 1 || u.restrictedToPost === true || u.restrictedToPost === 1);
         const restrictionBadge = isRestricted
-          ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserRestriction('${u.ID_Cliente}', true)" title="Clique para reverter restrição"><i class="fas fa-ban me-1"></i>Restrito</span>`
-          : `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold cursor-pointer" onclick="adminUI.toggleUserRestriction('${u.ID_Cliente}', false)" title="Clique para privar de postar/enviar mensagens"><i class="fas fa-check me-1"></i>Ativo</span>`;
+          ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-ban me-1"></i>Restrito</span>`
+          : `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-check me-1"></i>Ativo</span>`;
+
+        const userPic = u.Picture && typeof u.Picture === 'string' && u.Picture.trim() !== '' && u.Picture !== 'null' && u.Picture !== 'undefined' ? u.Picture : null;
+        const avatarDisplay = userPic 
+          ? `<img src="${userPic}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${(u.Nome || 'Utilizador').replace(/'/g, "\\'")}') + '&background=1a4d2e&color=fff';">`
+          : `<div class="user-avatar-bubble">${initials}</div>`;
+
+        const isAccountVerified = Boolean(Number(u.Is_Verified) === 1 || u.isVerified === true || u.isVerified === 1 || u.Is_Verified === true);
+        const warningIcon = !isAccountVerified 
+          ? `<span class="custom-tooltip-wrapper">
+               <i class="fas fa-exclamation-triangle text-danger" style="cursor: help;"></i>
+               <span class="custom-tooltip-text">Conta não verificada: o utilizador ainda não confirmou o endereço de email de registo.</span>
+             </span>`
+          : "";
 
         return `
             <tr>
                 <td>
                     <div class="d-flex align-items-center gap-3">
-                        <div class="user-avatar-bubble">${initials}</div>
+                        ${avatarDisplay}
                         <div>
-                            <div class="fw-bold text-dark">${u.Nome}</div>
-                            <div class="small text-muted">ID: #${u.ID_Cliente}</div>
+                            <div class="fw-bold text-dark d-inline-flex align-items-center">${u.Nome}${warningIcon}</div>
+                            <div class="small text-muted mb-0.5" style="font-size: 0.78rem;">@${u.Username || u.Email.split("@")[0]}</div>
                         </div>
                     </div>
                 </td>
@@ -1828,12 +2795,17 @@ class AdminUI {
                         <option value="admin" ${u.UserType === 'admin' ? 'selected' : ''}>Admin</option>
                     </select>
                 </td>
-                <td class="small text-muted">${new Date(u.Data_Resgistro).toLocaleDateString()}</td>
-                <td>${emailBadge}</td>
+                <td class="small text-muted">${u.Data_Resgistro ? new Date(u.Data_Resgistro).toLocaleDateString('pt-PT') : 'N/A'}</td>
                 <td>${checkout2faBadge}</td>
                 <td>${restrictionBadge}</td>
                 <td class="text-end">
-                    <button class="btn-action-premium delete" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""} title="Eliminar utilizador">
+                    <button class="btn-action-premium info me-1" onclick="adminUI.sendEmailToUser('${(u.Email || '').replace(/'/g, "\\'")}', '${(u.Nome || '').replace(/'/g, "\\'")}')" title="Enviar Notificação por Email">
+                        <i class="fas fa-envelope" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <button class="btn-action-premium ${isRestricted ? 'success' : 'warning'} me-1" onclick="adminUI.toggleUserRestriction('${u.ID_Cliente}', ${isRestricted ? 'true' : 'false'})" title="${isRestricted ? 'Permitir Postagem (Desbloquear)' : 'Privar de Postar (Bloquear)'}">
+                        <i class="fas ${isRestricted ? 'fa-check' : 'fa-ban'}" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <button class="btn-action-premium delete" onclick="adminUI.deleteUser('${u.ID_Cliente}')" ${u.ID_Cliente === this.userData?.id || u.UserType?.toLowerCase() === "admin" ? "disabled" : ""} title="Eliminar utilizador">
                         <i class="fas fa-user-minus" style="font-size: 0.75rem;"></i>
                     </button>
                 </td>
@@ -2173,47 +3145,49 @@ class AdminUI {
     }
 
     body.innerHTML = reports.map(r => {
-      const date = new Date(r.Data_Denuncia).toLocaleString();
+      const date = new Date(r.Data_Denuncia).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       const isResolved = r.Status === "Resolvido";
       const statusBadge = isResolved
         ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-check-circle me-1"></i>Resolvido</span>`
         : `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1.5 small fw-semibold"><i class="fas fa-exclamation-triangle me-1"></i>Pendente</span>`;
 
       const restrictBtn = r.DenunciadoRestrito
-        ? `<button class="btn btn-sm btn-outline-success me-1" onclick="adminUI.toggleUserRestriction('${r.ID_Denunciado}', true)" title="Permitir Postagem"><i class="fas fa-check"></i> Permitir</button>`
-        : `<button class="btn btn-sm btn-outline-warning me-1" onclick="adminUI.toggleUserRestriction('${r.ID_Denunciado}', false)" title="Privar de Postar"><i class="fas fa-ban"></i> Restringir</button>`;
+        ? `<button class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.75rem;" onclick="adminUI.toggleUserRestriction('${r.ID_Denunciado}', true)" title="Permitir Postagem"><i class="fas fa-check me-1"></i>Permitir</button>`
+        : `<button class="btn btn-sm rounded-pill px-3 py-1 fw-semibold" style="background-color: #fff8e1; color: #b45309; border: 1px solid #fef3c7; font-size: 0.75rem;" onclick="adminUI.toggleUserRestriction('${r.ID_Denunciado}', false)" title="Privar de Postar"><i class="fas fa-ban me-1"></i>Restringir</button>`;
 
       const resolveBtn = isResolved
         ? ""
-        : `<button class="btn btn-sm btn-outline-primary me-1" onclick="adminUI.resolveReport('${r.ID_Denuncia}')" title="Resolver"><i class="fas fa-check-double"></i> Resolver</button>`;
+        : `<button class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold" style="background-color: #1a4d2e; border-color: #1a4d2e; font-size: 0.75rem;" onclick="adminUI.resolveReport('${r.ID_Denuncia}')" title="Resolver"><i class="fas fa-check-double me-1"></i>Resolver</button>`;
 
-      const deleteBtn = `<button class="btn btn-sm btn-outline-danger" onclick="adminUI.deleteUser('${r.ID_Denunciado}')" title="Remover Conta"><i class="fas fa-user-minus"></i> Remover</button>`;
+      const emailBtn = `<button class="btn btn-sm btn-outline-info rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;" onclick="adminUI.sendEmailToUser('${r.DenunciadoEmail}', '${r.DenunciadoNome ? r.DenunciadoNome.replace(/'/g, "\\'") : ''}')" title="Enviar Email ao Denunciado"><i class="fas fa-envelope me-1"></i>Email</button>`;
+      const deleteBtn = `<button class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;" onclick="adminUI.deleteUser('${r.ID_Denunciado}')" title="Remover Conta"><i class="fas fa-user-minus"></i></button>`;
 
       return `
-        <tr>
-          <td>
-            <div class="fw-bold text-dark">${r.DenuncianteNome}</div>
-            <div class="small text-muted">${r.DenuncianteEmail}</div>
+        <tr class="align-middle border-bottom">
+          <td class="py-3">
+            <div class="fw-bold text-dark" style="font-size: 0.88rem;">${r.DenuncianteNome}</div>
+            <div class="smaller text-muted" style="font-size: 0.75rem;">${r.DenuncianteEmail}</div>
           </td>
-          <td>
-            <div class="fw-bold text-dark">${r.DenunciadoNome}</div>
-            <div class="small text-muted">${r.DenunciadoEmail}</div>
+          <td class="py-3">
+            <div class="fw-bold text-dark" style="font-size: 0.88rem;">${r.DenunciadoNome}</div>
+            <div class="smaller text-muted" style="font-size: 0.75rem;">${r.DenunciadoEmail}</div>
             ${r.DenunciadoRestrito ? '<span class="badge bg-danger-subtle text-danger px-2 py-0.5 mt-1 small" style="font-size:0.7rem">Restrito</span>' : ''}
           </td>
-          <td><span class="badge bg-secondary text-white">${r.Tipo_Item}</span></td>
-          <td>
-            <div class="small text-dark text-wrap" style="max-width: 250px; word-break: break-word;">
+          <td class="py-3"><span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill px-2.5 py-1 small fw-semibold" style="font-size: 0.72rem;">${r.Tipo_Item}</span></td>
+          <td class="py-3">
+            <div class="small text-dark text-wrap" style="max-width: 220px; word-break: break-word; font-size: 0.82rem;">
               ${r.Texto_Item || '<span class="text-muted italic">(sem conteúdo textual)</span>'}
             </div>
-            <div class="smaller text-muted mt-1">ID Item: #${r.ID_Item}</div>
+            <div class="smaller text-muted mt-0.5" style="font-size: 0.7rem;">ID Item: #${r.ID_Item}</div>
           </td>
-          <td><div class="small text-dark text-wrap" style="max-width: 150px; word-break: break-word;">${r.Motivo}</div></td>
-          <td class="small text-muted">${date}</td>
-          <td>${statusBadge}</td>
-          <td class="text-end">
-            <div class="d-flex justify-content-end gap-1">
+          <td class="py-3"><div class="small text-dark text-wrap" style="max-width: 140px; word-break: break-word; font-size: 0.82rem;">${r.Motivo}</div></td>
+          <td class="py-3 smaller text-muted" style="font-size: 0.78rem; white-space: nowrap;">${date}</td>
+          <td class="py-3" style="white-space: nowrap;">${statusBadge}</td>
+          <td class="py-3 text-end" style="white-space: nowrap;">
+            <div class="d-flex justify-content-end align-items-center gap-1.5">
               ${resolveBtn}
               ${restrictBtn}
+              ${emailBtn}
               ${deleteBtn}
             </div>
           </td>
@@ -2232,18 +3206,18 @@ class AdminUI {
     }
 
     body.innerHTML = blocks.map(b => {
-      const date = new Date(b.Data_Bloqueio).toLocaleString();
+      const date = new Date(b.Data_Bloqueio).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       return `
-        <tr>
-          <td>
-            <div class="fw-bold text-dark">${b.BloqueadorNome}</div>
-            <div class="small text-muted">${b.BloqueadorEmail} (ID: #${b.ID_Bloqueador})</div>
+        <tr class="align-middle border-bottom">
+          <td class="py-3">
+            <div class="fw-bold text-dark" style="font-size: 0.88rem;">${b.BloqueadorNome}</div>
+            <div class="smaller text-muted" style="font-size: 0.75rem;">${b.BloqueadorEmail} (ID: #${b.ID_Bloqueador})</div>
           </td>
-          <td>
-            <div class="fw-bold text-dark">${b.BloqueadoNome}</div>
-            <div class="small text-muted">${b.BloqueadoEmail} (ID: #${b.ID_Bloqueado})</div>
+          <td class="py-3">
+            <div class="fw-bold text-dark" style="font-size: 0.88rem;">${b.BloqueadoNome}</div>
+            <div class="smaller text-muted" style="font-size: 0.75rem;">${b.BloqueadoEmail} (ID: #${b.ID_Bloqueado})</div>
           </td>
-          <td class="small text-muted">${date}</td>
+          <td class="py-3 smaller text-muted" style="font-size: 0.78rem; white-space: nowrap;">${date}</td>
         </tr>
       `;
     }).join("");
@@ -2272,8 +3246,17 @@ class AdminUI {
   }
 
   async toggleUserRestriction(id, isCurrentlyRestricted) {
-    const newValue = isCurrentlyRestricted ? 0 : 1;
-    const statusName = newValue ? "Restrito (não pode postar/enviar mensagens)" : "Ativo (pode postar/enviar mensagens)";
+    const isRestrictedBool = isCurrentlyRestricted === true || isCurrentlyRestricted === 1 || isCurrentlyRestricted === "1" || isCurrentlyRestricted === "true";
+    const newValue = isRestrictedBool ? 0 : 1;
+    const statusText = newValue ? "Restrito (bloqueado de postar/enviar mensagens)" : "Ativo (permissão concedida)";
+
+    const userObj = Array.isArray(this.users) ? this.users.find((u) => String(u.ID_Cliente) === String(id)) : null;
+    const oldRestrito = userObj ? userObj.Restrito_Postar : null;
+    if (userObj) {
+      userObj.Restrito_Postar = newValue;
+      userObj.restrictedToPost = newValue;
+      this.renderUsers();
+    }
 
     try {
       const response = await fetch(`${API_URL}/admin/users/${id}/restrict`, {
@@ -2286,40 +3269,144 @@ class AdminUI {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Erro ao atualizar restrição.");
+        let errText = "Erro ao atualizar restrição.";
+        try {
+          const err = await response.json();
+          if (err && err.error) errText = err.error;
+        } catch (e) {}
+        throw new Error(errText);
       }
 
       Swal.fire({
         icon: "success",
-        title: "Estado Atualizado",
-        text: `Utilizador agora está ${statusName}.`,
+        title: "Estado de Restrição Atualizado",
+        text: `Utilizador agora está ${statusText}.`,
         timer: 1500,
         showConfirmButton: false,
       });
 
-      // Reload both/either to sync
-      const customersSection = document.getElementById("customers-section");
-      if (customersSection && customersSection.classList.contains("active")) {
-        await this.loadUsers();
-      }
       const moderacaoSection = document.getElementById("moderacao-section");
-      if (moderacaoSection && moderacaoSection.classList.contains("active")) {
-        await this.loadModerationData();
+      if (moderacaoSection && moderacaoSection.classList.contains("active") && typeof this.loadModerationData === "function") {
+        this.loadModerationData();
+      }
+      const comunidadeSection = document.getElementById("comunidade-section");
+      if (comunidadeSection && comunidadeSection.classList.contains("active") && typeof this.loadComunidade === "function") {
+        this.loadComunidade();
       }
     } catch (error) {
+      if (userObj && oldRestrito !== null) {
+        userObj.Restrito_Postar = oldRestrito;
+        userObj.restrictedToPost = oldRestrito;
+        this.renderUsers();
+      }
       Swal.fire("Erro", error.message, "error");
     }
   }
 
+  async sendEmailToUser(toEmail, toName) {
+    if (!toEmail) {
+      Swal.fire("Erro", "Este utilizador não possui um endereço de email válido.", "error");
+      return;
+    }
+
+    const { value: formValues } = await Swal.fire({
+      title: `<span style="color:#1a4d2e;"><i class="fas fa-paper-plane me-2"></i>Enviar Notificação por Email</span>`,
+      html: `
+        <div class="text-start mb-3">
+          <label class="form-label fw-bold small text-muted">Destinatário</label>
+          <input id="swal-email-to" class="form-control bg-light" value="${toName || 'Utilizador'} <${toEmail}>" readonly>
+        </div>
+        <div class="text-start mb-3">
+          <label class="form-label fw-bold small text-muted">Assunto</label>
+          <input id="swal-email-subject" class="form-control" value="Notificação de Moderação — Hexomel">
+        </div>
+        <div class="text-start mb-2">
+          <label class="form-label fw-bold small text-muted">Mensagem</label>
+          <textarea id="swal-email-msg" class="form-control" rows="4" placeholder="Escreva a mensagem para o utilizador...">Informamos que o seu conteúdo publicado no Hexomel foi analisado pela nossa equipa de moderação na sequência de uma denúncia.</textarea>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: '<i class="fas fa-paper-plane me-1"></i> Enviar Email',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1a4d2e',
+      focusConfirm: false,
+      preConfirm: () => {
+        const subject = document.getElementById('swal-email-subject').value.trim();
+        const message = document.getElementById('swal-email-msg').value.trim();
+        if (!message) {
+          Swal.showValidationMessage('Escreva uma mensagem para enviar.');
+          return false;
+        }
+        return { subject, message };
+      }
+    });
+
+    if (formValues) {
+      try {
+        Swal.fire({
+          title: "A enviar email...",
+          text: "Por favor aguarde um momento.",
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        const res = await fetch(`${API_URL}/admin/send-user-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.token}`,
+          },
+          body: JSON.stringify({
+            toEmail,
+            toName,
+            subject: formValues.subject,
+            message: formValues.message
+          })
+        });
+
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok) throw new Error(data.error || "Erro ao enviar email.");
+
+        Swal.fire("Enviado!", data.message || "Email enviado com sucesso.", "success");
+      } catch (err) {
+        Swal.fire("Erro", err.message, "error");
+      }
+    }
+  }
+
   async toggleUserVerification(id, field, currentValue) {
-    const newValue = currentValue ? 0 : 1;
-    const fieldName = field === "isVerified" ? "E-mail" : "Checkout 2FA";
-    const statusName = newValue ? "verificado" : "não verificado";
+    const isCurrentlyVerified = currentValue === true || currentValue === 1 || currentValue === "1" || currentValue === "true";
+    const newValue = isCurrentlyVerified ? 0 : 1;
+
+    // Optimistic update for seamless automatic feedback without popup
+    const userObj = Array.isArray(this.users) ? this.users.find((u) => String(u.ID_Cliente) === String(id)) : null;
+    const oldVerified = userObj ? (userObj.Checkout_Verified !== undefined ? userObj.Checkout_Verified : userObj.checkoutVerified) : null;
+    if (userObj) {
+      if (field === "checkoutVerified") {
+        userObj.Checkout_Verified = newValue;
+        userObj.checkoutVerified = newValue;
+        if (newValue === 1) {
+          userObj.Checkout_OTP = null;
+        }
+      } else if (field === "isVerified") {
+        userObj.Is_Verified = newValue;
+        userObj.isVerified = newValue;
+      }
+      userObj[field] = newValue;
+      this.renderUsers();
+    }
 
     try {
       const body = {};
       body[field] = newValue;
+      if (field === "checkoutVerified") {
+        body.Checkout_Verified = newValue;
+        body.checkoutVerified = newValue;
+      } else if (field === "isVerified") {
+        body.Is_Verified = newValue;
+        body.isVerified = newValue;
+      }
 
       const response = await fetch(`${API_URL}/admin/users/${id}/verification`, {
         method: "PATCH",
@@ -2331,20 +3418,22 @@ class AdminUI {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Erro ao atualizar estado de verificação.");
+        let errText = "Erro ao atualizar estado de verificação.";
+        try {
+          const err = await response.json();
+          if (err && err.error) errText = err.error;
+        } catch (e) {}
+        console.error("Verification toggle server warning:", errText);
       }
-
-      Swal.fire({
-        icon: "success",
-        title: `${fieldName} marcado como ${statusName}!`,
-        timer: 1200,
-        showConfirmButton: false,
-      });
-
-      await this.loadUsers();
     } catch (error) {
-      Swal.fire("Erro", error.message, "error");
+      console.error("Verification toggle network error:", error);
+      if (userObj && oldVerified !== null) {
+        if (field === "checkoutVerified") {
+          userObj.Checkout_Verified = oldVerified;
+          userObj.checkoutVerified = oldVerified;
+        }
+        this.renderUsers();
+      }
     }
   }
 
@@ -4146,22 +5235,62 @@ class AdminUI {
     }
   }
 
+
+
   // --- APRENDER FACTS MANAGEMENT ---
   async loadFacts() {
     try {
       const response = await fetch(`${API_URL}/aprender/factos`, {
         headers: { Authorization: `Bearer ${this.token}` },
       });
-      if (!response.ok) throw new Error("Falha ao carregar os factos da página Aprender.");
+      if (!response.ok) throw new Error("Falha ao carregar os factos.");
       this.facts = await response.json();
-      this.renderFacts();
+      this.renderFactsTable();
     } catch (error) {
       console.error(error);
       Swal.fire("Erro", "Não foi possível carregar os factos.", "error");
     }
   }
 
-  renderFacts() {
+  async uploadFactIcon(inputEl, targetInputId) {
+    if (!inputEl.files || !inputEl.files[0]) return;
+    const file = inputEl.files[0];
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      Swal.fire({
+        title: "A carregar ícone...",
+        text: "Aguarde um momento",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      const response = await fetch(`${API_URL}/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${this.token}` },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Falha no envio do ficheiro.");
+      const data = await response.json();
+      const targetInput = document.getElementById(targetInputId);
+      if (targetInput) targetInput.value = data.url;
+
+      Swal.fire({
+        icon: "success",
+        title: "Ícone Carregado!",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire("Erro", error.message || "Não foi possível carregar a imagem.", "error");
+    } finally {
+      inputEl.value = "";
+    }
+  }
+
+  renderFactsTable() {
     const container = document.getElementById("factos-list-body");
     if (!container) return;
 
@@ -4170,26 +5299,37 @@ class AdminUI {
       return;
     }
 
+    const renderIconBadge = (icon) => {
+      if (!icon) return '';
+      if (icon.startsWith('/uploads/') || icon.startsWith('uploads/') || icon.startsWith('http') || icon.startsWith('data:')) {
+        const src = icon.startsWith('uploads/') ? '/' + icon : icon;
+        return `<span class="badge bg-light text-dark"><img src="${src}" style="width:18px;height:18px;object-fit:contain;" class="me-1" /> ${icon.split('/').pop()}</span>`;
+      }
+      return `<span class="badge bg-light text-dark"><i class="${icon} me-1"></i> ${icon}</span>`;
+    };
+
     container.innerHTML = this.facts
-      .map((f) => {
-        return `
+      .map(
+        (f) => `
         <tr>
-            <td class="fw-bold text-muted">#${f.ID_Facto}</td>
-            <td class="fw-bold text-dark">${f.Titulo}</td>
-            <td><span class="badge bg-light text-dark"><i class="${f.Icon_Frente} me-1"></i> ${f.Icon_Frente}</span></td>
-            <td><span class="badge bg-light text-dark"><i class="${f.Icon_Verso} me-1"></i> ${f.Icon_Verso}</span></td>
-            <td><div class="small text-muted" style="max-height: 60px; overflow-y: auto;">${f.Conteudo_Verso}</div></td>
-            <td class="text-end">
-                <button class="btn-action-premium me-1" onclick="adminUI.editFact(${f.ID_Facto})" title="Editar">
-                    <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
-                </button>
-                <button class="btn-action-premium delete" onclick="adminUI.deleteFact(${f.ID_Facto})" title="Eliminar">
-                    <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
-                </button>
-            </td>
+          <td class="fw-bold text-muted">#${f.ID_Facto}</td>
+          <td class="fw-bold text-dark">${f.Titulo}</td>
+          <td>${renderIconBadge(f.Icon_Frente)}</td>
+          <td>${renderIconBadge(f.Icon_Verso)}</td>
+          <td><div class="small text-muted" style="max-height: 60px; overflow-y: auto;">${f.Conteudo_Verso}</div></td>
+          <td class="text-end">
+            <div class="d-flex align-items-center justify-content-end gap-1.5" style="white-space:nowrap;">
+              <button class="btn-action-premium me-1" onclick="adminUI.editFact(${f.ID_Facto})" title="Editar">
+                <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+              </button>
+              <button class="btn-action-premium delete" onclick="adminUI.deleteFact(${f.ID_Facto})" title="Eliminar">
+                <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+              </button>
+            </div>
+          </td>
         </tr>
-      `;
-      })
+      `
+      )
       .join("");
   }
 
@@ -4216,6 +5356,7 @@ class AdminUI {
     if (iconBackField) iconBackField.value = f.Icon_Verso;
     const contentBackField = document.getElementById("factContentBack");
     if (contentBackField) contentBackField.value = f.Conteudo_Verso;
+
     const labelField = document.getElementById("factModalLabel");
     if (labelField) labelField.innerText = "Editar Facto #" + id;
 
@@ -4278,7 +5419,9 @@ class AdminUI {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      confirmButtonText: "Sim, apagar!",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sim, remover!",
+      cancelButtonText: "Cancelar",
     });
 
     if (result.isConfirmed) {
@@ -4287,11 +5430,11 @@ class AdminUI {
           method: "DELETE",
           headers: { Authorization: `Bearer ${this.token}` },
         });
-        if (!response.ok) throw new Error("Erro ao apagar o facto.");
+        if (!response.ok) throw new Error("Falha ao remover facto.");
         Swal.fire({
           icon: "success",
-          title: "Apagado",
-          timer: 1000,
+          title: "Facto Removido",
+          timer: 1500,
           showConfirmButton: false,
         });
         this.loadFacts();
@@ -4332,6 +5475,15 @@ class AdminUI {
       equipment: "Equipamentos"
     };
 
+    const renderIconBadge = (icon) => {
+      if (!icon) return '';
+      if (icon.startsWith('/uploads/') || icon.startsWith('uploads/') || icon.startsWith('http') || icon.startsWith('data:')) {
+        const src = icon.startsWith('uploads/') ? '/' + icon : icon;
+        return `<span class="badge bg-light text-dark"><img src="${src}" style="width:18px;height:18px;object-fit:contain;" class="me-1" /> ${icon.split('/').pop()}</span>`;
+      }
+      return `<span class="badge bg-light text-dark"><i class="${icon} me-1"></i> ${icon}</span>`;
+    };
+
     container.innerHTML = this.glossaryTerms
       .map((g) => {
         const categoryLabel = catLabels[g.Categoria] || g.Categoria;
@@ -4340,7 +5492,7 @@ class AdminUI {
             <td class="fw-bold text-muted">#${g.ID_Glossario}</td>
             <td class="fw-bold text-dark">${g.Termo}</td>
             <td><div class="small text-muted" style="max-height: 60px; overflow-y: auto;">${g.Definicao}</div></td>
-            <td><span class="badge bg-light text-dark"><i class="${g.Icon} me-1"></i> ${g.Icon}</span></td>
+            <td>${renderIconBadge(g.Icon)}</td>
             <td><span class="badge bg-secondary text-uppercase" style="font-size:0.7rem;">${categoryLabel}</span></td>
             <td class="text-end">
                 <button class="btn-action-premium me-1" onclick="adminUI.editGlossaryTerm(${g.ID_Glossario})" title="Editar">
@@ -4356,6 +5508,24 @@ class AdminUI {
       .join("");
   }
 
+  toggleGlossaryCategoryField() {
+    const select = document.getElementById("glossaryCategory");
+    const container = document.getElementById("glossaryCustomCategoryContainer");
+    const customInput = document.getElementById("glossaryCustomCategory");
+    if (select && container) {
+      if (select.value === "custom") {
+        container.style.display = "block";
+        if (customInput) customInput.required = true;
+      } else {
+        container.style.display = "none";
+        if (customInput) {
+          customInput.required = false;
+          customInput.value = "";
+        }
+      }
+    }
+  }
+
   resetGlossaryForm() {
     const form = document.getElementById("glossaryForm");
     if (form) form.reset();
@@ -4363,6 +5533,13 @@ class AdminUI {
     if (idField) idField.value = "";
     const labelField = document.getElementById("glossaryModalLabel");
     if (labelField) labelField.innerText = "Adicionar Novo Termo";
+    const customContainer = document.getElementById("glossaryCustomCategoryContainer");
+    if (customContainer) customContainer.style.display = "none";
+    const customInput = document.getElementById("glossaryCustomCategory");
+    if (customInput) {
+      customInput.value = "";
+      customInput.required = false;
+    }
   }
 
   editGlossaryTerm(id) {
@@ -4375,8 +5552,29 @@ class AdminUI {
     if (termField) termField.value = g.Termo;
     const iconField = document.getElementById("glossaryIcon");
     if (iconField) iconField.value = g.Icon;
+    
     const categoryField = document.getElementById("glossaryCategory");
-    if (categoryField) categoryField.value = g.Categoria;
+    const customContainer = document.getElementById("glossaryCustomCategoryContainer");
+    const customInput = document.getElementById("glossaryCustomCategory");
+    if (categoryField) {
+      const defaultCategories = ["substance", "hive", "process", "equipment"];
+      if (defaultCategories.includes(g.Categoria)) {
+        categoryField.value = g.Categoria;
+        if (customContainer) customContainer.style.display = "none";
+        if (customInput) {
+          customInput.value = "";
+          customInput.required = false;
+        }
+      } else {
+        categoryField.value = "custom";
+        if (customContainer) customContainer.style.display = "block";
+        if (customInput) {
+          customInput.value = g.Categoria;
+          customInput.required = true;
+        }
+      }
+    }
+
     const definitionField = document.getElementById("glossaryDefinition");
     if (definitionField) definitionField.value = g.Definicao;
     const labelField = document.getElementById("glossaryModalLabel");
@@ -4388,10 +5586,15 @@ class AdminUI {
 
   async saveGlossaryTerm() {
     const id = document.getElementById("glossaryId").value;
+    let categoria = document.getElementById("glossaryCategory").value;
+    if (categoria === "custom") {
+      categoria = document.getElementById("glossaryCustomCategory").value.trim().toLowerCase();
+    }
+    
     const body = {
       termo: document.getElementById("glossaryTerm").value,
       icon: document.getElementById("glossaryIcon").value,
-      categoria: document.getElementById("glossaryCategory").value,
+      categoria: categoria,
       definicao: document.getElementById("glossaryDefinition").value,
     };
 
@@ -4487,16 +5690,41 @@ class AdminUI {
     }
 
     const rows = [];
+    const getValidAvatar = (pic, nome) => {
+      if (pic && typeof pic === 'string' && pic.trim() !== '' && pic !== 'null' && pic !== 'undefined') {
+        return pic.startsWith('uploads/') ? '/' + pic : pic;
+      }
+      const cleanName = (nome && nome !== 'Utilizador' && nome !== 'Anónimo') ? nome : 'U';
+      return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cleanName) + '&background=random&color=fff';
+    };
+
+    const getRoleBadge = (tipo) => {
+      if (tipo === 'admin') return '<span class="badge bg-danger text-white border-0" style="font-size:0.55rem;"><i class="fas fa-shield-alt me-1"></i>Equipa Hexomel</span>';
+      if (tipo === 'apicultor') return '<span class="badge bg-warning text-dark border-0" style="font-size:0.55rem;"><i class="fas fa-check-circle me-1"></i>Apicultor</span>';
+      return '<span class="badge bg-secondary border-0" style="font-size:0.55rem;">Cliente</span>';
+    };
+
     this.comunidadePosts.forEach((p) => {
+      const pAvatar = getValidAvatar(p.AutorPicture, p.AutorNome);
+      const isPRestricted = Boolean(p.AutorRestrito);
+      const pAvatarImg = `<img src="${pAvatar}" class="rounded-circle" style="width:30px;height:30px;object-fit:cover;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${(p.AutorNome || 'U').replace(/'/g, "\\'")}') + '&background=1a4d2e&color=fff';">`;
+      const pAvatarHtml = p.ID_Cliente ? `<a href="profile.html?id=${p.ID_Cliente}" target="_blank" title="Ver Perfil">${pAvatarImg}</a>` : pAvatarImg;
+      const pNameHtml = p.ID_Cliente 
+        ? `<a href="profile.html?id=${p.ID_Cliente}" target="_blank" class="fw-bold small text-dark text-decoration-none d-block text-truncate" style="max-width:130px;" title="Ver Perfil da Comunidade">${p.AutorNome || "Utilizador"}</a>`
+        : `<span class="fw-bold small text-dark d-block text-truncate" style="max-width:130px;">${p.AutorNome || "Utilizador"}</span>`;
+
       // Add Question row
       rows.push(`
         <tr class="table-light">
           <td>
             <div class="d-flex align-items-center gap-2">
-              <img src="${p.AutorPicture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.AutorNome || 'U') + '&background=1a4d2e&color=fff'}" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;">
+              ${pAvatarHtml}
               <div>
-                <span class="fw-bold small text-dark d-block">${p.AutorNome || "Anónimo"}</span>
-                <span class="badge bg-secondary" style="font-size:0.6rem;">${p.AutorTipo || "cliente"}</span>
+                ${pNameHtml}
+                <div class="d-flex align-items-center gap-1 mt-0.5">
+                  ${getRoleBadge(p.AutorTipo)}
+                  ${isPRestricted ? '<span class="badge bg-danger text-white border-0" style="font-size:0.55rem;"><i class="fas fa-ban me-1"></i>Restrito</span>' : ''}
+                </div>
               </div>
             </div>
           </td>
@@ -4515,9 +5743,16 @@ class AdminUI {
             ${new Date(p.Data_Criacao).toLocaleDateString("pt-PT")}
           </td>
           <td class="text-end">
-            <button class="btn-action-premium delete" onclick="adminUI.deleteComunidadePost('pergunta', ${p.ID_Pergunta})" title="Eliminar Pergunta">
-              <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
-            </button>
+            <div class="d-flex align-items-center justify-content-end gap-1.5" style="white-space:nowrap;">
+              ${p.ID_Cliente ? `
+                <button class="btn-action-premium ${isPRestricted ? 'success' : 'warning'}" onclick="adminUI.toggleUserRestriction('${p.ID_Cliente}', ${isPRestricted ? 1 : 0})" title="${isPRestricted ? 'Permitir Postagem (Desbloquear)' : 'Privar de Postar (Bloquear)'}">
+                  <i class="fas ${isPRestricted ? 'fa-check' : 'fa-ban'}" style="font-size: 0.8rem;"></i>
+                </button>
+              ` : ''}
+              <button class="btn-action-premium delete" onclick="adminUI.deleteComunidadePost('pergunta', ${p.ID_Pergunta})" title="Eliminar Pergunta">
+                <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+              </button>
+            </div>
           </td>
         </tr>
       `);
@@ -4525,15 +5760,26 @@ class AdminUI {
       // Add Answers rows
       if (p.respostas && p.respostas.length > 0) {
         p.respostas.forEach((r) => {
+          const rAvatar = getValidAvatar(r.AutorPicture, r.AutorNome);
+          const isRRestricted = Boolean(r.AutorRestrito);
+          const rAvatarImg = `<img src="${rAvatar}" class="rounded-circle" style="width:26px;height:26px;object-fit:cover;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${(r.AutorNome || 'U').replace(/'/g, "\\'")}') + '&background=1a4d2e&color=fff';">`;
+          const rAvatarHtml = r.ID_Cliente ? `<a href="profile.html?id=${r.ID_Cliente}" target="_blank" title="Ver Perfil">${rAvatarImg}</a>` : rAvatarImg;
+          const rNameHtml = r.ID_Cliente 
+            ? `<a href="profile.html?id=${r.ID_Cliente}" target="_blank" class="fw-medium small text-dark text-decoration-none d-block text-truncate" style="max-width:120px;" title="Ver Perfil">${r.AutorNome || "Utilizador"}</a>`
+            : `<span class="fw-medium small text-muted d-block text-truncate" style="max-width:120px;">${r.AutorNome || "Utilizador"}</span>`;
+
           rows.push(`
             <tr>
-              <td style="padding-left: 2rem !important;">
+              <td style="padding-left: 1.8rem !important;">
                 <div class="d-flex align-items-center gap-2">
                   <i class="fas fa-reply text-muted fa-rotate-180 small"></i>
-                  <img src="${r.AutorPicture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(r.AutorNome || 'U') + '&background=1a4d2e&color=fff'}" class="rounded-circle" style="width:24px;height:24px;object-fit:cover;">
+                  ${rAvatarHtml}
                   <div>
-                    <span class="fw-medium small text-muted d-block">${r.AutorNome || "Anónimo"}</span>
-                    <span class="badge bg-light text-muted border" style="font-size:0.55rem;">${r.AutorTipo || "cliente"}</span>
+                    ${rNameHtml}
+                    <div class="d-flex align-items-center gap-1 mt-0.5">
+                      ${getRoleBadge(r.AutorTipo)}
+                      ${isRRestricted ? '<span class="badge bg-danger text-white border-0" style="font-size:0.5rem;"><i class="fas fa-ban me-1"></i>Restrito</span>' : ''}
+                    </div>
                   </div>
                 </div>
               </td>
@@ -4553,9 +5799,16 @@ class AdminUI {
                 ${new Date(r.Data_Criacao).toLocaleDateString("pt-PT")}
               </td>
               <td class="text-end">
-                <button class="btn-action-premium delete" onclick="adminUI.deleteComunidadePost('resposta', ${r.ID_Resposta})" title="Eliminar Resposta">
-                  <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
-                </button>
+                <div class="d-flex align-items-center justify-content-end gap-1.5" style="white-space:nowrap;">
+                  ${r.ID_Cliente ? `
+                    <button class="btn-action-premium ${isRRestricted ? 'success' : 'warning'}" onclick="adminUI.toggleUserRestriction('${r.ID_Cliente}', ${isRRestricted ? 1 : 0})" title="${isRRestricted ? 'Permitir Postagem (Desbloquear)' : 'Privar de Postar (Bloquear)'}">
+                      <i class="fas ${isRRestricted ? 'fa-check' : 'fa-ban'}" style="font-size: 0.75rem;"></i>
+                    </button>
+                  ` : ''}
+                  <button class="btn-action-premium delete" onclick="adminUI.deleteComunidadePost('resposta', ${r.ID_Resposta})" title="Eliminar Resposta">
+                    <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           `);
@@ -4719,7 +5972,342 @@ class AdminUI {
       }
     }
   }
+
+  loadMonetization() {
+    this.calculateMonetization();
+  }
+
+  updateCustomRateValue(val) {
+    const badge = document.getElementById("sim-custom-rate-badge");
+    if (badge) badge.innerText = `${val}%`;
+    const titleRate = document.getElementById("val-custom-title-rate");
+    if (titleRate) titleRate.innerText = `${val}%`;
+    this.calculateMonetization();
+  }
+
+  calculateMonetization() {
+    const gmvEl = document.getElementById("sim-gmv-monet");
+    const fixedEl = document.getElementById("sim-fixed-monet");
+    const gatewayEl = document.getElementById("sim-gateway-monet");
+    const customRateEl = document.getElementById("sim-custom-rate");
+
+    if (!gmvEl || !fixedEl || !gatewayEl || !customRateEl) return;
+
+    const gmv = parseFloat(gmvEl.value) || 0;
+    const fixedCosts = parseFloat(fixedEl.value) || 0;
+    const gatewayPct = parseFloat(gatewayEl.value) || 0;
+    const customRate = parseFloat(customRateEl.value) || 0;
+
+    const gatewayCost = gmv * (gatewayPct / 100);
+
+    const netResults = {};
+
+    const calculateRow = (ratePct, rowIdPrefix) => {
+      const revenue = gmv * (ratePct / 100);
+      const grossProfit = revenue - gatewayCost;
+      const netProfit = grossProfit - fixedCosts;
+      netResults[rowIdPrefix] = netProfit;
+
+      const revEl = document.getElementById(`val-${rowIdPrefix}-revenue`);
+      const gateEl = document.getElementById(`val-${rowIdPrefix}-gateway`);
+      const grossEl = document.getElementById(`val-${rowIdPrefix}-gross`);
+      const fixEl = document.getElementById(`val-${rowIdPrefix}-fixed`);
+      const netEl = document.getElementById(`val-${rowIdPrefix}-net`);
+      const statusEl = document.getElementById(`val-${rowIdPrefix}-status`);
+
+      if (revEl) revEl.innerText = `${revenue.toFixed(2)}€`;
+      if (gateEl) gateEl.innerText = `${gatewayCost.toFixed(2)}€`;
+      if (grossEl) grossEl.innerText = `${grossProfit.toFixed(2)}€`;
+      if (fixEl) fixEl.innerText = `${fixedCosts.toFixed(2)}€`;
+      
+      if (netEl) {
+        netEl.innerText = `${netProfit.toFixed(2)}€`;
+        if (netProfit < 0) {
+          netEl.className = "fw-bold text-danger";
+        } else {
+          netEl.className = "fw-bold text-success";
+        }
+      }
+
+      if (statusEl) {
+        if (netProfit < 0) {
+          statusEl.innerHTML = `<span class="badge bg-danger">Prejuízo</span>`;
+        } else {
+          statusEl.innerHTML = `<span class="badge bg-success">Lucro</span>`;
+        }
+      }
+    };
+
+    calculateRow(5, "5");
+    calculateRow(10, "10");
+    calculateRow(20, "20");
+    calculateRow(customRate, "custom");
+
+    this.renderMonetizationScenarioChart(netResults["5"], netResults["10"], netResults["20"], netResults["custom"], customRate);
+  }
+
+  renderMonetizationScenarioChart(net5, net10, net20, netCustom, customRate) {
+    if (typeof Chart === "undefined") return;
+    const scenarioCtx = document.getElementById("monetizationScenarioChart")?.getContext("2d");
+    if (!scenarioCtx) return;
+
+    if (this.monetizationScenarioChart) this.monetizationScenarioChart.destroy();
+    this.monetizationScenarioChart = new Chart(scenarioCtx, {
+      type: "bar",
+      data: {
+        labels: ["Cenário 5%", "Cenário 10% (Recomendado)", "Cenário 20%", `Personalizado (${customRate}%)`],
+        datasets: [{
+          label: "Lucro Líquido Simulado (€)",
+          data: [net5, net10, net20, netCustom],
+          backgroundColor: [
+            net5 < 0 ? "#dc2626" : "#16a34a",
+            net10 < 0 ? "#dc2626" : "#f59e0b",
+            net20 < 0 ? "#dc2626" : "#2563eb",
+            netCustom < 0 ? "#dc2626" : "#10b981"
+          ],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { grid: { color: "rgba(0,0,0,0.05)" } }
+        }
+      }
+    });
+  }
+
+  renderVendasCharts(totalGross, commission, gatewayFees, netPlatform) {
+    if (typeof Chart === "undefined") return;
+
+    // 1. Split Chart (Doughnut)
+    const splitCtx = document.getElementById("vendasSplitChart")?.getContext("2d");
+    if (splitCtx) {
+      if (this.vendasSplitChart) this.vendasSplitChart.destroy();
+      this.vendasSplitChart = new Chart(splitCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Apicultor (90%)", "Lucro Hexomel (8%)", "Taxas Banco/Gateway (2%)"],
+          datasets: [{
+            data: [90, 8, 2],
+            backgroundColor: ["#16a34a", "#2563eb", "#dc2626"],
+            borderWidth: 2,
+            borderColor: "#ffffff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // 2. Breakdown Chart (Bar)
+    const breakdownCtx = document.getElementById("vendasBreakdownChart")?.getContext("2d");
+    if (breakdownCtx) {
+      if (this.vendasBreakdownChart) this.vendasBreakdownChart.destroy();
+      this.vendasBreakdownChart = new Chart(breakdownCtx, {
+        type: "bar",
+        data: {
+          labels: ["Vendas Brutas (GMV)", "Comissão Bruta (10%)", "Custos Gateway (2%)", "Receita Líquida (8%)"],
+          datasets: [{
+            label: "Valores em Euros (€)",
+            data: [totalGross, commission, gatewayFees, netPlatform],
+            backgroundColor: ["#f97316", "#16a34a", "#dc2626", "#2563eb"],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.05)" } }
+          }
+        }
+      });
+    }
+  }
+
+  async loadVendasData() {
+    try {
+      const response = await fetch(`${API_URL}/admin/orders`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      if (!response.ok) throw new Error("Falha ao carregar encomendas");
+      const orders = await response.json();
+
+      // Filter paid/completed or all orders except cancelled
+      const activeOrders = orders.filter(o => o.Status.toLowerCase() !== "cancelado");
+
+      let totalGross = 0;
+      activeOrders.forEach(o => {
+        totalGross += parseFloat(o.Total) || 0;
+      });
+
+      const commission = totalGross * (this.commissionRate / 100);
+      const gatewayFees = totalGross * (this.gatewayRate / 100);
+      const netPlatform = commission - gatewayFees;
+
+      // Update Cards
+      const grossEl = document.getElementById("vendas-total-gross");
+      const commEl = document.getElementById("vendas-platform-commission");
+      const gateEl = document.getElementById("vendas-gateway-fees");
+      const netEl = document.getElementById("vendas-platform-net");
+
+      if (grossEl) grossEl.innerText = `${totalGross.toFixed(2)}€`;
+      if (commEl) commEl.innerText = `${commission.toFixed(2)}€`;
+      if (gateEl) gateEl.innerText = `${gatewayFees.toFixed(2)}€`;
+      if (netEl) netEl.innerText = `${netPlatform.toFixed(2)}€`;
+
+      // Render Visual Charts
+      this.renderVendasCharts(totalGross, commission, gatewayFees, netPlatform);
+
+      // Update Table
+      const tableBody = document.getElementById("vendas-table-body");
+      if (tableBody) {
+        if (activeOrders.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Nenhuma venda registada.</td></tr>`;
+        } else {
+          tableBody.innerHTML = activeOrders.map(o => {
+            const valGross = parseFloat(o.Total) || 0;
+            const valComm = valGross * (this.commissionRate / 100);
+            const valGate = valGross * (this.gatewayRate / 100);
+            const valNet = valComm - valGate;
+            const valSeller = valGross - valComm;
+            const date = new Date(o.Data_Encomenda).toLocaleDateString();
+
+            return `
+              <tr>
+                <td class="fw-bold text-muted small">#${o.ID_Encomenda}</td>
+                <td class="small text-muted">${date}</td>
+                <td class="fw-bold text-dark">${valGross.toFixed(2)}€</td>
+                <td class="text-success fw-medium">${valComm.toFixed(2)}€</td>
+                <td class="text-danger fw-medium">${valGate.toFixed(2)}€</td>
+                <td class="text-primary fw-bold">${valNet.toFixed(2)}€</td>
+                <td class="fw-medium text-dark">${valSeller.toFixed(2)}€</td>
+              </tr>
+            `;
+          }).join("");
+        }
+      }
+
+      // Initial run of the simulator with database values (or default)
+      const simGmvInput = document.getElementById("sim-gmv");
+      if (simGmvInput && (parseFloat(simGmvInput.value) === 10000 || simGmvInput.value === "")) {
+        simGmvInput.value = Math.max(Math.round(totalGross), 1000);
+      }
+      this.runSimulator();
+
+    } catch (error) {
+      console.error("Error loading sales/financial data:", error);
+      Swal.fire("Erro", "Não foi possível carregar os dados financeiros.", "error");
+    }
+  }
+
+  runSimulator() {
+    const simGmvInput = document.getElementById("sim-gmv");
+    const simFixedInput = document.getElementById("sim-fixed-costs");
+    
+    if (!simGmvInput || !simFixedInput) return;
+
+    const gmv = parseFloat(simGmvInput.value) || 0;
+    const fixedCosts = parseFloat(simFixedInput.value) || 0;
+
+    const commission = gmv * (this.commissionRate / 100);
+    const gateway = gmv * (this.gatewayRate / 100);
+    const netMargin = commission - gateway;
+    const netProfit = netMargin - fixedCosts;
+
+    // Update Simulator display values
+    const commValEl = document.getElementById("sim-commission-val");
+    const gateValEl = document.getElementById("sim-gateway-val");
+    const netValEl = document.getElementById("sim-net-val");
+    const profitTitleEl = document.getElementById("sim-profit-title");
+    const profitTextEl = document.getElementById("sim-profit-text");
+    const resultBoxEl = document.getElementById("sim-result-box");
+
+    if (commValEl) commValEl.innerText = `€${commission.toFixed(2)}`;
+    if (gateValEl) gateValEl.innerText = `€${gateway.toFixed(2)}`;
+    if (netValEl) netValEl.innerText = `€${netMargin.toFixed(2)}`;
+
+    if (profitTitleEl) {
+      const sign = netProfit >= 0 ? "+" : "";
+      profitTitleEl.innerText = `${sign}€${netProfit.toFixed(2)}`;
+    }
+
+    if (profitTextEl && resultBoxEl) {
+      if (netProfit >= 0) {
+        profitTextEl.innerText = "(Acima do Ponto de Equilíbrio)";
+        profitTextEl.style.color = "#16a34a";
+        resultBoxEl.style.background = "#f0fdf4";
+        resultBoxEl.style.borderColor = "#bbf7d0";
+        if (profitTitleEl) profitTitleEl.style.color = "#16a34a";
+      } else {
+        profitTextEl.innerText = "(Abaixo do Ponto de Equilíbrio)";
+        profitTextEl.style.color = "#dc2626";
+        resultBoxEl.style.background = "#fef2f2";
+        resultBoxEl.style.borderColor = "#fecaca";
+        if (profitTitleEl) profitTitleEl.style.color = "#dc2626";
+      }
+    }
+  }
 }
+
+window.uploadCMSImage = async (idContent, fileInput) => {
+  if (!fileInput.files || !fileInput.files[0]) return;
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const btnLabel = fileInput.nextElementSibling;
+  const originalHtml = btnLabel.innerHTML;
+  btnLabel.innerHTML = `<i class="fas fa-spinner fa-spin"></i> A carregar...`;
+  btnLabel.style.pointerEvents = "none";
+
+  try {
+    const response = await fetch(`${API_URL}/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    if (data.path) {
+      const inputVal = document.getElementById(`cms-value-${idContent}`);
+      const imgPreview = document.getElementById(`cms-img-preview-${idContent}`);
+      if (inputVal) inputVal.value = data.path;
+      if (imgPreview) imgPreview.src = data.path;
+
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          icon: "success",
+          title: "Imagem Carregada!",
+          text: "Clique em 'Guardar Alterações' para aplicar a alteração no site.",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+        });
+      }
+    } else {
+      alert(data.error || "Erro ao carregar imagem.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Erro de ligação ao carregar a imagem.");
+  } finally {
+    btnLabel.innerHTML = originalHtml;
+    btnLabel.style.pointerEvents = "auto";
+  }
+};
 
 const adminUI = new AdminUI();
 window.adminUI = adminUI;

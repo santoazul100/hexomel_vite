@@ -19,12 +19,12 @@ const homePage = {
       // Filter products that are marked as featured
       let products = data.filter((p) => Number(p.Em_Destaque) === 1);
 
-      // Fallback: If no products are marked as featured, show the first 8 products
       if (products.length === 0) {
-        products = data.slice(0, 8);
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-5" style="width: 100%;">Nenhum produto em destaque de momento.</div>';
+        const dotsContainer = document.getElementById("featured-carousel-dots");
+        if (dotsContainer) dotsContainer.innerHTML = '';
+        return;
       }
-
-      if (products.length === 0) return; // Keep static placeholders if no products exist at all
 
       grid.innerHTML = products
         .map((p) => {
@@ -53,16 +53,16 @@ const homePage = {
             : `<p class="smaller mb-0 text-muted" style="font-size: 0.78rem;"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`;
 
           return `
-            <div class="product-card-premium d-flex flex-column" style="flex: 0 0 300px; scroll-snap-align: start; min-height: 440px;">
+            <div class="product-card-premium d-flex flex-column" style="flex: 0 0 280px; scroll-snap-align: start; min-height: 350px;">
               <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${p.Slug || ""}'">
                 <div class="product-tags-container">
                   ${tagsHtml}
                 </div>
                 <img src="${p.Imagem || "/images/default-product.png"}" alt="${p.Nome}" onerror="this.src='/images/default-product.png'">
               </div>
-              <div class="p-4 d-flex flex-column flex-grow-1">
-                <div onclick="window.location.href='/produto/${p.Slug || ""}'" style="cursor: pointer" class="mb-3">
-                  <h5 class="fw-bold mb-1" style="min-height: 2.5rem;">${p.Nome}</h5>
+              <div class="p-3 d-flex flex-column flex-grow-1">
+                <div onclick="window.location.href='/produto/${p.Slug || ""}'" style="cursor: pointer" class="mb-2">
+                  <h5 class="fw-bold mb-1" style="min-height: 2.2rem; font-size: 1.1rem;">${p.Nome}</h5>
                   <div class="star-rating mb-1" style="font-size: 0.85rem;">
                     ${starsHtml} 
                     <span class="text-muted small">(${reviewCount})</span>
@@ -109,13 +109,46 @@ const homePage = {
       });
 
       // Render dots
-      this.renderCarouselDots(products.length);
+      this.setupCarouselDots();
     } catch (error) {
       console.warn("Home featured products: using static HTML fallback.", error);
     }
   },
 
-  renderCarouselDots(count) {
+  setupCarouselDots() {
+    const carousel = document.getElementById("featured-products");
+    if (!carousel) return;
+    
+    setTimeout(() => {
+      const maxScroll = carousel.scrollWidth - carousel.clientWidth;
+      if (maxScroll <= 0) {
+        this.renderCarouselDots(0, []);
+        return;
+      }
+      
+      const firstCard = carousel.firstElementChild;
+      const cardWidth = firstCard ? firstCard.offsetWidth : 280;
+      const gap = 24; // 1.5rem
+      const step = cardWidth + gap;
+      
+      const snapPoints = [];
+      for (let s = 0; s < maxScroll; s += step) {
+        snapPoints.push(s);
+      }
+      snapPoints.push(maxScroll);
+      
+      const uniqueSnaps = snapPoints.filter((val, i, arr) => {
+        if (i === 0) return true;
+        return val - arr[i-1] > 10; 
+      });
+
+      this.carouselSnapPoints = uniqueSnaps;
+      this.renderCarouselDots(uniqueSnaps.length, uniqueSnaps);
+      carousel.dispatchEvent(new Event("scroll")); 
+    }, 50);
+  },
+
+  renderCarouselDots(count, snapPoints = []) {
     const dotsContainer = document.getElementById("featured-carousel-dots");
     if (!dotsContainer) return;
 
@@ -129,12 +162,23 @@ const homePage = {
       dotsHtml += `
         <button class="carousel-dot ${i === 0 ? 'active' : ''}" 
                 data-index="${i}" 
-                aria-label="Slide ${i + 1}"
-                onclick="document.getElementById('featured-products').scrollTo({ left: ${i * 324}, behavior: 'smooth' })">
+                aria-label="Slide ${i + 1}">
         </button>
       `;
     }
     dotsContainer.innerHTML = dotsHtml;
+
+    // Adicionar eventos de clique aos pontos
+    const dots = dotsContainer.querySelectorAll(".carousel-dot");
+    const carousel = document.getElementById("featured-products");
+    
+    dots.forEach((dot, i) => {
+      dot.addEventListener("click", () => {
+        if (!carousel) return;
+        const targetScroll = snapPoints.length > i ? snapPoints[i] : 0;
+        carousel.scrollTo({ left: targetScroll, behavior: "smooth" });
+      });
+    });
   },
 
   generateStars(rating) {
@@ -159,24 +203,46 @@ const homePage = {
     if (!prevBtn || !nextBtn || !carousel) return;
 
     prevBtn.addEventListener("click", () => {
-      carousel.scrollBy({ left: -324, behavior: "smooth" });
+      carousel.scrollBy({ left: -304, behavior: "smooth" });
     });
 
     nextBtn.addEventListener("click", () => {
-      carousel.scrollBy({ left: 324, behavior: "smooth" });
+      carousel.scrollBy({ left: 304, behavior: "smooth" });
     });
 
     // Synchronize dots on scroll
     carousel.addEventListener("scroll", () => {
-      const scrollIndex = Math.round(carousel.scrollLeft / 324);
       const dots = document.querySelectorAll("#featured-carousel-dots .carousel-dot");
+      if (dots.length <= 1) return;
+      
+      const currentScroll = carousel.scrollLeft;
+      let closestIndex = 0;
+      let minDiff = Infinity;
+      
+      const snapPoints = this.carouselSnapPoints || [];
+      snapPoints.forEach((snap, idx) => {
+        const diff = Math.abs(currentScroll - snap);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIndex = idx;
+        }
+      });
+      
       dots.forEach((dot, idx) => {
-        if (idx === scrollIndex) {
+        if (idx === closestIndex) {
           dot.classList.add("active");
         } else {
           dot.classList.remove("active");
         }
       });
+    });
+
+    // Reajustar ao redimensionar a janela
+    window.addEventListener("resize", () => {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => {
+        this.setupCarouselDots();
+      }, 250);
     });
   },
 };

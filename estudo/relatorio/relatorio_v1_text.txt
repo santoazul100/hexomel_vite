@@ -1,0 +1,1307 @@
+﻿
+
+
+Curso com Plano Próprio
+Informáticas e Tecnologias Multimédia 
+
+Prova de aptidão profissional
+12.º ano de escolaridade
+
+Relatório
+
+Hexomel
+
+
+Aluno
+Rodrigo Filipe Costa Silva 
+
+Trabalho realizado sob a orientação do professor
+Maria José Viera Soares da Costa
+
+
+
+
+
+
+
+Vila Nova de Gaia, julho de 0000
+
+Dedicatória
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
+Maecenas porttitor congue massa.
+
+— Apagar —
+Pode ser um texto, ou apenas uma simples frase que mencione um ente ou uma entidade.
+Não é obrigatório inserir.
+
+
+Agradecimentos
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem.
+Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis.
+
+— Apagar —
+Destina-se a referir pessoas ou entidades cuja colaboração tenha sido pertinente para a realização do trabalho.
+Não é obrigatório inserir.
+
+
+Resumo
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem.
+Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis.
+
+Palavras-chave: …
+
+— Apagar —
+Apresenta de um modo sucinto, claro e objetivo, as questões ou as informações mais importantes tratadas no trabalho como o tema, os objetivos que se pretendem alcançar, os métodos usados e os resultados obtidos.
+Recomendações:
+Utilizar 200 palavras no máximo.
+Escrever três a cinco palavras-chave.
+Não usar abreviaturas.
+Não usar tabelas ou figuras.
+Não usar referências bibliográficas.
+Não fazer referência a tabelas ou figuras no texto.
+
+Exemplo de frases tipo a usar no resumo:
+«O presente estudo tem como objetivo principal caracterizar…»
+«Os dados foram recolhidos através de um questionário de resposta fechada com um total de n questões para avaliação de aspetos relativos a: …» [incluir secções do questionário]
+«No contexto do trabalho a que se refere este estudo foi analisada a questão…»
+«Realizou-se uma análise descritiva dos resultados, tendo-se concluído que…»]
+
+
+Abstract
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem.
+Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis.
+
+Keywords: …
+
+
+Índice geral
+Agradecimentosv
+Resumovii
+Abstractix
+Lista de abreviaturas15
+1.Introdução17
+2. Capítulo do Colégio de Gaia18
+2.1. História do colégio18
+2.2. Níveis de ensino18
+2.3. Ensino Secundário19
+2.4 Curso de Informática e Tecnologias Multimédia20
+2.4.1. Formação Geral20
+2.4.2. Formação Científica20
+2.4.3. Formação Técnica20
+2.5. FCT (Formação em Contexto de Trabalho)22
+2.6. Prosseguimento de Estudos23
+2.7. Saídas profissionais23
+3.  Prova de Aptidão Profissional23
+3.1. Evolução do Projeto24
+3.1.1. Contextualização: O Ponto de Partida24
+3.1.2. A Formalização Original da PAP24
+3.1.3. A Versão Inicial: O que Foi Construído Primeiro25
+3.1.4. A Decisão de Reconstruir o Projeto26
+3.1.5 O Que Mudou: Comparação Detalhada27
+3.1.6. O Que a Hexomel É Agora27
+3.1.7. A Hexomel em Números29
+3.1.8. Síntese29
+3.2 Título do Projeto30
+3.3 Tema do Projeto30
+3.4 Motivação para o Projeto31
+3.5. Contextualização no Mercado (Análise SWOT/FOFA)32
+3.4.1 Pontos Fortes (Strengths)32
+3.4.2 Pontos Fracos (Weaknesses)33
+3.4.3 Oportunidades (Opportunities)33
+3.4.4 Ameaças (Threats)34
+3.4.5 Comparação da Hexomel com Soluções Estabelecidas34
+3.4.6 Conclusão do Estudo de Mercado35
+3.6. Ferramentas40
+3.6.1. Visual Studio Code40
+3.6.2. HTML540
+3.6.3. JavaScript ES6+40
+3.6.4. Vite41
+3.6.5. Node.js41
+3.6.6.  MySQL41
+3.6.7.  npm41
+3.7.1. SweetAlert244
+3.7.2. Three.js44
+3.7.3. Chart.js44
+3.7.4. Google Identity Services45
+3.7.5. Express.js45
+3.7.6. Nodemailer45
+3.7.7. Stripe46
+4. Desenvolvimento do Projeto50
+4.1 Calendarização inicial50
+4.2 Pesquisa51
+4.2.1 Pesquisa sobre e-commerce52
+2.Capítulo…53
+2.1.Subcapítulo…53
+Conclusão55
+Referências bibliográficas56
+Glossário57
+Apêndices/Anexos59
+
+
+— Apagar —
+Refere-se à numeração das divisões do trabalho pela ordem em que são apresentadas, com a respetiva indicação da página em que começa essa parte do trabalho.
+
+Índice de Tabelas
+Tabela 1. As várias gerações de evolução da tecnologia16
+
+
+Índice de Gráficos
+
+
+Índice de Figuras
+Figura 1.  Plano de Estudos do curso20
+Figura 1. Exemplo de um eletrocardiógrafo25
+
+
+
+Lista de abreviaturas
+— Apagar —
+Esta secção consiste na relação alfabética das abreviaturas, das siglas e dos símbolos utilizados no texto, seguidos das palavras ou das expressões correspondentes, expressas por extenso. Só faz sentido efetuar listas de siglas e símbolos quando o número de cada um destes elementos for significativo em todo o trabalho.
+A sigla é sempre descodificada a primeira vez que surge, colocando-se entre parênteses ou a sigla ou a expressão por extenso. A sigla deve ser evitada nos títulos e não é usada no resumo.
+Exemplos:
+AGDAnimação e Gestão Desportiva
+AMAdministração e Marketing
+AQBAnálises Químico-Biológicas
+CGEContabilidade e Gestão Empresarial
+CMComunicação Multimédia
+DP-AEDesenhador de Projetos – Arquitetura e Engenharia
+EIAEletrónica Industrial e Automação
+ETCEletrónica, Telecomunicações e Computadores
+FCTFormação em contexto de trabalho
+ITMInformática e Tecnologias Multimédia
+MDIMecânica e Design Industrial
+PAAPlano anual de atividades
+PAPProva de aptidão profissional
+PEProjeto educativo
+RIRegulamento interno
+TdSTecnologias da Saúde
+TSATecnologias e Segurança Alimentar
+TSITecnologias e Sistemas de Informação
+
+
+1.Introdução
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem.
+Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis.
+
+— Apagar —
+Tem por finalidade apresentar o tema, o enquadramento, a delimitação e a justificação da temática, as abordagens escolhidas, os objetivos, a metodologia utilizada e a estrutura do trabalho.
+Apresentação das razões para se tratar este tema e não outro.
+Enquadramento da problemática.
+Geralmente esta parte é a última a ser redigida.
+
+Exemplos de frases tipo a usar na introdução:
+«Neste trabalho, pretende dar-se conta de uma investigação/estudo que se enquadra na prova de aptidão profissional, do curso de …. Este trabalho, centrado no campo de pesquisa …, procura contribuir para uma compreensão mais aprofundada sobre os processos de …»
+«Através da realização do presente trabalho pretende-se:
+caracterizar …;
+identificar as principais razões para …;
+comparar as expetativas …;
+apontar os fatores …;
+recolher sugestões sobre …;
+identificar …»
+«Na primeira parte do documento enunciaremos os principais conceitos inerentes ao estudo e as principais referências na área. Na segunda parte do trabalho explicitaremos, de modo sucinto, a metodologia adotada, bem como os seus principais resultados. Na terceira parte passaremos à análise e à discussão dos dados obtidos. Por fim, serão apresentadas as conclusões do estudo, assim como as principais referências bibliográficas».
+
+
+
+2. Capítulo do Colégio de Gaia
+2.1. História do colégio
+Em 1933, na “Quinta do Trancoso”, nascia o Colégio Externato de Gaia por iniciativa do então Bispo do Porto, D. António Meireles. Localizada na freguesia de Mafamude, Vila Nova de Gaia, a referida Quinta foi doada à Diocese do Porto por D. Maria Margarida Guimarães e Silva.
+Em 1934 foi concedido alvará de funcionamento ao Colégio Externato de Gaia – hoje Colégio de Gaia – sendo nomeado para diretor o Sr. Pe. Nédio de Sousa.
+Nas décadas de 1960 e 1970 assistiu-se a uma significativa expansão das instalações, transformando o Colégio de Gaia no maior Colégio do país ao nível de instalações escolares e desportivas e de espaços exteriores, situação esta que se mantém até aos dias de hoje.
+Atualmente e sob a direção do Sr. Pe. António Manuel Barbosa Ferreira, o Colégio de Gaia possui um Projeto Educativo próprio, de forma a servir uma população escolar com cerca de 1500 alunos que frequenta níveis de ensino desde os 3 anos até ao 12º ano de escolaridade.
+Tendo como entidade titular a Diocese do Porto e sendo uma instituição de ensino católica, o Colégio de Gaia assegura uma educação sólida e assente em valores que fomentam um diálogo persistente e continuado com os pais e encarregados de educação centrando as nossas preocupações nos alunos e na sua formação e educação constante.~
+
+2.2. Níveis de ensino
+O Colégio de Gaia oferece ensino em todos os níveis, desde o pré-escolar até ao 12º ano, com uma abordagem educativa que visa o desenvolvimento integral dos alunos.
+No pré-escolar, destinado a crianças a partir dos 3 anos, o foco é o desenvolvimento emocional, social e intelectual. A metodologia utilizada é lúdica e interativa, permitindo que as crianças desenvolvam competências essenciais para o seu crescimento pessoal e académico. Este ciclo é uma base sólida para o futuro dos alunos, onde se prioriza o aprender brincando e a interação com os colegas.
+O Ensino Básico é composto por três ciclos e prepara os alunos para o Ensino Secundário. Durante este período, os alunos adquirem conhecimentos fundamentais em áreas como Línguas, Ciências, Matemática, História, entre outras, enquanto desenvolvem competências cognitivas e sociais. Este ciclo serve como um passo importante para os desafios e exigências do Ensino Secundário.
+No Ensino Secundário, os alunos do Colégio de Gaia podem escolher entre diversas áreas de formação, de acordo com os planos curriculares estabelecidos pela Portaria n.º 272/2019, de 27 de agosto. O colégio destaca-se por oferecer cursos com dupla certificação, o que significa que os alunos estão habilitados tanto para seguir os seus estudos no ensino superior quanto para ingressar diretamente no mercado de trabalho, já com uma qualificação profissional de nível 4, conforme o Quadro Nacional de Qualificações (QNQ). Este modelo proporciona aos alunos uma flexibilidade muito importante, pois garante que, além de se prepararem academicamente, também adquirem competências práticas que lhes abrem portas no mundo profissional.
+2.3. Ensino Secundário
+Os cursos oferecidos no Ensino Secundário com dupla certificação são: 
+Desenho de Projetos - Arquitetura e Engenharia (DPAE)
+Formação em desenho técnico e projeto, prepara os alunos para trabalhar em arquitetura e engenharia.
+
+Animação e Gestão Desportiva (AGD)
+Curso de atividades desportivas.
+
+Eletrónica Industrial e Automação (EIA)
+Desenvolve competências em eletrónica e sistemas de automação.
+
+Eletrónica, Telecomunicações e Computadores (ETC)
+Prepara os alunos nas tecnologias de eletrónica, telecomunicações e computação
+
+Mecânica e Design Industrial (MDI)
+Ensina o desenvolvimento de projetos mecânicos e industriais, foca no design, na fabricação e na manutenção de produtos e sistemas mecânicos.
+
+Administração e Marketing (AM)
+Formação nas áreas de gestão empresarial e marketing
+
+Contabilidade e Gestão Empresarial (CGE)
+Forma os alunos em contabilidade e gestão financeira
+
+Comunicação Multimédia (CM)
+Prepara os alunos na criação de conteúdos multimédia.
+
+Informática e Tecnologias Multimédia (ITM)
+Forma os alunos em programação e tecnologias digitais.
+
+Tecnologias e Sistemas de Informação (TSI)
+Prepara os alunos no desenvolvimento e gestão de sistemas de informação.
+
+Análises Químico-Biológicas (AQB)
+Forma os alunos em análises laboratoriais químico-biológicas.
+
+Tecnologias da Saúde (TDS)
+Prepara os alunos em tecnologias de apoio à saúde.
+
+Tecnologias e Segurança Alimentar (TSA)
+Forma os alunos em controlo e segurança alimentar.
+2.4 Curso de Informática e Tecnologias Multimédia
+O curso de Informática de Gestão e Multimédia (ITM) do Colégio de Gaia é um curso que prepara os alunos para o mercado de trabalho e para o prosseguimento de estudos no ensino superior. O curso foca-se no desenvolvimento de competências técnicas em informática e multimédia, proporcionando uma formação equilibrada entre teoria e prática.
+O plano curricular do curso de ITM está dividido em três componentes principais: Formação Geral, Formação Científica e Formação Técnica. Este modelo permite aos alunos adquirirem conhecimentos fundamentais em diversas áreas, enquanto desenvolvem competências específicas exigidas pelo setor da informática e multimédia.
+
+2.4.1. Formação Geral
+A Formação Geral inclui disciplinas que visam o desenvolvimento pessoal e académico dos alunos, como:
+Português
+Inglês
+Educação Física
+Filosofia
+2.4.2. Formação Científica
+Na Formação Científica, os alunos têm disciplinas fundamentais para compreender os conceitos matemáticos e lógicos, tais como:
+Matemática
+Física e Química
+2.4.3. Formação Técnica
+A Formação Técnica inclui as disciplinas que capacitam os alunos para o mercado de trabalho. Algumas das principais disciplinas são:
+Moral, Ética e Deontologia- Disciplina que desenvolve nos alunos valores éticos e profissionais. 
+
+Aplicações informáticas- Ensina a utilizar ferramentas digitais de produtividade, comunicação e colaboração.
+Ferramentas utilizadas:
+Microsoft Word;
+Microsoft Power Point;
+Microsoft Excel;
+Photoshop;
+
+
+Fundamentos e Arquitetura de Computadores- Apresenta o funcionamento dos componentes de hardware e software, bem como a estrutura e organização de um computador e dos sistemas de rede.
+Ferramentas utilizadas:
+Simuladores de hardware ou circuitos;
+Microsoft Power Point;
+
+Técnicas de Programação- Introduz a lógica de programação, algoritmos e linguagens de código para desenvolver soluções informáticas.
+Ferramentas utilizadas:
+Visual Studio;
+Exercícios práticos e projetos simples para fixar lógica, estruturas condicionais e ciclos.
+Linguagens de programação, Visual Basic e C#;              
+
+Implementação e Exploração de Base de Dados- Capacita os alunos a criar, gerir e manipular bases de dados utilizando linguagens e ferramentas específicas.
+Ferramentas utilizadas:
+Linguagem SQL para consultas, criação de tabelas, índices, etc.;
+Sistemas de Gestão de Base de Dados (SGBD), Acess;
+
+Programação Internet- Foca no desenvolvimento de sites e aplicações web, explorando linguagens e tecnologias para o front-end e back-end.
+Ferramentas utilizadas:
+Visual Studio code;
+Linguagens de programação para a criação de sites, Html, Css, Java Script, PHP, etc;              
+
+Tecnologias e Desenvolvimento Multimédia- Trabalha a criação e edição de conteúdos multimédia, combinando imagem, som, vídeo e animação digital.
+Ferramentas utilizadas:
+Microsoft Project;
+Unity;
+Redes e diagramas de Pert;
+
+
+Projeto tecnológico- Integra os conhecimentos adquiridos no curso através do desenvolvimento de um projeto prático voltado para o mercado de trabalho.
+Ferramentas utilizadas:
+Wix e Wordpress para criação de sites;
+Europass para criação de currículo;
+Analisar e preparar a PAP;
+
+Figura 1. Primeira versão/modelo inicial da base de dados da Hexomel
+
+2.5. FCT (Formação em Contexto de Trabalho)
+A Formação em Contexto de Trabalho (FCT) é uma componente essencial do curso, onde os alunos realizam estágios em empresas da área de informática e multimédia. Esta experiência permite consolidar os conhecimentos adquiridos, desenvolver competências profissionais e criar contactos no mercado de trabalho.  
+No 11º os alunos têm de completar um total de 105 Horas de estágio, normalmente esta fase serve de adaptação.
+No 12º os alunos têm de completar um total de 295 Horas de estágio.
+A FCT é, portanto, um momento determinante no percurso formativo, pois:
+Permite a transição entre o ambiente escolar e o mundo profissional;
+Desenvolve competências de autonomia, responsabilidade e trabalho em equipa;
+Proporciona experiências práticas que reforçam a empregabilidade dos alunos;
+Valoriza o currículo académico, preparando os estudantes tanto para o prosseguimento de estudos no ensino superior como para a entrada imediata no mercado de trabalho.
+2.6. Prosseguimento de Estudos
+
+Depois de terminares o curso de Informática e Tecnologias Multimédia do ColGaia, tens várias opções para continuar a tua formação. Podes seguir para o ensino superior, escolhendo áreas ligadas à informática, ao design ou à comunicação digital.
+Entre as licenciaturas mais comuns estão Engenharia Informática, Ciências da Computação, Design Multimédia, Design Gráfico, Produção Audiovisual, Jogos Digitais ou Cibersegurança.
+
+Se preferires um percurso mais curto e prático, podes optar por um Curso Técnico Superior Profissional (TeSP), que dura cerca de dois anos e inclui estágio, em áreas como Desenvolvimento Web e Multimédia, Design Digital, Programação de Sistemas de Informação ou Gestão de Redes.
+Também podes apostar em formações técnicas específicas ou certificações profissionais (como as da Cisco, Adobe ou Microsoft), que valorizam muito o teu currículo.
+
+Por fim, há sempre a possibilidade de seguires um caminho mais empreendedor, criando o teu próprio projeto digital ou trabalhando como freelancer em design, programação ou multimédia.
+
+2.7. Saídas profissionais
+Os alunos podem exercer atividades em empresas especializadas na conceção, desenvolvimento e instalação de software, aplicações para dispositivos móveis e sistemas operativos; departamentos de informática; empresas de comercialização e/ou manutenção de programas e equipamentos informáticos; empresas de instalação, reparação e manutenção de redes informáticas; empresas de desenvolvimento de produtos multimédia, outras empresas ou entidades do setor público ou privado.
+
+3.  Prova de Aptidão Profissional
+A Prova de Aptidão Profissional (ou PAP) consiste na execução e apresentação de um projeto final prático no qual o aluno pretende demonstrar as competências e conhecimentos que desenvolveu e adquiriu ao longo da formação proposta pelo curso que frequentou, incidindo sobre um tema específico. 
+Segundo o preceituado na Portaria 74A/2013 de 15 de fevereiro (artigo 17o, no3), a concretização do projeto compreende quatro momentos essenciais: conceção, desenvolvimento, autoavaliação e elaboração do relatório final.
+
+
+
+3.1. Evolução do Projeto
+3.1.1. Contextualização: O Ponto de Partida
+O projeto Hexomel, tal como se apresenta hoje, não nasceu como uma plataforma de e-commerce completa. A sua origem remonta a uma necessidade real e concreta: ajudar o meu pai a vender mel online.
+A família sempre esteve ligada à produção artesanal de mel, mas a comercialização dependia quase exclusivamente de vendas porta a porta e de contactos pessoais. Este modelo, embora funcional numa escala local, apresentava limitações evidentes: alcance geográfico reduzido, dependência do contacto presencial, ausência de visibilidade digital da marca e impossibilidade de crescimento escalável.
+Foi neste contexto que surgiu a ideia inicial do projeto — criar um website simples que permitisse apresentar os produtos da família e facilitar as encomendas. Esta ideia foi formalizada no documento de Formalização da PAP, entregue no início do ano letivo.
+3.1.2. A Formalização Original da PAP
+O documento de formalização da Prova de Aptidão Profissional, submetido antes do início do desenvolvimento, definia o projeto nos seguintes termos:
+Título do Projeto: Hexomel
+
+Objetivos: Desenvolver um website de vendas de mel, produzido pela família, com gestão fácil de produtos, pagamentos online e exposição da marca.
+
+Descrição: O projeto consiste na criação de um site para ajudar o meu pai a vender mel online. Atualmente, as vendas são feitas principalmente de porta em porta, o que limita o número de clientes e a visibilidade da marca. Com o novo site, queremos facilitar as encomendas, chegar a mais pessoas e expandir a marca do nosso mel.
+
+As ferramentas previstas na formalização original eram:
+• HTML — para a estrutura das páginas web.
+• JavaScript — para a interatividade e comportamento dinâmico.
+• PHP — para o backend e comunicação com a base de dados.
+
+Esta formalização refletia um projeto modesto e adequado ao contexto inicial: um website informativo com algumas funcionalidades de encomenda, pensado especificamente para a empresa familiar do meu pai. Não contemplava autenticação de utilizadores, perfis diferenciados, pagamentos integrados com gateway profissional, comunidade, dashboards, analytics nem qualquer componente multimédia avançada.
+
+
+
+
+
+
+
+
+3.1.3. A Versão Inicial: O que Foi Construído Primeiro
+Com base na formalização, a primeira versão do projeto foi desenvolvida como uma aplicação web simples, direcionada exclusivamente à empresa do meu pai. As suas características eram:
+• Páginas estáticas: apresentação dos produtos com imagens, nomes e preços fixos, sem carregamento dinâmico a partir de base de dados.
+• Página informativa: secção "Sobre" com breve descrição da empresa e da atividade apícola da família.
+• Formulário de contacto: formulário básico sem backend funcional — não enviava emails nem guardava mensagens.
+• Sem autenticação: qualquer pessoa via os mesmos conteúdos, sem login, registo ou diferenciação de perfis.
+• Sem carrinho de compras: não existia mecanismo para adicionar produtos a um carrinho, calcular totais ou finalizar compras.
+• Sem pagamentos: não existia integração com qualquer gateway de pagamento.
+• Base de dados rudimentar: apenas 5 tabelas (cliente, produto, encomenda, categoria, workshop) sem relações complexas nem integridade referencial completa.
+• Design funcional, mas básico: layout simples sem efeitos visuais avançados, animações, glassmorphism ou skeleton loaders.
+• Stack tecnológico limitado: HTML, CSS, JavaScript e PHP, conforme previsto na formalização.
+
+Esta versão cumpria o objetivo original de apresentar os produtos da família, mas não ia além disso. Funcionava mais como uma montra digital do que como uma plataforma de comércio eletrónico.
+
+3.1.4. A Decisão de Reconstruir o Projeto
+Após completar a versão inicial e analisar o resultado com espírito crítico, tornou-se evidente que o projeto, tal como estava, apresentava limitações significativas enquanto Prova de Aptidão Profissional do curso de Informática e Tecnologias de Multimédia:
+3.1.4.1. Limitações Identificadas
+• Complexidade técnica insuficiente: o uso de PHP com páginas estáticas não permitia demonstrar competências em áreas como autenticação avançada, APIs REST, integração de serviços externos, segurança multi-camada ou visualização 3D — áreas fundamentais do curso.
+• Funcionalidades demasiado básicas: a ausência de carrinho persistente, checkout com pagamento real, sistema de perfis, comunidade interativa e painel administrativo tornava a aplicação inadequada para um projeto final de curso.
+• Design sem ambição: o aspeto visual da versão inicial não explorava as competências de design multimédia e UX adquiridas ao longo de três anos de formação.
+• Stack desatualizado: a combinação HTML/CSS/JS/PHP, embora válida, não refletia as tendências atuais do mercado de desenvolvimento web, onde Node.js, APIs REST e frontends modulares são o padrão.
+• Âmbito demasiado estreito: um site feito exclusivamente para uma empresa familiar limitava o potencial de demonstração técnica e a aplicabilidade das competências aprendidas.
+
+3.1.4.2. A Decisão
+Face a estas limitações, tomei uma decisão estruturante para o projeto: reconstruir a Hexomel de raiz, transformando-a de um website simples para uma empresa familiar numa plataforma completa de e-commerce com múltiplas dimensões.
+Esta decisão implicou:
+• Mudança de stack tecnológico: de PHP para Node.js/Express.js no backend, mantendo JavaScript como linguagem unificadora de todo o projeto.
+• Mudança de base de dados: de um esquema rudimentar para MySQL 8.0 com InnoDB, integridade referencial completa, foreign keys com ON DELETE CASCADE e suporte a JSON nativo.
+• Mudança de ambição: de um website informativo para uma plataforma full-stack com autenticação, pagamentos, comunidade, analytics, visualização 3D, internacionalização e painel administrativo.
+• Mudança de público-alvo: de uma ferramenta exclusiva para o meu pai para uma plataforma aberta a múltiplos apicultores e consumidores.
+
+O tema e o nome mantiveram-se — a Hexomel continua a ser sobre mel e apicultura — mas o projeto deixou de ser uma página para uma empresa e passou a ser uma plataforma de e-commerce profissional.
+
+3.1.6. O Que a Hexomel É Agora
+A Hexomel, na sua versão final, é uma plataforma de comércio eletrónico premium dedicada ao mel português artesanal. Trata-se de uma aplicação web full-stack, construída de raiz sem recurso a plataformas pré-fabricadas como Shopify, WooCommerce ou WordPress, o que demonstra domínio completo sobre cada camada da solução.
+
+
+
+
+3.1.6.1. Arquitetura
+A plataforma segue uma Arquitetura de Três Camadas:
+• Camada de Apresentação (Frontend): HTML5 semântico, CSS3 com design system centralizado (variáveis, Grid, Flexbox, glassmorphism), JavaScript ES6+ modular compilado por Vite, animações procedurais, skeleton loaders e View Transitions API para transições fluidas entre páginas.
+• Camada de Lógica de Negócio (Backend): servidor Node.js com Express.js, API REST com mais de 80 rotas, middleware de autenticação JWT, middleware de autorização por roles, integração Stripe, Nodemailer, Google OAuth, Multer para uploads e sistema de migrações automáticas.
+• Camada de Dados: MySQL 8.0 com motor InnoDB, 15+ tabelas com integridade referencial completa, suporte a JSON nativo para analytics e pool de conexões assíncronas via mysql2.
+
+3.1.6.2. Perfis de Utilizador
+A plataforma suporta três perfis com permissões diferenciadas:
+• Cliente: pode explorar o catálogo, filtrar produtos por categoria/origem/preço, adicionar ao carrinho, comprar com Stripe, avaliar produtos (1-5 estrelas), adicionar favoritos, participar no fórum Q&A, editar perfil com avatar e bio, e consultar histórico de encomendas com recibos.
+• Apicultor: dispõe de um dashboard dedicado para registar e gerir produtos, acompanhar vendas, criar e gerir workshops presenciais. Os clientes podem solicitar upgrade para apicultor através de submissão de documentação, sujeita a aprovação.
+• Administrador: acede a um painel centralizado com KPIs em tempo real (receita, encomendas, utilizadores, produtos), gráficos Chart.js (vendas por mês, categorias, estados de encomendas, crescimento), gestão de utilizadores, moderação da comunidade, aprovação de workshops e processamento de pedidos de upgrade.
+
+3.1.6.3.  Funcionalidades Principais
+A versão final inclui as seguintes funcionalidades:
+• Loja com catálogo dinâmico: produtos carregados da BD com filtros cruzados de categoria, origem, preço e pesquisa textual, paginação dinâmica, ordenação e slugs SEO amigáveis.
+• Carrinho dual: sincronização entre localStorage (acesso imediato offline) e base de dados MySQL (persistência entre dispositivos quando autenticado).
+• Checkout com 2FA: fluxo em dois passos — dados de envio com verificação OTP por email, seguido de redirecionamento para Stripe Checkout.
+• Pagamentos reais via Stripe: integração com a API Stripe Checkout para processamento de cartões, com imagens dinâmicas dos produtos e suporte para ambiente local (placeholders) e produção (URLs absolutas).
+• Recibos automáticos: após pagamento, o sistema gera e envia automaticamente um email com recibo HTML formatado com logótipo, detalhes da encomenda, subtotal, portes e total.
+• Sistema de comunidade Q&A: fórum interativo onde clientes fazem perguntas e apicultores verificados respondem, com sistema de votos, seleção de melhor resposta e moderação por administradores.
+• Visualização 3D: página de curiosidades com frasco de mel 3D renderizado em Three.js com materiais PBR que mudam conforme a origem botânica selecionada.
+• Analytics comportamental: registo silencioso de interações (page_view, product_view, add_to_cart, search, checkout_step) em formato JSON na tabela interacao, permitindo análise detalhada do comportamento dos utilizadores.
+• Internacionalização: sistema i18n completo com suporte PT/EN, usando atributos data-i18n, com troca dinâmica de idioma e persistência no localStorage.
+• Workshops: apicultores podem criar workshops presenciais com título, descrição, data, preço, vagas e imagem. Clientes podem reservar vagas. Administradores aprovam ou rejeitam workshops.
+
+3.1.6.4. Stack Tecnológico Final
+Camada
+Tecnologia
+Função no Projeto
+Frontend
+HTML5, CSS3, JS ES6+
+Estrutura semântica, design system com variáveis, lógica de interação modular
+Build
+Vite
+Servidor de dev com HMR, suporte a módulos ES6, build otimizado para produção
+Backend
+Node.js + Express.js
+API REST com 80+ rotas, middleware de auth e roles, lógica de negócio
+Base de dados
+MySQL 8.0 (InnoDB)
+15+ tabelas, FK, CASCADE, JSON nativo, pool assíncrono
+Autenticação
+JWT + bcrypt + Google OAuth
+Tokens com expiração, hash de passwords, login social
+2FA
+Nodemailer (SMTP)
+Códigos OTP com expiração, verificação de email no registo
+Pagamentos
+Stripe API
+Checkout seguro, recibos automáticos, suporte local/produção
+3D
+Three.js + OrbitControls
+Visualização WebGL com materiais PBR por tipo de mel
+Gráficos
+Chart.js
+Dashboards com gráficos de vendas, categorias e crescimento
+UI/UX
+Bootstrap 5, SweetAlert2
+Grid responsivo, modais premium, feedback visual
+Uploads
+Multer
+Imagens de produtos, avatares e documentos de upgrade
+Tabela 2- Stack tecnológico completo da versão final da Hexomel.
+
+3.1.7. A Hexomel em Números
+Para dimensionar a escala da transformação, apresentam-se alguns indicadores quantitativos do projeto na sua versão final:
+Indicador
+Valor
+Páginas HTML no frontend
+18+
+Módulos JavaScript no frontend
+28+
+Ficheiros CSS dedicados
+9
+Linhas de código no server.js (backend)
+6.000+
+Rotas da API REST
+80+
+Tabelas na base de dados
+15+
+Dependências npm (frontend + backend)
+15+
+Perfis de utilizador
+3 (cliente, apicultor, admin)
+Idiomas suportados
+2 (PT, EN)
+Gateway de pagamento integrado
+Stripe
+Motor 3D utilizado
+Three.js (WebGL)
+Tabela 3- Indicadores quantitativos da Hexomel na versão final.
+3.1.8. Síntese
+A Hexomel percorreu um caminho de evolução significativo. O projeto começou como uma resposta simples a uma necessidade familiar — ajudar o meu pai a vender mel online, substituindo as vendas porta a porta por uma presença digital. As ferramentas previstas eram básicas (HTML, JavaScript e PHP) e o âmbito era limitado a uma montra digital com contacto.
+Contudo, ao avaliar criticamente essa versão inicial, identifiquei que não demonstrava a profundidade técnica esperada numa PAP, nem explorava as competências adquiridas ao longo de três anos de formação em Informática e Tecnologias de Multimédia.
+A decisão de reconstruir o projeto de raiz foi o ponto de viragem. O resultado é uma plataforma full-stack com 18+ páginas, 28+ módulos JavaScript, 15+ tabelas relacionais, autenticação multi-fator, pagamentos Stripe, comunidade Q&A, visualização 3D, analytics comportamental, internacionalização e design premium — tudo construído sem plataformas pré-fabricadas.
+O tema manteve-se — o mel e a apicultura continuam a ser o centro da experiência. Mas a escala, a complexidade e a qualidade técnica são incomparáveis com o ponto de partida. A Hexomel deixou de ser a página de uma empresa familiar e tornou-se uma plataforma de e-commerce profissional que demonstra, de forma concreta, as competências esperadas de um técnico de informática e multimédia.
+
+3.2 Título do Projeto
+Figura 2. Logo (Hexomel)Figura 2. Logo (Hexomel)O nome HexoMel combina duas ideias-chave. “Hexo” faz referência à geometria hexagonal dos favos de mel. É notório que os favos hexagonais armazenam o máximo de mel com o mínimo de cera, resultando em extrema eficiência (como comprovado matematicamente por Hales). Metaforicamente, este princípio de eficiência inspira a modularidade do código do projeto: cada módulo do sistema funciona como uma célula hexagonal auto-suficiente, isolando lógica de negócio em componentes independentes. Em termos práticos, isso assemelha-se ao padrão arquitetural “Hexagonal” (ports-and-adapters), em que cada módulo (como um hexágono) mantém a lógica central separada das interfaces externas.
+Figura 2. Logo (Hexomel)
+Figura 2. Logo (Hexomel)
+Por outro lado, “Mel” destaca o contexto apícola português. A apicultura em Portugal se beneficia de uma rica diversidade florística, produzindo dezenas de tipos de mel monofloral (rosmaninho, urze, castanheiro etc.) com apelo local e até indicações geográficas protegidas. Essa variedade e qualidade elevam o nicho do mel português, conferindo valor comercial e identitário ao projeto. Em suma, HexoMel simboliza tanto a eficiência geométrica do favo quanto a tradição e potencial comercial do mel nacional.
+
+
+
+
+
+
+3.3 Tema do Projeto
+O HexoMel vai além de um simples site de vendas online: é uma plataforma integradora com quatro dimensões distintas.
+Comercial: oferece e-commerce completo (carrinho, checkout, Stripe etc.), CMS de produtos e pagamento seguro. Modernos sistemas e-commerce integram CMS, carrinho de compras, sistemas de pagamento e gestão de estoque. Essa camada comercial provê toda infraestrutura de loja online (catálogo, filtros de produtos, gateway de pagamento) conforme boas práticas do mercado.
+Social: inclui a rede HexoHive e chat interno. Essa dimensão segue a tendência de social commerce, que integra redes sociais ao e-commerce para uma experiência fluida. A plataforma permite que apicultores e consumidores interajam (postem dúvidas, compartilhem receitas, façam avaliações) em um espaço comunitário, ampliando o engajamento além da simples transação de compra.
+Educativa: incorpora quizzes e visualizações 3D (Three.js) para ensinar sobre apicultura e produtos. Esse recurso interativo visa diferenciar o site, atraindo usuários através de conteúdo gamificado e imersivo. Por exemplo, um quiz interativo de conhecimento sobre abelhas estimula o aprendizado lúdico, enquanto modelos 3D de colmeias em Three.js oferecem visualização avançada do produto – aproveitando bibliotecas web de ponta (Three.js) para enriquecer o aprendizado.
+Administrativa: contempla o painel de controle (CMS) e ferramentas de moderação. Inclui dashboards de análise (implementados com Chart.js para gráficos simples e flexíveis), sistemas de gestão de conteúdo e métricas, além de controles de acesso e moderação. Essa dimensão assegura que a plataforma seja gerenciável e mantenha qualidade em conteúdo e interação com os usuários.
+Em conjunto, essas quatro dimensões mostram que o HexoMel é muito mais que “apenas um e-commerce”: é um ecossistema completo de comércio, rede social, educação e gestão integrada.
+
+
+
+
+
+
+
+
+
+
+
+
+
+3.4 Motivação para o Projeto
+A motivação inicial para este projeto surgiu da necessidade de criar uma presença digital para a empresa familiar de produção e comercialização de mel. Numa fase inicial, o objetivo era desenvolver um website simples que permitisse divulgar os produtos, aumentar a visibilidade da marca e facilitar o contacto com os clientes, contribuindo para a modernização do negócio e para a sua adaptação às novas formas de comércio digital.
+Contudo, durante a fase de planeamento e desenvolvimento, verificou-se que a implementação de um website básico não representava um desafio técnico suficientemente exigente para uma Prova de Aptidão Profissional. Perante esta situação, decidiu-se reformular e expandir o conceito inicial, transformando-o num projeto mais ambicioso e completo, capaz de demonstrar um conjunto mais alargado de competências técnicas adquiridas ao longo do curso.
+Desta forma, a Hexomel evoluiu de um simples website institucional para uma plataforma web mais complexa, integrando funcionalidades avançadas de comércio eletrónico, gestão de utilizadores, autenticação segura, processamento de pagamentos, área administrativa e conteúdos informativos relacionados com a apicultura. Esta evolução permitiu aproximar o projeto de um cenário real de desenvolvimento de software e proporcionar uma experiência mais rica aos utilizadores.
+Do ponto de vista técnico, o projeto possibilitou a aplicação de conhecimentos em desenvolvimento frontend e backend, bases de dados, segurança informática, integração de APIs, design de interfaces, experiência do utilizador (UX/UI), responsividade e documentação técnica. A diversidade de tecnologias e funcionalidades implementadas tornou a PAP mais desafiante e enriquecedora, contribuindo significativamente para o desenvolvimento das minhas competências profissionais.
+Com este projeto pretendeu-se:
+Valorizar o mel português e a produção artesanal através de uma presença digital moderna e profissional;
+Desenvolver uma plataforma funcional de comércio eletrónico;
+Aplicar conhecimentos de programação e desenvolvimento web adquiridos ao longo do curso;
+Implementar mecanismos de autenticação e segurança adequados a aplicações modernas;
+Integrar diferentes tecnologias e serviços externos num único sistema;
+Produzir documentação técnica que demonstre a evolução, arquitetura e decisões tomadas durante o desenvolvimento do projeto.
+
+
+
+
+
+
+
+3.5. Contextualização no Mercado (Análise SWOT/FOFA)
+O mercado do mel tem uma forte componente de confiança, origem e qualidade. O consumidor tende a valorizar produtos naturais, artesanais e rastreáveis, mas encontra muitas vezes estes produtos dispersos em feiras, redes sociais, pequenas lojas locais ou marketplaces genéricos.
+Neste contexto, a Hexomel posiciona-se como uma solução especializada. Em vez de competir apenas pelo preço, procura competir pela experiência, pela informação, pela relação com o produtor e pela organização digital do processo de compra.
+
+Forças
+Especialização no mel português; identidade visual premium; e-commerce completo; perfis de cliente, apicultor e administrador; checkout com Stripe; comunidade Q&A; analytics comportamental; conteúdos educativos sobre apicultura.
+Fraquezas
+Projeto académico ainda sem operação real; catálogo dependente de adesão de apicultores; manutenção contínua de APIs externas; necessidade de validação legal para produção; ausência de equipa comercial/logística permanente.
+Oportunidades
+Crescimento do comércio eletrónico; valorização de produtos locais e naturais; procura por rastreabilidade; expansão para workshops e turismo apícola; internacionalização PT/EN; parcerias regionais com produtores.
+Ameaças
+Concorrência de marketplaces e supermercados online; custos de alojamento, pagamentos e manutenção; resistência de produtores à digitalização; exigências de RGPD, faturação e segurança; alterações em serviços como Stripe ou Google.
+
+A análise SWOT sugere que existe espaço para uma solução online especializada em mel português, especialmente ao aproveitar tendências de confiança na origem e na produção artesanal. A Hexomel apresenta pontos fortes relevantes (especialização, plataforma tecnicamente robusta, foco em segurança e comunidade) que podem atrair um segmento de consumidores dispostos a valorizar experiência sobre preço. No entanto, enfrenta desafios típicos de um projeto em fase inicial, como a necessidade de validação legal, expansão do catálogo e consolidação da infraestrutura.
+
+A proposta de valor da Hexomel está em oferecer uma experiência de compra diferenciada: conhecer a história do produto e do produtor, aprender sobre apicultura, interagir numa comunidade temática e comprar de forma segura. Isso a distingue de uma simples loja online de mercearia. Para concretizar esse potencial, será crucial avançar nos seguintes pontos críticos:
+Validação legal e fiscal: Definir e implementar sistemas de faturação oficiais, termos de uso e políticas de privacidade alinhadas ao RGPD, bem como rotulagem adequada para mel.
+Segurança e testes: Realizar auditorias de segurança, testes de usabilidade e simulações de carga para garantir confiança e estabilidade em ambiente de produção.
+Infraestrutura de produção: Migrar o site para um servidor dedicado ou serviço de cloud escalável, registando domínio próprio e configurando certificados SSL.
+Integração logística: Estabelecer parcerias com transportadoras para automatizar envios, bem como processos para gestão de stock e embalagens.
+Captação de apicultores: Expandir a rede de produtores parceiros, incentivando adesões através de campanhas de marketing e benefícios claros (novos canais de venda).
+Marketing digital: Desenvolver estratégias de SEO, redes sociais e campanhas publicitárias que destaquem a autenticidade e qualidade do mel português, visando atrair clientes e aumentar a notoriedade da marca.
+Em síntese, embora o projeto ainda seja académico, a Hexomel tem potencial para preencher uma lacuna de mercado, oferecendo uma plataforma especializada que alia comércio eletrónico, conteúdo e comunidade num mesmo espaço. Com os ajustes adequados, poderá posicionar-se como referência no nicho de mel artesanal, focando-se em atributos de experiência e confiança mais do que em competição de preço puro.
+
+
+3.5 Evolução da Base de Dados
+A base de dados foi uma das partes que mais evoluiu durante o desenvolvimento da Hexomel. A primeira versão, apresentada no ficheiro antigo Relatorio de pap.docx, representava sobretudo aquilo que eu pensava inicialmente construir: uma loja online com entidades principais como Cliente, Produto, Encomenda, Categoria, Stock e Fatura.
+Essa primeira abordagem foi importante porque serviu como ponto de partida conceptual. O objetivo inicial era garantir que a loja tivesse uma estrutura mínima para registar produtos, clientes e encomendas. No entanto, à medida que o projeto cresceu, percebi que uma plataforma real precisava de muito mais detalhe para suportar funcionalidades como carrinho persistente, histórico de produtos comprados, perfis de apicultor, avaliações, favoritos, workshops, comunidade e analytics.
+
+
+Figura 3.  Primeira versão/modelo inicial da base de dados da Hexomel
+3.5.1 Primeira Versão Pensada
+A base de dados estava descrita de forma mais teórica e simples. A modelação apresentava relações fundamentais de uma loja online: um cliente podia fazer várias encomendas, uma encomenda podia conter vários produtos, uma categoria podia agrupar vários produtos e cada produto teria controlo de stock.
+Cliente: entidade responsável por guardar dados do utilizador e associar encomendas.
+Produto: entidade central do catálogo, com preço, descrição e stock.
+Categoria: organização básica dos produtos da loja.
+Encomenda: registo da compra realizada por um cliente.
+Stock/Fatura: conceitos previstos inicialmente para controlo de quantidade e comprovativo de compra.
+Esta versão era suficiente para imaginar uma loja online básica, mas ainda não respondia totalmente às necessidades que surgiram durante a implementação prática da Hexomel.
+
+3.5.2 Nova Versão Implementada
+A versão final da base de dados passou a ser mais completa e próxima de um sistema comercial. Em vez de guardar apenas produtos e encomendas de forma simples, o modelo atual separa responsabilidades, cria tabelas intermédias, melhora a integridade dos dados e suporta funcionalidades avançadas do projeto.
+
+
+
+Figura 4. Versão final do esquema relacional da base de dados Hexomel
+Área
+Versão inicial pensada
+Versão final implementada
+Melhoria obtida
+Utilizadores
+Cliente simples associado a encomendas.
+Tabela cliente com email, username, password com hash, imagem, morada, telefone, bio e UserType.
+Permite distinguir cliente, apicultor e administrador, suportando permissões diferentes.
+Produtos
+Produto com dados essenciais e stock.
+Produto ligado a categoria, origem e apicultor, com descrição, imagem, tags e estado.
+Melhor organização do catálogo, rastreabilidade regional e gestão por produtores.
+Encomendas
+Relação Cliente-Encomenda-Produto pensada de forma conceptual.
+Encomenda separada de item_encomenda, guardando quantidade e preço unitário histórico.
+Mantém histórico correto mesmo que o preço do produto mude no futuro.
+Carrinho
+Não estava detalhado no modelo inicial.
+Tabelas carrinho e item_carrinho.
+Permite persistência do carrinho e melhor controlo do fluxo de compra.
+Favoritos
+Não previsto inicialmente.
+Tabela favoritos com relação cliente-produto.
+Permite lista de desejos e personalização da experiência do cliente.
+Avaliações
+Não previsto inicialmente.
+Tabela avaliacao com nota, comentário e data.
+Adiciona feedback social e confiança aos produtos.
+Workshops
+Ideia simples de evento/formação.
+Workshop associado ao apicultor, com vagas, preço, data, imagem e estado.
+Transforma a plataforma numa solução comercial e educativa.
+Comunidade
+Não existia no modelo inicial.
+pergunta_comunidade e resposta_comunidade.
+Cria interação entre clientes e apicultores, reforçando a vertente educativa.
+Analytics
+Não previsto inicialmente.
+Tabela interacao com tipo, página, dados JSON e data.
+Permite analisar comportamento do utilizador e melhorar decisões.
+Upgrades
+Não previsto inicialmente.
+upgrade_requests com documento, descrição, estado e datas.
+Permite gerir pedidos para clientes se tornarem apicultores.
+
+
+3.5.3 Comparação e Melhorias Realizadas
+A maior melhoria foi a passagem de um modelo pensado apenas para uma loja online simples para um modelo relacional capaz de sustentar uma plataforma completa. A versão antiga tinha uma função principalmente conceptual; a versão nova foi construída de acordo com problemas reais encontrados durante o desenvolvimento.
+A base de dados deixou de guardar apenas entidades principais e passou a representar fluxos reais de compra.
+A relação muitos-para-muitos entre encomendas e produtos foi resolvida com item_encomenda.
+O preço unitário passou a ser guardado no momento da compra, evitando incoerências históricas.
+Foram adicionados papéis de utilizador para suportar cliente, apicultor e administrador.
+O catálogo ficou mais rico com categoria, origem, tags, estado e associação ao apicultor.
+Foram adicionadas funcionalidades de comunidade, avaliações, favoritos e analytics.
+A base de dados passou a apoiar diretamente segurança, gestão, dashboards e experiência do utilizador.
+Assim, a nova base de dados representa uma evolução técnica significativa. A primeira versão mostrou a intenção inicial; a versão final demonstra a adaptação do projeto às funcionalidades que realmente foram implementadas.
+
+3.6. Ferramentas
+O desenvolvimento da Hexomel exigiu um conjunto amplo de ferramentas, selecionadas para responder a necessidades concretas do projeto: interface, lógica de servidor, persistência de dados, autenticação, pagamentos, envio de emails, testes, documentação e experiência do utilizador.
+
+
+3.6.1. Visual Studio Code
+Editor principal do projeto, utilizado para centralizar a escrita e organização de ficheiros HTML, CSS, JavaScript e backend. Também foi importante para depuração, gestão de extensões, controlo de versão e navegação rápida entre os módulos do sistema.
+
+
+Figura 5.  Visual Studio CodeFigura 5.  Visual Studio Code
+Figura 5.  Visual Studio Code
+Figura 5.  Visual Studio Code
+
+
+
+3.6.2. HTML5
+Foi usado para construir a estrutura semântica das páginas públicas e das áreas de autenticação, checkout, perfil, administração e apicultor. A utilização de elementos semânticos ajudou a melhorar a legibilidade do código, a manutenção futura e a acessibilidade da interface.
+.
+Figura 6. HTML5Figura 6. HTML5
+Figura 6. HTML5
+Figura 6. HTML5
+
+
+Figura 7.  JavaScript ES6+Figura 7.  JavaScript ES6+3.6.3. JavaScript ES6+
+Figura 7.  JavaScript ES6+
+Figura 7.  JavaScript ES6+
+Foi a base da interatividade da aplicação, permitindo manipular o DOM, fazer pedidos assíncronos através da Fetch API e atualizar o conteúdo sem recarregar as páginas. Também sustentou funcionalidades como o carrinho de compras, filtros, estados de carregamento, dashboards e áreas comunitárias.
+
+
+
+
+
+Figura 8. ViteFigura 8. Vite3.6.4. Vite
+Figura 8. Vite
+Figura 8. Vite
+Atuou como servidor de desenvolvimento e ferramenta de build do frontend, oferecendo carregamento rápido, módulos modernos e atualização automática durante a programação. Além disso, facilitou a organização dos assets, a importação modular de scripts e a preparação de uma versão otimizada para produção.
+.
+
+
+Figura 9. node.jsFigura 9. node.js3.6.5. Node.js
+Figura 9. node.js
+Figura 9. node.js
+Serviu de ambiente de execução do backend, suportando a lógica de negócio, a criação de rotas e o processamento das operações ligadas à autenticação, pagamentos e envio de emails. A sua natureza assíncrona foi útil para lidar com várias tarefas em simultâneo com melhor desempenho.
+
+
+
+
+Figura 10. MySqlFigura 10. MySql3.6.6.  MySQL
+Figura 10. MySql
+Figura 10. MySql
+Foi a base de dados relacional usada para guardar de forma estruturada clientes, produtos, encomendas, itens, avaliações, workshops e interações. O modelo relacional permitiu estabelecer ligações entre tabelas, evitar redundâncias e garantir consultas mais fiáveis e organizadas.
+
+
+
+3.6.7.  npm
+Figura 11. npmFigura 11. npmFoi utilizado como gestor de pacotes do projeto, permitindo instalar e atualizar dependências, controlar versões e manter o ambiente de desenvolvimento mais consistente. Também foi útil para executar scripts do projeto, automatizar tarefas comuns e assegurar que todos os módulos necessários estivessem disponíveis de forma simples e reproduzível.
+Figura 11. npm
+Figura 11. npm
+
+3.7. Bibliotecas e Dependências
+Para além das linguagens e ferramentas principais, o projeto Hexomel utiliza várias bibliotecas e dependências que permitiram acelerar o desenvolvimento, melhorar a segurança, enriquecer a interface e aproximar a aplicação de um cenário real de comércio eletrónico.
+Estas dependências estão organizadas em três zonas: dependências do frontend, dependências do backend e dependências auxiliares de desenvolvimento/documentação. A escolha de cada biblioteca foi feita com base na sua utilidade prática dentro do projeto, evitando dependências sem função concreta.
+No frontend, as bibliotecas estão ligadas sobretudo à experiência do utilizador, à construção do projeto e à componente multimédia.
+
+3.7.1. SweetAlert2
+Utilizada para substituir os alertas nativos do navegador por modais mais claros, consistentes e visualmente apelativos. No projeto, o SweetAlert2 é aplicado em confirmações, mensagens de erro, sucesso, logout, sessão expirada, checkout e eliminações, ajudando o utilizador a perceber de imediato o resultado da ação. A biblioteca também facilita a personalização de botões, ícones e textos, o que melhora a experiência geral da interface.
+Figura 12. SweetAlert2Figura 12. SweetAlert2
+Figura 12. SweetAlert2
+Figura 12. SweetAlert2
+
+Figura 13. Three.jsFigura 13. Three.js3.7.2. Three.js
+Figura 13. Three.js
+Figura 13. Three.js
+Biblioteca responsável pela visualização 3D do frasco de mel na página de curiosidades. Foi usada para criar uma cena interativa com câmara, luzes, materiais e efeitos visuais que tornam a apresentação do produto mais rica e envolvente. Através da integração com OrbitControls, o utilizador consegue rodar e explorar o objeto de forma natural, o que reforça o caráter demonstrativo e apelativo da secção.
+
+
+Figura 14. Chart.jsFigura 14. Chart.js3.7.3. Chart.js
+Figura 14. Chart.js
+Figura 14. Chart.js
+Biblioteca usada para construir gráficos e painéis de monitorização da atividade da plataforma. No Hexomel, o Chart.js apresenta informação sobre vendas, categorias, estados de encomenda, crescimento de utilizadores, produtos mais vendidos e comportamento de utilização. A sua principal vantagem é transformar dados brutos em visualizações simples, responsivas e fáceis de interpretar, apoiando a leitura rápida dos indicadores mais relevantes.
+
+3.7.4. Google Identity Services
+Responsável pela integração do login com conta Google nas páginas públicas e de autenticação. Esta dependência simplifica o processo de registo e início de sessão, reduzindo o atrito para o utilizador e aumentando a conveniência do acesso. Além disso, permite uma autenticação moderna e reconhecida, que complementa o sistema de contas criado para a aplicação.
+
+Figura 15. Google Identity ServicesFigura 15. Google Identity Services
+Figura 15. Google Identity Services
+Figura 15. Google Identity Services
+No backend, as bibliotecas têm maior foco em segurança, comunicação com a base de dados, rotas da API, pagamentos, emails e uploads.
+
+Figura 16. Express.jsFigura 16. Express.js3.7.5. Express.js
+Figura 16. Express.js
+Figura 16. Express.js
+Framework base do servidor, usado para estruturar as rotas da API e organizar a lógica do backend de forma modular. No projeto, o Express.js gere autenticação, produtos, encomendas, comunidade, workshops, pagamentos e área de administração, servindo como ponte entre o frontend e a base de dados. A sua leveza e flexibilidade tornam-no adequado para construir uma aplicação web com vários pontos de acesso e middleware.
+3.7.6. Nodemailer
+Figura 17. NodemailerFigura 17. NodemailerDependência responsável pelo envio de emails automáticos a partir do servidor. No Hexomel, o Nodemailer é usado para enviar códigos OTP de autenticação reforçada, notificações importantes e recibos em formato HTML através de SMTP. A biblioteca facilita a criação de mensagens personalizadas e integra-se facilmente com os restantes fluxos do backend, contribuindo para uma comunicação mais profissional com o utilizador.
+Figura 17. Nodemailer
+Figura 17. Nodemailer
+
+3.7.7. Stripe
+Figura 18. StripeFigura 18. StripeBiblioteca de pagamentos utilizada para criar sessões Stripe Checkout e processar transações de forma segura. O Stripe permite confirmar pagamentos, consultar o estado das operações e preparar a aplicação para integração com webhooks, garantindo que o sistema recebe e trata corretamente os eventos financeiros. A sua adoção reduz a complexidade da implementação e oferece uma solução fiável e amplamente reconhecida para comércio eletrónico.
+Figura 18. Stripe
+Figura 18. Stripe
+
+A utilização destas bibliotecas demonstra que a Hexomel não é apenas uma página estática, mas uma aplicação web completa. Cada dependência resolve uma necessidade real: segurança, pagamentos, emails, uploads, gráficos, experiência visual, desenvolvimento local ou organização interna do código.
+O frontend usa bibliotecas para melhorar a experiência visual e interativa do utilizador.
+O backend usa bibliotecas para garantir segurança, persistência, autenticação e integração com serviços externos.
+Os módulos internos reduzem repetição de código e tornam a aplicação mais organizada.
+As dependências de desenvolvimento facilitam testes, execução local e documentação.
+Assim, as bibliotecas e dependências escolhidas contribuem diretamente para a qualidade final da plataforma, mantendo equilíbrio entre código próprio, aprendizagem técnica e utilização de soluções profissionais já consolidadas no ecossistema JavaScript.
+
+3.8. Abordagem Histórica
+A evolução das ferramentas utilizadas no projeto acompanha a própria evolução da web. Inicialmente, os websites eram constituídos por páginas HTML estáticas, com pouca interação e sem ligação dinâmica a bases de dados. O CSS veio separar apresentação de conteúdo, permitindo criar interfaces mais organizadas e visualmente consistentes.
+Com a evolução do JavaScript, a web passou a permitir experiências mais próximas de aplicações. No caso da Hexomel, esta evolução está presente na utilização de JavaScript moderno, módulos ES6, Fetch API, renderização dinâmica, skeleton loaders, filtros em tempo real e navegação com View Transitions API.
+No backend, Node.js representou uma mudança importante ao permitir usar JavaScript também no servidor. Esta escolha simplifica a comunicação entre frontend e backend, porque ambas as camadas partilham a mesma linguagem base. O Express.js complementa esta abordagem ao fornecer uma estrutura clara para rotas, middlewares e APIs REST.
+As bases de dados relacionais, como MySQL, continuam fundamentais em sistemas comerciais. Mesmo com a evolução de bases de dados NoSQL, um projeto de e-commerce beneficia de tabelas relacionais, chaves estrangeiras, consistência e transações, especialmente quando lida com utilizadores, encomendas, produtos e pagamentos.
+Mais recentemente, o desenvolvimento web passou a integrar serviços externos especializados. Em vez de criar dos zero sistemas complexos de pagamentos, autenticação social ou envio de email, é comum usar APIs profissionais como Stripe, Google OAuth e Gmail SMTP. A Hexomel segue essa lógica, aproximando o projeto de práticas reais de mercado.
+
+3.9. Justificação da Utilização das Ferramentas
+A escolha das ferramentas foi feita com base em três critérios: adequação técnica, aprendizagem e proximidade com o mundo profissional. A opção por HTML, CSS e JavaScript puro permitiu compreender a base da web sem depender totalmente de frameworks como React ou Vue. Esta decisão deu maior controlo sobre a estrutura, performance e comportamento da interface.
+O Vite foi utilizado para tornar o desenvolvimento mais rápido e organizado, permitindo trabalhar com módulos modernos e assets de forma eficiente. No design, o CSS foi centralizado em ficheiros como modern.css, skeleton.css e estilos específicos por página, garantindo uma identidade visual consistente.
+No backend, Node.js e Express.js foram escolhidos por serem adequados à criação de APIs REST e por se integrarem naturalmente com JavaScript no frontend. Esta combinação permitiu implementar autenticação, roles, validações, checkout, comunidade, dashboard, uploads e comunicação com a base de dados.
+O MySQL foi escolhido pela robustez e pela clareza do modelo relacional. Num e-commerce, a relação entre clientes, produtos, encomendas, itens de encomenda, avaliações, workshops e interações exige consistência. O uso de MySQL Workbench também contribuiu para uma gestão mais profissional da base de dados.
+As ferramentas de segurança foram essenciais. O bcryptjs protege passwords através de hashing; o JWT gere sessões autenticadas; o Google OAuth facilita login seguro; e o 2FA por email acrescenta uma camada adicional antes da compra. Esta combinação reforça a credibilidade da plataforma.
+As integrações externas aproximam a Hexomel de uma aplicação real. O Stripe permite pagamentos seguros; o Nodemailer permite emails transacionais; o Ngrok facilita testes com serviços externos; o Chart.js transforma dados em gráficos úteis; e o Three.js acrescenta uma componente multimédia avançada ligada à origem e aparência do mel.
+No conjunto, as ferramentas escolhidas permitiram construir um projeto tecnicamente completo, visualmente cuidado e coerente com o curso de Informática e Tecnologias de Multimédia. A Hexomel demonstra competências de programação, design, base de dados, segurança, integração de serviços, documentação e pensamento crítico sobre mercado.
+
+4. Desenvolvimento do Projeto
+Este capítulo descreve o processo de desenvolvimento da Hexomel, desde a organização inicial do trabalho até à implementação das principais funcionalidades do website. A estrutura segue uma lógica cronológica e técnica: primeiro apresenta-se a calendarização, depois a pesquisa realizada, a organização do projeto e, por fim, o desenvolvimento das várias áreas funcionais da plataforma.
+A Hexomel foi desenvolvida como uma aplicação web full-stack orientada para o comércio eletrónico de mel português artesanal. O objetivo não foi apenas criar um website visualmente apelativo, mas sim construir uma plataforma funcional, com autenticação, base de dados, perfis de utilizador, carrinho, checkout, dashboards, comunidade, chat privado e mecanismos de administração.
+Ao longo do desenvolvimento, o projeto foi registado e acompanhado através do Git. O histórico do repositório mostra uma evolução progressiva entre janeiro e junho de 2026, começando pela estrutura inicial do website e terminando em funcionalidades avançadas como leaderboard educativo, moderação social, chat privado e melhorias de interface. Esta utilização do Git foi importante para guardar versões, recuperar alterações, acompanhar fases de trabalho e manter uma memória técnica do projeto.
+
+
+
+4.1 Calendarização inicial
+A calendarização inicial serviu como orientação para distribuir o trabalho por fases. No entanto, como acontece frequentemente em projetos de software, algumas funcionalidades foram revistas, alargadas ou reconstruídas durante a implementação. A versão final da Hexomel acabou por ficar mais completa do que a ideia inicial, porque o projeto deixou de ser apenas uma loja online e passou a funcionar como uma plataforma com componentes comerciais, educativos e comunitários.
+
+Período
+Objetivo previsto
+Trabalho realizado
+Janeiro
+Criar estrutura inicial do projeto e páginas base
+Arranque do repositório, primeiras páginas HTML, login, produtos, favoritos, perfil e início da área de administração.
+Fevereiro
+Ligar o site à base de dados e melhorar o catálogo
+Integração com MySQL, filtros de produtos, estruturação do catálogo, primeiras páginas de administração e resolução de conflitos de versões.
+Março
+Implementar fluxos comerciais principais
+Criação do perfil avançado, histórico de encomendas, checkout multi-step, dashboard de apicultor e evolução da área administrativa.
+Abril
+Aumentar segurança e funcionalidades de gestão
+Implementação de 2FA por email, melhorias em encomendas, verificação de email, autenticação e primeiros módulos completos de dashboard/admin.
+Maio
+Melhorar experiência visual e conteúdos adicionais
+Workshops, página de curiosidades, elementos 3D, secção educativa, melhorias de layout e preparação para apresentação.
+Junho
+Polir funcionalidades finais e documentação
+Redesign da página Aprender, quiz com leaderboard, CMS para factos/glossário, diretório social, chat e correções finais de interface.
+Tabela 4- Calendarização
+
+4.2 Pesquisa
+A fase de pesquisa acompanhou todo o desenvolvimento. Inicialmente, a investigação centrou-se em plataformas de comércio eletrónico, organização de catálogos, autenticação de utilizadores e estruturação de bases de dados relacionais. A escolha do tema obrigou também a estudar a forma como produtos alimentares artesanais podem ser apresentados digitalmente, valorizando origem, apicultor, categoria, imagem e descrição.
+Numa segunda fase, a pesquisa passou para áreas mais técnicas: APIs REST, autenticação com JSON Web Token, hashing de passwords com bcrypt, envio de emails com Nodemailer, pagamentos com Stripe e integração com Google OAuth. Estas tecnologias foram escolhidas por serem próximas de soluções usadas em projetos reais, tornando a PAP mais profissional e menos limitada a uma demonstração estática.
+Mais tarde, com o crescimento do projeto, a investigação estendeu-se a dashboards, analytics, moderação de comunidade, chat privado, filtros de profanidade, upload de ficheiros, gestão de permissões e experiência de utilizador. Este processo permitiu transformar a Hexomel numa aplicação mais completa, capaz de simular necessidades reais de clientes, apicultores e administradores.
+
+4.2.1 Pesquisa sobre e-commerce
+A pesquisa sobre comércio eletrónico ajudou a definir os elementos essenciais da loja: catálogo, filtros, detalhe de produto, carrinho, stock, checkout, encomendas e recibos. A Hexomel precisava de permitir ao cliente encontrar produtos facilmente e concluir uma compra com segurança. Por isso, foram considerados fluxos comuns de lojas online, como pesquisa por categoria, filtros por origem, validação de dados de envio e confirmação de pagamento.
+
+4.2.2 Pesquisa sobre apicultura e diferenciação do projeto
+O tema do mel português permitiu acrescentar uma componente própria ao projeto. Em vez de criar uma loja genérica, a Hexomel foi pensada como uma plataforma especializada em apicultura. Esta decisão refletiu-se na criação de perfis de apicultores, workshops, página educativa, glossário apícola, curiosidades e comunidade de perguntas e respostas. Assim, o site não se limita a vender produtos; também aproxima produtores e consumidores através de informação e interação.
+
+4.2.3 Pesquisa técnica
+A pesquisa técnica foi essencial para decidir a arquitetura do projeto. O frontend foi desenvolvido com HTML, CSS e JavaScript Vanilla, usando Vite para melhorar o ambiente de desenvolvimento. O backend ficou assente em Node.js e Express.js, enquanto a persistência dos dados foi feita com MySQL. Esta separação permitiu organizar a aplicação em camadas: interface, lógica de negócio e base de dados.
+
+
+
+Figura 19. Arquitetura funcional da aplicação Hexomel.Figura 19. Arquitetura funcional da aplicação Hexomel.
+Figura 19. Arquitetura funcional da aplicação Hexomel.
+Figura 19. Arquitetura funcional da aplicação Hexomel.
+Também foram estudadas bibliotecas e serviços externos. O Stripe foi usado para pagamentos, o Nodemailer para emails transacionais, o Google OAuth para login social, o bcryptjs para proteção de passwords, o JWT para sessões autenticadas, o Multer para uploads e o Chart.js para dashboards. A utilização destas ferramentas aproximou o projeto de uma aplicação profissional.
+
+4.3 Organização do projeto
+A Hexomel está organizada em duas áreas principais: frontend e backend. Esta divisão ajudou a separar responsabilidades e facilitou a manutenção. A pasta frontend contém as páginas HTML, os estilos CSS, os scripts JavaScript e os assets públicos. A pasta backend contém o servidor Express, a configuração da base de dados, middleware de autenticação, scripts de migração/seed e o ficheiro SQL principal.
+
+Área
+Ficheiros/Pastas principais
+Função no projeto
+Frontend
+frontend/*.html, frontend/src/*.js, frontend/src/styles/*.css
+Constrói a interface visual, páginas públicas, loja, perfil, checkout, dashboards e interações do utilizador.
+Backend
+backend/server.js, backend/config, backend/middleware
+Disponibiliza a API REST, autenticação, autorização, pagamentos, emails, uploads e acesso à base de dados.
+Base de dados
+backend/hexomel_mysql.sql e scripts de migração
+Define tabelas, relações, chaves estrangeiras e dados necessários para produtos, utilizadores, encomendas e comunidade.
+Documentação
+estudo/ e docs/site-estrutura
+Guarda documentação técnica, estudo de funcionalidades, mapa do site e conteúdos de apoio ao relatório.
+Versionamento
+.git e histórico de commits
+Regista a evolução do projeto e permite acompanhar as fases de desenvolvimento.
+Tabela 5- Organização do projeto
+Esta organização tornou o projeto mais claro. Cada página possui o seu ficheiro HTML e, em muitos casos, um módulo JavaScript próprio. Por exemplo, shop.js trata da loja, cart.js gere o carrinho, checkout.js trata do fluxo de pagamento, admin.js controla a área administrativa e rede-social.js gere a HexoHive e o chat privado.
+
+
+
+
+
+
+4.4 Desenvolvimento do frontend
+O frontend foi desenvolvido com HTML5, CSS3 e JavaScript moderno. A opção por JavaScript Vanilla permitiu compreender de forma direta o funcionamento do DOM, dos eventos, da Fetch API e da renderização dinâmica de componentes. Em vez de depender de uma framework pesada, o projeto foi construído com módulos próprios, o que obrigou a organizar melhor o código e a perceber a responsabilidade de cada ficheiro.
+A nível visual, a Hexomel adotou uma identidade associada ao mel e à natureza, usando uma paleta com tons dourados, verdes e brancos. O objetivo foi criar uma experiência elegante, limpa e coerente com o produto vendido. Foram usados componentes reutilizáveis, animações suaves, skeleton loaders, notificações toast, modais e feedback visual para tornar a navegação mais agradável.
+Outra preocupação foi a experiência de navegação. A aplicação utiliza uma abordagem de SPA híbrida, tirando partido de transições suaves e de scripts de pré-carregamento para reduzir flickers visuais entre páginas. Isto tornou o site mais próximo de uma aplicação moderna, mesmo mantendo a estrutura de páginas HTML separadas.
+
+4.4.1 Páginas públicas
+As páginas públicas foram criadas para apresentar a marca, os produtos e a componente educativa da plataforma. Entre elas destacam-se a página inicial, loja, detalhe de produto, sobre contactos, workshops, curiosidades, aprender, comunidade, lista de apicultores e página individual de apicultor. Estas páginas permitem que um visitante compreenda rapidamente o objetivo da Hexomel e explore o ecossistema criado à volta da apicultura.
+
+4.4.2 Loja, filtros e detalhe de produto
+A loja foi uma das áreas centrais do projeto. O catálogo apresenta produtos de mel e derivados, permitindo filtrar por categorias, origens, vendedores e preço. Estes filtros ajudam o utilizador a encontrar produtos de forma rápida e tornam a loja mais funcional. A página de detalhe do produto inclui informação específica, imagem, preço, stock, avaliações e ligação ao carrinho.
+A existência de slugs para produtos permitiu criar URLs mais legíveis e adequadas para uma aplicação real. Em vez de depender apenas de IDs numéricos, o sistema consegue gerar endereços amigáveis baseados no nome do produto.
+
+4.4.3 Perfil, favoritos e histórico
+A área de perfil foi desenvolvida para dar ao utilizador controlo sobre os seus dados. O cliente pode consultar e alterar informações pessoais, gerir avatar, morada, telefone, biografia, favoritos e histórico de encomendas. Esta área tornou o projeto mais completo porque deixa de existir apenas a compra pontual e passa a existir uma relação contínua entre utilizador e plataforma.
+
+4.4.4 Experiência visual e animações
+O projeto inclui animações de abelhas, efeitos visuais, cartões interativos e elementos 3D. Estas funcionalidades reforçam a componente multimédia do curso e mostram a preocupação com a experiência do utilizador. A utilização de Three.js e de animações CSS/JavaScript contribuiu para criar uma identidade visual própria, sem comprometer a funcionalidade principal da plataforma.
+
+
+
+4.5 Desenvolvimento do Backend
+O backend da Hexomel é a camada responsável por ligar a interface do utilizador à base de dados e aos serviços externos. Enquanto o frontend apresenta páginas, formulários, animações e interações, o backend valida os dados recebidos, aplica regras de negócio, protege rotas privadas, comunica com o MySQL e devolve respostas em formato JSON para que a interface seja atualizada.
+No estado atual do projeto, o backend está concentrado principalmente no ficheiro backend/server.js, que possui cerca de 6333 linhas e 152 rotas Express. Apesar de esta concentração tornar o ficheiro grande, ela mostra também a quantidade de funcionalidades implementadas: autenticação, catálogo, carrinho, checkout, encomendas, apicultores, workshops, administração, comunidade, chat, quiz, glossário, analytics e CMS.
+Figura 20. Arquitetura funcional do backend Hexomel.Figura 20. Arquitetura funcional do backend Hexomel.
+Figura 20. Arquitetura funcional do backend Hexomel.
+Figura 20. Arquitetura funcional do backend Hexomel.
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.5.1 Tecnologias utilizadas no backend
+O backend foi desenvolvido em Node.js com Express.js. Esta escolha permitiu usar JavaScript em todo o projeto, tanto no cliente como no servidor, reduzindo a distância entre a lógica do frontend e a lógica da API. O Express foi usado para definir rotas HTTP e middlewares, enquanto o MySQL foi usado como sistema de gestão de base de dados relacional.
+Tecnologia
+Função no backend
+Express.js
+Criação da API REST, definição de rotas e tratamento de pedidos HTTP.
+mysql2/promise
+Ligação ao MySQL através de pool de conexões e queries assíncronas.
+bcryptjs
+Hashing de passwords antes de guardar na base de dados.
+jsonwebtoken
+Criação e validação de tokens JWT para sessões autenticadas.
+Nodemailer
+Envio de emails de verificação, recuperação, OTP e recibos.
+Stripe
+Criação e validação de sessões de pagamento.
+google-auth-library
+Validação de login social com Google OAuth.
+Multer
+Receção de uploads de imagens e documentos.
+compression e cors
+Otimização de respostas e controlo de acesso entre frontend e backend.
+Tabela 6- Tecnologias do Backend
+
+4.5.2 Organização geral do servidor
+O servidor é inicializado com Express e configurado para aceitar JSON, pedidos CORS, compressão e ficheiros estáticos. A ligação à base de dados é feita através de backend/config/db.js, onde é criada um pool MySQL com limite de ligações. Esta abordagem é melhor do que abrir uma ligação nova para cada pedido, porque permite reutilizar conexões e responder a vários utilizadores de forma mais eficiente.
+server.js: concentra a API REST, migrações, integrações e lógica principal do projeto.
+config/env.js: lê variáveis de ambiente e centraliza configurações de base de dados.
+config/db.js: cria a pool MySQL e fornece métodos db.get, db.all, db.run e db.exec.
+middleware/auth.js: protege rotas com JWT e valida permissões de administrador.
+
+
+
+
+
+
+
+
+4.5.3 Ciclo de funcionamento de um pedido
+O funcionamento de uma rota segue normalmente o mesmo ciclo. Primeiro o utilizador executa uma ação no site. Depois o frontend envia um pedido HTTP para a API. O backend aplica middlewares, valida dados, executa a lógica necessária, comunica com a base de dados ou com serviços externos e devolve uma resposta JSON ao frontend.
+
+
+
+
+
+
+
+
+
+
+
+Figura 21. Ciclo de um pedido no BackendFigura 21. Ciclo de um pedido no Backend
+Figura 21. Ciclo de um pedido no Backend
+Figura 21. Ciclo de um pedido no Backend
+Esta imagem representa o ciclo de funcionamento de um pedido no backend. O processo começa quando o utilizador realiza uma ação no site, como fazer login, adicionar um produto ao carrinho ou enviar uma mensagem. De seguida, o frontend envia um pedido HTTP para a API, que passa pelos middlewares responsáveis por tarefas como CORS, leitura de JSON, autenticação JWT, autorização e upload de ficheiros. Depois, o backend em Express.js valida os dados, aplica as regras de negócio e comunica com a base de dados ou com serviços externos, como Stripe, Google OAuth ou SMTP. Por fim, o backend devolve uma resposta ao frontend, normalmente em formato JSON, podendo indicar sucesso, erro ou dados atualizados. No caso do checkout, este ciclo permite validar a sessão, confirmar o carrinho, criar a encomenda e continuar o pagamento com segurança.
+
+
+
+
+
+
+4.5.4 Ligação à base de dados
+A ligação à base de dados é feita através de mysql2/promise, usando um pool de conexões. O ficheiro db.js fornece quatro métodos principais: get para obter um registo, all para obter vários registos, run para executar alterações e exec para executar scripts SQL maiores. Esta abstração torna o restante código mais simples, porque as rotas não precisam de lidar diretamente com a criação da ligação.
+db.get: usado quando se espera apenas um resultado, como procurar um utilizador pelo email.
+db.all: usado para listas, como produtos, encomendas, mensagens ou perguntas.
+db.run: usado para INSERT, UPDATE e DELETE.
+db.exec: usado em scripts e migrações com várias instruções SQL.
+
+4.5.5 Autenticação, permissões e segurança
+Figura 22. Segurança e controlo de permissões.
+
+
+
+
+A segurança do backend assenta principalmente em três elementos: passwords protegidas com bcryptjs, tokens JWT para sessões autenticadas e middlewares para proteger rotas privadas. Quando um utilizador faz login, o backend verifica a password e devolve um token. Nas rotas protegidas, esse token é enviado no cabeçalho Authorization e validado pelo middleware authenticateToken.
+
+Além da autenticação normal, existe a função isAdmin, que impede utilizadores comuns de acederem a rotas administrativas. Esta separação é essencial, porque o projeto contém ações sensíveis como apagar produtos, gerir utilizadores, resolver denúncias, editar conteúdos CMS e consultar dashboards.
+
+4.5.7 Integração com pagamentos, emails e login social
+Uma parte importante do backend é a integração com serviços externos. O Stripe é usado para pagamentos, o Nodemailer para emails e o Google OAuth para autenticação social. Estas integrações tornam a Hexomel mais próxima de uma aplicação profissional, porque representam necessidades reais de uma plataforma de e-commerce.
+Stripe: criação de sessões de checkout e verificação do estado do pagamento.
+Nodemailer: envio de verificação de email, recuperação de password, OTP de checkout e recibos.
+Google OAuth: login mais rápido e seguro através de conta Google.
+Multer: upload de imagens de produtos e documentos associados a pedidos de upgrade.
+
+4.6 Desenvolvimento da base de dados
+A base de dados MySQL foi uma das partes que mais evoluiu. Inicialmente, o projeto precisava apenas de guardar utilizadores, produtos e encomendas. Com a evolução da Hexomel, o modelo tornou-se mais robusto e passou a incluir entidades ligadas a apicultores, workshops, favoritos, avaliações, carrinho, comunidade, mensagens privadas, bloqueios, denúncias, analytics, quiz, leaderboard, factos educativos, glossário e CMS.
+A utilização de uma base de dados relacional foi adequada porque o projeto contém muitas relações entre entidades. Um cliente pode fazer várias encomendas; uma encomenda contém vários itens; um produto pertence a uma categoria, origem e apicultor; um utilizador pode ter favoritos; perguntas e respostas pertencem a autores; mensagens ligam remetentes e destinatários; denúncias referenciam utilizadores e conteúdos.
+
+4.6.1 Entidades principais
+As tabelas principais da plataforma incluem cliente, produto, categoria, origem, carrinho, item_carrinho, encomenda, item_encomenda, favoritos, avaliacao, workshop e upgrade_requests. Estas tabelas suportam o funcionamento comercial da aplicação e permitem guardar dados essenciais de utilizadores, produtos, stock, compras e pedidos de mudança de perfil.
+4.6.2 Entidades sociais e educativas
+Com a evolução do projeto, a base de dados passou a suportar também comunidade e aprendizagem. Foram adicionadas tabelas para perguntas e respostas da comunidade, mensagens privadas, bloqueios, denúncias, interações de analytics, perguntas de quiz, pontuações, factos educativos e termos de glossário. Isto permitiu que a plataforma deixasse de ser apenas uma loja e se tornasse um espaço mais completo de interação e aprendizagem.
+
+4.6.3 Integridade e evolução
+Foram usadas chaves primárias, chaves estrangeiras, índices e constraints para garantir maior consistência. Por exemplo, item_encomenda guarda o preço unitário no momento da compra, evitando incoerências caso o preço do produto mude no futuro. O uso de ON DELETE CASCADE ou ON DELETE SET NULL também ajuda a manter a base de dados coerente quando determinados registos são removidos.
+
+4.7 Autenticação e segurança
+A segurança foi uma preocupação central do desenvolvimento. O sistema de autenticação usa passwords protegidas com bcryptjs, sessões através de JSON Web Tokens e rotas protegidas por middleware. Desta forma, o backend consegue identificar o utilizador autenticado e verificar se tem permissões para executar determinada ação.
+Foram implementados três perfis principais: cliente, apicultor e administrador. O cliente pode comprar, gerir perfil, favoritos, encomendas e participar na comunidade. O apicultor tem permissões adicionais para gerir produtos, workshops e consultar estatísticas. O administrador tem acesso a ferramentas de gestão global, moderação e análise.
+Além do login tradicional, foi implementado Google OAuth para facilitar a entrada dos utilizadores. Também foi adicionado um sistema de verificação por email e 2FA associado ao checkout, aumentando a segurança antes da conclusão de uma compra.
+
+4.8 Carrinho, encomendas e checkout
+O carrinho de compras foi desenvolvido para ser persistente e prático. O utilizador pode adicionar produtos, alterar quantidades, remover itens e consultar o total antes de avançar para o checkout. A aplicação sincroniza dados entre frontend e backend, evitando que o utilizador perca a seleção de produtos durante a navegação.
+O checkout foi dividido em etapas para melhorar a experiência: primeiro são recolhidos e validados os dados de envio; depois o utilizador confirma os produtos e escolhe o método de pagamento. O sistema suporta Stripe para pagamento por cartão e inclui lógica para encomendas pendentes, permitindo que uma compra interrompida possa ser retomada posteriormente.
+Após a compra, o sistema cria registos nas tabelas encomenda e item_encomenda. Esta separação permite guardar o cabeçalho da compra e os produtos comprados individualmente. Também foi desenvolvido um sistema de recibo em HTML, preparado para consulta, download/impressão e envio por email.
+
+4.9 Área do apicultor
+A área do apicultor foi criada para representar o lado dos produtores dentro da plataforma. Um apicultor pode gerir produtos, adicionar descrições, imagens, categorias, origens e stock. Também pode criar workshops, controlar vagas e consultar estatísticas relacionadas com a sua atividade.
+Esta área é importante porque diferencia a Hexomel de uma loja tradicional. Em vez de existir apenas uma administração central a vender produtos, a plataforma permite que produtores tenham presença própria, biografia profissional e ligação direta ao cliente. Isto reforça a ideia de marketplace especializado em mel português.
+
+4.10 Área de administração
+A administração funciona como um CMS personalizado para gerir a plataforma. O administrador pode gerir produtos, categorias, origens, utilizadores, encomendas, pedidos de upgrade para apicultor, conteúdos do site, factos educativos, glossário, quiz, denúncias e bloqueios. Esta área centraliza o controlo da aplicação e permite manter a plataforma organizada.
+Também foram desenvolvidos dashboards com métricas e gráficos. Estes elementos ajudam a analisar vendas, crescimento de utilizadores, desempenho de produtos e atividade dos parceiros. A utilização de Chart.js permite transformar dados da base de dados em visualizações mais fáceis de interpretar.
+
+4.11 Comunidade HexoHive e chat privado
+A HexoHive surgiu como uma extensão social da plataforma. A comunidade inclui um sistema de perguntas e respostas onde clientes podem colocar dúvidas e apicultores podem responder. Esta funcionalidade aproxima utilizadores e produtores, criando um espaço de confiança e partilha de conhecimento.
+O chat privado permite comunicação direta entre membros. O sistema guarda mensagens na base de dados, marca mensagens como lidas, lista conversas, permite bloquear utilizadores e permite denunciar comportamentos inadequados. Para simular uma experiência próxima de redes sociais modernas, o frontend utiliza polling automático e uma interface dividida entre lista de conversas e janela de mensagens.
+A moderação foi pensada desde o início desta área. O sistema inclui filtro de linguagem imprópria, denúncias, bloqueios e restrição de utilizadores. O administrador pode consultar reports e tomar decisões para manter a comunidade segura.
+
+4.12 Secção Aprender, quiz e glossário
+A secção Aprender reforça a componente educativa da Hexomel. Para além de vender produtos, a plataforma ensina conceitos de apicultura e curiosidades sobre abelhas e mel. Foram criados cartões interativos, glossário com pesquisa, quiz gamificado e leaderboard de pontuações.
+O quiz torna a aprendizagem mais dinâmica. O utilizador responde a perguntas, recebe pontuação e pode comparar o resultado com outros membros através da tabela de liderança. O glossário ajuda a explicar termos técnicos de apicultura, tornando o site mais acessível para clientes sem conhecimento prévio na área.
+
+4.13 Síntese do desenvolvimento
+O desenvolvimento da Hexomel foi um processo progressivo, marcado por aprendizagem, tentativa, correção e melhoria contínua. O projeto começou com funcionalidades base de uma loja online, mas evoluiu para uma plataforma completa com e-commerce, autenticação segura, base de dados relacional, dashboards, área de apicultores, administração, comunidade, chat privado e aprendizagem gamificada.
+A utilização do Git permitiu registar esta evolução e comprovar que o projeto foi construído por fases. A comparação entre as primeiras funcionalidades e a versão final mostra uma evolução técnica significativa. A Hexomel deixou de ser apenas uma ideia de website e tornou-se uma aplicação web funcional, coerente com o curso de Informática e Tecnologias Multimédia e adequada ao contexto de uma Prova de Aptidão Profissional.
+Este capítulo demonstra, por isso, não apenas o resultado final, mas também o percurso feito para chegar até ele: planeamento, pesquisa, implementação, testes, correções e decisões técnicas. Esse percurso é uma parte fundamental da PAP, porque mostra a capacidade de transformar uma ideia inicial num produto digital completo.
+
+5. Aplicação
+Nesta secção é apresentada a validação visual de todas as interfaces da plataforma Hexomel desenvolvidas no âmbito do projeto, acompanhadas de uma descrição detalhada do seu layout, dos seus objetivos funcionais e da forma como os utilizadores interagem com cada ecrã.
+
+
+
+
+
+
+
+
+5.1 Página Inicial
+Figura 23. Página inicial da plataforma Hexomel.Figura 23. Página inicial da plataforma Hexomel.A página inicial é o primeiro contacto do utilizador com a plataforma. Este ecrã apresenta a identidade visual da Hexomel, com um slogan apelativo e chamadas à ação (CTAs) que incentivam o utilizador a explorar a loja e a conhecer os produtos. A interface foi desenhada de forma limpa e atrativa, contendo um menu de navegação que dá acesso à loja, aos workshops, às curiosidades, à comunidade, à informação institucional e aos contactos. Apresenta também alguns produtos em destaque e secções curtas que introduzem o compromisso da marca com o mel 100% natural e a apicultura artesanal tradicional.
+Figura 23. Página inicial da plataforma Hexomel.
+Figura 23. Página inicial da plataforma Hexomel.
+5.2 Sobre nós
+Figura 24. Página institucional "Sobre Nós".Figura 24. Página institucional "Sobre Nós".A página "Sobre Nós" apresenta o caráter institucional do projeto. O objetivo deste ecrã é transmitir o legado, a missão e a visão sustentável da marca. O utilizador encontra uma narrativa que descreve o processo tradicional de produção de mel na região da Serra da Estrela, acompanhada de fotografias reais de apicultores, colmeias e paisagens naturais. A organização deste ecrã foi pensada para transmitir segurança, qualidade e proximidade familiar, valores essenciais para o comércio de produtos biológicos.
+Figura 24. Página institucional "Sobre Nós".
+Figura 24. Página institucional "Sobre Nós".
+5.3 Loja e Catálogo
+Figura 25. Catálogo de produtos com filtros na loja online.Figura 25. Catálogo de produtos com filtros na loja online.A página da loja online exibe o catálogo completo de produtos disponíveis, como méis de rosmaninho, urze, eucalipto e derivados da colheita (pólen e própolis). Do lado esquerdo, existe uma barra de filtros dinâmicos onde o utilizador pode pesquisar por palavras-chave, selecionar categorias, origens geográficas das colmeias ou filtrar por limite de preço. Os produtos são expostos em grelha responsiva contendo a imagem, a designação do artigo, o preço e a classificação média dada pelos clientes através de estrelas.
+Figura 25. Catálogo de produtos com filtros na loja online.
+Figura 25. Catálogo de produtos com filtros na loja online.
+5.4 Detalhes do produto
+Figura 26. Ecrã de detalhes de um produto individual.Figura 26. Ecrã de detalhes de um produto individual.Ao selecionar um produto na loja, o utilizador é direcionado para o ecrã de detalhes individuais. Este ecrã divide-se em duas colunas: a coluna da esquerda apresenta a imagem ampliada do mel e a secção de avaliações escritas por clientes; a coluna da direita detalha a descrição do mel, stock em armazém, preço, origem e categoria. Contém ainda um painel informativo sobre o apicultor que produziu aquele lote de mel, com foto e breve biografia, estimulando a valorização dos produtores nacionais e do comércio justo.
+Figura 26. Ecrã de detalhes de um produto individual.
+Figura 26. Ecrã de detalhes de um produto individual.
+
+5.5 Carrinho de Compras
+Figura 27. Painel lateral do carrinho de compras.Figura 27. Painel lateral do carrinho de compras.O carrinho de compras é apresentado como uma barra lateral direita que surge de forma sobreposta no ecrã. O utilizador pode abrir esta barra a qualquer momento para verificar que produtos adicionou, ajustar a quantidade de cada item ou remover artigos sem ter de abandonar a página onde se encontra a navegar. No rodapé da barra lateral é mostrado o cálculo automático da soma total da encomenda e um botão destacado para encaminhar o utilizador para o processo de pagamento.
+Figura 27. Painel lateral do carrinho de compras.
+Figura 27. Painel lateral do carrinho de compras.
+5.6 Finalização de Compra
+Figura 28. Ecrã de introdução de dados e finalização de compra.Figura 28. Ecrã de introdução de dados e finalização de compra.O ecrã de checkout permite ao utilizador registar a morada e concluir o processo de compra. A interface divide-se de forma organizada: a área da esquerda recolhe os dados pessoais, contacto telefónico e a morada detalhada de envio da encomenda, enquanto a secção da direita exibe um resumo final com a listagem dos artigos, o cálculo dos portes de envio e o preço final a pagar, integrando a gateway segura de pagamento por cartão de crédito.
+Figura 28. Ecrã de introdução de dados e finalização de compra.
+Figura 28. Ecrã de introdução de dados e finalização de compra.
+
+5.6 Fórum da Comunidade
+Figura 29. Fórum comunitário com perguntas e respostas.Figura 29. Fórum comunitário com perguntas e respostas.A área de comunidade funciona como um fórum público de partilha e esclarecimento de dúvidas entre apicultores e consumidores. Os utilizadores podem publicar perguntas gerais ou responder a dúvidas de outros membros. As respostas que forem fornecidas por profissionais registados são identificadas por uma moldura verde e pelo selo "Apicultor Verificado", garantindo credibilidade técnica às discussões da comunidade.
+Figura 29. Fórum comunitário com perguntas e respostas.
+Figura 29. Fórum comunitário com perguntas e respostas.
+5.7 Rede Social HexoHive
+O HexoHive é a rede social integrada na plataforma, permitindo um contacto mais informal entre a comunidade. A interface apresenta uma caixa de texto e imagem para criação de novas publicações no topo, seguida de um feed cronológico onde são exibidas as publicações dos membros. Os utilizadores podem interagir com as partilhas através de gostos e comentários, promovendo uma comunidade viva e interessada no mundo das abelhas.
+Figura 30.  Feed de publicações na rede social HexoHive.Figura 30.  Feed de publicações na rede social HexoHive.
+Figura 30.  Feed de publicações na rede social HexoHive.
+Figura 30.  Feed de publicações na rede social HexoHive.
+
+
+5.8 Central Aprender
+Figura 31. Secção educativa com quiz e glossário.Figura 31. Secção educativa com quiz e glossário.Esta secção funciona como um centro de e-learning focado no ensino sobre as abelhas, a colheita de mel e a sustentabilidade ambiental. O ecrã apresenta no topo um quiz interativo com perguntas de escolha múltipla sobre apicultura, permitindo ao utilizador testar as suas competências lúdicas. Na metade inferior, é apresentado um glossário alfabético interativo, onde é possível pesquisar e filtrar termos científicos de apicultura de forma celeremente.
+Figura 31. Secção educativa com quiz e glossário.
+Figura 31. Secção educativa com quiz e glossário.
+5.9 Assistente Virtual Melita
+Figura 32. Janela de diálogo com a assistente virtual Melita.Figura 32. Janela de diálogo com a assistente virtual Melita.A Melita é a assistente virtual e mascote inteligente do site. A sua janela de diálogo surge ao clicar no botão flutuante posicionado no canto inferior direito das páginas. O utilizador pode dialogar de forma livre através da caixa de escrita inferior ou optar por clicar em sugestões rápidas (chips) pré-configuradas. A assistente responde fornecendo informações rápidas sobre produtos, parcerias locais, redes sociais, workshops ou indicando caminhos de navegação.
+Figura 32. Janela de diálogo com a assistente virtual Melita.
+Figura 32. Janela de diálogo com a assistente virtual Melita.
+
+5.10 Experiência 3D Interativa
+Figura 33. Visualização tridimensional interativa de frasco de mel.Figura 33. Visualização tridimensional interativa de frasco de mel.A página de curiosidades oferece uma experiência interativa avançada. O elemento central deste ecrã é a modelagem tridimensional foto realista de um frasco de mel Hexomel. Através do painel lateral de controlo deslizante, o utilizador pode transitar entre os diferentes tipos de meles biológicos disponíveis na loja. A alteração no painel de controlo altera visualmente e em tempo real a cor, a opacidade e a refração da luz do líquido no frasco 3D, simulando com fidelidade o mel real.
+Figura 33. Visualização tridimensional interativa de frasco de mel.
+Figura 33. Visualização tridimensional interativa de frasco de mel.
+
+5.11 Agenda de Workshops
+Figura 34.  Lista de workshops de apicultura disponíveis.Figura 34.  Lista de workshops de apicultura disponíveis.Este ecrã apresenta o catálogo de formações, sessões de aprendizagem e workshops práticos marcados nas colmeias dos apicultores parceiros. Os eventos são dispostos em formato de cartões visuais que reúnem a fotografia ilustrativa, o título da formação, a data, o horário, a localização, o preço e o número de vagas ainda disponíveis em tempo real. O utilizador registado pode clicar no botão para reservar o seu bilhete de participação.
+Figura 34.  Lista de workshops de apicultura disponíveis.
+Figura 34.  Lista de workshops de apicultura disponíveis.
+5.12 Painel de Login e Registo
+Figura 35. Janela modal de início de sessão e registo.Figura 35. Janela modal de início de sessão e registo.O modal de autenticação é a janela central que surge no ecrã sempre que o utilizador deseja iniciar sessão ou efetuar o registo de uma nova conta no site. O layout da janela disponibiliza abas fáceis para alternar entre login e registo de novos utilizadores, campos básicos de preenchimento (e-mail e palavra-passe com controlo de visibilidade) e o botão integrado para efetuar login social rápido e seguro através da conta Google.
+Figura 35. Janela modal de início de sessão e registo.
+Figura 35. Janela modal de início de sessão e registo.
+
+5.13 Painel de Perfil de Utilizador
+Figura 36. Ecrã de perfil do utilizador comum.Figura 36. Ecrã de perfil do utilizador comum.A página de perfil pessoal destina-se a dar autonomia de gestão aos clientes registados da plataforma. A interface está dividida por áreas modulares num menu lateral, permitindo ao utilizador consultar e alterar os seus dados pessoais, verificar o histórico cronológico de encomendas e faturas já pagas, criar uma lista de produtos favoritos e gerir as definições de segurança da conta.
+Figura 36. Ecrã de perfil do utilizador comum.
+Figura 36. Ecrã de perfil do utilizador comum.
+
+5.14 Segurança do Perfil
+Figura 37. Separador de definições de segurança do perfil.Figura 37. Separador de definições de segurança do perfil.Este ecrã permite ao utilizador gerir as definições de segurança e a proteção da sua conta na plataforma. O painel central exibe as opções para alteração de palavra-passe e apresenta o estado da autenticação de dois fatores (2FA). Quando ativa, esta camada adicional de segurança garante que qualquer transação crítica, como a finalização de compras ou a alteração de dados pessoais, requer uma verificação extra, protegendo a conta contra acessos não autorizados.
+Figura 37. Separador de definições de segurança do perfil.
+Figura 37. Separador de definições de segurança do perfil.
+5.15 Perfil do Apicultor
+Figura 38. Perfil público do apicultor.Figura 38. Perfil público do apicultor.O ecrã de perfil do apicultor exibe a página de apresentação pública de um produtor parceiro da plataforma. Este ecrã reúne a imagem de perfil do apicultor, o seu selo de autenticidade, biografia e as opções de contacto social. Apresenta também, em grelhas dedicadas, os meles e derivados produzidos por si que estão à venda na loja, bem como a agenda dos próximos workshops de apicultura marcados para as suas colmeias, promovendo a proximidade direta entre o produtor e o consumidor final.
+Figura 38. Perfil público do apicultor.
+Figura 38. Perfil público do apicultor.
+
+5.16 Dashboard de Apicultor
+Figura 39. Painel de controlo e gestão para apicultores.Figura 39. Painel de controlo e gestão para apicultores.O painel de apicultor é uma área reservada para os produtores parceiros gerirem a sua presença comercial no site. Neste ecrã, o apicultor pode cadastrar novos méis e derivados, definir preços de venda e gerir os níveis de stock. Dispõe também de abas para acompanhar o volume de faturação mensal do seu mel e para registar ou editar novas sessões de workshops de apicultura associadas ao seu apiário.
+Figura 39. Painel de controlo e gestão para apicultores.
+Figura 39. Painel de controlo e gestão para apicultores.
+
+5.17 Painel Administrativo Geral
+Figura 40. Painel administrativo com estatísticas e gráficos globais.Figura 40. Painel administrativo com estatísticas e gráficos globais.O painel do administrador geral é o ecrã reservado à moderação e análise estatística global do Hexomel. O layout apresenta no topo indicadores chave (KPIs) com o número total de utilizadores, encomendas, faturas e mensagens. Na metade inferior, exibe gráficos estatísticos de vendas mensais e registo de novas contas no site. Contém também menus de controlo lateral para gerir utilizadores, locais de produção e gerir as publicações da comunidade e rede social.
+Figura 40. Painel administrativo com estatísticas e gráficos globais.
+Figura 40. Painel administrativo com estatísticas e gráficos globais.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2.Capítulo…
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem.
+
+2.1.Subcapítulo…
+Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis.
+
+— Apagar —
+Engloba o desenvolvimento sequencial dos temas, onde se desenvolve a descrição, a análise, a sistematização e a explicação da temática.
+Pode ser subdividida em partes, capítulos, subcapítulos, de acordo com as exigências do tema e as opções do autor.
+
+As tabelas devem ser numeradas com algarismos arábicos (1, 2, 3, …). O título deve ser escrito no topo, centrado (Arial Narrow, 9 pt). Os cabeçalhos das tabelas devem ser descritivos, embora breves. Sempre que possível, as tabelas devem aparecer referenciadas no corpo do texto. Por exemplo:
+«A Tabela 1 apresenta as gerações de evolução da Tecnologia …»
+
+Tabela 7. As várias gerações de evolução da tecnologia
+Colaborativa
+Administrativa
+Abc
+Abc
+
+
+As figuras devem ser numeradas com algarismos arábicos (1, 2, 3, …). A legenda deve ser colocada a seguir à imagem, centrada (Arial Narrow, 9 pt). As legendas das figuras devem ser descritivas, embora breves. Sempre que possível, as figuras devem aparecer referenciadas no corpo do texto. Por exemplo:
+«O eletrocardiógrafo (Figura 1) é um aparelho…»
+
+
+Figura 41. Exemplo de um eletrocardiógrafo
+
+
+Conclusão
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est. Vivamus a tellus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci. Aenean nec lorem.
+Donec ut est in lectus consequat consequat. Etiam eget dui. Aliquam erat volutpat. Sed at lorem in nunc por-ta tristique. Proin nec augue. Quisque aliquam tempor magna. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nunc ac magna. Maecenas odio dolor, vulputate vel, auctor ac, accumsan id, felis. Pellentesque cursus sagittis felis.
+
+— Apagar —
+Pode ser apresentada sob a forma parcial, por exemplo no final de cada capítulo. Tal não invalida a existência de uma conclusão geral que não deve repetir as conclusões parcelares já apresentadas ao longo do trabalho.
+É elaborada na conclusão dos estudos, representa a síntese do trabalho, sendo clara e breve (máximo 1/10 das páginas do corpo do trabalho).
+Está intimamente relacionada com a introdução fornecendo respostas às questões aí levantadas, apresentando as conclusões e os resultados.
+Contém um balanço dos objetivos (referindo os que foram alcançados e os que ficaram por cumprir), bem como das dúvidas, das indicações e dos constrangimentos surgidos ao longo da sua elaboração.
+Inclui as consequências dos resultados para a resolução dos problemas e as perspetivas para investigações futuras.
+Não se usam citações e nem referências bibliográficas.
+
+Referências bibliográficas
+Almeida, A. C. P. de. (2019). Implementação de uma academia de conhecimento em contexto industrial: Uma proposta metodológica [Tese de Mestrado, Universidade de Aveiro]. Repositório Institucional da Universidade de Aveiro. https://ria.ua.pt/handle/10773/26809
+Ashwin, P. (2006). Changing higher education: The development of learning and teaching. Routledge.
+Barlow, D. H. (2014). Clinical handbook of psychological disorders: A step-by-step treatment manual. The Guilford Press. http://books.google.pt/books?id=FCTyAgAAQBAJ
+Craik, F., & Lockhart, R. (1972). Levels of processing: A framework for memory research. Journal of Verbal Learning and Verbal Behavior, 11(6), 671-684. https://d0i.0rg/l 0.1016/S0022- 5371(72)80001-X
+Despacho n.° 17169/2011 do Ministério da Educação e Ciência. (2011). Diário da República: II série, n.° 245. https://dre.pt/application/file/1010956
+Giovanetti, F. (2019, novembro 16). Why we are so obsessed with personality types. Medium. https://medium.com/the-business-of-wellness/why-we-are- so-obsessed-with-personality-types-577450f9aee9
+Universidade de Aveiro. (2020). Apoio ao ensino. https://www.ua.pt/pt/apoio- ensino
+
+
+— Apagar —
+Para a realização da lista de referências bibliográficas devem ser seguidas as seguintes indicações:
+A lista de referências bibliográficas deve figurar no final do documento, antes do glossário e dos apêndices/anexos (caso existam), e respeitar um formato apresentação (normas APA).
+A lista de referências bibliográficas deve ser organizada por ordem alfabética do apelido do primeiro autor de cada uma das referências.
+Apenas figuram na lista de referências bibliográficas os documentos citados ao longo do texto, a não ser que a sua menção seja de particular importância. Neste caso faz-se a distinção entre Bibliografia (lista de todas as fontes consultadas durante o trabalho de pesquisa) e Referências bibliográficas (lista de fontes citadas no relatório).
+Todas as entradas de citações no texto devem corresponder a uma referência bibliográfica.
+Não devem referir-se dicionários a não ser que sejam especializados.
+
+
+Glossário
+Lorem: Ipsum dolor sit amet, consectetuer adipiscing elit.
+Maecenas: Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna.
+Pellentesque: Habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+
+— Apagar —
+Relação em ordem alfabética de palavras ou expressões técnicas de uso restrito, acompanhadas das respetivas definições.
+Não é obrigatório inserir.
+
+
+Apêndices/Anexos
+— Apagar —
+O apêndice funciona como um texto de prolongamento da obra e é da autoria do autor da obra.
+O anexo é a compilação de dados, gráficos, ilustrações e outros elementos que não são da responsabilidade do autor da obra.
+Não é obrigatório inserir.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

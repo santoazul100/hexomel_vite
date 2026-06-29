@@ -243,7 +243,20 @@ export const handleSessionExpired = async (
   window.location.href = "/";
 };
 
-export const logout = () => {
+export const logout = async () => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    } catch (err) {
+      console.error("Error on backend logout:", err);
+    }
+  }
   clearSession();
   window.location.href = "/";
 };
@@ -251,6 +264,9 @@ export const logout = () => {
 // Google Auth Integration
 export const initializeGoogleAuth = async () => {
   if (!window.google || googleInitialized) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("admin") === "true") return;
 
   const { googleClientId } = await getPublicConfig();
   if (!googleClientId) return;
@@ -447,7 +463,16 @@ export function updateNav(user) {
     }, 1200);
 
   } else {
-    const isAuthPage = window.location.pathname.includes("login.html") || window.location.pathname.includes("register.html") || window.location.pathname.includes("verify-email.html") || window.location.pathname.includes("recuperar.html");
+    const path = window.location.pathname;
+    const isAuthPage =
+      path.includes("login.html") ||
+      path.includes("register.html") ||
+      path.includes("verify-email.html") ||
+      path.includes("recuperar.html") ||
+      path === "/login" ||
+      path === "/register" ||
+      path === "/verify-email" ||
+      path === "/recuperar";
     authSection.innerHTML = isAuthPage ? "" : `
       <div class="d-flex align-items-center gap-2">
         <button class="btn btn-nav-auth-filled" data-i18n="auth.login" onclick="window.openAuthModal('login')">Iniciar Sessão</button>
@@ -474,7 +499,9 @@ export function updateNav(user) {
 if (
   typeof document !== "undefined" &&
   (window.location.pathname.includes("login.html") ||
-    window.location.pathname.includes("register.html"))
+    window.location.pathname.includes("register.html") ||
+    window.location.pathname === "/login" ||
+    window.location.pathname === "/register")
 ) {
   document.addEventListener("DOMContentLoaded", initializeAuthForms);
 }

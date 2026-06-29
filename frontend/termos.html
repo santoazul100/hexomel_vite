@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hexomel — Termos, Condições e Privacidade</title>
+    <meta name="description" content="Consulte os Termos e Condições de Serviço e a Política de Privacidade da Hexomel." />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="src/styles/index.css" />
+    <link rel="stylesheet" href="src/styles/modern.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="icon" href="/favicon.webp" type="image/x-icon" />
+    <script src="src/pre-load.js"></script>
+    <meta name="view-transition" content="same-origin" />
+    <style>
+      .terms-hero {
+        background: linear-gradient(180deg, #fefdf8 0%, #f4f7f5 100%);
+        padding: 130px 0 60px;
+      }
+      .terms-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.02);
+        margin-bottom: 2rem;
+      }
+      .terms-card h3 {
+        font-family: var(--font-heading, "Outfit", sans-serif);
+        font-weight: 700;
+        color: var(--primary-green, #1a4d2e);
+        font-size: 1.35rem;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+      }
+      .terms-card h3 i {
+        color: var(--secondary-gold, #f4b400);
+        margin-right: 12px;
+      }
+      .terms-card p, .terms-card li {
+        color: #555;
+        line-height: 1.8;
+        font-size: 0.98rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="navbar-logo" />
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav mx-auto gap-4">
+            <li class="nav-item"><a class="nav-link" href="index.html" data-i18n="nav.home">Início</a></li>
+            <li class="nav-item"><a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a></li>
+            <li class="nav-item"><a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
+              <ul class="dropdown-menu dropdown-menu-hexomel">
+                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
+                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a></li>
+            <li class="nav-item"><a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a></li>
+          </ul>
+          <div class="d-flex align-items-center navbar-right-fixed">
+            <div class="cart-navbar-separate me-3">
+              <button id="cart-btn" class="btn btn-link text-decoration-none text-dark position-relative p-0">
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span id="cart-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0">0</span>
+              </button>
+            </div>
+            <div class="d-flex align-items-center gap-3" id="authSection"></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- Hero -->
+      <section class="terms-hero position-relative text-center">
+        <div class="bee-container">
+          <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
+          <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
+        </div>
+        <div class="container position-relative z-1">
+          <span class="product-badge-premium mb-3 d-inline-block px-4 py-2" style="background:rgba(26,77,46,0.08);color:var(--primary-green);"><i class="fas fa-shield-alt me-2"></i>LEGAL & COMPLIANCE</span>
+          <h1 class="display-4 fw-bold mb-3" style="color:var(--primary-green)">Termos e Condições de Serviço</h1>
+          <p class="text-muted fs-5 mx-auto mb-4" style="max-width: 600px;">Última atualização: 2026. Conheça os nossos compromissos de transparência, privacidade e proteção do consumidor.</p>
+        </div>
+      </section>
+
+      <!-- Content Cards -->
+      <section class="py-5 bg-white">
+        <div class="container py-3" style="max-width: 900px;">
+          
+          <div class="terms-card">
+            <h3><i class="fas fa-file-contract"></i> 1. Condições Gerais e Propriedade Intelectual</h3>
+            <p>A plataforma e marca <strong>Hexomel</strong> são propriedade dedicada à apicultura artesanal em Portugal. Todo o conteúdo textual, fotográfico, logótipos e ilustrações exibidos no site estão protegidos pelos direitos de autor e propriedade intelectual.</p>
+          </div>
+
+          <div class="terms-card">
+            <h3><i class="fas fa-shopping-bag"></i> 2. Processo de Encomenda e Preços</h3>
+            <p>Todos os preços exibidos na loja incluem IVA à taxa legal em vigor em Portugal. As encomendas estão sujeitas à disponibilidade de stock de cada colheita de mel. Caso um produto fique temporariamente indisponível após o pedido, o cliente será reembolsado integralmente ou notificado sobre a previsão de nova extração.</p>
+          </div>
+
+          <div class="terms-card">
+            <h3><i class="fas fa-truck-loading"></i> 3. Devoluções e Reembolsos</h3>
+            <p>Nos termos da legislação europeia de defesa do consumidor, dispõe de <strong>14 dias</strong> a contar da receção da encomenda para proceder à devolução. Por motivos de higiene e segurança alimentar, os frascos de mel e produtos apícolas apenas podem ser devolvidos com o selo de garantia intacto e embalagem original não violada.</p>
+          </div>
+
+          <div class="terms-card">
+            <h3><i class="fas fa-user-lock"></i> 4. Política de Privacidade e Proteção de Dados (RGPD)</h3>
+            <p>A Hexomel compromete-se a proteger rigorosamente os seus dados pessoais. Todas as informações recolhidas (nome, morada, contacto telefónico e email) destinam-se exclusivamente ao processamento das suas encomendas e faturação. Não partilhamos nem vendemos dados a terceiros.</p>
+          </div>
+
+          <div class="terms-card">
+            <h3><i class="fas fa-envelope-open-text"></i> 5. Resolução de Litígios e Contactos</h3>
+            <p class="mb-0">Para qualquer esclarecimento ou questão jurídica, pode contactar o nosso suporte através do email <strong class="text-success">hexomelpap@gmail.com</strong> ou morada oficial na Serra da Estrela, Portugal.</p>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-premium">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <a href="index.html" class="footer-brand"><img src="/images/logo_hexomel.webp" alt="Hexomel Logo" class="footer-logo" /></a>
+            <p class="mb-4 text-white-50" style="max-width: 300px; font-size: 0.95rem; line-height: 1.6">Dedicados à produção de mel 100% natural, preservando a pureza e a tradição apícola em cada gota.</p>
+            <div class="social-links">
+              <a href="https://instagram.com" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+              <a href="https://facebook.com" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+              <a href="https://wa.me/351912345678" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-2 ms-lg-auto">
+            <h5 class="footer-heading">Navegação</h5>
+            <ul class="list-unstyled">
+              <li><a href="index.html" class="footer-link">Início</a></li>
+              <li><a href="shop.html" class="footer-link">Produtos</a></li>
+              <li><a href="workshops.html" class="footer-link">Workshops</a></li>
+              <li><a href="about.html" class="footer-link">Sobre</a></li>
+              <li><a href="contact.html" class="footer-link">Contactos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2">
+            <h5 class="footer-heading">Pedido</h5>
+            <ul class="list-unstyled">
+              <li><a href="#" onclick="document.getElementById('cart-btn')?.click(); return false;" class="footer-link">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" style="color:#f4b400 !important">Termos</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-3">
+            <h5 class="footer-heading">Contactos</h5>
+            <p class="small mb-2 text-white"><i class="fas fa-map-marker-alt me-2 text-warning"></i> Serra da Estrela, Portugal</p>
+            <p class="small mb-2 text-white"><i class="fas fa-phone me-2 text-warning"></i> +351 912 345 678</p>
+            <p class="small mb-4 text-white"><i class="fas fa-envelope me-2 text-warning"></i> hexomelpap@gmail.com</p>
+          </div>
+        </div>
+        <hr class="my-5 opacity-10" />
+        <div class="text-center small opacity-50"><p class="mb-0">&copy; 2026 Hexomel — Todos os direitos reservados.</p></div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

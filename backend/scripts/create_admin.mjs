@@ -18,13 +18,13 @@ const [rows] = await pool.execute("SELECT * FROM cliente WHERE Email = ?", [
 
 if (rows.length > 0) {
   await pool.execute(
-    "UPDATE cliente SET Senha = ?, UserType = 'admin', Nome = 'Admin Hexomel' WHERE Email = ?",
+    "UPDATE cliente SET Senha = ?, UserType = 'admin', Nome = 'Admin Hexomel', Is_Verified = 1 WHERE Email = ?",
     [hash, email],
   );
   console.log(`✅ Admin user updated: ${email} / ${password}`);
 } else {
   await pool.execute(
-    "INSERT INTO cliente (Nome, Email, Senha, UserType) VALUES (?, ?, ?, 'admin')",
+    "INSERT INTO cliente (Nome, Email, Senha, UserType, Is_Verified) VALUES (?, ?, ?, 'admin', 1)",
     ["Admin Hexomel", email, hash],
   );
   console.log(`✅ Admin user created: ${email} / ${password}`);

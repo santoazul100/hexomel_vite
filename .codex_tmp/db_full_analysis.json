@@ -1,0 +1,1111 @@
+{
+  "table_count": 28,
+  "fk_count": 30,
+  "route_count": 152,
+  "tables": [
+    {
+      "name": "aprender_facto",
+      "columns": [
+        {
+          "name": "ID_Facto",
+          "type": "INT"
+        },
+        {
+          "name": "Titulo",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Icon_Frente",
+          "type": "VARCHAR(100)"
+        },
+        {
+          "name": "Icon_Verso",
+          "type": "VARCHAR(100)"
+        },
+        {
+          "name": "Conteudo_Verso",
+          "type": "TEXT"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "aprender_glossario",
+      "columns": [
+        {
+          "name": "ID_Glossario",
+          "type": "INT"
+        },
+        {
+          "name": "Termo",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Definicao",
+          "type": "TEXT"
+        },
+        {
+          "name": "Icon",
+          "type": "VARCHAR(100)"
+        },
+        {
+          "name": "Categoria",
+          "type": "VARCHAR(50)"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "avaliacao",
+      "columns": [
+        {
+          "name": "ID_Avaliacao",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nota",
+          "type": "tinyint(1)"
+        },
+        {
+          "name": "Comentario",
+          "type": "varchar(500)"
+        },
+        {
+          "name": "Data_Avaliacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "bloqueio",
+      "columns": [
+        {
+          "name": "ID_Bloqueador",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Bloqueado",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Bloqueio",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Bloqueador",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Bloqueado",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "carrinho",
+      "columns": [
+        {
+          "name": "ID_Carrinho",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "categoria",
+      "columns": [
+        {
+          "name": "ID_Categoria",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "cliente",
+      "columns": [
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "Email",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "Username",
+          "type": "varchar(60)"
+        },
+        {
+          "name": "Senha",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Picture",
+          "type": "TEXT"
+        },
+        {
+          "name": "Morada",
+          "type": "TEXT"
+        },
+        {
+          "name": "Telefone",
+          "type": "varchar(30)"
+        },
+        {
+          "name": "UserType",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "Bio",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Resgistro",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Restrito_Postar",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "Favoritos_Publicos",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "Encomendas_Publicas",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "Is_Verified",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "Verification_Token",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Checkout_OTP",
+          "type": "VARCHAR(10)"
+        },
+        {
+          "name": "Checkout_OTP_Expires",
+          "type": "DATETIME"
+        },
+        {
+          "name": "Checkout_Verified",
+          "type": "BOOLEAN"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "cms_content",
+      "columns": [
+        {
+          "name": "ID_Content",
+          "type": "int(10)"
+        },
+        {
+          "name": "Page_Key",
+          "type": "varchar(50)"
+        },
+        {
+          "name": "Block_Key",
+          "type": "varchar(100)"
+        },
+        {
+          "name": "Type",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "Content_Value",
+          "type": "text"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "denuncia",
+      "columns": [
+        {
+          "name": "ID_Denuncia",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Denunciante",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Denunciado",
+          "type": "int(10)"
+        },
+        {
+          "name": "Tipo_Item",
+          "type": "VARCHAR(50)"
+        },
+        {
+          "name": "ID_Item",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto_Item",
+          "type": "TEXT"
+        },
+        {
+          "name": "Motivo",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Denuncia",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Status",
+          "type": "VARCHAR(20)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Denunciante",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Denunciado",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "encomenda",
+      "columns": [
+        {
+          "name": "ID_Encomenda",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Encomenda",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Total",
+          "type": "decimal(10,2)"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(50)"
+        },
+        {
+          "name": "Morada",
+          "type": "TEXT"
+        },
+        {
+          "name": "Telefone",
+          "type": "varchar(30)"
+        },
+        {
+          "name": "Custo_Envio",
+          "type": "DECIMAL(10,2)"
+        },
+        {
+          "name": "Tipo_Envio",
+          "type": "VARCHAR(50)"
+        },
+        {
+          "name": "Nome",
+          "type": "VARCHAR(120)"
+        },
+        {
+          "name": "Apelido",
+          "type": "VARCHAR(120)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "favoritos",
+      "columns": [
+        {
+          "name": "ID_Favorito",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "interacao",
+      "columns": [
+        {
+          "name": "ID_Interacao",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Tipo",
+          "type": "varchar(50)"
+        },
+        {
+          "name": "Pagina",
+          "type": "varchar(150)"
+        },
+        {
+          "name": "Dados",
+          "type": "JSON"
+        },
+        {
+          "name": "Data_Interacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "name": "item_carrinho",
+      "columns": [
+        {
+          "name": "ID_itemCarrinho",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Carrinho",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "Quantidade",
+          "type": "int(30)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Carrinho",
+          "ref_table": "carrinho",
+          "ref_col": "ID_Carrinho",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "item_encomenda",
+      "columns": [
+        {
+          "name": "ID_ItemEncomenda",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Encomenda",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "Quantidade",
+          "type": "int(30)"
+        },
+        {
+          "name": "Preco_Unitario",
+          "type": "decimal(10,2)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Encomenda",
+          "ref_table": "encomenda",
+          "ref_col": "ID_Encomenda",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Produto",
+          "ref_table": "produto",
+          "ref_col": "ID_Produto",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "mensagem_privada",
+      "columns": [
+        {
+          "name": "ID_Mensagem",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Remetente",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Destinatario",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Envio",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Lida",
+          "type": "BOOLEAN"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Remetente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Destinatario",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "menu_nav",
+      "columns": [
+        {
+          "name": "ID_Menu",
+          "type": "int(10)"
+        },
+        {
+          "name": "Label",
+          "type": "varchar(100)"
+        },
+        {
+          "name": "Link",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Ordenacao",
+          "type": "int(10)"
+        },
+        {
+          "name": "Ativo",
+          "type": "boolean"
+        },
+        {
+          "name": "Abrir_Nova_Aba",
+          "type": "boolean"
+        },
+        {
+          "name": "ID_Parent",
+          "type": "INT(10)"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "origem",
+      "columns": [
+        {
+          "name": "ID_Origem",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "password_recovery",
+      "columns": [
+        {
+          "name": "ID_Recovery",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Token",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Expires_At",
+          "type": "datetime"
+        },
+        {
+          "name": "Used",
+          "type": "boolean"
+        },
+        {
+          "name": "Created_At",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "pergunta_comunidade",
+      "columns": [
+        {
+          "name": "ID_Pergunta",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto",
+          "type": "text"
+        },
+        {
+          "name": "Votos",
+          "type": "int(11)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "produto",
+      "columns": [
+        {
+          "name": "ID_Produto",
+          "type": "int(10)"
+        },
+        {
+          "name": "Nome",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "Preco",
+          "type": "decimal(10,2)"
+        },
+        {
+          "name": "Stock",
+          "type": "int(30)"
+        },
+        {
+          "name": "ID_Categoria",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Origem",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Apicultor",
+          "type": "int(10)"
+        },
+        {
+          "name": "Descricao",
+          "type": "TEXT"
+        },
+        {
+          "name": "Imagem",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Tags",
+          "type": "TEXT"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "Slug",
+          "type": "VARCHAR(200)"
+        },
+        {
+          "name": "Em_Destaque",
+          "type": "tinyint(1)"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Apicultor",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE SET NULL"
+        },
+        {
+          "column": "ID_Origem",
+          "ref_table": "origem",
+          "ref_col": "ID_Origem",
+          "rule": "ON DELETE SET NULL"
+        },
+        {
+          "column": "ID_Categoria",
+          "ref_table": "categoria",
+          "ref_col": "ID_Categoria",
+          "rule": "ON DELETE SET NULL"
+        }
+      ]
+    },
+    {
+      "name": "quiz_pergunta",
+      "columns": [
+        {
+          "name": "ID_Pergunta",
+          "type": "int(10)"
+        },
+        {
+          "name": "Pergunta",
+          "type": "TEXT"
+        },
+        {
+          "name": "Opcao1",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Opcao2",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Opcao3",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Opcao4",
+          "type": "VARCHAR(255)"
+        },
+        {
+          "name": "Resposta_Correta",
+          "type": "INT"
+        },
+        {
+          "name": "Explicacao",
+          "type": "TEXT"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "quiz_score",
+      "columns": [
+        {
+          "name": "ID_Score",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Score",
+          "type": "INT"
+        },
+        {
+          "name": "Max_Score",
+          "type": "INT"
+        },
+        {
+          "name": "Data_Score",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "reserva_workshop",
+      "columns": [
+        {
+          "name": "ID_Reserva",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Workshop",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Reserva",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Workshop",
+          "ref_table": "workshop",
+          "ref_col": "ID_Workshop",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "resposta_comunidade",
+      "columns": [
+        {
+          "name": "ID_Resposta",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Pergunta",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Texto",
+          "type": "text"
+        },
+        {
+          "name": "Votos",
+          "type": "int(11)"
+        },
+        {
+          "name": "Melhor_Resposta",
+          "type": "tinyint(1)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Pergunta",
+          "ref_table": "pergunta_comunidade",
+          "ref_col": "ID_Pergunta",
+          "rule": "ON DELETE CASCADE"
+        },
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "site_settings",
+      "columns": [
+        {
+          "name": "setting_key",
+          "type": "VARCHAR(100)"
+        },
+        {
+          "name": "setting_value",
+          "type": "TEXT"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "site_slugs",
+      "columns": [
+        {
+          "name": "ID_Slug",
+          "type": "int(10)"
+        },
+        {
+          "name": "Pagina",
+          "type": "VARCHAR(60)"
+        },
+        {
+          "name": "Slug",
+          "type": "VARCHAR(200)"
+        },
+        {
+          "name": "Titulo_SEO",
+          "type": "VARCHAR(200)"
+        },
+        {
+          "name": "Descricao_SEO",
+          "type": "TEXT"
+        }
+      ],
+      "fks": []
+    },
+    {
+      "name": "upgrade_requests",
+      "columns": [
+        {
+          "name": "ID_Request",
+          "type": "int(10)"
+        },
+        {
+          "name": "ID_Cliente",
+          "type": "int(10)"
+        },
+        {
+          "name": "Descricao",
+          "type": "TEXT"
+        },
+        {
+          "name": "Documento",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "Data_Pedido",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "Data_Processamento",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Cliente",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "workshop",
+      "columns": [
+        {
+          "name": "ID_Workshop",
+          "type": "int(10)"
+        },
+        {
+          "name": "Titulo",
+          "type": "varchar(150)"
+        },
+        {
+          "name": "Descricao",
+          "type": "text"
+        },
+        {
+          "name": "Data_Realizacao",
+          "type": "datetime"
+        },
+        {
+          "name": "Preco",
+          "type": "decimal(10,2)"
+        },
+        {
+          "name": "Vagas",
+          "type": "int(11)"
+        },
+        {
+          "name": "Imagem",
+          "type": "varchar(255)"
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "ID_Apicultor",
+          "type": "int(10)"
+        },
+        {
+          "name": "Data_Criacao",
+          "type": "timestamp"
+        }
+      ],
+      "fks": [
+        {
+          "column": "ID_Apicultor",
+          "ref_table": "cliente",
+          "ref_col": "ID_Cliente",
+          "rule": "ON DELETE CASCADE"
+        }
+      ]
+    }
+  ],
+  "areas": {
+    "Comércio": [
+      "produto",
+      "categoria",
+      "origem",
+      "carrinho",
+      "item_carrinho",
+      "encomenda",
+      "item_encomenda",
+      "favoritos",
+      "avaliacao"
+    ],
+    "Utilizadores e segurança": [
+      "cliente",
+      "password_recovery",
+      "upgrade_requests"
+    ],
+    "Apicultores e workshops": [
+      "workshop",
+      "reserva_workshop"
+    ],
+    "Comunidade social": [
+      "pergunta_comunidade",
+      "resposta_comunidade",
+      "mensagem_privada",
+      "bloqueio",
+      "denuncia"
+    ],
+    "Aprendizagem": [
+      "quiz_pergunta",
+      "quiz_score",
+      "aprender_facto",
+      "aprender_glossario"
+    ],
+    "Gestão e SEO": [
+      "interacao",
+      "site_slugs",
+      "site_settings",
+      "menu_nav",
+      "cms_content"
+    ]
+  }
+}

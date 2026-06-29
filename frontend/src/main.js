@@ -1,8 +1,8 @@
 import "./styles/index.css";
 import "./styles/i18n.css";
-// import "./styles/modern.css";
-// Note: modern.css is loaded via HTML now to avoid FOUC
+import "./styles/chatbot.css";
 import { initI18n, createLangToggle, getLang } from "./i18n.js";
+import { initMelitaChatbot } from "./chatbot.js";
 import {
   getLoggedUser,
   logout,
@@ -14,6 +14,7 @@ import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { trackPageView, setupAutoTracking } from "./analytics.js";
 import { API_URL, ensureBackendReady, parseJsonSafely } from "./api.js";
+import { app } from "./common.js";
 
 // Global fetch interceptor for automatic logout on 401 Unauthorized
 const originalFetch = window.fetch;
@@ -248,6 +249,7 @@ window.addEventListener("scroll", () => {
 
 // Initialize
 document.addEventListener("DOMContentLoaded", async () => {
+  app.checkMaintenanceMode();
   trackPageView(); // Global analytics
   setupAutoTracking(); // Automatic click tracking
   injectAuthModal();
@@ -265,6 +267,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Initialize i18n (apply saved language)
   initI18n();
+
+  // Initialize Melita Chatbot
+  initMelitaChatbot();
 
   // Apply admin-managed SEO title/description for the current page
   await applySiteSEO();
@@ -479,7 +484,7 @@ function injectAuthModal() {
             </div>
             <label class="terms-label-v2">
               <input type="checkbox" id="terms-checkbox-v2" required>
-              <span>Aceito os <a href="#" class="terms-link">Termos e Condições</a></span>
+              <span>Aceito os <a href="/termos.html" class="terms-link" target="_blank">Termos e Condições</a></span>
             </label>
             <button type="submit" class="auth-btn-primary" id="register-submit-v2">Criar conta</button>
           </form>
@@ -600,17 +605,18 @@ export async function loadDynamicMenu() {
           else if (m.Link === "rede-social.html") i18nAttr = 'data-i18n="nav.social"';
 
           if (children.length > 0) {
-            const childrenHtml = children.map(c => {
-              const cTarget = c.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
-              let cI18n = "";
-              if (c.Link === "curiosidades.html") cI18n = 'data-i18n="nav.curiosities"';
-              else if (c.Link === "aprender.html") cI18n = 'data-i18n="nav.learn"';
-              else if (c.Link === "comunidade.html") cI18n = 'data-i18n="nav.community"';
-              else if (c.Link === "rede-social.html") cI18n = 'data-i18n="nav.social"';
-              else if (c.Link && c.Link.includes("tab=messages")) cI18n = 'data-i18n="nav.messages"';
-              
-              return `<li><a class="dropdown-item" href="${c.Link || '#'}" ${cTarget} ${cI18n}>${c.Label}</a></li>`;
-            }).join("");
+            const childrenHtml = children
+              .filter(c => c.Link !== "comunidade.html")
+              .map(c => {
+                const cTarget = c.Abrir_Nova_Aba ? 'target="_blank" rel="noopener noreferrer"' : '';
+                let cI18n = "";
+                if (c.Link === "curiosidades.html") cI18n = 'data-i18n="nav.curiosities"';
+                else if (c.Link === "aprender.html") cI18n = 'data-i18n="nav.learn"';
+                else if (c.Link === "rede-social.html") cI18n = 'data-i18n="nav.social"';
+                else if (c.Link && c.Link.includes("tab=messages")) cI18n = 'data-i18n="nav.messages"';
+                
+                return `<li><a class="dropdown-item" href="${c.Link || '#'}" ${cTarget} ${cI18n}>${c.Label}</a></li>`;
+              }).join("");
 
             return `
               <li class="nav-item dropdown">
@@ -668,6 +674,11 @@ async function loadCMSContent() {
     "contact": "contact",
     "contactos": "contact",
     "contact.html": "contact",
+    "shop": "shop",
+    "produtos": "shop",
+    "shop.html": "shop",
+    "workshops": "workshops",
+    "workshops.html": "workshops",
   };
 
   const pageKey = pageKeyMap[path];
@@ -680,15 +691,25 @@ async function loadCMSContent() {
       hero_subtitle: ".hero-subtitle, [data-i18n='home.subtitle']",
       featured_title: "h2[data-i18n='home.collection'], .featured-collection-title",
       featured_subtitle: "span[data-i18n='home.selection'], .featured-collection-subtitle",
+      hero_image: "img.hero-main-img"
     },
     about: {
       hero_title: ".about-hero-title, [data-i18n-html='about.title']",
       hero_subtitle: ".about-hero-subtitle, [data-i18n='about.subtitle']",
       legacy_text: ".about-legacy-text",
+      hero_image: "img.about-hero-img"
     },
     contact: {
       hero_title: ".contact-hero-title",
       hero_subtitle: ".contact-hero-subtitle",
+    },
+    shop: {
+      hero_title: ".shop-hero-title",
+      hero_subtitle: ".shop-hero-subtitle",
+    },
+    workshops: {
+      hero_title: ".workshops-hero-title",
+      hero_subtitle: ".workshops-hero-subtitle",
     },
   };
 
@@ -707,7 +728,15 @@ async function loadCMSContent() {
     contact: {
       hero_title: "contact.title",
       hero_subtitle: "contact.subtitle",
-    }
+    },
+    shop: {
+      hero_title: "shop.title",
+      hero_subtitle: "shop.subtitle",
+    },
+    workshops: {
+      hero_title: "workshops.title",
+      hero_subtitle: "workshops.subtitle",
+    },
   };
 
   const selectors = selectorMap[pageKey];
@@ -739,17 +768,21 @@ async function loadCMSContent() {
       const el = document.querySelector(selector);
       if (!el) continue;
 
-      if (block.Type === "html") {
-        el.innerHTML = block.Content_Value;
-      } else if (block.Type === "image_url") {
+      const isPT = (i18nModule && typeof i18nModule.getLang === "function" ? i18nModule.getLang() : "pt") === "pt";
+
+      if (block.Type === "image_url") {
         if (el.tagName === "IMG") {
           el.src = block.Content_Value;
         } else {
           el.style.backgroundImage = `url('${block.Content_Value}')`;
         }
-      } else {
-        // text type — set textContent to preserve XSS safety
-        el.textContent = block.Content_Value;
+      } else if (isPT) {
+        if (block.Type === "html") {
+          el.innerHTML = block.Content_Value;
+        } else {
+          // text type — set textContent to preserve XSS safety
+          el.textContent = block.Content_Value;
+        }
       }
     }
 

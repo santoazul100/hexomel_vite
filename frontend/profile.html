@@ -62,7 +62,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -96,7 +95,7 @@
       </div>
     </nav>
 
-    <main class="profile-main py-5 mt-5 position-relative overflow-hidden">
+    <main class="profile-main py-5 mt-5 position-relative">
       <!-- Floating Bees -->
       <div
         class="bee-container z-0"
@@ -443,40 +442,60 @@
                 <form id="changePasswordForm">
                   <h5 class="fw-bold mb-3">Alterar Palavra-passe</h5>
                   <div class="mb-3">
-                    <label class="form-label small fw-bold"
-                      >Palavra-passe Atual</label
-                    >
-                    <input
-                      type="password"
-                      id="current-password"
-                      class="auth-input mb-0"
-                      required
-                      placeholder="••••••••"
-                    />
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <label class="form-label small fw-bold mb-0">Palavra-passe Atual</label>
+                      <a href="recuperar.html" class="small text-warning text-decoration-none fw-semibold"><i class="fas fa-key me-1"></i>Esqueceu-se da palavra-passe?</a>
+                    </div>
+                    <div class="password-wrapper-v2 position-relative">
+                      <input
+                        type="password"
+                        id="current-password"
+                        class="auth-input mb-0 w-100"
+                        required
+                        placeholder="••••••••"
+                      />
+                      <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('current-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c757d; cursor: pointer; z-index: 10;">
+                        <i class="far fa-eye"></i>
+                      </button>
+                    </div>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label small fw-bold"
-                      >Nova Palavra-passe</label
-                    >
-                    <input
-                      type="password"
-                      id="new-password"
-                      class="auth-input mb-0"
-                      required
-                      placeholder="Pelo menos 6 caracteres"
-                    />
+                    <label class="form-label small fw-bold">Nova Palavra-passe</label>
+                    <div class="password-wrapper-v2 position-relative">
+                      <input
+                        type="password"
+                        id="new-password"
+                        class="auth-input mb-0 w-100"
+                        required
+                        placeholder="Pelo menos 6 caracteres"
+                        data-password-strength-input
+                      />
+                      <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('new-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c757d; cursor: pointer; z-index: 10;">
+                        <i class="far fa-eye"></i>
+                      </button>
+                    </div>
+                    <div id="profile-strength-container" class="mt-2" style="display: none;">
+                      <div style="height: 6px; background-color: #e9ecef; border-radius: 4px; overflow: hidden;">
+                        <div id="profile-strength-fill" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; border-radius: 4px;"></div>
+                      </div>
+                      <small id="profile-strength-label" class="fw-semibold mt-1 d-block" style="font-size: 0.8rem;"></small>
+                    </div>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label small fw-bold"
-                      >Confirmar Nova Palavra-passe</label
-                    >
-                    <input
-                      type="password"
-                      id="confirm-new-password"
-                      class="auth-input mb-0"
-                      required
-                      placeholder="Repete a nova password"
-                    />
+                    <label class="form-label small fw-bold">Confirmar Nova Palavra-passe</label>
+                    <div class="password-wrapper-v2 position-relative">
+                      <input
+                        type="password"
+                        id="confirm-new-password"
+                        class="auth-input mb-0 w-100"
+                        required
+                        placeholder="Repete a nova password"
+                      />
+                      <button type="button" class="password-toggle-v2" onclick="window.togglePasswordVisibility('confirm-new-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c757d; cursor: pointer; z-index: 10;">
+                        <i class="far fa-eye"></i>
+                      </button>
+                    </div>
+                    <small id="password-match-message" class="fw-semibold mt-1 d-block" style="font-size: 0.82rem; display: none;"></small>
                   </div>
                   <button type="submit" class="btn btn-auth-enhanced register">
                     Guardar Nova Password
@@ -517,6 +536,20 @@
                       <i class="fas fa-redo me-1"></i>Reenviar código
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <!-- Blocked Users Card -->
+              <div class="premium-card p-4 mt-4" style="max-width: 600px">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h5 class="fw-bold mb-0"><i class="fas fa-user-slash text-danger me-2"></i>Utilizadores Bloqueados</h5>
+                  <span class="badge bg-secondary rounded-pill px-2.5 py-1" id="blocked-count-badge">0</span>
+                </div>
+                <p class="text-muted small mb-3">
+                  Gerir a lista de membros que bloqueaste. Utilizadores bloqueados não te podem enviar mensagens privadas nem ver as tuas publicações.
+                </p>
+                <div id="blocked-users-list" class="d-flex flex-column gap-2 pt-2">
+                  <div class="text-center py-3 text-muted small"><i class="fas fa-spinner fa-spin me-2"></i>A carregar lista de bloqueios...</div>
                 </div>
               </div>
             </div>
@@ -1057,10 +1090,10 @@
           <div class="col-lg-2">
             <h5 class="footer-heading">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link">Carrinho</a></li>
-              <li><a href="#" class="footer-link">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">

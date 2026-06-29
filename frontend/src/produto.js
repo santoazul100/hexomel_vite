@@ -135,7 +135,7 @@ function renderProduct(p) {
 
       ${p.ID_Apicultor ? `
         <a href="profile.html?id=${p.ID_Apicultor}" class="apicultor-badge mb-4 d-inline-flex">
-          <img src="${p.ApicultorFoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.ApicultorNome || 'A')}&background=random`}" 
+          <img src="${(p.ApicultorFoto && p.ApicultorFoto.trim() !== '' && p.ApicultorFoto !== 'null' && p.ApicultorFoto !== 'undefined') ? p.ApicultorFoto : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.ApicultorNome || 'A')}&background=random`}" 
                alt="${p.ApicultorNome}" 
                referrerpolicy="no-referrer" 
                onerror="this.src='https://ui-avatars.com/api/?name=A&background=random'">
@@ -156,7 +156,7 @@ function renderProduct(p) {
         </div>
       `}
 
-      <!-- Add to Cart -->
+      <!-- Add to Cart & Contact -->
       <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
         <div class="qty-selector">
           <button type="button" id="qty-minus">−</button>
@@ -167,17 +167,17 @@ function renderProduct(p) {
           <i class="fas fa-shopping-cart me-2"></i>
           ${p.Stock > 0 ? "Adicionar ao Carrinho" : "Esgotado"}
         </button>
-      </div>
 
-      ${p.ID_Apicultor ? `
-        <button class="btn btn-outline-success rounded-pill fw-bold px-4 py-2.5 mt-3 w-100" id="btn-ask-seller" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease;">
-          <i class="fas fa-comment-dots me-2"></i>Perguntar ao Vendedor
-        </button>
-      ` : `
-        <a href="contact.html" class="btn btn-outline-success rounded-pill fw-bold px-4 py-2.5 mt-3 w-100 d-flex align-items-center justify-content-center" id="btn-contact-support" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease; text-decoration: none;">
-          <i class="fas fa-envelope me-2"></i>Contactar Apoio ao Cliente
-        </a>
-      `}
+        ${p.ID_Apicultor ? `
+          <button class="btn btn-outline-success fw-bold px-4" id="btn-ask-seller" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease; height: 44px; border-radius: 10px; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; margin: 0;">
+            <i class="fas fa-comment-dots me-2"></i>Perguntar ao Vendedor
+          </button>
+        ` : `
+          <a href="contact.html" class="btn btn-outline-success fw-bold px-4 d-inline-flex align-items-center justify-content-center" id="btn-contact-support" style="border: 2px solid var(--primary-green); color: var(--primary-green); background: transparent; transition: all 0.2s ease; text-decoration: none; height: 44px; border-radius: 10px; font-size: 0.95rem; margin: 0;">
+            <i class="fas fa-envelope me-2"></i>Contactar Apoio ao Cliente
+          </a>
+        `}
+      </div>
     </div>
   `;
 
@@ -193,20 +193,58 @@ function renderProduct(p) {
   });
   document.getElementById("qty-plus").addEventListener("click", () => {
     const input = document.getElementById("product-qty");
-    input.value = parseInt(input.value) + 1;
+    let val = parseInt(input.value) + 1;
+    if (val > p.Stock) {
+      val = p.Stock;
+      Swal.fire({
+        icon: "warning",
+        title: "Limite de Stock",
+        text: `Apenas existem ${p.Stock} unidades disponíveis em stock.`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    }
+    input.value = val;
   });
 
-  // Bind add to cart
-  document.getElementById("btn-add-to-cart").addEventListener("click", () => {
-    const qty = parseInt(document.getElementById("product-qty").value);
-    cart.addItem(p.ID_Produto, qty);
-    Swal.fire({
-      icon: "success",
-      title: "Adicionado!",
-      text: `${p.Nome} foi adicionado ao carrinho.`,
-      timer: 1800,
-      showConfirmButton: false,
+  const qtyInput = document.getElementById("product-qty");
+  if (qtyInput) {
+    qtyInput.addEventListener("change", function () {
+      let val = parseInt(this.value) || 1;
+      if (val < 1) val = 1;
+      if (val > p.Stock) {
+        val = p.Stock;
+        Swal.fire({
+          icon: "warning",
+          title: "Limite de Stock",
+          text: `Apenas existem ${p.Stock} unidades disponíveis em stock.`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+      this.value = val;
     });
+  }
+
+  // Bind add to cart
+  document.getElementById("btn-add-to-cart").addEventListener("click", async () => {
+    const qty = parseInt(document.getElementById("product-qty").value);
+    if (qty > p.Stock) {
+      Swal.fire("Limite de Stock", `Apenas existem ${p.Stock} unidades em stock.`, "warning");
+      return;
+    }
+    const success = await cart.addItem(p.ID_Produto, qty, false);
+    if (success) {
+      Swal.fire({
+        icon: "success",
+        title: "Adicionado!",
+        text: `${p.Nome} foi adicionado ao carrinho.`,
+        timer: 1800,
+        showConfirmButton: false,
+      }).then(() => {
+        cart.toggle(true);
+      });
+    }
   });
 
   // Bind ask seller button

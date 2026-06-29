@@ -64,7 +64,6 @@
               <ul class="dropdown-menu dropdown-menu-hexomel">
                 <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
                 <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-                <li><a class="dropdown-item" href="comunidade.html" data-i18n="nav.community">Comunidade</a></li>
               </ul>
             </li>
             <li class="nav-item">
@@ -141,14 +140,15 @@
               </div>
             </div>
             <div
-              class="col-lg-6 d-none d-lg-block animate-fade-up"
+              class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center animate-fade-up"
               style="animation-delay: 0.2s"
             >
-              <div class="hero-image-wrapper">
+              <div class="hero-image-wrapper text-center my-auto pt-4 pb-2">
                 <img
                   src="/images/hero.png"
-                  alt="Premium Honey"
+                  alt="Mel Artesanal Hexomel"
                   class="img-fluid hero-main-img"
+                  style="max-width: 350px; width: 100%; height: auto; border-radius: 24px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.12)); margin-top: 25px;"
                 />
               </div>
             </div>
@@ -191,34 +191,35 @@
             <div class="product-carousel" id="featured-products">
               <!-- Dynamically populated or fallback static items -->
               <div class="carousel-product-card">
-                <img src="/images/lavender.png" alt="Mel de Rosmaninho" onerror="this.src='/images/logo_hexomel.webp'">
+                <img src="/images/mel_rosmaninho_ai.png" alt="Mel de Rosmaninho Premium" onerror="this.src='/images/logo_hexomel.webp'">
                 <span>Suave</span>
-                <h4>Mel de Rosmaninho</h4>
-                <p>€12.50</p>
+                <h4>Mel de Rosmaninho Premium</h4>
+                <p>€13.50</p>
                 <div class="carousel-card-actions">
                   <button class="add-to-cart-home" data-id="fallback-1"><i class="fas fa-cart-plus"></i></button>
                   <a href="shop.html">Ver Detalhes</a>
                 </div>
               </div>
               <div class="carousel-product-card">
-                <img src="/images/acacia.png" alt="Mel de Urze" onerror="this.src='/images/logo_hexomel.webp'">
+                <img src="/images/mel_eucalipto_ai.png" alt="Mel de Urze da Serra" onerror="this.src='/images/logo_hexomel.webp'">
                 <span>Antioxidante</span>
-                <h4>Mel de Urze</h4>
-                <p>€14.00</p>
+                <h4>Mel de Urze da Serra</h4>
+                <p>€15.50</p>
                 <div class="carousel-card-actions">
                   <button class="add-to-cart-home" data-id="fallback-2"><i class="fas fa-cart-plus"></i></button>
                   <a href="shop.html">Ver Detalhes</a>
                 </div>
               </div>
               <div class="carousel-product-card">
-                <img src="/images/wildflower.png" alt="Mel de Castanheiro" onerror="this.src='/images/logo_hexomel.webp'">
-                <span>Robusto</span>
-                <h4>Mel de Castanheiro</h4>
-                <p>€15.50</p>
+                <img src="/images/mel_urze_ai.png" alt="Mel de Eucalipto Puro" onerror="this.src='/images/logo_hexomel.webp'">
+                <span>Balsâmico</span>
+                <h4>Mel de Eucalipto Puro</h4>
+                <p>€12.00</p>
                 <div class="carousel-card-actions">
                   <button class="add-to-cart-home" data-id="fallback-3"><i class="fas fa-cart-plus"></i></button>
                   <a href="shop.html">Ver Detalhes</a>
                 </div>
+              </div>
             </div>
             <!-- Dots Indicators -->
             <div class="carousel-indicators-container d-flex justify-content-center gap-2 mt-2" id="featured-carousel-dots">
@@ -407,10 +408,10 @@
           <div class="col-lg-2">
             <h5 class="footer-heading" data-i18n="footer.order">Pedido</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
-              <li><a href="#" class="footer-link">FAQ</a></li>
-              <li><a href="#" class="footer-link" data-i18n="footer.terms">Termos</a></li>
+              <li><a href="checkout.html" class="footer-link" data-i18n="footer.cart">Carrinho</a></li>
+              <li><a href="profile.html" class="footer-link" data-i18n="footer.myaccount">A minha conta</a></li>
+              <li><a href="faq.html" class="footer-link" data-i18n="footer.faq">FAQ</a></li>
+              <li><a href="termos.html" class="footer-link" data-i18n="footer.terms">Termos</a></li>
             </ul>
           </div>
           <div class="col-lg-3">

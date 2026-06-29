@@ -1,5 +1,6 @@
 import Swal from "sweetalert2";
 import { ensureBackendReady, parseJsonSafely } from "./api.js";
+import { getLang } from "./i18n.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -50,8 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (submitBtn) submitBtn.disabled = true;
 
       Swal.fire({
-        title: "A processar...",
-        text: "Por favor, aguarde enquanto validamos o seu pedido.",
+        title: getLang() === "pt" ? "A processar..." : "Processing...",
+        text: getLang() === "pt" ? "Por favor, aguarde enquanto validamos o seu pedido." : "Please wait while we validate your request.",
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
@@ -61,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const backendAvailable = await ensureBackendReady();
         if (!backendAvailable) {
-          throw new Error("O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos.");
+          throw new Error(getLang() === "pt" ? "O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos." : "The server is still starting. Try again in a few seconds.");
         }
 
         const response = await fetch("/api/auth/forgot-password", {
@@ -75,12 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await parseJsonSafely(response);
 
         if (!response.ok) {
-          throw new Error(data.error || "Erro ao solicitar redefinição.");
+          throw new Error(data.error || (getLang() === "pt" ? "Erro ao solicitar redefinição." : "Error requesting reset."));
         }
 
         Swal.fire({
           icon: "success",
-          title: "Email Enviado!",
+          title: getLang() === "pt" ? "Email Enviado!" : "Email Sent!",
           text: data.message,
           confirmButtonText: "Ok",
           confirmButtonColor: "#2d5f3f"
@@ -90,9 +91,9 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (error) {
         Swal.fire({
           icon: "error",
-          title: "Erro no Pedido",
+          title: getLang() === "pt" ? "Erro no Pedido" : "Request Error",
           text: error.message,
-          confirmButtonText: "Fechar",
+          confirmButtonText: getLang() === "pt" ? "Fechar" : "Close",
           confirmButtonColor: "#d33"
         });
       } finally {
@@ -116,8 +117,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (password.length < 6) {
         Swal.fire({
           icon: "warning",
-          title: "Senha Insegura",
-          text: "A palavra-passe deve conter pelo menos 6 caracteres.",
+          title: getLang() === "pt" ? "Senha Insegura" : "Insecure Password",
+          text: getLang() === "pt" ? "A palavra-passe deve conter pelo menos 6 caracteres." : "The password must contain at least 6 characters.",
           confirmButtonColor: "#ffa500"
         });
         return;
@@ -126,8 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (password !== confirmPassword) {
         Swal.fire({
           icon: "warning",
-          title: "Palavras-passe diferentes",
-          text: "A confirmação de palavra-passe não coincide.",
+          title: getLang() === "pt" ? "Palavras-passe diferentes" : "Passwords do not match",
+          text: getLang() === "pt" ? "A confirmação de palavra-passe não coincide." : "The password confirmation does not match.",
           confirmButtonColor: "#ffa500"
         });
         return;
@@ -138,8 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (submitBtn) submitBtn.disabled = true;
 
       Swal.fire({
-        title: "A guardar...",
-        text: "A atualizar a sua nova palavra-passe.",
+        title: getLang() === "pt" ? "A guardar..." : "Saving...",
+        text: getLang() === "pt" ? "A atualizar a sua nova palavra-passe." : "Updating your new password.",
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
@@ -149,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const backendAvailable = await ensureBackendReady();
         if (!backendAvailable) {
-          throw new Error("O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos.");
+          throw new Error(getLang() === "pt" ? "O servidor ainda está a iniciar. Tente novamente dentro de alguns segundos." : "The server is still starting. Try again in a few seconds.");
         }
 
         const response = await fetch("/api/auth/reset-password", {
@@ -163,20 +164,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await parseJsonSafely(response);
 
         if (!response.ok) {
-          throw new Error(data.error || "Erro ao redefinir palavra-passe.");
+          throw new Error(data.error || (getLang() === "pt" ? "Erro ao redefinir palavra-passe." : "Error resetting password."));
         }
 
-        // Auto-login: If backend returned token and user info, save immediately!
+        // Auto-login or maintain existing active session
         if (data.token && data.user) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           console.log("Auto-login active following password reset.");
+        }
 
+        const isLoggedIn = !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
+
+        if (isLoggedIn) {
           Swal.fire({
             icon: "success",
-            title: "Sucesso!",
-            text: "A sua palavra-passe foi redefinida e a sua sessão foi iniciada automaticamente!",
-            confirmButtonText: "Entrar na Minha Conta",
+            title: getLang() === "pt" ? "Password Alterada!" : "Password Changed!",
+            text: getLang() === "pt" ? "A sua palavra-passe foi redefinida com sucesso. A sua sessão continua ativa!" : "Your password was reset successfully. Your session remains active!",
+            confirmButtonText: getLang() === "pt" ? "Ir para a Página Inicial" : "Go to Home",
             confirmButtonColor: "#2d5f3f"
           }).then(() => {
             window.location.href = "/";
@@ -184,21 +189,21 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           Swal.fire({
             icon: "success",
-            title: "Sucesso!",
-            text: data.message,
-            confirmButtonText: "Iniciar Sessão",
+            title: getLang() === "pt" ? "Sucesso!" : "Success!",
+            text: data.message || (getLang() === "pt" ? "Palavra-passe alterada com sucesso." : "Password reset successfully."),
+            confirmButtonText: getLang() === "pt" ? "Iniciar Sessão" : "Log In",
             confirmButtonColor: "#2d5f3f"
           }).then(() => {
-            // Redirect back home and open the login screen automatically
+            // Redirect back home and open the login screen automatically for non-logged users
             window.location.href = "/?openAuth=login";
           });
         }
       } catch (error) {
         Swal.fire({
           icon: "error",
-          title: "Falha na Redefinição",
+          title: getLang() === "pt" ? "Falha na Redefinição" : "Reset Failed",
           text: error.message,
-          confirmButtonText: "Tentar novamente",
+          confirmButtonText: getLang() === "pt" ? "Tentar novamente" : "Try again",
           confirmButtonColor: "#d33"
         });
       } finally {

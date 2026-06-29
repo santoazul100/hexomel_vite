@@ -6,6 +6,98 @@
 const STORAGE_KEY = 'hexomel-lang';
 
 const translations = {
+  // ── Autenticação ──
+  'auth.login':        { pt: 'Iniciar Sessão', en: 'Sign In' },
+  'auth.login.desc':   { pt: 'Bem-vindo de volta! Introduza os seus dados para aceder.', en: 'Welcome back! Enter your details to access.' },
+  'auth.email':        { pt: 'EMAIL OU USERNAME', en: 'EMAIL OR USERNAME' },
+  'auth.email.ph':     { pt: 'email@exemplo.com ou username', en: 'email@example.com or username' },
+  'auth.password':     { pt: 'PASSWORD', en: 'PASSWORD' },
+  'auth.password.ph':  { pt: 'Sua password', en: 'Your password' },
+  'auth.forgot':       { pt: 'Esqueceu-se da palavra-passe?', en: 'Forgot your password?' },
+  'auth.enter':        { pt: 'Entrar', en: 'Sign In' },
+  'auth.or':           { pt: 'ou entrar com', en: 'or sign in with' },
+  'auth.noaccount':    { pt: 'Não tem uma conta? ', en: 'Don\'t have an account? ' },
+  'auth.create':       { pt: 'Criar conta', en: 'Create account' },
+  
+  'auth.reg.title':    { pt: 'Criar Conta', en: 'Create Account' },
+  'auth.reg.desc':     { pt: 'Registe-se e desfrute do mel 100% puro e das nossas novidades.', en: 'Register and enjoy 100% pure honey and our news.' },
+  'auth.reg.name':     { pt: 'NOME COMPLETO', en: 'FULL NAME' },
+  'auth.reg.name_ph':  { pt: 'Como deseja aparecer', en: 'How you want to appear' },
+  'auth.reg.username': { pt: 'NOME DE UTILIZADOR', en: 'USERNAME' },
+  'auth.reg.username_ph': { pt: 'Ex: joao_silva', en: 'E.g.: john_doe' },
+  'auth.reg.email_ph': { pt: 'nome@exemplo.com', en: 'name@example.com' },
+  'auth.reg.pass_label': { pt: 'PASSWORD', en: 'PASSWORD' },
+  'auth.reg.pass_ph':  { pt: 'Crie uma password forte', en: 'Create a strong password' },
+  'auth.reg.pass_min': { pt: 'Mínimo 6 caracteres', en: 'Minimum 6 characters' },
+  'auth.reg.confpass_label': { pt: 'CONFIRMAR PASSWORD', en: 'CONFIRM PASSWORD' },
+  'auth.reg.confpass_ph': { pt: 'Repita a password', en: 'Repeat the password' },
+  'auth.reg.accept':   { pt: 'Aceito os ', en: 'I accept the ' },
+  'auth.reg.terms_link': { pt: 'Termos e Condições', en: 'Terms and Conditions' },
+  'auth.reg.btn':      { pt: 'Registar', en: 'Register' },
+  'auth.reg.already':  { pt: 'Já tem uma conta? ', en: 'Already have an account? ' },
+
+  'auth.rec.h2':       { pt: 'Recuperar Palavra-passe', en: 'Recover Password' },
+  'auth.rec.desc':     { pt: 'Introduza o seu email ou nome de utilizador.<br />Enviaremos um link seguro para redefinir o acesso.', en: 'Enter your email or username.<br />We will send a secure link to reset access.' },
+  'auth.rec.email_label': { pt: 'EMAIL OU USERNAME', en: 'EMAIL OR USERNAME' },
+  'auth.rec.email_ph': { pt: 'Email ou nome de utilizador', en: 'Email or username' },
+  'auth.rec.btn_send': { pt: 'Enviar Link de Recuperação', en: 'Send Recovery Link' },
+
+  'auth.ver.title':    { pt: 'Verificar Email — Hexomel', en: 'Verify Email — Hexomel' },
+  'auth.ver.h2':       { pt: 'Verificação de Email', en: 'Email Verification' },
+  'auth.ver.verifying':{ pt: 'A verificar a sua conta, aguarde um momento...', en: 'Verifying your account, please wait...' },
+  'auth.ver.back_home':{ pt: 'Voltar à Página Inicial', en: 'Back to Home Page' },
+
+  // ── Outras Páginas (Sucesso/Erro/Apicultor) ──
+  'succ.title':        { pt: 'Sucesso | Hexomel 🐝', en: 'Success | Hexomel 🐝' },
+  'succ.heading':      { pt: 'Encomenda Recebida!', en: 'Order Received!' },
+  'succ.message':      { pt: 'A tua encomenda foi processada com sucesso pela nossa colmeia.', en: 'Your order was successfully processed by our hive.' },
+  'succ.loadingOrder': { pt: 'A carregar encomenda...', en: 'Loading order...' },
+  'succ.emailInfo':    { pt: 'Enviámos um email com os detalhes da tua encomenda.', en: 'We sent an email with your order details.' },
+  'succ.goHome':       { pt: 'Voltar ao Início', en: 'Back to Home' },
+
+  'canc.title':        { pt: 'Pagamento Cancelado | Hexomel 🐝', en: 'Payment Cancelled | Hexomel 🐝' },
+  'canc.heading':      { pt: 'Pagamento Cancelado', en: 'Payment Cancelled' },
+  'canc.message':      { pt: 'Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.', en: 'It seems the payment was not completed. Don\'t worry, your items are still in the cart.' },
+  'canc.retry':        { pt: 'Tentar Novamente', en: 'Try Again' },
+  'canc.backToShop':   { pt: 'Voltar à Loja', en: 'Back to Shop' },
+
+  'apis.title':        { pt: 'Apicultores - Hexomel', en: 'Beekeepers - Hexomel' },
+  'apis.badge':        { pt: 'NOSSOS PRODUTORES', en: 'OUR PRODUCERS' },
+  'apis.heading':      { pt: 'Nossos Apicultores', en: 'Our Beekeepers' },
+  'apis.subtitle':     { pt: 'Conheça os apicultores que dedicam a sua vida à produção do melhor mel artesanal.', en: 'Meet the beekeepers who dedicate their lives to producing the best artisanal honey.' },
+
+  'apic.title':        { pt: 'Perfil do Apicultor - Hexomel', en: 'Beekeeper Profile - Hexomel' },
+  'apic.loading':      { pt: 'Carregando...', en: 'Loading...' },
+  'apicultor.verified':{ pt: '<i class="fas fa-check-circle me-1"></i> Apicultor Verificado', en: '<i class="fas fa-check-circle me-1"></i> Verified Beekeeper' },
+  'apic.productsTitle':{ pt: 'Produtos do Apicultor', en: 'Beekeeper Products' },
+  'apic.workshopsTitle':{ pt: 'Experiências e Workshops', en: 'Experiences and Workshops' },
+
+  // ── Dashboards ──
+  'dash.modal.product.name': { pt: 'Nome do Produto', en: 'Product Name' },
+  'dash.modal.product.name_ph': { pt: 'Ex: Mel de Rosmaninho', en: 'E.g.: Rosemary Honey' },
+  'dash.modal.product.slug': { pt: 'Slug (URL Amigável)', en: 'Slug (Friendly URL)' },
+  'dash.modal.product.slug_ph': { pt: 'ex: mel-de-rosmaninho (gerado automaticamente se vazio)', en: 'e.g.: rosemary-honey (auto-generated if empty)' },
+  'dash.modal.product.slug_help': { pt: 'Deixe vazio para gerar automaticamente a partir do nome.', en: 'Leave empty to auto-generate from name.' },
+  'dash.modal.product.price': { pt: 'Preço (€)', en: 'Price (€)' },
+  'dash.modal.product.stock': { pt: 'Stock', en: 'Stock' },
+  'dash.modal.product.category': { pt: 'Categoria', en: 'Category' },
+  'dash.modal.select': { pt: 'Selecionar...', en: 'Select...' },
+  'dash.modal.product.origin': { pt: 'Origem', en: 'Origin' },
+  'dash.modal.product.desc': { pt: 'Descrição', en: 'Description' },
+  'dash.modal.product.desc_ph': { pt: 'Descreva o seu produto...', en: 'Describe your product...' },
+  'dash.modal.product.tags': { pt: 'Tags', en: 'Tags' },
+  'dash.modal.product.tags_ph': { pt: 'ENTER para adicionar', en: 'ENTER to add' },
+  'dash.modal.image': { pt: 'Imagem', en: 'Image' },
+  'dash.modal.image_click': { pt: 'Clique para carregar', en: 'Click to upload' },
+  'dash.modal.image_req': { pt: 'PNG, JPG até 5MB', en: 'PNG, JPG up to 5MB' },
+  'dash.modal.image_change': { pt: 'Alterar', en: 'Change' },
+  'dash.modal.product.btn_save': { pt: 'Guardar Produto', en: 'Save Product' },
+
+  // ── Chatbot ──
+  'chatbot.title':       { pt: 'Melita — Assistente Virtual', en: 'Melita — Virtual Assistant' },
+  'chatbot.placeholder': { pt: 'Como posso ajudar?',          en: 'How can I help?' },
+  'chatbot.tooltip':     { pt: 'Olá! Posso ajudar? 🐝',       en: 'Hi! Can I help? 🐝' },
+
   // ── Navbar ──
   'nav.home':        { pt: 'Início',       en: 'Home' },
   'nav.products':    { pt: 'Produtos',     en: 'Products' },
@@ -80,28 +172,69 @@ const translations = {
   'home.subscribe':    { pt: 'Subscrever', en: 'Subscribe' },
 
   // ── About ──
-  'about.badge':       { pt: 'NOSSA ESSÊNCIA', en: 'OUR ESSENCE' },
-  'about.title':       { pt: 'Mais que Mel,', en: 'More Than Honey,' },
-  'about.title2':      { pt: 'Uma Tradição Viva', en: 'A Living Tradition' },
-  'about.subtitle':    { pt: 'Desde 1984, dedicamo-nos à arte da apicultura na Serra da Estrela, transformando a magia da natureza num néctar puro e inigualável.', en: 'Since 1984, we have been dedicated to the art of beekeeping in Serra da Estrela, transforming nature\'s magic into a pure, unmatched nectar.' },
-  'about.origin':      { pt: 'A Nossa Origem', en: 'Our Origin' },
-  'about.generation':  { pt: 'De Geração em Geração', en: 'From Generation to Generation' },
-  'about.story.p1':    { pt: 'A Hexomel não é apenas uma marca; é um legado familiar que nasceu do respeito profundo pelo ciclo da vida e pelas abelhas.', en: 'Hexomel is not just a brand; it is a family legacy born from a deep respect for the cycle of life and bees.' },
-  'about.story.p2':    { pt: 'Localizados no coração de Portugal, trabalhamos em simbiose com a biodiversidade local. Não apressamos a natureza, acompanhamos o seu ritmo. É este tempo, dedicado e paciente, que confere ao nosso mel as suas propriedades terapêuticas e o seu perfil aromático distinto.', en: 'Located in the heart of Portugal, we work in symbiosis with local biodiversity. We don\'t rush nature, we follow its rhythm. It is this dedicated, patient time that gives our honey its therapeutic properties and distinct aromatic profile.' },
-  'about.experience':  { pt: 'Anos de Experiência', en: 'Years of Experience' },
-  'about.biological':  { pt: 'Biológico', en: 'Organic' },
-  'about.values':      { pt: 'O Que Nos Move', en: 'What Drives Us' },
-  'about.sustain':     { pt: 'Sustentabilidade', en: 'Sustainability' },
-  'about.sustain.desc': { pt: 'Protegemos a biodiversidade garantindo práticas apícolas que não esgotam, mas regeneram o ecossistema local.', en: 'We protect biodiversity by ensuring beekeeping practices that don\'t deplete but regenerate the local ecosystem.' },
-  'about.purity':      { pt: 'Pureza Absoluta', en: 'Absolute Purity' },
-  'about.purity.desc': { pt: 'Extração a frio e sem filtração agressiva. O mel chega ao seu frasco exatamente como a natureza o criou.', en: 'Cold extraction without aggressive filtration. The honey reaches your jar exactly as nature created it.' },
-  'about.fair':        { pt: 'Comércio Justo', en: 'Fair Trade' },
-  'about.fair.desc':   { pt: 'Valorizamos a comunidade local, apoiando pequenos produtores e mantendo viva a economia rural da região.', en: 'We value the local community, supporting small producers and keeping the rural economy alive.' },
-  'about.cta':         { pt: 'Descubra o Sabor da Tradição', en: 'Discover the Taste of Tradition' },
-  'about.cta.desc':    { pt: 'Deixe-se envolver pela riqueza e complexidade da nossa coleção de méis premium. Uma experiência sensorial única.', en: 'Let yourself be immersed in the richness and complexity of our premium honey collection. A unique sensory experience.' },
-  'about.cta.btn':     { pt: 'Visitar a Loja', en: 'Visit the Shop' },
-  'about.quote':       { pt: '"Onde a pureza da montanha encontra o cuidado artesanal."', en: '"Where mountain purity meets artisanal care."' },
-  'about.quote.author': { pt: '— Família Hexomel', en: '— Hexomel Family' },
+  'about.badge':                  { pt: 'SOBRE NÓS', en: 'ABOUT US' },
+  'about.hero.tagline':           { pt: 'Hexomel é mais do que uma loja de mel. É uma ponte entre a tradição da apicultura portuguesa e a experiência digital moderna.', en: 'Hexomel is more than a honey shop. It is a bridge between Portuguese beekeeping tradition and the modern digital experience.' },
+  'about.hero.subtitle':          { pt: 'Unimos apicultores portugueses e consumidores finais numa plataforma que valoriza origem, qualidade e autenticidade.', en: 'We unite Portuguese beekeepers and end consumers in a platform that values origin, quality, and authenticity.' },
+  
+  'about.name.badge':             { pt: 'O NOME', en: 'THE NAME' },
+  'about.name.title':             { pt: 'A Essência por Trás de Hexomel', en: 'The Essence Behind Hexomel' },
+  'about.name.desc1':             { pt: 'O nome Hexomel nasce da união entre “Hexo”, inspirado no hexágono dos favos de mel, e “mel”, o coração da nossa plataforma.', en: 'The name Hexomel is born from the union of “Hexo”, inspired by the hexagon of the honeycombs, and “mel” (honey), the heart of our platform.' },
+  'about.name.desc2':             { pt: 'Curto, memorável e diretamente ligado ao universo da apicultura, o nome reflete a eficiência da natureza e a essência da marca.', en: 'Short, memorable and directly connected to the universe of beekeeping, the name reflects the efficiency of nature and the essence of the brand.' },
+  
+  'about.history.badge':          { pt: 'A NOSSA HISTÓRIA', en: 'OUR HISTORY' },
+  'about.history.title':          { pt: 'Da Tradição Familiar à Inovação Digital', en: 'From Family Tradition to Digital Innovation' },
+  'about.history.text':           { pt: 'A Hexomel começou como uma aplicação simples criada para apoiar a empresa familiar do fundador, ligada à produção e venda de mel em Portugal. Com o tempo, tornou-se claro que essa primeira versão não correspondia à ambição do projeto. Foi então reconstruída de raiz, dando origem a uma plataforma completa de e-commerce que liga apicultores portugueses diretamente ao consumidor final, sem intermediários.', en: 'Hexomel began as a simple application created to support the founder\'s family business, linked to honey production and sales in Portugal. Over time, it became clear that this first version did not match the project\'s ambition. It was then rebuilt from scratch, giving rise to a complete e-commerce platform that connects Portuguese beekeepers directly to the end consumer, without intermediaries.' },
+  
+  'about.mission.badge':          { pt: 'A NOSSA MISSÃO', en: 'OUR MISSION' },
+  'about.mission.title':          { pt: 'Valorizar a Apicultura Portuguesa', en: 'Valuing Portuguese Beekeeping' },
+  'about.mission.text':           { pt: 'A nossa missão é valorizar a apicultura portuguesa e dar visibilidade aos pequenos produtores que, apesar da qualidade do seu trabalho, continuam com pouca presença digital. A Hexomel existe para aproximar produtores e consumidores, promovendo uma experiência onde o mel é tratado com o respeito que merece: como produto artesanal, com origem, identidade e história.', en: 'Our mission is to value Portuguese beekeeping and give visibility to small producers who, despite the quality of their work, still have little digital presence. Hexomel exists to bring producers and consumers closer, promoting an experience where honey is treated with the respect it deserves: as an artisanal product, with origin, identity, and history.' },
+  
+  'about.diff.badge':             { pt: 'O QUE NOS TORNA DIFERENTES', en: 'WHAT MAKES US DIFFERENT' },
+  'about.diff.title':             { pt: 'Um Ecossistema Digital Completo', en: 'A Complete Digital Ecosystem' },
+  'about.diff.intro':             { pt: 'A Hexomel combina comércio, educação e comunidade para criar um ecossistema digital completo dedicado ao mel português artesanal.', en: 'Hexomel combines commerce, education, and community to create a complete digital ecosystem dedicated to artisanal Portuguese honey.' },
+  'about.diff.pillar1.title':     { pt: 'Comercial', en: 'Commercial' },
+  'about.diff.pillar1.desc':      { pt: 'Loja online com pagamentos seguros e experiência simples de compra.', en: 'Online store with secure payments and a simple buying experience.' },
+  'about.diff.pillar2.title':     { pt: 'Educativa', en: 'Educational' },
+  'about.diff.pillar2.desc':      { pt: 'Curiosidades, conteúdos sobre apicultura e visualização 3D dos tipos de mel.', en: 'Curiosities, beekeeping content, and 3D visualization of honey types.' },
+  'about.diff.pillar3.title':     { pt: 'Comunitária', en: 'Community' },
+  'about.diff.pillar3.desc':      { pt: 'Fórum de perguntas entre clientes e apicultores verificados.', en: 'Q&A forum between customers and verified beekeepers.' },
+  
+  'about.values.badge':           { pt: 'VALORES', en: 'VALUES' },
+  'about.values.title':           { pt: 'Aquilo em que Acreditamos', en: 'What We Believe In' },
+  'about.values.intro':           { pt: 'Na Hexomel, acreditamos em autenticidade, qualidade e proximidade. Valorizamos o trabalho dos produtores locais, promovemos práticas responsáveis e usamos a tecnologia para aproximar pessoas do verdadeiro sabor do mel português.', en: 'At Hexomel, we believe in authenticity, quality, and proximity. We value the work of local producers, promote responsible practices, and use technology to bring people closer to the true taste of Portuguese honey.' },
+  'about.values.val1.title':      { pt: 'Autenticidade', en: 'Authenticity' },
+  'about.values.val1.desc':       { pt: 'Mel puro e cru, sem misturas, que reflete fielmente o terroir e a flor de cada região.', en: 'Pure and raw honey, unblended, faithfully reflecting the terroir and flower of each region.' },
+  'about.values.val2.title':      { pt: 'Qualidade', en: 'Quality' },
+  'about.values.val2.desc':       { pt: 'Padrões de controlo rigorosos para assegurar que cada frasco mantém o sabor e as propriedades medicinais originais.', en: 'Rigorous control standards to ensure that each jar maintains its original taste and medicinal properties.' },
+  'about.values.val3.title':      { pt: 'Proximidade', en: 'Proximity' },
+  'about.values.val3.desc':       { pt: 'Ligamos quem produz a quem consome, eliminando barreiras e fomentando relações humanas de confiança.', en: 'We connect those who produce with those who consume, removing barriers and fostering human relationships of trust.' },
+  'about.values.val4.title':      { pt: 'Inovação', en: 'Innovation' },
+  'about.values.val4.desc':       { pt: 'Tecnologia ao serviço da tradição: da visualização 3D do mel aos pagamentos digitais seguros.', en: 'Technology at the service of tradition: from 3D honey visualization to secure digital payments.' },
+  'about.values.val5.title':      { pt: 'Sustentabilidade', en: 'Sustainability' },
+  'about.values.val5.desc':       { pt: 'Apoio a práticas apícolas éticas que protegem as abelhas e promovem a conservação da biodiversidade.', en: 'Support for ethical beekeeping practices that protect bees and promote biodiversity conservation.' },
+  'about.values.val6.title':      { pt: 'Valorização do Produtor', en: 'Producer Appreciation' },
+  'about.values.val6.desc':       { pt: 'Garantimos uma remuneração justa para os apicultores locais, dignificando e preservando a sua atividade.', en: 'We guarantee fair remuneration for local beekeepers, dignifying and preserving their activity.' },
+  
+  'about.impact.badge':           { pt: 'IMPACTO E PROPÓSITO', en: 'IMPACT AND PURPOSE' },
+  'about.impact.title':           { pt: 'Contribuir para Algo Maior', en: 'Contributing to Something Greater' },
+  'about.impact.text':            { pt: 'Ao aproximar apicultores e consumidores, ajudamos a fortalecer pequenos produtores, promovemos o consumo informado e contribuímos para a valorização de uma atividade fundamental para o equilíbrio ambiental e cultural em Portugal.', en: 'By bringing beekeepers and consumers closer, we help strengthen small producers, promote informed consumption, and contribute to valuing an activity fundamental to environmental and cultural balance in Portugal.' },
+  
+  'about.project.badge':          { pt: 'PROVA DE APTIDÃO PROFISSIONAL (PAP)', en: 'PROFESSIONAL CAPABILITY TEST (PAP)' },
+  'about.project.title':          { pt: 'O Projeto Técnico Hexomel', en: 'The Hexomel Technical Project' },
+  'about.project.subtitle':       { pt: 'Desenvolvido no âmbito do curso Técnico de Gestão e Programação de Sistemas Informáticos (TGPSI).', en: 'Developed for the Computer Systems Management and Programming Technician course (TGPSI).' },
+  'about.project.motivation.title': { pt: 'Motivação & Objetivo', en: 'Motivation & Goal' },
+  'about.project.motivation.desc': { pt: 'O Hexomel nasceu para criar uma ponte digital entre pequenos apicultores portugueses e os consumidores. Aliando métodos tradicionais a tecnologias de ponta, permitimos que os produtores vendam diretamente e promovam a biodiversidade de forma sustentável.', en: 'Hexomel was born to build a digital bridge between small Portuguese beekeepers and consumers. Combining traditional methods with cutting-edge technologies, we allow producers to sell directly and promote biodiversity sustainably.' },
+  'about.project.architecture.title': { pt: 'Arquitetura e Construção', en: 'Architecture & Construction' },
+  'about.project.architecture.desc': { pt: 'Construído sobre uma arquitetura de três camadas (Three-Tier), o sistema implementa uma SPA híbrida nativa no frontend (com View Transitions API e pre-load.js) conectada a uma API REST robusta em Express e a uma base de dados relacional segura.', en: 'Built on a three-tier architecture, the system implements a native hybrid SPA on the frontend (using View Transitions API and pre-load.js) connected to a robust Express REST API and a secure relational database.' },
+  'about.project.db.title':       { pt: 'Base de Dados Relacional', en: 'Relational Database' },
+  'about.project.db.desc':        { pt: 'Utilizamos o SGBD MySQL 8.0 gerido pelo MySQL Workbench. A estrutura com motor InnoDB garante a integridade referencial com Transações ACID, chaves estrangeiras complexas, histórico de faturação e um log de analytics comportamental em JSON nativo.', en: 'We use MySQL 8.0 SGBD managed by MySQL Workbench. The InnoDB engine structure guarantees referential integrity with ACID Transactions, complex foreign keys, billing history, and a behavioral analytics log in native JSON.' },
+  'about.project.tech.title':     { pt: 'Tecnologias Avançadas', en: 'Advanced Technologies' },
+  'about.project.tech.desc':      { pt: 'Para elevar a experiência, o site integra um motor 3D em Three.js para simulação física de tipos de mel, pagamentos online seguros integrados com a API Stripe, e envio de emails transacionais SMTP com verificação 2FA no Checkout.', en: 'To elevate the experience, the site integrates a Three.js 3D engine for physical simulation of honey types, secure online payments integrated with the Stripe API, and transactional SMTP emails with 2FA verification at Checkout.' },
+
+  'about.cta.text':               { pt: 'Descobre a Hexomel, explora os nossos méis e conhece as histórias por trás de cada produtor.', en: 'Discover Hexomel, explore our honeys and learn the stories behind each producer.' },
+  'about.cta.shop':               { pt: 'Explorar Loja', en: 'Explore Shop' },
+  'about.cta.producers':          { pt: 'Conhecer Produtores', en: 'Meet Producers' },
+  'about.cta.community':          { pt: 'Ver Comunidade', en: 'View Community' },
 
   // ── Shop ──
   'shop.filters':      { pt: 'Filtros', en: 'Filters' },
@@ -195,7 +328,7 @@ const translations = {
   // ── Aprender ──
   'learn.badge':       { pt: 'EDUCAÇÃO', en: 'EDUCATION' },
   'learn.title':       { pt: 'Aprende Sobre o Mundo das Abelhas', en: 'Learn About the World of Bees' },
-  'learn.subtitle':    { pt: 'Testa os teus conhecimentos com o nosso quiz, descobre factos surpreendentes e explora o glossário do mel.', en: 'Test your knowledge with our quiz, discover surprising facts and explore the honey glossary.' },
+  'learn.subtitle':    { pt: 'Testa os teus conhecimentos com o nosso quiz e explora o glossário do mel.', en: 'Test your knowledge with our quiz and explore the honey glossary.' },
   'learn.cta.quiz':    { pt: 'Começar o Quiz', en: 'Start the Quiz' },
   'learn.quiz.badge':  { pt: 'QUIZ', en: 'QUIZ' },
   'learn.quiz.title':  { pt: 'Quiz: Quanto Sabes Sobre Abelhas?', en: 'Quiz: How Much Do You Know About Bees?' },
@@ -203,15 +336,26 @@ const translations = {
   'learn.quiz.next':   { pt: 'Próxima', en: 'Next' },
   'learn.quiz.done':   { pt: 'Quiz Concluído!', en: 'Quiz Complete!' },
   'learn.quiz.retry':  { pt: 'Tentar Novamente', en: 'Try Again' },
-  'learn.reveal.badge': { pt: 'DESCOBRE', en: 'DISCOVER' },
-  'learn.reveal.title': { pt: 'Factos Para Descobrir', en: 'Facts to Discover' },
-  'learn.reveal.desc': { pt: 'Clica nos cartões para revelar factos surpreendentes!', en: 'Click the cards to reveal surprising facts!' },
-  'learn.reveal.tap':  { pt: 'Toca para revelar', en: 'Tap to reveal' },
   'learn.glossary.badge': { pt: 'GLOSSÁRIO', en: 'GLOSSARY' },
   'learn.glossary.title': { pt: 'Glossário do Mel', en: 'Honey Glossary' },
   'learn.glossary.desc':  { pt: 'Termos essenciais do mundo apícola', en: 'Essential terms from the beekeeping world' },
   'learn.explore':     { pt: 'Explora Mais', en: 'Explore More' },
   'learn.explore.desc': { pt: 'Visita a página de curiosidades ou junta-te à comunidade Hexomel.', en: 'Visit the curiosities page or join the Hexomel community.' },
+
+  // ── Apicultores & Apicultor ──
+  'apicultores.badge':            { pt: 'NOSSOS PRODUTORES', en: 'OUR PRODUCERS' },
+  'apicultores.title':            { pt: 'Nossos Apicultores', en: 'Our Beekeepers' },
+  'apicultores.subtitle':         { pt: 'Conheça os apicultores que dedicam a sua vida à produção do melhor mel artesanal.', en: 'Meet the beekeepers who dedicate their lives to producing the best artisanal honey.' },
+  'apicultores.empty':            { pt: 'Nenhum apicultor encontrado.', en: 'No beekeepers found.' },
+  'apicultores.default_bio':      { pt: 'Dedicado à apicultura tradicional.', en: 'Dedicated to traditional beekeeping.' },
+  'apicultores.view_profile':     { pt: 'Ver Perfil', en: 'View Profile' },
+  'apicultor.verified':           { pt: 'Apicultor Verificado', en: 'Verified Beekeeper' },
+  'apicultor.default_bio':        { pt: 'Este apicultor ainda não definiu a sua biografia, mas garante o melhor mel da região!', en: 'This beekeeper has not set a biography yet, but guarantees the best honey in the region!' },
+  'apicultor.send_msg':           { pt: 'Enviar Mensagem', en: 'Send Message' },
+  'apicultor.report':             { pt: 'Denunciar', en: 'Report' },
+  'apicultor.block':              { pt: 'Bloquear', en: 'Block' },
+  'apicultor.unblock':            { pt: 'Desbloquear', en: 'Unblock' },
+  'apicultor.no_products':        { pt: 'Ainda não há produtos listados por este apicultor.', en: 'No products listed by this beekeeper yet.' },
 
   // ── Auth (injected by main.js) ──
   'auth.login':        { pt: 'Iniciar Sessão', en: 'Sign In' },
@@ -224,6 +368,49 @@ const translations = {
 
   // ── Loading / Placeholder ──
   'loading.text':      { pt: 'Carregando', en: 'Loading' },
+
+  // ── Other Pages (Apicultor, Success, Cancel) ──
+  "apic.title": { pt: "Perfil do Apicultor - Hexomel", en: "Beekeeper Profile - Hexomel" },
+  "apic.loading": { pt: "Carregando...", en: "Loading..." },
+  "apic.bio": { pt: '"A nossa paixão é cuidar das abelhas e trazer até si o melhor da natureza."', en: '"Our passion is caring for bees and bringing you the best of nature."' },
+  "apic.productsTitle": { pt: "Produtos do Apicultor", en: "Beekeeper's Products" },
+  "apic.workshopsTitle": { pt: "Experiências e Workshops", en: "Experiences and Workshops" },
+
+  "apis.title": { pt: "Apicultores - Hexomel", en: "Beekeepers - Hexomel" },
+  "apis.badge": { pt: "NOSSOS PRODUTORES", en: "OUR PRODUCERS" },
+  "apis.heading": { pt: "Nossos Apicultores", en: "Our Beekeepers" },
+  "apis.subtitle": { pt: "Conheça os apicultores que dedicam a sua vida à produção do melhor mel artesanal.", en: "Meet the beekeepers who dedicate their lives to producing the best artisanal honey." },
+
+  "succ.title": { pt: "Sucesso | Hexomel 🐝", en: "Success | Hexomel 🐝" },
+  "succ.heading": { pt: "Encomenda Recebida!", en: "Order Received!" },
+  "succ.message": { pt: "A tua encomenda foi processada com sucesso pela nossa colmeia.", en: "Your order was successfully processed by our hive." },
+  "succ.loadingOrder": { pt: "A carregar pedido...", en: "Loading order..." },
+  "succ.emailInfo": { pt: "Enviámos um email de confirmação com todos os detalhes. Podes acompanhar o estado no teu perfil.", en: "We've sent a confirmation email with all the details. You can track the status in your profile." },
+  "succ.goHome": { pt: "Voltar ao Início", en: "Back to Home" },
+
+  "canc.title": { pt: "Pagamento Cancelado | Hexomel 🐝", en: "Payment Canceled | Hexomel 🐝" },
+  "canc.heading": { pt: "Pagamento Cancelado", en: "Payment Canceled" },
+  "canc.message": { pt: "Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.", en: "It looks like the payment was not completed. Don't worry, your items are still in the cart." },
+  "canc.retry": { pt: "Tentar Novamente", en: "Try Again" },
+  "canc.backToShop": { pt: "Voltar à Loja", en: "Back to Shop" },
+
+  // ── Check/Dash Missing ──
+  "check.title": { pt: "Checkout | Hexomel", en: "Checkout | Hexomel" },
+  "check.secure_checkout": { pt: "Checkout 100% Seguro", en: "100% Secure Checkout" },
+  "check.step_shipping": { pt: "Dados de Envio", en: "Shipping Data" },
+  "check.step_payment": { pt: "Confirmacao e Pagamento", en: "Confirmation & Payment" },
+  "check.order_summary": { pt: "Resumo do Pedido", en: "Order Summary" },
+  "check.subtotal": { pt: "Subtotal", en: "Subtotal" },
+  "check.shipping": { pt: "Envio", en: "Shipping" },
+  "check.total_tax_incl": { pt: "Total (IVA incl.)", en: "Total (VAT incl.)" },
+  "check.finish_pay": { pt: "Finalizar e Pagar", en: "Finish & Pay" },
+  "dash.sidebar.title": { pt: "Painel Apicultor", en: "Beekeeper Dashboard" },
+  "dash.sidebar.main": { pt: "Principal", en: "Main" },
+  "dash.welcome.badge": { pt: "Painel Apicultor", en: "Beekeeper Panel" },
+  "dash.stat.total_earned": { pt: "Total Ganho", en: "Total Earned" },
+  "dash.sales.title": { pt: "Minhas Vendas", en: "My Sales" },
+  "dash.products.title": { pt: "Meus Produtos", en: "My Products" },
+  "dash.workshops.title": { pt: "Meus Workshops", en: "My Workshops" }
 };
 
 /** Get current language */
@@ -233,8 +420,8 @@ export function getLang() {
 
 // ── SVG Flag Icons (inline base64 for cross-platform consistency) ──
 const FLAG_SVG = {
-  pt: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480"><path fill="#006600" d="M0 0h256v480H0z"/><path fill="#ff0000" d="M256 0h384v480H256z"/><circle cx="256" cy="240" r="80" fill="#ff0" stroke="#006600" stroke-width="4"/><path fill="#006600" d="M256 176c-14 0-26 4-36 12l36 52 36-52c-10-8-22-12-36-12z"/><path fill="#ff0000" d="M220 240c0-20 16-36 36-36s36 16 36 36-16 36-36 36-36-16-36-36z"/><path fill="#fff" d="M240 220h32v40h-32z"/></svg>`,
-  en: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480"><path fill="#012169" d="M0 0h640v480H0z"/><path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-178L0 64V0h75z"/><path fill="#C8102E" d="m424 281 216 159v40L369 281h55zm-184 20 6 35L54 480H0l240-179zM640 0v3L391 191l2-44L590 0h50zM0 0l239 176h-60L0 42V0z"/><path fill="#FFF" d="M241 0v480h160V0H241zM0 160v160h640V160H0z"/><path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/></svg>`
+  pt: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice"><path fill="#006600" d="M0 0h256v480H0z"/><path fill="#ff0000" d="M256 0h384v480H256z"/><circle cx="256" cy="240" r="80" fill="#ff0" stroke="#006600" stroke-width="4"/><path fill="#006600" d="M256 176c-14 0-26 4-36 12l36 52 36-52c-10-8-22-12-36-12z"/><path fill="#ff0000" d="M220 240c0-20 16-36 36-36s36 16 36 36-16 36-36 36-36-16-36-36z"/><path fill="#fff" d="M240 220h32v40h-32z"/></svg>`,
+  en: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice"><path fill="#012169" d="M0 0h640v480H0z"/><path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-178L0 64V0h75z"/><path fill="#C8102E" d="m424 281 216 159v40L369 281h55zm-184 20 6 35L54 480H0l240-179zM640 0v3L391 191l2-44L590 0h50zM0 0l239 176h-60L0 42V0z"/><path fill="#FFF" d="M241 0v480h160V0H241zM0 160v160h640V160H0z"/><path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/></svg>`
 };
 
 /** Get flag SVG HTML for a language */

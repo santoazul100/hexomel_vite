@@ -36,25 +36,6 @@
   z-index: 0;
 }
 
-.bee-decoration {
-  position: absolute;
-  opacity: 0.45;
-  filter: grayscale(20%) drop-shadow(0 6px 12px rgba(0,0,0,0.05));
-  animation: floatBee 8s ease-in-out infinite alternate;
-  z-index: 1;
-}
-
-.bee-decoration:nth-child(2) {
-  animation-delay: -3s;
-  animation-duration: 10s;
-}
-
-@keyframes floatBee {
-  0% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(2deg); }
-  100% { transform: translateY(4px) rotate(-2deg); }
-}
-
 .hero-image-wrapper {
   transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
