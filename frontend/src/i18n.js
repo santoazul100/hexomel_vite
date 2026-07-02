@@ -410,7 +410,23 @@ const translations = {
   "dash.stat.total_earned": { pt: "Total Ganho", en: "Total Earned" },
   "dash.sales.title": { pt: "Minhas Vendas", en: "My Sales" },
   "dash.products.title": { pt: "Meus Produtos", en: "My Products" },
-  "dash.workshops.title": { pt: "Meus Workshops", en: "My Workshops" }
+  "dash.workshops.title": { pt: "Meus Workshops", en: "My Workshops" },
+
+  // ── Tags ──
+  "tag.HEALTH": { pt: "SAÚDE", en: "HEALTH" },
+  "tag.PROPOLIS": { pt: "PRÓPOLIS", en: "PROPOLIS" },
+  "tag.BIO": { pt: "BIO", en: "BIO" },
+  "tag.MOUNTAIN": { pt: "MONTANHA", en: "MOUNTAIN" },
+  "tag.RAW": { pt: "BRUTO", en: "RAW" },
+  "tag.WILD": { pt: "SELVAGEM", en: "WILD" },
+  "tag.ORGANIC": { pt: "ORGÂNICO", en: "ORGANIC" },
+  "tag.PREMIUM": { pt: "PREMIUM", en: "PREMIUM" },
+  "tag.FLOWER": { pt: "FLORAL", en: "FLOWER" },
+  "tag.VINTAGE": { pt: "VINTAGE", en: "VINTAGE" },
+  "tag.GOLD": { pt: "OURO", en: "GOLD" },
+  "tag.SUPERFOOD": { pt: "SUPER-ALIMENTO", en: "SUPERFOOD" },
+  "tag.PROTEIN": { pt: "PROTEÍNA", en: "PROTEIN" },
+  "tag.NATURAL": { pt: "NATURAL", en: "NATURAL" }
 };
 
 /** Get current language */
@@ -485,6 +501,20 @@ function applyTranslations(lang) {
   });
 }
 
+/** Translate a specific key manually */
+export function t(key) {
+  const lang = getLang();
+  const entry = translations[key];
+  if (entry && entry[lang]) {
+    return entry[lang];
+  }
+  // Fallback
+  if (key.startsWith("tag.")) {
+    return key.replace("tag.", "");
+  }
+  return key;
+}
+
 /** Initialize — apply saved language on page load */
 export function initI18n() {
   const lang = getLang();
@@ -515,3 +545,4 @@ export function createLangToggle() {
 
 // Expose toggle globally for onclick
 window.__toggleLang = toggleLang;
+window.__t = t;

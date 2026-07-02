@@ -31,7 +31,13 @@ const LOADING_TEXT = {
 export const Skeleton = {
 
   /** Estilo ativo: 'skeleton' (cards shimmer) ou 'spinner' (círculo + texto) */
-  _style: 'skeleton',
+  _style: (() => {
+    try {
+      return localStorage.getItem('hexomel_skeleton_style') || 'skeleton';
+    } catch(e) {
+      return 'skeleton';
+    }
+  })(),
 
   /** Flag para evitar múltiplos fetches */
   _initialized: false,
@@ -54,6 +60,9 @@ export const Skeleton = {
           const settings = await res.json();
           if (settings.placeholder_style === 'spinner' || settings.placeholder_style === 'skeleton') {
             this._style = settings.placeholder_style;
+            try {
+              localStorage.setItem('hexomel_skeleton_style', this._style);
+            } catch(e) {}
           }
         }
       } catch (e) {
@@ -157,7 +166,7 @@ export const Skeleton = {
   genericCard() {
     return `
       <div class="skeleton-generic-card">
-        <div class="skeleton-generic-image"></div>
+        <div class="skeleton skeleton-generic-image"></div>
         <div class="skeleton-generic-body">
           <div class="skeleton skeleton-title"></div>
           <div class="skeleton skeleton-text long"></div>
@@ -178,6 +187,50 @@ export const Skeleton = {
       </div>
     `).join('');
   },
+
+  // ============================
+  // WORKSHOP CARD SKELETON
+  // ============================
+  workshopCard() {
+    return `
+      <div class="workshop-card-premium h-100 d-flex flex-column" style="pointer-events: none;">
+        <div class="skeleton" style="width: 100%; aspect-ratio: 16/10; border-radius: 20px 20px 0 0; position: relative;">
+          <div style="position: absolute; top: 12px; right: 12px;">
+            <div class="skeleton skeleton-badge" style="width: 110px; background: rgba(255,255,255,0.3);"></div>
+          </div>
+        </div>
+        <div class="workshop-card-body p-4 d-flex flex-column flex-grow-1">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="skeleton skeleton-circle" style="width: 32px; height: 32px; flex-shrink: 0;"></div>
+            <div class="skeleton skeleton-text short" style="margin-bottom: 0; width: 80px;"></div>
+          </div>
+          <div class="skeleton skeleton-title" style="width: 85%;"></div>
+          <div class="skeleton skeleton-text long"></div>
+          <div class="skeleton skeleton-text medium"></div>
+          <div class="skeleton skeleton-text short"></div>
+          <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
+            <div>
+              <div class="skeleton skeleton-price" style="margin-bottom: 4px; height: 24px; width: 60px;"></div>
+              <div class="skeleton skeleton-text short" style="margin-bottom: 0; height: 12px; width: 50px;"></div>
+            </div>
+            <div class="skeleton skeleton-button" style="width: 100px; border-radius: 50px; height: 40px;"></div>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  // ============================
+  // WORKSHOP GRID (múltiplos cards de workshops)
+  // ============================
+  workshopGrid(count = 6, colClass = 'col-md-6 col-lg-4') {
+    if (this._style === 'spinner') return this.spinner();
+    return Array.from({ length: count }, () => `
+      <div class="${colClass}">
+        ${this.workshopCard()}
+      </div>
+    `).join('');
+  },
+
 
   // ============================
   // STATE: ERROR

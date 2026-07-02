@@ -236,38 +236,20 @@ class HexomelApp {
   }
 
   bindGlobalEvents() {
-    document.addEventListener("click", (e) => {
-      const toggleBtn = e.target.closest("#cart-toggle-btn");
-      if (toggleBtn) {
-        this.toggleCart(true);
-      }
-    });
-
-    document.addEventListener("mousedown", (e) => {
-      const sidebar = document.getElementById("cart-sidebar");
-      const toggleBtn = e.target.closest("#cart-toggle-btn");
-      if (
-        this.sidebarOpen &&
-        sidebar &&
-        !sidebar.contains(e.target) &&
-        !toggleBtn
-      ) {
-        this.toggleCart(false);
-      }
-    });
+    // Cart toggle logic is now handled by cart.js
   }
 
   toggleCart(show) {
-    this.sidebarOpen = show;
-    const sidebar = document.getElementById("cart-sidebar");
-    if (sidebar) {
-      if (show) sidebar.classList.add("active");
-      else sidebar.classList.remove("active");
-    }
+    // Disabled: cart.js now handles the cart toggle
   }
 
   updateCartBadge() {
-    this.renderCartSidebar();
+    // Only update badge, do not render sidebar to avoid duplicate with cart.js
+    const cartCount = this.cart.reduce((sum, item) => sum + item.quantity, 0);
+    const badge = document.querySelector(".cart-badge-modern");
+    if (badge) {
+      badge.textContent = cartCount;
+    }
   }
 
   addToCart(product) {

@@ -66,10 +66,10 @@
             <i class="fas fa-times"></i>
         </div>
         <h2 style="font-weight: 800; color: #1c5236;" data-i18n="canc.heading">Pagamento Cancelado</h2>
-        <p class="text-muted" data-i18n="canc.message">Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.</p>
+        <p class="text-muted" id="cancel-message">Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.</p>
         
         <div class="d-flex flex-column gap-2 mt-4">
-            <a href="checkout.html" id="retry-link" class="btn-retry" data-i18n="canc.retry">Tentar Novamente</a>
+            <a href="checkout.html" id="retry-link" class="btn-retry">Tentar Novamente</a>
             <a href="shop.html" class="text-decoration-none text-muted small mt-2" data-i18n="canc.backToShop">Voltar à Loja</a>
         </div>
     </div>
@@ -78,10 +78,40 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const orderId = params.get('orderId');
-            if (orderId) {
-                const retryLink = document.getElementById('retry-link');
-                if (retryLink) {
+            const reservaIdsStr = params.get('reservaIds');
+            const returnUrl = params.get('returnUrl'); // Get the return URL
+            
+            const msgEl = document.getElementById('cancel-message');
+            const retryLink = document.getElementById('retry-link');
+
+            // Update description text dynamically
+            if (msgEl) {
+                if (reservaIdsStr && orderId) {
+                    msgEl.textContent = "Parece que o pagamento não foi concluído. Os teus produtos ainda estão no carrinho, e a tua reserva de workshop foi guardada como Pendente no teu perfil.";
+                } else if (reservaIdsStr) {
+                    msgEl.textContent = "Parece que o pagamento não foi concluído. A tua reserva de workshop foi guardada como Pendente no teu perfil.";
+                } else {
+                    msgEl.textContent = "Parece que o pagamento não foi concluído. Não te preocupes, os teus itens ainda estão no carrinho.";
+                }
+            }
+
+            // Configure action button dynamically
+            if (retryLink) {
+                if (returnUrl) {
+                    // If we have a return URL, use it to go back
+                    retryLink.href = decodeURIComponent(returnUrl);
+                    retryLink.textContent = "Voltar";
+                } else if (orderId) {
+                    // For products, retry checkout
                     retryLink.href = `checkout.html?orderId=${orderId}`;
+                    retryLink.textContent = "Tentar Novamente";
+                } else if (reservaIdsStr) {
+                    // For workshops, view reservations in profile
+                    retryLink.href = 'profile.html?tab=workshops';
+                    retryLink.textContent = "Ver Reservas";
+                } else {
+                    retryLink.href = 'checkout.html';
+                    retryLink.textContent = "Tentar Novamente";
                 }
             }
         });

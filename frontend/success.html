@@ -122,8 +122,22 @@
             const params = new URLSearchParams(window.location.search);
             const orderId = params.get('orderId');
             const sessionId = params.get('session_id');
+            const returnUrl = params.get('returnUrl'); // Get the return URL
             const orderInfoEl = document.getElementById('order-info');
             const paymentStatusEl = document.getElementById('payment-status');
+            const goHomeBtn = document.querySelector('.btn-go-home');
+
+            // If we have a returnUrl, redirect to it after showing the success page for 3 seconds
+            if (returnUrl) {
+                const decodedUrl = decodeURIComponent(returnUrl);
+                goHomeBtn.href = decodedUrl; // Update button to point to return URL
+                goHomeBtn.setAttribute('data-i18n', 'succ.goBack'); // Change button text to "Voltar" instead of "Voltar ao Início"
+                
+                // Auto-redirect after 3 seconds if user doesn't click the button
+                setTimeout(() => {
+                    window.location.href = decodedUrl;
+                }, 3000);
+            }
 
             const renderFallback = () => {
                 if (orderId) {

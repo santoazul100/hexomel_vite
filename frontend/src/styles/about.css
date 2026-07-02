@@ -1,0 +1,82 @@
+/* 
+ * Hexomel — About Page Organic Theme & Scroll Animations
+ * Connects standard site styles with Lando-inspired scroll reveals
+ */
+
+/* 1. Hero Parallax Scroll Support */
+.about-hero-premium {
+  position: relative;
+  overflow: hidden;
+  background-attachment: scroll; /* Allow JS parallax control */
+}
+
+.about-hero-premium > .container {
+  transform: translateY(var(--parallax-y, 0px));
+  opacity: var(--parallax-opacity, 1);
+  will-change: transform, opacity;
+}
+
+/* 2. PAP Technical Spec Sheet Dashboard (F1 Telemetry style, Organic Theme) */
+.pap-spec-dashboard {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.pap-spec-dashboard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(26, 77, 46, 0.08);
+}
+
+.pap-spec-title {
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--primary-green) !important;
+  letter-spacing: 0.5px;
+}
+
+.pap-spec-row {
+  transition: background-color 0.2s ease;
+}
+
+.pap-spec-row:hover {
+  background-color: rgba(26, 77, 46, 0.02);
+}
+
+.pap-spec-label {
+  font-family: monospace;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pap-spec-label i {
+  color: var(--secondary-gold) !important;
+}
+
+.pap-spec-value {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text-dark) !important;
+}
+
+/* 3. Smooth Hover lifts for Brand Values */
+.about-value-capsule {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.about-value-capsule:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(26, 77, 46, 0.06);
+}
+
+.about-pillar-card {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.about-pillar-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 45px rgba(26, 77, 46, 0.08);
+}

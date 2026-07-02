@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS `item_encomenda` (
   `ID_Produto` int(10) NOT NULL,
   `Quantidade` int(30) NOT NULL,
   `Preco_Unitario` decimal(10,2) NOT NULL,
+  `Status` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Em processamento',
   PRIMARY KEY (`ID_ItemEncomenda`),
   KEY `ID_Encomenda` (`ID_Encomenda`),
   KEY `ID_Produto` (`ID_Produto`),

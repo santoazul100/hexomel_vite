@@ -235,6 +235,12 @@
         border-color: rgba(26, 77, 46, 0.1);
       }
 
+      .admin-card.active {
+        border-color: var(--primary-green) !important;
+        background-color: rgba(26, 77, 46, 0.03);
+        box-shadow: 0 0 0 2px rgba(26, 77, 46, 0.2);
+      }
+
       .product-table th {
         background: transparent;
         font-weight: 600;
@@ -895,76 +901,7 @@
     </script>
 
     <!-- Navbar (Premium Overhaul) -->
-    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
-      <div class="container-fluid px-4">
-        <!-- Sidebar Toggle (always visible inside navbar) -->
-        <button id="navbar-sidebar-toggle" title="Alternar Menu" aria-label="Toggle Sidebar">
-          <i class="fas fa-bars"></i>
-        </button>
-
-        <a class="navbar-brand" href="index.html">
-          <img
-            src="/images/logo_hexomel.webp"
-            alt="Hexomel Logo"
-            class="navbar-logo"
-          />
-        </a>
-        <button
-          class="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav mx-auto gap-4">
-            <li class="nav-item">
-              <a class="nav-link active" href="index.html" data-i18n="nav.home">Início</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
-              <ul class="dropdown-menu dropdown-menu-hexomel">
-                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
-                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
-            </li>
-          </ul>
-
-          <div class="d-flex align-items-center navbar-right-fixed">
-            <div class="cart-navbar-separate me-3">
-              <button
-                id="cart-btn"
-                class="btn btn-link text-decoration-none text-dark position-relative p-0"
-              >
-                <i class="fas fa-shopping-cart fs-5"></i>
-                <span
-                  id="cart-badge"
-                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
-                  >0</span
-                >
-              </button>
-            </div>
-
-            <div class="d-flex align-items-center gap-3" id="authSection">
-              <!-- Injected by main.js -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <div id="navbar-container"></div>
 
     <div class="admin-layout" id="admin-layout">
 
@@ -1035,10 +972,6 @@
           <a class="admin-nav-link" data-section="vendas">
             <i class="fas fa-cash-register"></i> <span>Vendas & Lucro</span>
           </a>
-          <a class="admin-nav-link" data-section="monetizacao">
-            <i class="fas fa-hand-holding-usd"></i> <span>Monetização</span>
-          </a>
-
           <p class="sidebar-section-title">Configurações</p>
           <a class="admin-nav-link" data-section="appearance">
             <i class="fas fa-palette"></i> <span>Aparência</span>
@@ -2117,6 +2050,78 @@
           </div>
         </section>
 
+        <!-- Aparência Section -->
+        <section id="appearance-section" class="admin-section">
+          <header class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+              <h4 class="fw-bold text-dark mb-1" style="font-size: 1.15rem;">
+                <i class="fas fa-palette text-success me-2" style="font-size: 0.95rem;"></i>Aparência
+              </h4>
+              <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                Personalize o estilo de carregamento e animações da interface.
+              </p>
+            </div>
+            <button type="button" class="btn btn-add-product px-4 py-2 fw-bold" onclick="adminUI.saveAppearanceSettings()">
+              <i class="fas fa-save me-2"></i><span>Guardar Configurações</span>
+            </button>
+          </header>
+
+          <input type="hidden" id="app-placeholder-style" value="skeleton" />
+          <input type="hidden" id="app-layout-animation-style" value="fade" />
+
+          <!-- Configurações de Loading -->
+          <div class="admin-card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-hourglass-half me-2"></i> Estilo de Carregamento</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div id="opt-skeleton" class="admin-card border text-center p-4 cursor-pointer" onclick="adminUI.selectLoadingStyle('skeleton')" style="cursor: pointer; transition: all 0.2s">
+                  <div class="mb-3 d-flex flex-column gap-2 opacity-50 align-items-center">
+                    <div class="skeleton-title w-75 m-0" style="background:#ddd; height:20px; border-radius:4px"></div>
+                    <div class="skeleton-text w-100 m-0" style="background:#eee; height:12px; border-radius:4px"></div>
+                    <div class="skeleton-text w-50 m-0" style="background:#eee; height:12px; border-radius:4px"></div>
+                  </div>
+                  <h6 class="fw-bold mb-1">Skeleton UI</h6>
+                  <p class="text-muted small mb-0">Efeito moderno (shimmer) a simular o conteúdo final.</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div id="opt-spinner" class="admin-card border text-center p-4 cursor-pointer" onclick="adminUI.selectLoadingStyle('spinner')" style="cursor: pointer; transition: all 0.2s">
+                  <div class="mb-3 opacity-50 text-success">
+                    <i class="fas fa-circle-notch fa-spin fs-1"></i>
+                  </div>
+                  <h6 class="fw-bold mb-1">Spinner Clássico</h6>
+                  <p class="text-muted small mb-0">Círculo de carregamento animado com texto.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configurações de Animação -->
+          <div class="admin-card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-magic me-2"></i> Animação de Transição</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div id="opt-anim-fade" class="admin-card border text-center p-4 cursor-pointer" onclick="adminUI.selectAnimationStyle('fade')" style="cursor: pointer; transition: all 0.2s">
+                  <div class="mb-3 opacity-50 text-primary">
+                    <i class="fas fa-wind fs-1"></i>
+                  </div>
+                  <h6 class="fw-bold mb-1">Fade Suave</h6>
+                  <p class="text-muted small mb-0">As páginas aparecem gradualmente (padrão).</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div id="opt-anim-roda" class="admin-card border text-center p-4 cursor-pointer" onclick="adminUI.selectAnimationStyle('roda')" style="cursor: pointer; transition: all 0.2s">
+                  <div class="mb-3 opacity-50 text-warning">
+                    <i class="fas fa-sync-alt fs-1"></i>
+                  </div>
+                  <h6 class="fw-bold mb-1">Rodar</h6>
+                  <p class="text-muted small mb-0">Efeito dinâmico com rotação.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Modo de Manutenção Section -->
         <section id="maintenance-section" class="admin-section">
           <header class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
@@ -2469,8 +2474,16 @@
             <div class="col-lg-4 d-flex flex-column gap-3">
               <div class="admin-card border-0 shadow-sm">
                 <h5 class="fw-bold mb-3"><i class="fas fa-calculator text-success me-2"></i>Parâmetros & Simulação</h5>
-                <p class="text-muted small">Ajuste os parâmetros abaixo para atualizar as comissões e margens em todo o painel e simular o lucro líquido.</p>
-                
+                <p class="text-muted small">Ajuste os parâmetros abaixo para simular a divisão de qualquer valor (uma venda ou o total mensal) entre Apicultor, Gateway e Plataforma.</p>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold opacity-75">VALOR A SIMULAR (€) <i class="fas fa-circle-info text-muted ms-1" title="Podes usar este campo para o valor bruto de uma única venda ou para o volume total de vendas de um mês (GMV) — a fórmula é a mesma."></i></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light fw-bold">€</span>
+                    <input type="number" id="sim-gmv" class="form-control fw-bold" value="100.00" min="0" step="5">
+                  </div>
+                </div>
+
                 <div class="row g-2 mb-3">
                   <div class="col-6">
                     <label class="form-label small fw-bold opacity-75">COMISSÃO (%) <i class="fas fa-circle-info text-muted ms-1" title="Taxa percentual que a plataforma cobra sobre o valor total da venda do apicultor."></i></label>
@@ -2489,304 +2502,53 @@
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label small fw-bold opacity-75">CUSTOS FIXOS MENSAIS <i class="fas fa-circle-info text-muted ms-1" title="Custos operacionais fixos mensais da plataforma (ex: servidores, manutenção)."></i></label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light fw-bold">€</span>
-                    <input type="number" id="sim-fixed-costs" class="form-control fw-bold text-danger" value="2000" min="0" step="100">
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label small fw-bold opacity-75">META VENDAS MENSAIS (GMV) <i class="fas fa-circle-info text-muted ms-1" title="Volume bruto total de vendas faturadas na plataforma por mês."></i></label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light fw-bold">€</span>
-                    <input type="number" id="sim-gmv" class="form-control fw-bold" value="10000" min="0" step="500">
-                  </div>
-                </div>
-
-                <div class="d-flex flex-column gap-2 mb-3 bg-light p-3 rounded-3 border">
-                  <div class="d-flex justify-content-between small">
-                    <span class="text-muted" id="lbl-sim-commission">Comissão (10%):</span>
-                    <span id="sim-commission-val" class="fw-bold text-success">€0.00</span>
-                  </div>
-                  <div class="d-flex justify-content-between small">
-                    <span class="text-muted" id="lbl-sim-gateway">Custos Gateway (2%):</span>
-                    <span id="sim-gateway-val" class="fw-bold text-danger">€0.00</span>
-                  </div>
-                  <div class="d-flex justify-content-between small border-top pt-2">
-                    <span class="fw-bold text-dark" id="lbl-sim-net">Margem Líquida (8%):</span>
-                    <span id="sim-net-val" class="fw-bold text-success">€0.00</span>
-                  </div>
-                </div>
-
-                <div class="text-center p-3 rounded-3" id="sim-result-box" style="background: #fef2f2; border: 1px solid #fee2e2;">
-                  <span class="d-block small text-muted">LUCRO LÍQUIDO SIMULADO</span>
-                  <h4 class="fw-bold mb-1" id="sim-profit-title">-€1,200.00</h4>
-                  <span class="smaller" id="sim-profit-text" style="color: #dc2626; font-weight: 600;">(Abaixo do Ponto de Equilíbrio)</span>
-                </div>
-
-                <div class="mt-3 text-muted small p-2.5 rounded-3 bg-light border" style="font-size: 0.72rem; line-height: 1.3;" id="sim-breakeven-help">
-                  <i class="fas fa-info-circle me-1 text-primary"></i> <strong>Break-Even:</strong> Vendas mensais necessárias para cobrir custos.
-                </div>
-              </div>
-
-              <!-- Individual Transaction Simulator -->
-              <div class="admin-card border-0 shadow-sm">
-                <h5 class="fw-bold mb-3"><i class="fas fa-scale-balanced text-success me-2"></i>Simulador de Venda Individual</h5>
-                <p class="text-muted small">Simule a divisão exata de ganhos por venda individual entre o Apicultor e a plataforma.</p>
-                
-                <div class="mb-3">
-                  <label class="form-label small fw-bold opacity-75">VALOR BRUTO DA VENDA <i class="fas fa-circle-info text-muted ms-1" title="Preço de venda total do produto listado na loja."></i></label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light fw-bold">€</span>
-                    <input type="number" id="sim-single-gross" class="form-control fw-bold" value="100.00" min="0" step="5">
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label small fw-bold opacity-75">GANHO LÍQUIDO DO APICULTOR <i class="fas fa-circle-info text-muted ms-1" title="Valor líquido que o apicultor recebe na sua conta após a dedução da comissão da plataforma."></i></label>
+                  <label class="form-label small fw-bold opacity-75">GANHO LÍQUIDO DO APICULTOR <i class="fas fa-circle-info text-muted ms-1" title="Valor líquido que o apicultor recebe após a dedução da comissão da plataforma. Ajustar este campo recalcula o valor bruto acima."></i></label>
                   <div class="input-group">
                     <span class="input-group-text bg-light fw-bold">€</span>
                     <input type="number" id="sim-single-apicultor" class="form-control fw-bold text-success" value="90.00" min="0" step="5">
                   </div>
                 </div>
 
-                <hr class="opacity-50">
-
                 <div class="d-flex flex-column gap-2 bg-light p-3 rounded-3 border">
                   <div class="d-flex justify-content-between small">
-                    <span class="text-muted" id="lbl-single-commission">Comissão Bruta (10%):</span>
-                    <span id="sim-single-comm-val" class="fw-bold text-success">€10.00</span>
+                    <span class="text-muted">Valor Bruto:</span>
+                    <span id="sim-gross-val" class="fw-bold text-dark">€0.00</span>
                   </div>
                   <div class="d-flex justify-content-between small">
-                    <span class="text-muted" id="lbl-single-gateway">Custo Gateway (2%):</span>
-                    <span id="sim-single-gate-val" class="fw-bold text-danger">€2.00</span>
+                    <span class="text-muted" id="lbl-sim-commission">Comissão (10%):</span>
+                    <span id="sim-commission-val" class="fw-bold text-danger">-€0.00</span>
                   </div>
                   <div class="d-flex justify-content-between small border-top pt-2">
-                    <span class="fw-bold text-dark" id="lbl-single-net">Lucro Plataforma (8%):</span>
-                    <span id="sim-single-net-val" class="fw-bold text-primary">€8.00</span>
+                    <span class="fw-bold text-dark" id="lbl-sim-apicultor">Ganho do Apicultor (90%):</span>
+                    <span id="sim-apicultor-val" class="fw-bold text-success">€0.00</span>
+                  </div>
+                  <hr class="opacity-50 my-1">
+                  <div class="d-flex justify-content-between small">
+                    <span class="text-muted" id="lbl-sim-gateway">Custos Gateway (2%):</span>
+                    <span id="sim-gateway-val" class="fw-bold text-danger">-€0.00</span>
+                  </div>
+                  <div class="d-flex justify-content-between small border-top pt-2">
+                    <span class="fw-bold text-dark" id="lbl-sim-net">Margem Líquida da Plataforma (8.0%):</span>
+                    <span id="sim-net-val" class="fw-bold text-success">€0.00</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <!-- MONETIZAÇÃO SECTION -->
-        <section id="monetizacao-section" class="admin-section">
-          <div class="row justify-content-center">
-            <div class="col-lg-11">
-              <header class="mb-4">
-                <h2 class="fw-bold mb-1" style="font-size: 1.05rem;"><i class="fas fa-hand-holding-usd text-success me-2"></i><span>Estudo de Monetização e Propostas de Lucro</span></h2>
-                <p class="text-muted small">
-                  Simule cenários financeiros e consulte a estratégia de rentabilização da plataforma Hexomel.
+                <div class="d-flex flex-column gap-2 mt-3">
+                  <button type="button" id="btn-apply-real-rate" class="btn btn-success w-100 fw-bold rounded-3 py-2 d-flex align-items-center justify-content-center gap-2" style="font-size: 0.85rem; white-space: nowrap;">
+                    <i class="fas fa-check-circle"></i> Aplicar como Taxa Real
+                  </button>
+                  <button type="button" id="btn-reset-simulator" class="btn btn-outline-secondary w-100 fw-medium rounded-3 py-2 d-flex align-items-center justify-content-center gap-2" style="font-size: 0.8rem; white-space: nowrap;">
+                    <i class="fas fa-rotate-left"></i> Repor Padrão
+                  </button>
+                </div>
+                <p class="text-muted mb-0 mt-2" style="font-size: 0.72rem; line-height: 1.3;">
+                  <i class="fas fa-info-circle me-1"></i> Passa a usar esta Comissão/Gateway a partir de agora. As vendas já registadas mantêm a taxa que tinham na altura — só as novas usam o valor novo.
                 </p>
-              </header>
-
-              <!-- Simulation Parameters & Live Simulator -->
-              <div class="row g-4 mb-4">
-                <div class="col-xl-4">
-                  <div class="admin-card border-0 shadow-sm p-4 h-100">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-sliders-h text-success me-2"></i>Parâmetros da Simulação</h5>
-                    <p class="text-muted small mb-4">Ajuste os valores abaixo para projetar os lucros da plataforma em tempo real.</p>
-                    
-                    <div class="mb-3">
-                      <label for="sim-gmv-monet" class="form-label small fw-bold text-uppercase text-muted">GMV Mensal Estimado (€)</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-shopping-cart text-muted"></i></span>
-                        <input type="number" id="sim-gmv-monet" class="form-control" value="50000" min="0" step="1000" oninput="adminUI.calculateMonetization()" />
-                      </div>
-                      <div class="form-text small">Volume total transacionado pelas vendas de mel.</div>
-                    </div>
-
-                    <div class="mb-3">
-                      <label for="sim-fixed-monet" class="form-label small fw-bold text-uppercase text-muted">Custos Fixos Mensais (€)</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-building text-muted"></i></span>
-                        <input type="number" id="sim-fixed-monet" class="form-control" value="2000" min="0" step="100" oninput="adminUI.calculateMonetization()" />
-                      </div>
-                      <div class="form-text small">Servidores, marketing digital e salários.</div>
-                    </div>
-
-                    <div class="mb-3">
-                      <label for="sim-gateway-monet" class="form-label small fw-bold text-uppercase text-muted">Taxa do Gateway de Pagamento (%)</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-credit-card text-muted"></i></span>
-                        <input type="number" id="sim-gateway-monet" class="form-control" value="2" min="0" max="100" step="0.1" oninput="adminUI.calculateMonetization()" />
-                      </div>
-                      <div class="form-text small">Custo por transação (ex: Stripe, MB Way).</div>
-                    </div>
-
-                    <div class="mb-2">
-                      <label for="sim-custom-rate" class="form-label small fw-bold text-uppercase text-muted d-flex justify-content-between">
-                        <span>Taxa Personalizada (%)</span>
-                        <span id="sim-custom-rate-badge" class="badge bg-success">15%</span>
-                      </label>
-                      <input type="range" class="form-range" id="sim-custom-rate" min="1" max="50" value="15" step="0.5" oninput="adminUI.updateCustomRateValue(this.value)" />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-xl-8">
-                  <div class="admin-card border-0 shadow-sm p-4 h-100">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-calculator text-success me-2"></i>Comparação de Cenários</h5>
-                    <p class="text-muted small mb-3">Matriz financeira detalhada e gráfico comparativo entre taxas de comissão (Take Rate).</p>
-                    
-                    <!-- Visual Chart for Scenarios -->
-                    <div class="mb-4 p-3 bg-light rounded-3 border">
-                      <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-chart-column text-success me-2"></i>Gráfico Comparativo: Lucro Líquido Simultâneo por Cenário</h6>
-                      <div style="height: 190px; position: relative;">
-                        <canvas id="monetizationScenarioChart"></canvas>
-                      </div>
-                    </div>
-
-                    <div class="table-responsive">
-                      <table class="table align-middle table-hover" id="monetization-table" style="border-collapse: separate; border-spacing: 0 10px;">
-                        <thead>
-                          <tr class="text-muted text-uppercase small fw-bold" style="border-bottom: 2px solid rgba(0,0,0,0.05);">
-                            <th class="ps-3">Taxa (%)</th>
-                            <th>Receita Comissão</th>
-                            <th>Custos Gateway</th>
-                            <th>Lucro Bruto</th>
-                            <th>Custos Fixos</th>
-                            <th>Lucro Líquido</th>
-                            <th class="pe-3">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <!-- Dynamic Rows for 5%, 10%, 20%, and Custom -->
-                          <tr id="row-5pct" style="background: rgba(0,0,0,0.01); border-radius: 8px;">
-                            <td class="fw-bold ps-3">5%</td>
-                            <td id="val-5-revenue">0.00€</td>
-                            <td id="val-5-gateway">0.00€</td>
-                            <td id="val-5-gross">0.00€</td>
-                            <td id="val-5-fixed">0.00€</td>
-                            <td id="val-5-net" class="fw-bold">0.00€</td>
-                            <td class="pe-3" id="val-5-status">---</td>
-                          </tr>
-                          <tr id="row-10pct" style="background: rgba(244, 180, 0, 0.05); border-radius: 8px; border-left: 4px solid #f4b400;">
-                            <td class="fw-bold ps-3 text-warning">10% <span class="badge bg-warning text-dark text-uppercase small" style="font-size:0.6rem;">Recomendado</span></td>
-                            <td id="val-10-revenue">0.00€</td>
-                            <td id="val-10-gateway">0.00€</td>
-                            <td id="val-10-gross">0.00€</td>
-                            <td id="val-10-fixed">0.00€</td>
-                            <td id="val-10-net" class="fw-bold">0.00€</td>
-                            <td class="pe-3" id="val-10-status">---</td>
-                          </tr>
-                          <tr id="row-20pct" style="background: rgba(0,0,0,0.01); border-radius: 8px;">
-                            <td class="fw-bold ps-3">20%</td>
-                            <td id="val-20-revenue">0.00€</td>
-                            <td id="val-20-gateway">0.00€</td>
-                            <td id="val-20-gross">0.00€</td>
-                            <td id="val-20-fixed">0.00€</td>
-                            <td id="val-20-net" class="fw-bold">0.00€</td>
-                            <td class="pe-3" id="val-20-status">---</td>
-                          </tr>
-                          <tr id="row-custompct" style="background: rgba(25, 135, 84, 0.04); border-radius: 8px; border-left: 4px solid #198754;">
-                            <td class="fw-bold ps-3 text-success">Personalizado (<span id="val-custom-title-rate">15%</span>)</td>
-                            <td id="val-custom-revenue">0.00€</td>
-                            <td id="val-custom-gateway">0.00€</td>
-                            <td id="val-custom-gross">0.00€</td>
-                            <td id="val-custom-fixed">0.00€</td>
-                            <td id="val-custom-net" class="fw-bold">0.00€</td>
-                            <td class="pe-3" id="val-custom-status">---</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <!-- Formula tip -->
-                    <div class="p-3 bg-light rounded mt-3 d-flex align-items-center gap-3">
-                      <div class="icon-box bg-white text-success p-2 rounded shadow-sm"><i class="fas fa-percentage"></i></div>
-                      <div class="small text-muted">
-                        <span class="fw-bold text-dark d-block">Dica de Margem para Vendedores:</span>
-                        Para proteger a margem, os apicultores podem ajustar o preço com a fórmula:
-                        <code class="fw-bold text-success d-inline-block mt-1 bg-white px-2 py-0.5 rounded">PV = (Custo + Lucro Desejado) / (1 - %comissão)</code>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Extra Monetization Information -->
-              <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                  <div class="admin-card border-0 shadow-sm p-4 h-100">
-                    <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-coins text-warning me-2"></i>Fontes Alternativas de Receita</h5>
-                    <div class="d-flex flex-column gap-3 mt-3">
-                      <div class="d-flex gap-3">
-                        <div class="icon-box bg-light text-primary p-2 rounded" style="width: 40px; height: 40px; text-align: center;"><i class="fas fa-tag"></i></div>
-                        <div>
-                          <h6 class="fw-bold mb-1">Taxas Fixas por Venda</h6>
-                          <p class="text-muted small mb-0">Cobrar um valor fixo (ex: €0.50) por item vendido. Adequado para tickets de compra baixos para garantir uma receita base de transação.</p>
-                        </div>
-                      </div>
-                      <div class="d-flex gap-3">
-                        <div class="icon-box bg-light text-success p-2 rounded" style="width: 40px; height: 40px; text-align: center;"><i class="fas fa-gem"></i></div>
-                        <div>
-                          <h6 class="fw-bold mb-1">Subscrições Premium para Produtores</h6>
-                          <p class="text-muted small mb-0">Mensalidades para apicultores (ex: €15/mês) que oferecem taxas reduzidas, relatórios de vendas avançados ou destaque prioritário.</p>
-                        </div>
-                      </div>
-                      <div class="d-flex gap-3">
-                        <div class="icon-box bg-light text-danger p-2 rounded" style="width: 40px; height: 40px; text-align: center;"><i class="fas fa-ad"></i></div>
-                        <div>
-                          <h6 class="fw-bold mb-1">Publicidade Não Intrusiva (Upsells)</h6>
-                          <p class="text-muted small mb-0">Destaque de produtos na homepage ou banners integrados. O apicultor paga uma taxa direta para obter mais visualizações e cliques.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="admin-card border-0 shadow-sm p-4 h-100">
-                    <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-balance-scale text-primary me-2"></i>Recomendações Legais & Fiscais</h5>
-                    <ul class="text-muted small ps-3 mt-3 d-flex flex-column gap-2">
-                      <li><strong>IVA sobre Comissões:</strong> Em Portugal, a comissão cobrada pelo marketplace está sujeita à taxa normal de IVA de 21%. O imposto é cobrado apenas sobre o serviço prestado (comissão), e não sobre o mel.</li>
-                      <li><strong>Clareza Contratual:</strong> Definir se a comissão incide sobre o valor líquido do produto ou o total bruto com portes de envio (geralmente sobre o total para evitar fraude de custos de frete).</li>
-                      <li><strong>Conformidade Registo OSS (One Stop Shop):</strong> Essencial registar a plataforma caso ocorram vendas de mel transfronteiriças para simplificar obrigações declarativas europeias.</li>
-                      <li><strong>UX Transparente:</strong> Manter transparência total nas taxas no painel do apicultor e apresentar preços finais com IVA/comissões já incorporados no checkout do cliente final.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-
-
-              <!-- KPIs Grid -->
-              <div class="admin-card border-0 shadow-sm p-4">
-                <h5 class="fw-bold mb-3"><i class="fas fa-chart-line text-success me-2"></i>Métricas de Performance (KPIs) a Monitorizar</h5>
-                <div class="row g-3 mt-1">
-                  <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                      <span class="d-block fw-bold text-dark small">Take Rate</span>
-                      <span class="text-muted" style="font-size:0.75rem;">% retida do GMV (Alvo: 10%)</span>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                      <span class="d-block fw-bold text-dark small">CAC / CLTV</span>
-                      <span class="text-muted" style="font-size:0.75rem;">Relação de custo/retorno</span>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                      <span class="d-block fw-bold text-dark small">Margens de Lucro</span>
-                      <span class="text-muted" style="font-size:0.75rem;">Lucro líquido do operador</span>
-                    </div>
-                  </div>
-                  <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                      <span class="d-block fw-bold text-dark small">MAU / DAU</span>
-                      <span class="text-muted" style="font-size:0.75rem;">Engajamento da comunidade</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
         </section>
+
       </main>
 
     </div>
@@ -2917,6 +2679,17 @@
                         class="form-control form-control-v2"
                         placeholder="0"
                         required
+                      />
+                    </div>
+
+                    <div class="col-md-4">
+                      <label class="form-label small fw-bold text-uppercase text-muted">Limite de Stock</label>
+                      <input
+                        type="number"
+                        id="prod-low-stock-threshold"
+                        class="form-control form-control-v2"
+                        placeholder="Ex: 10"
+                        min="0"
                       />
                     </div>
 
@@ -3177,8 +2950,17 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label small fw-bold text-uppercase text-muted">Conteúdo do Verso (Suporta tags HTML como strong)</label>
+                <label class="form-label small fw-bold text-uppercase text-muted">Conteúdo do Verso (Suporta tags HTML como strong e u)</label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="adminUI.wrapFactContentSelection('strong')" title="Colocar o texto selecionado a negrito">
+                    <i class="fas fa-bold me-1"></i>Negrito
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="adminUI.wrapFactContentSelection('u')" title="Sublinhar o texto selecionado">
+                    <i class="fas fa-underline me-1"></i>Sublinhar
+                  </button>
+                </div>
                 <textarea id="factContentBack" class="form-control form-control-v2" rows="3" placeholder="Insira o texto explicativo..." required></textarea>
+                <div class="form-text">Selecione uma palavra ou frase e clique em “Sublinhar” para inserir a marcação automaticamente.</div>
               </div>
 
               <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
@@ -3220,13 +3002,19 @@
                   <input type="file" id="glossaryIconFile" class="d-none" accept="image/*" onchange="adminUI.uploadFactIcon(this, 'glossaryIcon')" />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold text-uppercase text-muted">Categoria</label>
-                  <select id="glossaryCategory" class="form-select form-control-v2" required>
-                    <option value="substance">Substâncias</option>
-                    <option value="hive">A Colmeia</option>
-                    <option value="process">Processos</option>
-                    <option value="equipment">Equipamentos</option>
-                  </select>
+                  <label class="form-label small fw-bold text-uppercase text-muted">Tag / Categoria</label>
+                  <div class="input-group">
+                    <input type="text" id="glossaryCategory" class="form-control form-control-v2" list="glossary-category-suggestions" placeholder="Ex: saúde, florais, colmeia" required />
+                    <button class="btn btn-outline-success" type="button" onclick="adminUI.addGlossaryCategoryFromInput()" title="Adicionar esta tag ao glossário">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                  <datalist id="glossary-category-suggestions"></datalist>
+                  <div class="mt-2">
+                    <div class="small text-muted mb-2">Tags rápidas</div>
+                    <div id="glossary-category-chips" class="d-flex flex-wrap gap-2"></div>
+                  </div>
+                  <div class="form-text small">Pode escolher uma categoria existente ou criar uma nova tag para este termo.</div>
                 </div>
               </div>
 

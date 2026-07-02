@@ -14,6 +14,24 @@ let selectedRole = null;
 let isGuestMode = false;
 let guestProfileId = null;
 
+function resolveImage(img, fallback) {
+  if (!img) return fallback;
+  if (img.startsWith('/') || img.startsWith('http')) return img;
+  return `/images/${img}`;
+}
+
+function formatDateSafely(dateVal, options = {}, locale = "pt-PT") {
+  try {
+    if (!dateVal) return "N/A";
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "N/A";
+    return d.toLocaleDateString(locale, options);
+  } catch (err) {
+    console.error("formatDateSafely error:", err);
+    return "N/A";
+  }
+}
+
 let userFavorites = [];
 async function loadUserFavorites() {
   const token = getAuthToken();
@@ -599,6 +617,13 @@ async function fetchProfileData() {
       if (result.handled) return;
 
       const data = result.data;
+
+      if (data.newToken) {
+        localStorage.setItem("token", data.newToken);
+        window.location.reload();
+        return;
+      }
+
       currentUserData = data;
 
       // Update localStorage with fresh data to ensure persistence across refreshes
@@ -662,17 +687,22 @@ function renderPublicProfile(data) {
     badgeVerify.style.cssText = "display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; vertical-align: middle;";
     
     const isRestricted = Boolean(Number(member.restrictedToPost) === 1 || member.restrictedToPost === true || Number(member.Restrito_Postar) === 1 || member.Restrito_Postar === true);
-    const is2faVerified = Boolean(Number(member.checkoutVerified) === 1 || member.checkoutVerified === true || Number(member.Checkout_Verified) === 1 || member.Checkout_Verified === true);
 
     const statusBadgeHtml = isRestricted
       ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-ban"></i>Conta Restrita</span>`
       : `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-check-circle"></i>Conta Ativa</span>`;
 
-    const twoFaBadgeHtml = is2faVerified
-      ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-shield-alt"></i>2FA Verificado</span>`
-      : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-exclamation-triangle"></i>Requer 2FA</span>`;
+    let roleBadgeHtml = "";
+    const userRole = (member.role || "").toLowerCase();
+    if (userRole === "apicultor") {
+      roleBadgeHtml = `<span class="badge rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px; background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;"><i class="fas fa-store"></i>Apicultor</span>`;
+    } else if (userRole === "cliente") {
+      roleBadgeHtml = `<span class="badge rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px; background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;"><i class="fas fa-user"></i>Cliente</span>`;
+    } else if (userRole === "admin") {
+      roleBadgeHtml = `<span class="badge rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;"><i class="fas fa-user-shield"></i>Administrador</span>`;
+    }
 
-    badgeVerify.innerHTML = `${statusBadgeHtml}${twoFaBadgeHtml}`;
+    badgeVerify.innerHTML = `${statusBadgeHtml}${roleBadgeHtml}`;
   }
 
   // Avatar Handling
@@ -800,9 +830,9 @@ function renderPublicProfile(data) {
           <div class="product-card-premium h-100 position-relative d-flex flex-column">
             <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${prod.slug || prod.id}'">
               ${tags.length > 0 ? `<div class="product-tags-container">
-                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('')}
+                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>`).join('')}
               </div>` : ''}
-              <img src="${prod.image || '/images/default-product.png'}" alt="${prod.name}" onerror="this.src='/images/default-product.png'">
+              <img src="${resolveImage(prod.image, '/images/default-product.png')}" alt="${prod.name}" onerror="this.src='/images/default-product.png'">
             </div>
             <div class="p-4 d-flex flex-column flex-grow-1">
               <div onclick="window.location.href='/produto/${prod.slug || prod.id}'" style="cursor: pointer" class="mb-3">
@@ -813,6 +843,16 @@ function renderPublicProfile(data) {
                 </div>
                 <p class="text-muted small mb-0">${prod.category || 'Sem Categoria'} • 500g</p>
                 ${prod.origin ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${prod.origin}</p>` : ''}
+                ${
+                  prod.apicultorId
+                    ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
+                        <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                        <a href="profile.html?id=${prod.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
+                          ${prod.apicultorName}
+                        </a>
+                      </p>`
+                    : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
+                }
               </div>
               <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
                 <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${(parseFloat(prod.price) || 0).toFixed(2)}</span>
@@ -857,9 +897,9 @@ function renderPublicProfile(data) {
           <div class="product-card-premium h-100 position-relative d-flex flex-column">
             <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${fav.slug || fav.id}'">
               ${tags.length > 0 ? `<div class="product-tags-container">
-                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('')}
+                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>`).join('')}
               </div>` : ''}
-              <img src="${fav.image || '/images/default-product.png'}" alt="${fav.name}" onerror="this.src='/images/default-product.png'">
+              <img src="${resolveImage(fav.image, '/images/default-product.png')}" alt="${fav.name}" onerror="this.src='/images/default-product.png'">
             </div>
             <div class="p-4 d-flex flex-column flex-grow-1">
               <div onclick="window.location.href='/produto/${fav.slug || fav.id}'" style="cursor: pointer" class="mb-3">
@@ -870,6 +910,16 @@ function renderPublicProfile(data) {
                 </div>
                 <p class="text-muted small mb-0">${fav.category || 'Sem Categoria'} • 500g</p>
                 ${fav.origin ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${fav.origin}</p>` : ''}
+                ${
+                  fav.apicultorId
+                    ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
+                        <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                        <a href="profile.html?id=${fav.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
+                          ${fav.apicultorName}
+                        </a>
+                      </p>`
+                    : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
+                }
               </div>
               <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
                 <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${(parseFloat(fav.price) || 0).toFixed(2)}</span>
@@ -907,17 +957,32 @@ function renderPublicProfile(data) {
   const ordersList = document.getElementById("orders-list");
   if (ordersList) {
     if (member.ordersPublic && data.orders && data.orders.length > 0) {
+      window.__publicOrdersCache = {};
+      data.orders.forEach(order => { window.__publicOrdersCache[order.id] = order; });
       ordersList.innerHTML = data.orders.map(order => {
         const sc = { Pendente: {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"}, Pago: {bg:"#f0fdf4",color:"#166534",icon:"fa-check-circle"}, Enviado: {bg:"#eff6ff",color:"#1d4ed8",icon:"fa-truck"}, Entregue: {bg:"#f0fdf4",color:"#15803d",icon:"fa-gift"}, Cancelado: {bg:"#fef2f2",color:"#991b1b",icon:"fa-times-circle"} }[order.status] || {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"};
-        return `<div class="order-card-premium animate-fade-up">
-          <div class="order-card-header" style="border-bottom: none;">
+        return `<div class="order-card-premium animate-fade-up py-3 px-4 mb-3" style="border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div class="d-flex align-items-center gap-3">
-              <div class="order-id-badge">#${order.id}</div>
-              <div><div class="fw-bold">Encomenda #${order.id}</div><div class="text-muted small">${new Date(order.date).toLocaleDateString("pt-PT",{year:"numeric",month:"long",day:"numeric"})}</div></div>
+              <div class="order-id-badge" style="background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;">#${order.id}</div>
+              <div>
+                <div class="fw-bold text-dark">Encomenda #${order.id}</div>
+                <div class="text-muted small">${formatDateSafely(order.date, {year:"numeric",month:"long",day:"numeric"})}</div>
+              </div>
             </div>
-            <div class="text-end">
-              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">€${(parseFloat(order.total)||0).toFixed(2)}</div>
-              <span class="order-status-pill" style="background:${sc.bg};color:${sc.color}"><i class="fas ${sc.icon} me-1"></i>${order.status}</span>
+            
+            <div class="d-flex align-items-center gap-4 flex-wrap ms-auto ms-md-0">
+              <div class="text-end">
+                <span class="order-status-pill d-inline-block px-3 py-1 rounded-pill" style="background:${sc.bg};color:${sc.color};font-size:0.8rem;font-weight:600;"><i class="fas ${sc.icon} me-1"></i>${order.status}</span>
+              </div>
+              <div class="text-end" style="min-width: 80px;">
+                <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">€${(parseFloat(order.total)||0).toFixed(2)}</div>
+              </div>
+              <div>
+                <button class="btn btn-sm text-white px-4 py-2 shadow-sm" style="background: var(--primary-green); border-radius: 8px; font-weight: 600; transition: all 0.2s;" onclick="window.viewPublicOrderDetails(${order.id}, ${guestProfileId})">
+                  <i class="fas fa-eye me-2"></i>Detalhes
+                </button>
+              </div>
             </div>
           </div>
         </div>`;
@@ -937,21 +1002,24 @@ function renderPublicProfile(data) {
   if (workshopsList) {
     if (member.role === "apicultor" && data.hostedWorkshops && data.hostedWorkshops.length > 0) {
       workshopsList.innerHTML = data.hostedWorkshops.map(ws => {
-        const date = new Date(ws.date).toLocaleDateString("pt-PT", {
+        const date = formatDateSafely(ws.date, {
           day: "2-digit",
           month: "long",
           year: "numeric"
         });
         return `
           <div class="col-md-6 col-xl-4 animate-fade-up">
-            <div class="premium-card p-3 h-100 d-flex flex-column gap-3">
+            <div class="premium-card p-3 h-100 d-flex flex-column gap-3" onclick="window.location.href='/workshops.html?id=${ws.id}'" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
                 <div class="text-center">
-                  <img src="${ws.image || '/images/default-workshop.png'}" alt="${ws.title}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
+                  <img src="${resolveImage(ws.image, '/images/workshop_default.webp')}" alt="${ws.title}" onerror="this.src='/images/workshop_default.webp'" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
                 </div>
-                <div class="flex-grow-1">
-                    <div class="fw-bold small text-truncate">${ws.title}</div>
+                <div class="flex-grow-1 d-flex flex-column">
+                    <div class="fw-bold small text-truncate mb-1" title="${ws.title}">${ws.title}</div>
                     <div class="text-muted" style="font-size: 0.85rem;"><i class="far fa-calendar-alt me-1"></i> ${date}</div>
-                    <div class="text-muted" style="font-size: 0.85rem;">€${(parseFloat(ws.price) || 0).toFixed(2)}</div>
+                    <div class="mt-auto pt-2 d-flex justify-content-between align-items-center">
+                        <div class="fw-bold" style="color: var(--primary-green); font-size: 0.95rem;">€${(parseFloat(ws.price) || 0).toFixed(2)}</div>
+                        <button class="btn btn-sm text-white px-3 py-1 shadow-sm" style="background: var(--primary-green); border-radius: 6px; font-weight: 600; font-size: 0.8rem;" onclick="event.stopPropagation(); window.location.href='/workshops.html?id=${ws.id}'">Reservar</button>
+                    </div>
                 </div>
             </div>
           </div>
@@ -1330,7 +1398,17 @@ function renderProfile(data) {
       ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-shield-alt"></i>2FA Verificado</span>`
       : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px;"><i class="fas fa-exclamation-triangle"></i>Requer 2FA</span>`;
 
-    badgeVerify.innerHTML = `${statusBadgeHtml}${twoFaBadgeHtml}`;
+    let roleBadgeHtml = "";
+    const userRole = (data.role || "").toLowerCase();
+    if (userRole === "apicultor") {
+      roleBadgeHtml = `<span class="badge rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px; background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;"><i class="fas fa-store"></i>Apicultor</span>`;
+    } else if (userRole === "cliente") {
+      roleBadgeHtml = `<span class="badge rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px; background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;"><i class="fas fa-user"></i>Cliente</span>`;
+    } else if (userRole === "admin") {
+      roleBadgeHtml = `<span class="badge rounded-pill px-3 py-1.5 small fw-bold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; height: 28px; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;"><i class="fas fa-user-shield"></i>Administrador</span>`;
+    }
+
+    badgeVerify.innerHTML = `${statusBadgeHtml}${twoFaBadgeHtml}${roleBadgeHtml}`;
   }
 
     // Show Upgrade tab if role is client
@@ -1425,15 +1503,40 @@ function renderOrders(orders) {
         const curIdx = statusSteps.indexOf(order.status);
         const sc = { Pendente: {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"}, Pago: {bg:"#f0fdf4",color:"#166534",icon:"fa-check-circle"}, Enviado: {bg:"#eff6ff",color:"#1d4ed8",icon:"fa-truck"}, Entregue: {bg:"#f0fdf4",color:"#15803d",icon:"fa-gift"}, Cancelado: {bg:"#fef2f2",color:"#991b1b",icon:"fa-times-circle"} }[order.status] || {bg:"#fffbeb",color:"#b45309",icon:"fa-clock"};
         const tl = statusSteps.map((s,i) => `<div class="order-timeline-step ${i<=curIdx?"active":""} ${i===curIdx?"current":""}"><div class="timeline-dot"></div><span class="timeline-label">${s}</span></div>`).join('<div class="timeline-line-connector"></div>');
-        return `<div class="order-card-premium animate-fade-up">
+        return `<div class="order-card-premium animate-fade-up position-relative">
           <div class="order-card-header">
             <div class="d-flex align-items-center gap-3">
               <div class="order-id-badge">#${order.id}</div>
-              <div><div class="fw-bold">Encomenda #${order.id}</div><div class="text-muted small">${new Date(order.date).toLocaleDateString("pt-PT",{year:"numeric",month:"long",day:"numeric"})}</div></div>
+              <div><div class="fw-bold">Encomenda #${order.id}</div><div class="text-muted small">${formatDateSafely(order.date,{year:"numeric",month:"long",day:"numeric"})}</div></div>
             </div>
-            <div class="text-end">
-              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e)">€${(parseFloat(order.total)||0).toFixed(2)}</div>
-              <span class="order-status-pill" style="background:${sc.bg};color:${sc.color}"><i class="fas ${sc.icon} me-1"></i>${order.status}</span>
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <div class="fw-bold fs-5" style="color:var(--primary-green,#1a4d2e);">€${(parseFloat(order.total)||0).toFixed(2)}</div>
+              <div class="dropdown">
+                <button class="btn-actions-dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end order-actions-menu mt-2">
+                  <li>
+                    <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 ${order.status === 'Pendente' ? 'disabled text-muted' : ''}" href="#" onclick="event.preventDefault(); ${order.status !== 'Pendente' ? `window.downloadReceipt(${order.id})` : ''}" ${order.status === 'Pendente' ? 'title="O recibo só fica disponível após o pagamento"' : ''}>
+                      <i class="fas fa-file-invoice ${order.status === 'Pendente' ? 'text-secondary opacity-50' : 'text-primary'}" style="width: 16px;"></i> 
+                      <span>Descarregar recibo</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 ${order.status === 'Pendente' ? 'disabled text-muted' : ''}" href="#" onclick="event.preventDefault(); ${order.status !== 'Pendente' ? `window.resendReceipt(${order.id})` : ''}" ${order.status === 'Pendente' ? 'title="Disponível após o pagamento"' : ''}>
+                      <i class="fas fa-envelope ${order.status === 'Pendente' ? 'text-secondary opacity-50' : 'text-success'}" style="width: 16px;"></i> 
+                      <span>Reenviar email</span>
+                    </a>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-danger" href="#" onclick="event.preventDefault(); window.cancelOrder(${order.id})">
+                      <i class="fas fa-trash-alt" style="width: 16px;"></i> 
+                      <span>Eliminar encomenda</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
           <div class="order-timeline-container">${tl}</div>
@@ -1441,8 +1544,7 @@ function renderOrders(orders) {
             <button class="btn text-white flex-grow-1 py-2 shadow-sm" style="background: var(--primary-green); border-radius: 8px; font-weight: 600; min-width: 140px;" onclick="window.viewOrderDetails(${order.id})"><i class="fas fa-eye me-2"></i>Detalhes</button>
             ${order.status === 'Pendente' 
               ? `<button class="btn flex-grow-1 py-2 shadow-sm" style="background: var(--primary-gold, #f4b400); color: #000; border: none; border-radius: 8px; font-weight: 600; min-width: 120px;" onclick="window.payOrder(${order.id})"><i class="fas fa-credit-card me-2"></i>Pagar</button>` 
-              : `<button class="btn flex-grow-1 py-2 shadow-sm" style="background: white; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; min-width: 120px;" onclick="window.downloadReceipt(${order.id})"><i class="fas fa-file-invoice me-2"></i>Recibo</button>
-                 <button class="btn flex-grow-1 py-2 shadow-sm" style="background: white; border: 1px solid #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; min-width: 120px;" onclick="window.resendReceipt(${order.id})"><i class="fas fa-envelope me-2"></i>Email</button>`
+              : ''
             }
           </div>
         </div>`;
@@ -1456,6 +1558,40 @@ function renderOrders(orders) {
       </div>`;
   }
 }
+
+window.cancelOrder = async function(orderId) {
+  const result = await Swal.fire({
+    title: 'Eliminar encomenda',
+    text: "Tem a certeza de que pretende eliminar esta encomenda? Esta ação não pode ser desfeita.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#475569',
+    confirmButtonText: 'Eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const res = await fetch(`/api/user/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: buildAuthHeaders()
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erro ao cancelar encomenda");
+      }
+
+      Swal.fire('Cancelada!', 'A encomenda foi eliminada.', 'success');
+      fetchProfileData(); // Refresh order list
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Erro', err.message, 'error');
+    }
+  }
+};
+
 
 async function fetchFavorites() {
   const token = getAuthToken();
@@ -1487,13 +1623,13 @@ function renderFavorites(favorites) {
     favGrid.innerHTML = favorites
       .map((fav) => {
         const tags = fav.tags ? fav.tags.split(',').map(t => t.trim()).filter(t => t) : [];
-        const imageSrc = fav.image || `/img/produtos/${fav.id}.webp`;
+        const imageSrc = resolveImage(fav.image, '/images/default-product.png');
         return `
         <div class="col-md-6 col-xl-4 mb-4 animate-fade-up">
           <div class="product-card-premium h-100 position-relative d-flex flex-column">
             <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${fav.slug || fav.id}'">
               ${tags.length > 0 ? `<div class="product-tags-container">
-                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('')}
+                ${tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>`).join('')}
               </div>` : ''}
               <img src="${imageSrc}" alt="${fav.name}" onerror="this.src='/images/default-product.png'">
             </div>
@@ -1506,6 +1642,16 @@ function renderFavorites(favorites) {
                 </div>
                 <p class="text-muted small mb-0">${fav.category || 'Sem Categoria'} • 500g</p>
                 ${fav.origin ? `<p class="text-muted smaller mb-1"><i class="fas fa-map-marker-alt me-1"></i>${fav.origin}</p>` : ''}
+                ${
+                  fav.apicultorId
+                    ? `<p class="smaller mb-0" style="color:var(--primary-gold)">
+                        <i class="fas fa-user-tie me-1"></i>Vendido por: 
+                        <a href="profile.html?id=${fav.apicultorId}" class="fw-bold text-decoration-none" style="color:inherit" onclick="event.stopPropagation()">
+                          ${fav.apicultorName}
+                        </a>
+                      </p>`
+                    : `<p class="smaller mb-0 text-muted"><i class="fas fa-check-circle me-1 text-success"></i>Original Hexomel</p>`
+                }
               </div>
               <div class="d-flex justify-content-between align-items-center mt-auto gap-2 pt-2 border-top">
                 <span class="h5 fw-bold mb-0" style="color: var(--primary-green)">€${(parseFloat(fav.price) || 0).toFixed(2)}</span>
@@ -1894,25 +2040,52 @@ window.viewOrderDetails = async function (orderId) {
 
   try {
     let items;
-    const res = await fetch(`/api/user/orders/${orderId}/items`, {
-      headers: buildAuthHeaders(),
-    });
+    let order;
+    const [orderRes, itemsRes] = await Promise.all([
+      fetch(`/api/user/orders/${orderId}`, { headers: buildAuthHeaders() }),
+      fetch(`/api/user/orders/${orderId}/items`, { headers: buildAuthHeaders() })
+    ]);
 
-    const result = await handleProtectedResponse(
-      res,
+    const orderResult = await handleProtectedResponse(
+      orderRes,
       "Falha ao carregar detalhes.",
       "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
     );
-    if (result.handled) {
+    if (orderResult.handled) {
       modal.hide();
       return;
     }
-    items = result.data;
+    
+    const itemsResult = await handleProtectedResponse(
+      itemsRes,
+      "Falha ao carregar detalhes.",
+      "A tua sessao expirou. Inicia sessao novamente para ver os detalhes da encomenda.",
+    );
+    if (itemsResult.handled) {
+      modal.hide();
+      return;
+    }
+
+    order = orderResult.data;
+    items = itemsResult.data;
+
+    // Set modal title dynamically
+    const modalTitleEl = document.getElementById("orderModalLabel");
+    if (modalTitleEl) {
+      modalTitleEl.innerText = `Detalhes da Encomenda #${orderId}`;
+    }
+
+    const dateFormatted = formatDateSafely(order.Data_Encomenda || order.date, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     let itemsHtml = `
-      <div class="order-id-display mb-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
-        <span class="text-muted small">ID da Encomenda</span>
-        <span class="fw-bold">#${orderId}</span>
+      <div class="mb-3 px-1 text-muted small">
+        <i class="far fa-calendar-alt me-1 text-warning"></i> Data de Compra: <strong>${dateFormatted}</strong>
       </div>
       <div class="table-responsive bg-white rounded-3 p-2 shadow-sm border border-light">
         <table class="table table-hover align-middle mb-0">
@@ -1926,20 +2099,30 @@ window.viewOrderDetails = async function (orderId) {
           <tbody style="border-top: none;">
     `;
 
-    let total = 0;
+    let subtotal = 0;
     items.forEach((item) => {
       const itemTotal = item.Quantidade * item.Preco_Unitario;
-      total += itemTotal;
+      subtotal += itemTotal;
+      
+      let imgPath = item.Imagem || `default-product.png`;
+      if (!imgPath.startsWith('/') && !imgPath.startsWith('http')) {
+        imgPath = `/images/${imgPath}`;
+      }
+
       itemsHtml += `
         <tr style="border-bottom: 1px solid #f8fafc; transition: background-color 0.2s;">
           <td style="width: 70px; padding: 12px 10px 12px 15px;">
-            <img src="${item.Imagem || "/img/produtos/" + item.ID_Produto + ".webp"}" 
+            <img src="${imgPath}" 
                  class="rounded-3 shadow-sm border" style="width: 48px; height: 48px; object-fit: cover;"
                  onerror="this.src='/images/logo_hexomel.webp'">
           </td>
           <td style="padding: 12px 10px;">
             <div class="fw-bold text-wrap" style="color: #1e293b;">${item.Nome}</div>
-            <div class="text-muted mt-1" style="font-size: 0.70rem; color: #94a3b8 !important;"><i class="fas fa-user-circle me-1"></i>${item.ApicultorNome || "Hexomel"}</div>
+            <div class="text-muted mt-1" style="font-size: 0.70rem; color: #94a3b8 !important;">
+              <i class="fas fa-user-circle me-1"></i>${item.ApicultorId 
+                ? `<a href="profile.html?id=${item.ApicultorId}" class="text-decoration-none fw-semibold" style="color: #64748b; transition: color 0.2s;" onmouseover="this.style.setProperty('color', '#f4b400', 'important')" onmouseout="this.style.setProperty('color', '#64748b', 'important')">${item.ApicultorNome || "Apicultor"}</a>` 
+                : (item.ApicultorNome || "Hexomel")}
+            </div>
             <div class="text-muted small mt-1">€${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
           </td>
           <td class="text-center fw-medium" style="color: #475569;">${item.Quantidade}</td>
@@ -1948,21 +2131,157 @@ window.viewOrderDetails = async function (orderId) {
       `;
     });
 
+    const orderTotal = parseFloat(order.Total || order.total || subtotal);
+    const shipping = parseFloat(order.Custo_Envio || order.custo_envio || 0);
+
     itemsHtml += `
           </tbody>
-          <tfoot class="bg-light rounded-bottom-3">
-            <tr>
-              <td colspan="3" class="p-3 fw-bold text-end" style="color: #64748b; border-bottom-left-radius: 8px;">Total da Encomenda</td>
-              <td class="p-3 text-end fw-bold fs-5" style="color: var(--primary-green); border-bottom-right-radius: 8px;">€${total.toFixed(2)}</td>
-            </tr>
-          </tfoot>
         </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-4">
+        <div class="p-3 bg-light rounded-4 shadow-sm border border-light" style="width: 320px;">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small fw-semibold">Subtotal</span>
+            <span class="fw-bold" style="color: #475569;">€${subtotal.toFixed(2)}</span>
+          </div>
+          ${shipping > 0 ? `
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small fw-semibold">Custo de Envio</span>
+            <span class="fw-bold" style="color: #475569;">€${shipping.toFixed(2)}</span>
+          </div>
+          ` : ''}
+          <hr class="my-2" style="border-top: 1px dashed #cbd5e1; opacity: 1;">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark">Total</span>
+            <span class="fw-bold fs-4" style="color: var(--primary-green, #1a4d2e);">€${orderTotal.toFixed(2)}</span>
+          </div>
+        </div>
       </div>
     `;
 
     content.innerHTML = itemsHtml;
   } catch (error) {
     console.error("Order details error:", error);
+    content.innerHTML = `
+      <div class="alert alert-danger rounded-4 py-4 text-center">
+        <i class="fas fa-exclamation-triangle fs-2 mb-2 d-block"></i>
+        Erro ao carregar os detalhes da encomenda.
+      </div>
+    `;
+  }
+};
+
+// Order details for someone else's public order list (no auth/ownership required, no PII exposed)
+window.viewPublicOrderDetails = async function (orderId, memberId) {
+  const content = document.getElementById("order-details-content");
+  const modalEl = document.getElementById("orderDetailsModal");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  content.innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-warning" role="status">
+        <span class="visually-hidden">A carregar...</span>
+      </div>
+    </div>
+  `;
+
+  modal.show();
+
+  try {
+    const order = (window.__publicOrdersCache || {})[orderId];
+    if (!order) throw new Error("Order not found");
+
+    const itemsRes = await fetch(`/api/members/${memberId}/orders/${orderId}/items`);
+    if (!itemsRes.ok) throw new Error("Falha ao carregar detalhes.");
+    const items = await itemsRes.json();
+
+    const modalTitleEl = document.getElementById("orderModalLabel");
+    if (modalTitleEl) {
+      modalTitleEl.innerText = `Detalhes da Encomenda #${orderId}`;
+    }
+
+    const dateFormatted = formatDateSafely(order.date, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    let itemsHtml = `
+      <div class="mb-3 px-1 text-muted small">
+        <i class="far fa-calendar-alt me-1 text-warning"></i> Data de Compra: <strong>${dateFormatted}</strong>
+      </div>
+      <div class="table-responsive bg-white rounded-3 p-2 shadow-sm border border-light">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="text-muted small fw-bold">
+            <tr style="border-bottom: 2px solid #f1f5f9;">
+              <th colspan="2" class="pb-3 px-3 text-uppercase" style="letter-spacing: 0.5px;">Produto</th>
+              <th class="text-center pb-3 text-uppercase" style="letter-spacing: 0.5px;">Qtd</th>
+              <th class="text-end pb-3 px-3 text-uppercase" style="letter-spacing: 0.5px;">Preço</th>
+            </tr>
+          </thead>
+          <tbody style="border-top: none;">
+    `;
+
+    let subtotal = 0;
+    items.forEach((item) => {
+      const itemTotal = item.Quantidade * item.Preco_Unitario;
+      subtotal += itemTotal;
+
+      let imgPath = item.Imagem || `default-product.png`;
+      if (!imgPath.startsWith('/') && !imgPath.startsWith('http')) {
+        imgPath = `/images/${imgPath}`;
+      }
+
+      itemsHtml += `
+        <tr style="border-bottom: 1px solid #f8fafc; transition: background-color 0.2s;">
+          <td style="width: 70px; padding: 12px 10px 12px 15px;">
+            <img src="${imgPath}"
+                 class="rounded-3 shadow-sm border" style="width: 48px; height: 48px; object-fit: cover;"
+                 onerror="this.src='/images/logo_hexomel.webp'">
+          </td>
+          <td style="padding: 12px 10px;">
+            <div class="fw-bold text-wrap" style="color: #1e293b;">${item.Nome}</div>
+            <div class="text-muted mt-1" style="font-size: 0.70rem; color: #94a3b8 !important;">
+              <i class="fas fa-user-circle me-1"></i>${item.ApicultorId
+                ? `<a href="profile.html?id=${item.ApicultorId}" class="text-decoration-none fw-semibold" style="color: #64748b; transition: color 0.2s;" onmouseover="this.style.setProperty('color', '#f4b400', 'important')" onmouseout="this.style.setProperty('color', '#64748b', 'important')">${item.ApicultorNome || "Apicultor"}</a>`
+                : (item.ApicultorNome || "Hexomel")}
+            </div>
+            <div class="text-muted small mt-1">€${parseFloat(item.Preco_Unitario).toFixed(2)} / un</div>
+          </td>
+          <td class="text-center fw-medium" style="color: #475569;">${item.Quantidade}</td>
+          <td class="text-end fw-bold" style="padding-right: 15px; color: #1e293b;">€${itemTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    const orderTotal = parseFloat(order.total || subtotal);
+
+    itemsHtml += `
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end mt-4">
+        <div class="p-3 bg-light rounded-4 shadow-sm border border-light" style="width: 320px;">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small fw-semibold">Subtotal</span>
+            <span class="fw-bold" style="color: #475569;">€${subtotal.toFixed(2)}</span>
+          </div>
+          <hr class="my-2" style="border-top: 1px dashed #cbd5e1; opacity: 1;">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark">Total</span>
+            <span class="fw-bold fs-4" style="color: var(--primary-green, #1a4d2e);">€${orderTotal.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = itemsHtml;
+  } catch (error) {
+    console.error("Public order details error:", error);
     content.innerHTML = `
       <div class="alert alert-danger rounded-4 py-4 text-center">
         <i class="fas fa-exclamation-triangle fs-2 mb-2 d-block"></i>
@@ -1994,14 +2313,21 @@ window.downloadReceipt = async function (orderId) {
 
     const html = await res.text();
     
-    // Abrir em nova aba de forma profissional usando Blob
+    // Forçar o download do ficheiro em vez de abrir num novo separador
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const win = window.open(url, "_blank");
     
-    if (!win) {
-      throw new Error("O seu navegador bloqueou a abertura do recibo. Por favor, permita pop-ups para este site.");
-    }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recibo_encomenda_${orderId}.html`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Limpeza
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
 
     Swal.close();
   } catch (error) {
@@ -2118,6 +2444,40 @@ window.reorderItems = async function (orderId) {
   }
 };
 
+window.payWorkshopReservation = async function (reservationId) {
+  const token = getAuthToken();
+  if (!token) return handleSessionExpired();
+
+  const result = await Swal.fire({
+    title: "Efetuar Pagamento",
+    text: "Desejas prosseguir para o pagamento desta reserva de workshop?",
+    icon: "info",
+    showCancelButton: true,
+    confirmButtonText: "Sim, Pagar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#f4b400",
+    cancelButtonColor: "#718096",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await fetch(`/api/user/workshops/${reservationId}/pay-order`, {
+      method: "POST",
+      headers: { ...buildAuthHeaders(), "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      return Swal.fire("Erro", err.error || "Não foi possível criar a encomenda.", "error");
+    }
+    const { reservaId } = await res.json();
+    window.location.href = `checkout.html?reservaId=${reservaId}`;
+  } catch (e) {
+    console.error("payWorkshopReservation error:", e);
+    Swal.fire("Erro", "Ocorreu um erro. Tenta novamente.", "error");
+  }
+};
+
 window.payOrder = async function (orderId) {
   const token = getAuthToken();
   if (!token) return handleSessionExpired();
@@ -2137,6 +2497,7 @@ window.payOrder = async function (orderId) {
     }
   });
 };
+
 
 // Upgrade Request Handling
 async function handleUpgradeRequest(e) {
@@ -2223,19 +2584,19 @@ async function checkUpgradeStatus() {
     const banner = document.getElementById("upgrade-status-banner");
     const form = document.getElementById("upgrade-request-form");
 
-    if (data.Status && data.Status !== "Nenhum") {
+    if (data.status && data.status !== "none") {
         banner.classList.remove("d-none");
         let statusClass = "bg-warning-subtle text-warning-emphasis";
         let statusIcon = "fa-clock";
         let statusText = "O teu pedido para ser Apicultor está pendente de análise.";
 
-        if (data.Status === "Aprovado") {
+        if (data.status === "Aprovado") {
           statusClass = "bg-success-subtle text-success-emphasis";
           statusIcon = "fa-check-circle";
           statusText =
             "O teu pedido de Apicultor foi aprovado! Re-inicia a sessão para ativar as tuas ferramentas de venda.";
           form.classList.add("d-none");
-        } else if (data.Status === "Rejeitado") {
+        } else if (data.status === "Rejeitado") {
           statusClass = "bg-danger-subtle text-danger-emphasis";
           statusIcon = "fa-times-circle";
           statusText =
@@ -2256,20 +2617,7 @@ async function checkUpgradeStatus() {
           statusText =
             "O teu pedido já foi submetido. Agora aguarde até o seu pedido estar aceite pela administração.";
             
-          form.classList.remove("d-none");
-          
-          // Disable form elements
-          document.getElementById("upgrade-desc").disabled = true;
-          document.getElementById("upgrade-doc").disabled = true;
-          const btnSubmit = document.getElementById("btn-submit-upgrade");
-          if(btnSubmit) {
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i class="fas fa-lock me-2"></i>Aguarde até estar aceite...';
-            btnSubmit.classList.replace("btn-primary", "btn-secondary");
-            btnSubmit.style.background = "#e2e8f0";
-            btnSubmit.style.color = "#64748b";
-            btnSubmit.style.border = "none";
-          }
+          form.classList.add("d-none");
         }
 
         banner.innerHTML = `
@@ -2324,8 +2672,8 @@ function renderUserWorkshops(reservations) {
       .map((reserva) => {
         const dataRes = new Date(reserva.Data_Realizacao);
         const agora = new Date();
-        const isPast = dataRes < agora;
-        const dateStr = dataRes.toLocaleDateString("pt-PT", {
+        const isPast = isNaN(dataRes.getTime()) ? false : (dataRes < agora);
+        const dateStr = formatDateSafely(reserva.Data_Realizacao, {
           day: "2-digit",
           month: "long",
           year: "numeric",
@@ -2333,31 +2681,69 @@ function renderUserWorkshops(reservations) {
           minute: "2-digit",
         });
 
-        const statusClass = isPast ? "past" : "upcoming";
-        const statusText = isPast ? "Realizado" : "Agendado";
-        const fallbackImg = "https://placehold.co/600x340/f6f6f6/e0e0e0?text=Workshop";
+        const dateReservaStr = formatDateSafely(reserva.Data_Reserva, {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        const isPago = reserva.Status === 'Pago';
+        const statusClass = isPast ? "past" : (isPago ? "upcoming" : "pending");
+        const statusText = isPast ? "Realizado" : (isPago ? "Agendado" : "Pendente de Pagamento");
+        
+        const fallbackImg = "/images/workshop_default.webp";
+        const hasImage = !!reserva.Imagem;
+        const imageSrc = hasImage ? resolveImage(reserva.Imagem) : fallbackImg;
+
+        const statusStyle = isPast
+          ? "background: rgba(255, 255, 255, 0.9) !important; color: #6c757d !important; box-shadow: 0 4px 12px rgba(0,0,0,0.08); backdrop-filter: blur(4px);"
+          : (isPago 
+              ? "background: rgba(255, 255, 255, 0.95) !important; color: #1a4d2e !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px);"
+              : "background: rgba(254, 243, 199, 0.95) !important; color: #b45309 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px);");
 
         return `
           <div class="col-md-6 col-lg-6">
-            <div class="reservation-card d-flex flex-column h-100 p-0">
-              <img src="${reserva.Imagem || fallbackImg}" alt="${reserva.Titulo}" class="reservation-card-img" onerror="this.src='${fallbackImg}'">
+            <div class="reservation-card d-flex flex-column h-100 p-0" style="border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); border: 1px solid rgba(0,0,0,0.08);">
+              <div class="position-relative overflow-hidden" style="height: 160px; background: #e2e8f0;">
+                <img src="${imageSrc}" alt="${reserva.Titulo}" class="reservation-card-img w-100 h-100" style="object-fit: cover;" onerror="this.src='${fallbackImg}'">
+                <span class="position-absolute top-0 start-0 m-3 reservation-status ${statusClass}" style="${statusStyle}">${statusText}</span>
+                <span class="position-absolute top-0 end-0 m-3 badge rounded-pill px-3 py-2 fw-bold" style="font-size: 0.8rem; backdrop-filter: blur(8px); background: rgba(0,0,0,0.55); color: #fff;">#${reserva.ID_Reserva}</span>
+              </div>
               <div class="p-4 d-flex flex-column flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <span class="reservation-status ${statusClass}">${statusText}</span>
-                  <span class="fw-bold text-dark fs-5">#${reserva.ID_Reserva}</span>
-                </div>
-                <h5 class="fw-bold mb-2 text-truncate" title="${reserva.Titulo}">${reserva.Titulo}</h5>
+                <h5 class="fw-bold mb-2 text-truncate" title="${reserva.Titulo}" style="color: #1a4d2e; font-size: 1.15rem;">${reserva.Titulo}</h5>
                 <div class="text-muted small mb-3">
-                  <i class="far fa-calendar-alt me-1 text-warning"></i> ${dateStr} <br/>
-                  <i class="fas fa-user-tie me-1 text-warning mt-1"></i> ${reserva.ApicultorNome}
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="far fa-calendar-alt me-2 text-warning" style="width: 16px;"></i>
+                    <span><strong>Realização:</strong> ${dateStr}</span>
+                  </div>
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="fas fa-shopping-bag me-2 text-warning" style="width: 16px;"></i>
+                    <span><strong>Compra:</strong> ${dateReservaStr}</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user-tie me-2 text-warning" style="width: 16px;"></i>
+                    <span><strong>Apicultor:</strong> ${reserva.ApicultorNome}</span>
+                  </div>
                 </div>
                 <div class="mt-auto d-flex justify-content-end border-top pt-3">
                   ${
                     !isPast
-                      ? `<button class="btn-cancel-reservation" onclick="window.cancelWorkshop(${reserva.ID_Reserva})">
-                           <i class="fas fa-times me-1"></i> Cancelar Reserva
-                         </button>`
-                      : `<button class="btn btn-sm btn-outline-secondary disabled">Terminado</button>`
+                      ? (!isPago
+                          ? `<div class="d-flex gap-2 w-100">
+                               <button class="btn flex-grow-1 shadow-sm" style="background: var(--primary-gold, #f4b400); color: #000; border: none; border-radius: 8px; font-weight: 600; padding: 0.5rem 1rem;" onclick="window.payWorkshopReservation(${reserva.ID_Reserva})">
+                                 <i class="fas fa-credit-card me-1"></i> Pagar
+                               </button>
+                               <button class="btn-cancel-reservation flex-grow-1" onclick="window.cancelWorkshop(${reserva.ID_Reserva})" style="padding: 0.5rem 1rem; border-radius: 8px;">
+                                 <i class="fas fa-times me-1"></i> Cancelar
+                               </button>
+                             </div>`
+                          : `<button class="btn-cancel-reservation w-100" onclick="window.cancelWorkshop(${reserva.ID_Reserva})" style="padding: 0.5rem 1rem;">
+                               <i class="fas fa-times me-1"></i> Cancelar Reserva
+                             </button>`)
+                      : `<button class="btn btn-sm btn-outline-secondary w-100 disabled" style="border-radius: 50px; padding: 0.5rem 1rem;">Terminado</button>`
+
                   }
                 </div>
               </div>

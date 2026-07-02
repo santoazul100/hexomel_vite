@@ -372,44 +372,176 @@ async function syncCustomerCheckoutDetails(
   );
 }
 
-async function fulfillPaidOrder(orderId) {
-  const order = await db.get(
-    "SELECT ID_Encomenda, ID_Cliente, Status FROM encomenda WHERE ID_Encomenda = ?",
-    [orderId],
-  );
+async function fulfillPaidOrder(orderId, reservaIds = []) {
+  let clientId = null;
+  let hasHandledOrder = false;
+  let hasHandledWorkshops = false;
 
-  if (!order) {
-    return { ok: false, reason: "ORDER_NOT_FOUND" };
+  // 1. Fulfill Order (Products)
+  if (orderId) {
+    const order = await db.get(
+      "SELECT ID_Encomenda, ID_Cliente, Status FROM encomenda WHERE ID_Encomenda = ?",
+      [orderId],
+    );
+
+    if (order) {
+      clientId = order.ID_Cliente;
+      if (order.Status !== "Pago") {
+        // Deduct product stock
+        const items = await db.all(
+          "SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?",
+          [orderId],
+        );
+        for (const item of items) {
+          await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [
+            item.Quantidade,
+            item.ID_Produto,
+          ]);
+        }
+
+        await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
+          orderId,
+        ]);
+        
+        await sendReceiptEmail(orderId);
+        hasHandledOrder = true;
+      }
+    }
   }
 
-  if (order.Status === "Pago") {
-    return { ok: true, alreadyPaid: true };
+  // 2. Fulfill Workshops
+  if (reservaIds && reservaIds.length > 0) {
+    const placeholders = reservaIds.map(() => '?').join(',');
+    const pendingWorkshops = await db.all(
+      `SELECT ID_Reserva, ID_Cliente, Status FROM reserva_workshop WHERE ID_Reserva IN (${placeholders})`,
+      reservaIds
+    );
+
+    for (const ws of pendingWorkshops) {
+      if (!clientId) clientId = ws.ID_Cliente;
+      if (ws.Status !== "Pago") {
+        await db.run("UPDATE reserva_workshop SET Status = 'Pago' WHERE ID_Reserva = ?", [ws.ID_Reserva]);
+        hasHandledWorkshops = true;
+      }
+    }
   }
 
-  const items = await db.all(
-    "SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?",
-    [orderId],
-  );
-
-  for (const item of items) {
-    await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [
-      item.Quantidade,
-      item.ID_Produto,
-    ]);
+  // 3. Clear Cart
+  if (clientId && (hasHandledOrder || hasHandledWorkshops)) {
+    await clearCustomerProductCart(clientId);
   }
 
-  await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
-    orderId,
-  ]);
+  // 4. Notify Apicultors
+  if (hasHandledOrder || hasHandledWorkshops) {
+    await notifyApicultorsOfSale(orderId, reservaIds);
+  }
 
+  return { ok: true, handledOrder: hasHandledOrder, handledWorkshops: hasHandledWorkshops };
+}
+
+async function clearCustomerProductCart(clientId) {
+  if (!clientId) return;
   await db.run(
     "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
-    [order.ID_Cliente],
+    [clientId],
   );
+}
 
-  await sendReceiptEmail(orderId);
+async function notifyApicultorsOfSale(orderId, reservaIds = []) {
+  if (!mailTransporter) return; // Skip if no mail config
+  
+  const salesByApicultor = {}; // { apicultorId: { email, nome, items: [], total: 0 } }
+  
+  let buyerNome = "Um cliente";
+  let purchaseDate = new Date().toLocaleString("pt-PT");
 
-  return { ok: true, alreadyPaid: false };
+  if (orderId) {
+    const order = await db.get("SELECT e.Data_Encomenda, c.Nome FROM encomenda e JOIN cliente c ON e.ID_Cliente = c.ID_Cliente WHERE e.ID_Encomenda = ?", [orderId]);
+    if (order) {
+      buyerNome = order.Nome;
+      purchaseDate = new Date(order.Data_Encomenda).toLocaleString("pt-PT");
+    }
+
+    const prodItems = await db.all(`
+      SELECT ie.Quantidade, ie.Preco_Unitario, p.Nome as ProdutoNome, p.ID_Apicultor, a.Email as ApicultorEmail, a.Nome as ApicultorNome
+      FROM item_encomenda ie
+      JOIN produto p ON ie.ID_Produto = p.ID_Produto
+      JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
+      WHERE ie.ID_Encomenda = ?
+    `, [orderId]);
+
+    for (const item of prodItems) {
+      if (!salesByApicultor[item.ID_Apicultor]) {
+        salesByApicultor[item.ID_Apicultor] = { email: item.ApicultorEmail, nome: item.ApicultorNome, items: [], total: 0 };
+      }
+      const totalItem = item.Quantidade * item.Preco_Unitario;
+      salesByApicultor[item.ID_Apicultor].items.push(`📦 ${item.Quantidade}x ${item.ProdutoNome} (${totalItem.toFixed(2)}€)`);
+      salesByApicultor[item.ID_Apicultor].total += totalItem;
+    }
+  }
+
+  if (reservaIds && reservaIds.length > 0) {
+    const placeholders = reservaIds.map(() => '?').join(',');
+    const wsItems = await db.all(`
+      SELECT rw.Preco_Unitario, w.Titulo as WorkshopNome, w.ID_Apicultor, a.Email as ApicultorEmail, a.Nome as ApicultorNome, c.Nome as ClienteNome
+      FROM reserva_workshop rw
+      JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+      JOIN cliente a ON w.ID_Apicultor = a.ID_Cliente
+      JOIN cliente c ON rw.ID_Cliente = c.ID_Cliente
+      WHERE rw.ID_Reserva IN (${placeholders})
+    `, reservaIds);
+
+    for (const item of wsItems) {
+      if (!salesByApicultor[item.ID_Apicultor]) {
+        salesByApicultor[item.ID_Apicultor] = { email: item.ApicultorEmail, nome: item.ApicultorNome, items: [], total: 0 };
+      }
+      buyerNome = item.ClienteNome; // Override buyer name
+      const totalItem = item.Preco_Unitario || 0;
+      salesByApicultor[item.ID_Apicultor].items.push(`📅 1x Reserva: ${item.WorkshopNome} (${totalItem.toFixed(2)}€)`);
+      salesByApicultor[item.ID_Apicultor].total += totalItem;
+    }
+  }
+
+  for (const apiId in salesByApicultor) {
+    const data = salesByApicultor[apiId];
+    if (!data.email) continue;
+    
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a4d2e;">Nova Venda na Hexomel! 🐝</h2>
+        <p>Olá <strong>${data.nome}</strong>,</p>
+        <p>Parabéns! Realizaste uma nova venda através da plataforma Hexomel.</p>
+        
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333;">Detalhes da Transação:</h3>
+          <p><strong>Comprador:</strong> ${buyerNome}</p>
+          <p><strong>Data:</strong> ${purchaseDate}</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+          <ul style="list-style-type: none; padding: 0;">
+            ${data.items.map(i => `<li style="margin-bottom: 8px;">${i}</li>`).join('')}
+          </ul>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+          <p style="font-size: 18px; margin-bottom: 0;"><strong>Total a receber:</strong> <span style="color: #16a34a;">${data.total.toFixed(2)}€</span></p>
+        </div>
+        
+        <p>Podes consultar todos os detalhes no teu <a href="http://localhost:5173/dashboard-apicultor.html" style="color: #d97706; text-decoration: none; font-weight: bold;">Painel de Apicultor</a>.</p>
+        <p>Continuação de boas vendas!</p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">A equipa Hexomel</p>
+      </div>
+    `;
+
+    try {
+      await mailTransporter.sendMail({
+        from: '"Hexomel" <noreply@hexomel.pt>',
+        to: data.email,
+        subject: "Nova Venda Realizada! 🎉 — Hexomel",
+        html: htmlContent,
+      });
+      console.log(`📧 Sale notification email sent to Apicultor ID ${apiId} (${data.email})`);
+    } catch (err) {
+      console.error(`📧 Failed to send sale notification to Apicultor ID ${apiId}:`, err);
+    }
+  }
 }
 
 function buildAbsoluteAppUrl(origin, assetPath) {
@@ -633,9 +765,10 @@ const runDatabaseMigrations = async () => {
       .catch(() => console.log("Workshop table creation handled"));
 
     await db
-      .run(
-        "ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'",
-      )
+      .run("ALTER TABLE workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'")
+      .catch(() => console.log("Workshop Status col already exists"));
+    await db
+      .run("ALTER TABLE workshop ADD COLUMN Low_Stock_Threshold INT DEFAULT NULL")
       .catch(() => console.log("Workshop Status col already exists"));
 
     await db
@@ -703,6 +836,9 @@ const runDatabaseMigrations = async () => {
               ID_Reserva int(10) NOT NULL AUTO_INCREMENT,
               ID_Workshop int(10) NOT NULL,
               ID_Cliente int(10) NOT NULL,
+              Status varchar(20) DEFAULT 'Pendente',
+              ID_Encomenda int(10) DEFAULT NULL,
+              Preco_Unitario decimal(10,2) DEFAULT NULL,
               Data_Reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (ID_Reserva),
               KEY ID_Workshop (ID_Workshop),
@@ -713,6 +849,18 @@ const runDatabaseMigrations = async () => {
         `,
       )
       .catch(() => console.log("reserva_workshop table creation handled"));
+
+    await db
+      .run(
+        "ALTER TABLE reserva_workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'",
+      )
+      .catch(() => {});
+    await db
+      .run("ALTER TABLE reserva_workshop ADD COLUMN ID_Encomenda INT(10) DEFAULT NULL")
+      .catch(() => {});
+    await db
+      .run("ALTER TABLE reserva_workshop ADD COLUMN Preco_Unitario DECIMAL(10,2) DEFAULT NULL")
+      .catch(() => {});
 
     // Community Q&A tables
     await db
@@ -757,6 +905,9 @@ const runDatabaseMigrations = async () => {
     await db
       .run("ALTER TABLE produto ADD COLUMN Slug VARCHAR(200) DEFAULT NULL")
       .catch(() => console.log("Slug col already exists"));
+    await db
+      .run("ALTER TABLE produto ADD COLUMN Low_Stock_Threshold INT DEFAULT NULL")
+      .catch(() => console.log("Low_Stock_Threshold col already exists"));
     await db
       .run("ALTER TABLE produto ADD UNIQUE INDEX uk_slug (Slug)")
       .catch(() => console.log("Slug unique index already exists"));
@@ -935,14 +1086,21 @@ const runDatabaseMigrations = async () => {
         CREATE TABLE IF NOT EXISTS aprender_facto (
           ID_Facto INT NOT NULL AUTO_INCREMENT,
           Titulo VARCHAR(255) NOT NULL,
-          Icon_Frente VARCHAR(100) NOT NULL,
-          Icon_Verso VARCHAR(100) NOT NULL,
+          Icon_Frente VARCHAR(255) NOT NULL,
+          Icon_Verso VARCHAR(255) NOT NULL,
           Conteudo_Verso TEXT NOT NULL,
           PRIMARY KEY (ID_Facto)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `,
       )
       .catch(() => console.log("aprender_facto table creation handled"));
+
+    await db
+      .run("ALTER TABLE aprender_facto MODIFY Icon_Frente VARCHAR(255) NOT NULL")
+      .catch(() => {});
+    await db
+      .run("ALTER TABLE aprender_facto MODIFY Icon_Verso VARCHAR(255) NOT NULL")
+      .catch(() => {});
 
     await db
       .run(
@@ -1383,6 +1541,57 @@ const runDatabaseMigrations = async () => {
     `).catch((err) => console.log("mensagem_privada table creation handled", err));
 
     await db.run(`
+      CREATE TABLE IF NOT EXISTS conversa_privada (
+        ID_Conversa int(10) NOT NULL AUTO_INCREMENT,
+        ID_Cliente_1 int(10) NOT NULL,
+        ID_Cliente_2 int(10) NOT NULL,
+        ID_Produto int(10) DEFAULT NULL,
+        Data_Criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        Data_Atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (ID_Conversa),
+        KEY idx_conversa_cliente_1 (ID_Cliente_1),
+        KEY idx_conversa_cliente_2 (ID_Cliente_2),
+        KEY idx_conversa_produto (ID_Produto),
+        UNIQUE KEY uk_conversa_produto (ID_Cliente_1, ID_Cliente_2, ID_Produto),
+        CONSTRAINT fk_conversa_cliente_1 FOREIGN KEY (ID_Cliente_1) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE,
+        CONSTRAINT fk_conversa_cliente_2 FOREIGN KEY (ID_Cliente_2) REFERENCES cliente (ID_Cliente) ON DELETE CASCADE,
+        CONSTRAINT fk_conversa_produto FOREIGN KEY (ID_Produto) REFERENCES produto (ID_Produto) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch((err) => console.log("conversa_privada table creation handled", err));
+
+    await db.run("ALTER TABLE mensagem_privada ADD COLUMN ID_Conversa int(10) DEFAULT NULL AFTER ID_Mensagem").catch(() => {});
+    await db.run("ALTER TABLE mensagem_privada ADD KEY idx_msg_conversa (ID_Conversa)").catch(() => {});
+    await db.run("ALTER TABLE mensagem_privada ADD CONSTRAINT fk_msg_conversa FOREIGN KEY (ID_Conversa) REFERENCES conversa_privada (ID_Conversa) ON DELETE CASCADE").catch(() => {});
+    await db.run(`
+      INSERT INTO conversa_privada (ID_Cliente_1, ID_Cliente_2, ID_Produto, Data_Criacao, Data_Atualizacao)
+      SELECT pairs.cliente1, pairs.cliente2, NULL, pairs.primeira_msg, pairs.ultima_msg
+      FROM (
+        SELECT
+          LEAST(ID_Remetente, ID_Destinatario) AS cliente1,
+          GREATEST(ID_Remetente, ID_Destinatario) AS cliente2,
+          MIN(Data_Envio) AS primeira_msg,
+          MAX(Data_Envio) AS ultima_msg
+        FROM mensagem_privada
+        WHERE ID_Conversa IS NULL
+        GROUP BY LEAST(ID_Remetente, ID_Destinatario), GREATEST(ID_Remetente, ID_Destinatario)
+      ) pairs
+      LEFT JOIN conversa_privada c
+        ON c.ID_Cliente_1 = pairs.cliente1
+        AND c.ID_Cliente_2 = pairs.cliente2
+        AND c.ID_Produto IS NULL
+      WHERE c.ID_Conversa IS NULL
+    `).catch((err) => console.log("legacy conversation migration handled", err));
+    await db.run(`
+      UPDATE mensagem_privada m
+      JOIN conversa_privada c
+        ON c.ID_Cliente_1 = LEAST(m.ID_Remetente, m.ID_Destinatario)
+        AND c.ID_Cliente_2 = GREATEST(m.ID_Remetente, m.ID_Destinatario)
+        AND c.ID_Produto IS NULL
+      SET m.ID_Conversa = c.ID_Conversa
+      WHERE m.ID_Conversa IS NULL
+    `).catch((err) => console.log("legacy message linking handled", err));
+
+    await db.run(`
       CREATE TABLE IF NOT EXISTS bloqueio (
         ID_Bloqueador int(10) NOT NULL,
         ID_Bloqueado int(10) NOT NULL,
@@ -1497,7 +1706,7 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
   }
   // Return path relative to public folder (accessible via web)
   const relativePath = `/uploads/${req.file.filename}`;
-  res.json({ path: relativePath });
+  res.json({ path: relativePath, url: relativePath });
 });
 
 // Basic health check route
@@ -2677,16 +2886,19 @@ app.get("/api/products", async (req, res) => {
     const rows = await db.all(`
       SELECT p.*, 
       p.Slug,
-      COALESCE(AVG(a.Nota), 0) as Rating, 
-      COUNT(a.ID_Avaliacao) as ReviewCount,
+      COALESCE(ar.Rating, 0) as Rating, 
+      COALESCE(ar.ReviewCount, 0) as ReviewCount,
       c.Nome as ApicultorNome,
       c.Picture as ApicultorFoto,
       c.Bio as ApicultorBio
       FROM produto p
-      LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+      LEFT JOIN (
+        SELECT ID_Produto, AVG(Nota) as Rating, COUNT(ID_Avaliacao) as ReviewCount
+        FROM avaliacao
+        GROUP BY ID_Produto
+      ) ar ON p.ID_Produto = ar.ID_Produto
       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
       WHERE p.Status = 'Aprovado' OR p.Status IS NULL
-      GROUP BY p.ID_Produto
       ORDER BY p.ID_Produto DESC
     `);
     res.json(rows);
@@ -2728,7 +2940,7 @@ app.post(
     try {
       const slug = await generateUniqueSlug(slugify(nome));
       const result = await db.run(
-        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, Slug, Em_Destaque) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, Slug, Em_Destaque, Low_Stock_Threshold) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           nome,
           preco,
@@ -2740,6 +2952,7 @@ app.post(
           tags,
           slug,
           emDestaque ? 1 : 0,
+          (lowStockThreshold === "" || lowStockThreshold === undefined || lowStockThreshold === null) ? null : parseInt(lowStockThreshold, 10),
         ],
       );
       const newProduct = await db.get(
@@ -2771,10 +2984,15 @@ app.put(
       imagem,
       tags,
       emDestaque,
+      lowStockThreshold,
     } = req.body;
     try {
+      const parsedThreshold = (lowStockThreshold === "" || lowStockThreshold === undefined || lowStockThreshold === null)
+        ? null
+        : parseInt(lowStockThreshold, 10);
+
       await db.run(
-        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Imagem = ?, Tags = ?, Em_Destaque = ? WHERE ID_Produto = ?",
+        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Imagem = ?, Tags = ?, Em_Destaque = ?, Low_Stock_Threshold = ? WHERE ID_Produto = ?",
         [
           nome,
           preco,
@@ -2785,6 +3003,7 @@ app.put(
           imagem,
           tags,
           emDestaque ? 1 : 0,
+          parsedThreshold,
           id,
         ],
       );
@@ -2859,14 +3078,14 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
       .json({ error: "Access denied. Apicultor role required." });
   }
 
-  const { nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags } =
+  const { nome, preco, stock, idCategoria, idOrigem, descricao, imagem, tags, lowStockThreshold } =
     req.body;
 
   try {
     const initialStatus = req.user.role === "admin" ? "Aprovado" : "Pendente";
     const slug = await generateUniqueSlug(slugify(nome));
     const result = await db.run(
-      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor, Status, Slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO produto (Nome, Preco, Stock, ID_Categoria, ID_Origem, Descricao, Imagem, Tags, ID_Apicultor, Status, Slug, Low_Stock_Threshold) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         nome,
         preco,
@@ -2879,6 +3098,7 @@ app.post("/api/apicultor/products", authenticateToken, async (req, res) => {
         req.user.id,
         initialStatus,
         slug,
+        (lowStockThreshold === "" || lowStockThreshold === undefined || lowStockThreshold === null) ? null : parseInt(lowStockThreshold, 10),
       ],
     );
     const newProduct = await db.get(
@@ -2905,6 +3125,46 @@ app.get("/api/apicultores", async (req, res) => {
   }
 });
 
+// APICULTOR PRODUCTS & WORKSHOPS GET
+app.get("/api/apicultor/products", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin") {
+    return res.status(403).json({ error: "Access denied." });
+  }
+  try {
+    const products = await db.all(
+      `SELECT p.*,
+        cat.Nome as CategoriaNome,
+        o.Nome as OrigemNome
+        FROM produto p
+        LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
+        LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
+        WHERE p.ID_Apicultor = ?
+        ORDER BY p.ID_Produto DESC`,
+      [req.user.id]
+    );
+    res.json(products);
+  } catch (error) {
+    console.error("Fetch apicultor products error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/apicultor/workshops", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin") {
+    return res.status(403).json({ error: "Access denied." });
+  }
+  try {
+    const workshops = await db.all(
+      "SELECT * FROM workshop WHERE ID_Apicultor = ? ORDER BY Data_Realizacao ASC",
+      [req.user.id]
+    );
+    res.json(workshops);
+  } catch (error) {
+    console.error("Fetch apicultor workshops error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // APICULTOR PROFILE & WORKSHOPS
 app.patch("/api/apicultor/bio", authenticateToken, async (req, res) => {
   if (req.user.role !== "apicultor" && req.user.role !== "admin")
@@ -2924,13 +3184,13 @@ app.patch("/api/apicultor/bio", authenticateToken, async (req, res) => {
 app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
   if (req.user.role !== "apicultor" && req.user.role !== "admin")
     return res.status(403).json({ error: "Access denied." });
-  const { titulo, descricao, data_realizacao, preco, vagas, imagem } = req.body;
+  const { titulo, descricao, data_realizacao, preco, vagas, imagem, lowStockThreshold } = req.body;
   const defaultWorkshopImage = "/images/workshop_default.webp";
   const finalImage =
     imagem && imagem.trim() !== "" ? imagem : defaultWorkshopImage;
   try {
     const result = await db.run(
-      "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, Status, ID_Apicultor) VALUES (?, ?, ?, ?, ?, ?, 'Pendente', ?)",
+      "INSERT INTO workshop (Titulo, Descricao, Data_Realizacao, Preco, Vagas, Imagem, Status, ID_Apicultor, Low_Stock_Threshold) VALUES (?, ?, ?, ?, ?, ?, 'Pendente', ?, ?)",
       [
         titulo,
         descricao,
@@ -2939,6 +3199,7 @@ app.post("/api/apicultor/workshops", authenticateToken, async (req, res) => {
         vagas,
         finalImage,
         req.user.id,
+        (lowStockThreshold === "" || lowStockThreshold === undefined || lowStockThreshold === null) ? null : parseInt(lowStockThreshold, 10),
       ],
     );
     res.status(201).json({ id: result.lastID });
@@ -2978,12 +3239,8 @@ app.post("/api/workshops/:id/reserve", authenticateToken, async (req, res) => {
       "INSERT INTO reserva_workshop (ID_Workshop, ID_Cliente) VALUES (?, ?)",
       [id, req.user.id],
     );
-    await db.run(
-      "UPDATE workshop SET Vagas = Vagas - 1 WHERE ID_Workshop = ?",
-      [id],
-    );
 
-    res.json({ ok: true, message: "Reserva efetuada com sucesso!" });
+    res.json({ ok: true, addedToCart: true, message: "Adicionado ao carrinho com sucesso!" });
   } catch (error) {
     console.error("Workshop reserve error:", error);
     res.status(500).json({ error: "Erro na base de dados." });
@@ -3008,6 +3265,7 @@ app.patch(
       descricao,
       tags,
       imagem,
+      lowStockThreshold,
     } = req.body;
 
     try {
@@ -3021,12 +3279,13 @@ app.patch(
           .status(404)
           .json({ error: "Product not found or access denied." });
 
-      // Reset to Pendente when apicultor edits (needs re-approval)
-      const newStatus =
-        req.user.role === "admin" ? existing?.Status : "Pendente";
+      const newStatus = existing?.Status || "Aprovado";
+      const parsedThreshold = (lowStockThreshold === "" || lowStockThreshold === undefined || lowStockThreshold === null)
+        ? null
+        : parseInt(lowStockThreshold, 10);
 
       await db.run(
-        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Tags = ?, Imagem = ?, Status = ? WHERE ID_Produto = ?",
+        "UPDATE produto SET Nome = ?, Preco = ?, Stock = ?, ID_Categoria = ?, ID_Origem = ?, Descricao = ?, Tags = ?, Imagem = ?, Status = ?, Low_Stock_Threshold = ? WHERE ID_Produto = ?",
         [
           nome,
           preco,
@@ -3037,6 +3296,7 @@ app.patch(
           tags || null,
           imagem || existing?.Imagem,
           newStatus,
+          parsedThreshold,
           id,
         ],
       );
@@ -3071,6 +3331,16 @@ app.delete(
           .status(404)
           .json({ error: "Product not found or access denied." });
 
+      // Check if product has orders
+      const hasOrders = await db.get("SELECT 1 FROM item_encomenda WHERE ID_Produto = ? LIMIT 1", [id]);
+      if (hasOrders) {
+        return res.status(400).json({ error: "Este produto já tem encomendas associadas e não pode ser eliminado." });
+      }
+
+      // Delete dependencies
+      await db.run("DELETE FROM favoritos WHERE ID_Produto = ?", [id]);
+      await db.run("DELETE FROM item_carrinho WHERE ID_Produto = ?", [id]);
+
       await db.run("DELETE FROM produto WHERE ID_Produto = ?", [id]);
       res.json({ message: "Product deleted successfully" });
     } catch (err) {
@@ -3102,7 +3372,7 @@ app.patch(
       return res.status(403).json({ error: "Access denied." });
 
     const { id } = req.params;
-    const { titulo, descricao, data_realizacao, preco, vagas, imagem } =
+    const { titulo, descricao, data_realizacao, preco, vagas, imagem, lowStockThreshold } =
       req.body;
 
     try {
@@ -3116,7 +3386,7 @@ app.patch(
           .json({ error: "Workshop not found or access denied." });
 
       await db.run(
-        "UPDATE workshop SET Titulo = ?, Descricao = ?, Data_Realizacao = ?, Preco = ?, Vagas = ?, Imagem = ?, Status = 'Pendente' WHERE ID_Workshop = ?",
+        "UPDATE workshop SET Titulo = ?, Descricao = ?, Data_Realizacao = ?, Preco = ?, Vagas = ?, Imagem = ?, Status = 'Pendente', Low_Stock_Threshold = ? WHERE ID_Workshop = ?",
         [
           titulo,
           descricao,
@@ -3124,6 +3394,7 @@ app.patch(
           preco,
           vagas,
           imagem || existing?.Imagem,
+          (lowStockThreshold === "" || lowStockThreshold === undefined || lowStockThreshold === null) ? null : parseInt(lowStockThreshold, 10),
           id,
         ],
       );
@@ -3199,21 +3470,123 @@ app.get("/api/apicultor/orders", authenticateToken, async (req, res) => {
     return res.status(403).json({ error: "Access denied." });
 
   try {
-    const rows = await db.all(
+    const productOrders = await db.all(
       `
-      SELECT DISTINCT e.*, c.Nome as ClienteNome 
+      SELECT e.ID_Encomenda as id, e.Data_Encomenda as data, SUM(ie.Quantidade * ie.Preco_Unitario) as total, MIN(ie.Status) as status, c.Nome as ClienteNome, e.Morada, 'produto' as tipo
       FROM encomenda e
       JOIN cliente c ON e.ID_Cliente = c.ID_Cliente
       JOIN item_encomenda ie ON e.ID_Encomenda = ie.ID_Encomenda
       JOIN produto p ON ie.ID_Produto = p.ID_Produto
       WHERE p.ID_Apicultor = ?
-      ORDER BY e.Data_Encomenda DESC
+      GROUP BY e.ID_Encomenda, e.Data_Encomenda, c.Nome, e.Morada
     `,
       [req.user.id],
     );
-    res.json(rows);
+
+    const workshopOrders = await db.all(
+      `
+      SELECT rw.ID_Reserva as id, rw.Data_Reserva as data, rw.Preco_Unitario as total, rw.Status as status, c.Nome as ClienteNome, 'Reserva Online' as Morada, 'workshop' as tipo, w.Titulo as WorkshopTitulo
+      FROM reserva_workshop rw
+      JOIN cliente c ON rw.ID_Cliente = c.ID_Cliente
+      JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+      WHERE w.ID_Apicultor = ? AND rw.Status != 'Pendente'
+    `,
+      [req.user.id],
+    );
+
+    const allOrders = [...productOrders, ...workshopOrders].sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    res.json(allOrders);
   } catch (error) {
     console.error("Apicultor orders fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// GET Order Details
+app.get("/api/apicultor/orders/:type/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  const { type, id } = req.params;
+  const apicultorId = req.user.id;
+
+  try {
+    let items = [];
+    if (type === "produto") {
+      items = await db.all(
+        `
+        SELECT ie.Quantidade, ie.Preco_Unitario, p.Nome, p.Imagem
+        FROM item_encomenda ie
+        JOIN produto p ON ie.ID_Produto = p.ID_Produto
+        WHERE ie.ID_Encomenda = ? AND p.ID_Apicultor = ?
+      `,
+        [id, apicultorId]
+      );
+    } else if (type === "workshop") {
+      items = await db.all(
+        `
+        SELECT 1 as Quantidade, rw.Preco_Unitario, w.Titulo as Nome, w.Imagem, w.Data_Realizacao
+        FROM reserva_workshop rw
+        JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+        WHERE rw.ID_Reserva = ? AND w.ID_Apicultor = ?
+      `,
+        [id, apicultorId]
+      );
+    }
+    res.json(items);
+  } catch (error) {
+    console.error("Order details fetch error:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// PATCH Order Status
+app.patch("/api/apicultor/orders/:type/:id/status", authenticateToken, async (req, res) => {
+  if (req.user.role !== "apicultor" && req.user.role !== "admin")
+    return res.status(403).json({ error: "Access denied." });
+
+  const { type, id } = req.params;
+  const { status } = req.body;
+  const apicultorId = req.user.id;
+
+  try {
+    if (type === "produto") {
+      // Basic security check: ensure apicultor is part of this order
+      const exists = await db.get(
+        `SELECT 1 FROM item_encomenda ie JOIN produto p ON ie.ID_Produto = p.ID_Produto WHERE ie.ID_Encomenda = ? AND p.ID_Apicultor = ? LIMIT 1`,
+        [id, apicultorId]
+      );
+      if (!exists) return res.status(403).json({ error: "Not authorized for this order" });
+      
+      // Update item_encomenda Status ONLY for the products belonging to this apicultor
+      await db.run(
+        `UPDATE item_encomenda ie JOIN produto p ON ie.ID_Produto = p.ID_Produto SET ie.Status = ? WHERE ie.ID_Encomenda = ? AND p.ID_Apicultor = ?`,
+        [status, id, apicultorId]
+      );
+
+      // Check if ALL items in this order have the same status
+      const differentStatuses = await db.all(
+        `SELECT DISTINCT Status FROM item_encomenda WHERE ID_Encomenda = ?`,
+        [id]
+      );
+
+      // If there's only 1 unique status across all items, it means all apicultors have reached this status!
+      if (differentStatuses.length === 1 && differentStatuses[0].Status === status) {
+        await db.run("UPDATE encomenda SET Status = ? WHERE ID_Encomenda = ?", [status, id]);
+      }
+    } else if (type === "workshop") {
+      const exists = await db.get(
+        `SELECT 1 FROM reserva_workshop rw JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop WHERE rw.ID_Reserva = ? AND w.ID_Apicultor = ? LIMIT 1`,
+        [id, apicultorId]
+      );
+      if (!exists) return res.status(403).json({ error: "Not authorized for this reservation" });
+
+      await db.run("UPDATE reserva_workshop SET Status = ? WHERE ID_Reserva = ?", [status, id]);
+    }
+    res.json({ message: "Status updated successfully" });
+  } catch (error) {
+    console.error("Order status update error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -3252,13 +3625,40 @@ app.get("/api/apicultor/stats", authenticateToken, async (req, res) => {
       [apicultorId],
     );
 
-    // Total Earnings from Orders
+    // Total Earnings from Orders (Products)
     const earnings = await db.get(
       `
       SELECT SUM(ie.Quantidade * ie.Preco_Unitario) as total 
       FROM item_encomenda ie
       JOIN produto p ON ie.ID_Produto = p.ID_Produto
-      WHERE p.ID_Apicultor = ?
+      JOIN encomenda e ON ie.ID_Encomenda = e.ID_Encomenda
+      WHERE p.ID_Apicultor = ? AND e.Status != 'Pendente'
+    `,
+      [apicultorId],
+    );
+
+    // Total Earnings from Workshops
+    const workshopEarnings = await db.get(
+      `
+      SELECT SUM(rw.Preco_Unitario) as total 
+      FROM reserva_workshop rw
+      JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+      WHERE w.ID_Apicultor = ? AND rw.Status != 'Pendente'
+    `,
+      [apicultorId],
+    );
+    
+    const totalEarnings = Number(earnings.total || 0) + Number(workshopEarnings.total || 0);
+
+    // Workshop Availability
+    const workshopAvailability = await db.all(
+      `
+      SELECT 
+        CASE WHEN Vagas > 0 THEN 'Com Vagas' ELSE 'Esgotado' END as availability, 
+        COUNT(*) as count 
+      FROM workshop 
+      WHERE ID_Apicultor = ?
+      GROUP BY availability
     `,
       [apicultorId],
     );
@@ -3286,15 +3686,30 @@ app.get("/api/apicultor/stats", authenticateToken, async (req, res) => {
       [apicultorId],
     );
 
+    // Workshop Status Distribution
+    const workshopStatuses = await db.all(
+      `
+      SELECT Status, COUNT(*) as count 
+      FROM workshop 
+      WHERE ID_Apicultor = ?
+      GROUP BY Status
+    `,
+      [apicultorId],
+    );
+
     res.json({
       summary: {
         products: productsCount.count,
         workshops: workshopsCount.count,
         pendingProducts: pendingProducts.count,
-        totalEarnings: earnings.total || 0,
+        totalEarnings: totalEarnings,
+        productEarnings: Number(earnings.total || 0),
+        workshopEarnings: Number(workshopEarnings.total || 0),
       },
       categories,
       statuses,
+      workshopStatuses,
+      workshopAvailability,
     });
   } catch (err) {
     console.error("Apicultor stats error:", err);
@@ -3500,16 +3915,71 @@ app.delete("/api/user/workshops/:id", authenticateToken, async (req, res) => {
     await db.run("DELETE FROM reserva_workshop WHERE ID_Reserva = ?", [
       req.params.id,
     ]);
-    await db.run(
-      "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
-      [reservation.ID_Workshop],
-    );
+    if (reservation.ID_Encomenda !== null) {
+      await db.run(
+        "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
+        [reservation.ID_Workshop],
+      );
+    }
     res.json({ message: "Reserva cancelada com sucesso." });
   } catch (err) {
     console.error("Cancel reservation error:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
+
+// Get a specific workshop reservation
+app.get("/api/user/workshops/:id", authenticateToken, async (req, res) => {
+  try {
+    const reservation = await db.get(
+      `SELECT rw.*, w.Titulo as Nome, w.Preco, w.Imagem
+       FROM reserva_workshop rw
+       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+       WHERE rw.ID_Reserva = ? AND rw.ID_Cliente = ?`,
+      [req.params.id, req.user.id]
+    );
+
+    if (!reservation) {
+      return res.status(404).json({ error: "Reserva n├úo encontrada" });
+    }
+
+    res.json(reservation);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Create a dedicated pending order for paying a specific workshop reservation
+app.post("/api/user/workshops/:id/pay-order", authenticateToken, async (req, res) => {
+  try {
+    const reservation = await db.get(
+      `SELECT rw.*, w.Preco, w.Titulo, w.Vagas
+       FROM reserva_workshop rw
+       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+       WHERE rw.ID_Reserva = ? AND rw.ID_Cliente = ?`,
+      [req.params.id, req.user.id],
+    );
+    if (!reservation)
+      return res.status(404).json({ error: "Reserva n├úo encontrada." });
+
+    if (reservation.Status === "Pago")
+      return res.status(400).json({ error: "Esta reserva j├í foi paga." });
+
+    // Ensure Preco_Unitario is set on the reservation if it wasn't already
+    if (!reservation.Preco_Unitario) {
+      await db.run(
+        "UPDATE reserva_workshop SET Preco_Unitario = ? WHERE ID_Reserva = ?",
+        [reservation.Preco, reservation.ID_Reserva]
+      );
+    }
+
+    return res.json({ reservaId: reservation.ID_Reserva });
+  } catch (err) {
+    console.error("Workshop pay-order error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 
 // Public list of beekeepers
 app.get("/api/apicultores", async (req, res) => {
@@ -4230,18 +4700,33 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
     }
 
     const orders = await db.all(
-      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
+      "SELECT DISTINCT e.ID_Encomenda as id, e.Data_Encomenda as date, e.Total as total, e.Status as status FROM encomenda e JOIN item_encomenda ie ON e.ID_Encomenda = ie.ID_Encomenda WHERE e.ID_Cliente = ? ORDER BY e.Data_Encomenda DESC",
       [req.user.id],
     );
 
-    res.json({
+    const responseData = {
       ...user,
       checkoutVerified: !!user.checkoutVerified,
       restrictedToPost: !!user.restrictedToPost,
       favoritesPublic: !!user.favoritesPublic,
       ordersPublic: !!user.ordersPublic,
       orders
-    });
+    };
+
+    if (req.user.role !== user.role) {
+      const newToken = jwt.sign(
+        {
+          id: user.id,
+          role: user.role,
+          checkoutVerified: !!user.checkoutVerified,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+      );
+      responseData.newToken = newToken;
+    }
+
+    res.json(responseData);
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ error: "Database error", details: error.message });
@@ -4404,7 +4889,7 @@ app.get("/api/members/:id/profile", async (req, res) => {
 
     let orders = [];
     if (member.ordersPublic) {
-      orders = await db.all("SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC", [memberId]);
+      orders = await db.all("SELECT DISTINCT e.ID_Encomenda as id, e.Data_Encomenda as date, e.Total as total, e.Status as status FROM encomenda e JOIN item_encomenda ie ON e.ID_Encomenda = ie.ID_Encomenda WHERE e.ID_Cliente = ? ORDER BY e.Data_Encomenda DESC", [memberId]);
     }
 
     res.json({
@@ -4412,6 +4897,32 @@ app.get("/api/members/:id/profile", async (req, res) => {
       products, hostedWorkshops, reviews: reviewsCensored, favorites, orders
     });
   } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Public order items for a member's public order (no PII like address/phone is exposed)
+app.get("/api/members/:memberId/orders/:orderId/items", async (req, res) => {
+  try {
+    const { memberId, orderId } = req.params;
+    const member = await db.get("SELECT Encomendas_Publicas as ordersPublic FROM cliente WHERE ID_Cliente = ?", [memberId]);
+    if (!member || !member.ordersPublic) return res.status(404).json({ error: "Order not found" });
+
+    const order = await db.get("SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?", [orderId, memberId]);
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    const items = await db.all(
+      `SELECT ie.*, p.Nome, p.Imagem, p.ID_Apicultor as ApicultorId, a.Nome as ApicultorNome
+       FROM item_encomenda ie
+       JOIN produto p ON ie.ID_Produto = p.ID_Produto
+       LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
+       WHERE ie.ID_Encomenda = ?`,
+      [orderId],
+    );
+
+    res.json(items);
+  } catch (err) {
+    console.error("Fetch public order items error:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -4490,37 +5001,118 @@ app.post("/api/reports/create", authenticateToken, async (req, res) => {
   }
 });
 
+async function getOrCreatePrivateConversation(userId, partnerId, productId = null) {
+  const firstUserId = Math.min(Number(userId), Number(partnerId));
+  const secondUserId = Math.max(Number(userId), Number(partnerId));
+  const normalizedProductId = productId ? Number(productId) : null;
+
+  if (!firstUserId || !secondUserId || firstUserId === secondUserId) {
+    const error = new Error("Participantes inválidos.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const partner = await db.get("SELECT ID_Cliente as id, Nome as name, Picture as picture FROM cliente WHERE ID_Cliente = ?", [partnerId]);
+  if (!partner) {
+    const error = new Error("Utilizador não encontrado.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  let product = null;
+  if (normalizedProductId) {
+    product = await db.get(
+      "SELECT ID_Produto as id, Nome as name, Imagem as image, Preco as price, Slug as slug, ID_Apicultor as beekeeperId FROM produto WHERE ID_Produto = ? AND (Status = 'Aprovado' OR Status IS NULL)",
+      [normalizedProductId]
+    );
+    if (!product || String(product.beekeeperId) !== String(partnerId)) {
+      const error = new Error("Produto inválido para esta conversa.");
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  const existing = normalizedProductId
+    ? await db.get(
+        "SELECT ID_Conversa as id FROM conversa_privada WHERE ID_Cliente_1 = ? AND ID_Cliente_2 = ? AND ID_Produto = ? LIMIT 1",
+        [firstUserId, secondUserId, normalizedProductId]
+      )
+    : await db.get(
+        "SELECT ID_Conversa as id FROM conversa_privada WHERE ID_Cliente_1 = ? AND ID_Cliente_2 = ? AND ID_Produto IS NULL LIMIT 1",
+        [firstUserId, secondUserId]
+      );
+
+  if (existing) return { id: existing.id, partner, product };
+
+  const result = await db.run(
+    "INSERT INTO conversa_privada (ID_Cliente_1, ID_Cliente_2, ID_Produto) VALUES (?, ?, ?)",
+    [firstUserId, secondUserId, normalizedProductId]
+  );
+
+  return { id: result.lastID, partner, product };
+}
+
+app.post("/api/messages/conversations/open", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const partnerId = parseInt(req.body.partnerId);
+  const productId = req.body.productId ? parseInt(req.body.productId) : null;
+
+  try {
+    const conversation = await getOrCreatePrivateConversation(userId, partnerId, productId);
+    res.json({ conversation });
+  } catch (error) {
+    console.error("Open conversation error:", error);
+    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Database error" });
+  }
+});
+
 app.get("/api/messages/conversations", authenticateToken, async (req, res) => {
   const userId = req.user.id;
   try {
-    const partners = await db.all(`
-      SELECT DISTINCT partnerId FROM (
-        SELECT ID_Remetente as partnerId FROM mensagem_privada WHERE ID_Destinatario = ?
-        UNION
-        SELECT ID_Destinatario as partnerId FROM mensagem_privada WHERE ID_Remetente = ?
-      ) as partners
-    `, [userId, userId]);
+    const rows = await db.all(`
+      SELECT
+        c.ID_Conversa as conversationId,
+        c.ID_Produto as productId,
+        c.Data_Atualizacao as updatedAt,
+        CASE WHEN c.ID_Cliente_1 = ? THEN c.ID_Cliente_2 ELSE c.ID_Cliente_1 END as partnerId,
+        p.Nome as productName,
+        p.Imagem as productImage,
+        p.Preco as productPrice,
+        p.Slug as productSlug
+      FROM conversa_privada c
+      LEFT JOIN produto p ON c.ID_Produto = p.ID_Produto
+      WHERE c.ID_Cliente_1 = ? OR c.ID_Cliente_2 = ?
+    `, [userId, userId, userId]);
 
     const conversations = [];
-    for (const p of partners) {
-      const partnerId = p.partnerId;
+    for (const row of rows) {
+      const partnerId = row.partnerId;
       const partnerInfo = await db.get("SELECT ID_Cliente as id, Nome as name, Picture as picture FROM cliente WHERE ID_Cliente = ?", [partnerId]);
       if (!partnerInfo) continue;
 
-      const unread = await db.get("SELECT COUNT(*) as count FROM mensagem_privada WHERE ID_Remetente = ? AND ID_Destinatario = ? AND Lida = FALSE", [partnerId, userId]);
-      const lastMsg = await db.get("SELECT Texto as text, Data_Envio as sentAt FROM mensagem_privada WHERE (ID_Remetente = ? AND ID_Destinatario = ?) OR (ID_Remetente = ? AND ID_Destinatario = ?) ORDER BY Data_Envio DESC LIMIT 1", [userId, partnerId, partnerId, userId]);
+      const unread = await db.get("SELECT COUNT(*) as count FROM mensagem_privada WHERE ID_Conversa = ? AND ID_Remetente = ? AND ID_Destinatario = ? AND Lida = FALSE", [row.conversationId, partnerId, userId]);
+      const lastMsg = await db.get("SELECT Texto as text, Data_Envio as sentAt FROM mensagem_privada WHERE ID_Conversa = ? ORDER BY Data_Envio DESC LIMIT 1", [row.conversationId]);
 
       conversations.push({
+        id: row.conversationId,
         partner: partnerInfo,
+        product: row.productId ? {
+          id: row.productId,
+          name: row.productName,
+          image: row.productImage,
+          price: row.productPrice,
+          slug: row.productSlug
+        } : null,
         unreadCount: unread ? unread.count : 0,
-        lastMessage: lastMsg ? { text: lastMsg.text ? censorText(lastMsg.text) : null, sentAt: lastMsg.sentAt } : null
+        lastMessage: lastMsg ? { text: lastMsg.text ? censorText(lastMsg.text) : null, sentAt: lastMsg.sentAt } : null,
+        updatedAt: lastMsg ? lastMsg.sentAt : row.updatedAt
       });
     }
 
     // Sort conversations by last message sentAt DESC
     conversations.sort((a, b) => {
-      const dateA = a.lastMessage ? new Date(a.lastMessage.sentAt) : new Date(0);
-      const dateB = b.lastMessage ? new Date(b.lastMessage.sentAt) : new Date(0);
+      const dateA = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+      const dateB = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
       return dateB - dateA;
     });
 
@@ -4531,16 +5123,20 @@ app.get("/api/messages/conversations", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/api/messages/history/:partnerId", authenticateToken, async (req, res) => {
+app.get("/api/messages/history/:conversationId", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const partnerId = parseInt(req.params.partnerId);
+  const conversationId = parseInt(req.params.conversationId);
   try {
+    const conversation = await db.get("SELECT * FROM conversa_privada WHERE ID_Conversa = ? AND (ID_Cliente_1 = ? OR ID_Cliente_2 = ?)", [conversationId, userId, userId]);
+    if (!conversation) return res.status(404).json({ error: "Conversa não encontrada." });
+    const partnerId = String(conversation.ID_Cliente_1) === String(userId) ? conversation.ID_Cliente_2 : conversation.ID_Cliente_1;
+
     const messages = await db.all(`
       SELECT ID_Remetente as senderId, ID_Destinatario as receiverId, Texto as text, Data_Envio as sentAt 
       FROM mensagem_privada 
-      WHERE (ID_Remetente = ? AND ID_Destinatario = ?) OR (ID_Remetente = ? AND ID_Destinatario = ?) 
+      WHERE ID_Conversa = ?
       ORDER BY Data_Envio ASC
-    `, [userId, partnerId, partnerId, userId]);
+    `, [conversationId]);
 
     const censoredMessages = messages.map(m => ({
       ...m,
@@ -4563,7 +5159,7 @@ app.get("/api/messages/history/:partnerId", authenticateToken, async (req, res) 
 
 app.post("/api/messages/send", authenticateToken, async (req, res) => {
   const senderId = req.user.id;
-  const { receiverId, text } = req.body;
+  const { receiverId, conversationId, productId, text } = req.body;
   if (!receiverId || !text) {
     return res.status(400).json({ error: "Receiver and text are required." });
   }
@@ -4580,20 +5176,36 @@ app.post("/api/messages/send", authenticateToken, async (req, res) => {
       return res.status(403).json({ error: "Não podes enviar mensagens a este utilizador devido a um bloqueio." });
     }
 
+    let conversation = null;
+    if (conversationId) {
+      conversation = await db.get("SELECT * FROM conversa_privada WHERE ID_Conversa = ? AND (ID_Cliente_1 = ? OR ID_Cliente_2 = ?)", [conversationId, senderId, senderId]);
+      if (!conversation) return res.status(404).json({ error: "Conversa não encontrada." });
+      const conversationPartnerId = String(conversation.ID_Cliente_1) === String(senderId) ? conversation.ID_Cliente_2 : conversation.ID_Cliente_1;
+      if (String(conversationPartnerId) !== String(receiverId)) {
+        return res.status(400).json({ error: "Destinatário inválido para esta conversa." });
+      }
+    } else {
+      const created = await getOrCreatePrivateConversation(senderId, receiverId, productId || null);
+      conversation = { ID_Conversa: created.id };
+    }
+
     const safeText = censorText(text.trim());
-    const result = await db.run("INSERT INTO mensagem_privada (ID_Remetente, ID_Destinatario, Texto) VALUES (?, ?, ?)", [senderId, receiverId, safeText]);
-    res.status(201).json({ id: result.insertId, message: "Mensagem enviada." });
+    const result = await db.run("INSERT INTO mensagem_privada (ID_Conversa, ID_Remetente, ID_Destinatario, Texto) VALUES (?, ?, ?, ?)", [conversation.ID_Conversa, senderId, receiverId, safeText]);
+    await db.run("UPDATE conversa_privada SET Data_Atualizacao = CURRENT_TIMESTAMP WHERE ID_Conversa = ?", [conversation.ID_Conversa]).catch(() => {});
+    res.status(201).json({ id: result.lastID, message: "Mensagem enviada." });
   } catch (error) {
     console.error("Send message error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-app.post("/api/messages/read/:partnerId", authenticateToken, async (req, res) => {
+app.post("/api/messages/read/:conversationId", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const partnerId = parseInt(req.params.partnerId);
+  const conversationId = parseInt(req.params.conversationId);
   try {
-    await db.run("UPDATE mensagem_privada SET Lida = TRUE WHERE ID_Remetente = ? AND ID_Destinatario = ? AND Lida = FALSE", [partnerId, userId]);
+    const conversation = await db.get("SELECT * FROM conversa_privada WHERE ID_Conversa = ? AND (ID_Cliente_1 = ? OR ID_Cliente_2 = ?)", [conversationId, userId, userId]);
+    if (!conversation) return res.status(404).json({ error: "Conversa não encontrada." });
+    await db.run("UPDATE mensagem_privada SET Lida = TRUE WHERE ID_Conversa = ? AND ID_Destinatario = ? AND Lida = FALSE", [conversationId, userId]);
     res.json({ message: "Mensagens marcadas como lidas." });
   } catch (error) {
     res.status(500).json({ error: "Database error" });
@@ -4698,7 +5310,7 @@ app.get("/api/user/favorites", authenticateToken, async (req, res) => {
   try {
     const rows = await db.all(
       `
-      SELECT p.ID_Produto as id, p.Nome as name, p.Preco as price, p.Imagem as image, p.Slug as slug, p.Tags as tags,
+      SELECT p.ID_Produto as id, p.ID_Produto, p.Nome as name, p.Preco as price, p.Imagem as image, p.Slug as slug, p.Tags as tags,
         COALESCE(AVG(a.Nota), 0) as rating,
         COUNT(a.ID_Avaliacao) as reviewCount,
         cat.Nome as category,
@@ -4724,8 +5336,11 @@ app.post("/api/user/favorites/add", authenticateToken, async (req, res) => {
   const { productId } = req.body;
   if (!productId) return res.status(400).json({ error: "Missing product ID" });
   try {
+    const product = await db.get("SELECT ID_Produto FROM produto WHERE ID_Produto = ?", [productId]);
+    if (!product) return res.status(404).json({ error: "Produto não encontrado." });
+
     await db.run(
-      "INSERT OR IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
+      "INSERT IGNORE INTO favoritos (ID_Cliente, ID_Produto) VALUES (?, ?)",
       [req.user.id, productId],
     );
     res.json({ success: true, message: "Added to favorites" });
@@ -4939,20 +5554,51 @@ app.get("/api/user/orders/:id", authenticateToken, async (req, res) => {
 // Get order items
 app.get("/api/user/orders/:id/items", authenticateToken, async (req, res) => {
   try {
-    const items = await db.all(
-      `SELECT ie.*, p.Nome, p.Imagem, a.Nome as ApicultorNome
-       FROM item_encomenda ie 
-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
+    const orderId = req.params.id;
+
+    // Validate the order belongs to this user
+    const order = await db.get(
+      "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+      [orderId, req.user.id],
+    );
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    // Get product items
+    const prodItems = await db.all(
+      `SELECT ie.*, p.Nome, p.Imagem, p.ID_Apicultor as ApicultorId, a.Nome as ApicultorNome
+       FROM item_encomenda ie
+       JOIN produto p ON ie.ID_Produto = p.ID_Produto
        LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
        WHERE ie.ID_Encomenda = ?`,
-      [req.params.id],
+      [orderId],
     );
+
+    // Get workshop reservations linked to this order
+    const wsItems = await db.all(
+      `SELECT rw.ID_Reserva, rw.ID_Workshop, rw.Status,
+              COALESCE(rw.Preco_Unitario, w.Preco) as Preco_Unitario,
+              w.Titulo as Nome, w.Imagem, w.ID_Apicultor as ApicultorId,
+              a.Nome as ApicultorNome,
+              1 as Quantidade, NULL as ID_Produto
+       FROM reserva_workshop rw
+       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+       LEFT JOIN cliente a ON w.ID_Apicultor = a.ID_Cliente
+       WHERE rw.ID_Encomenda = ? AND rw.ID_Cliente = ?`,
+      [orderId, req.user.id],
+    );
+
+    const items = [
+      ...prodItems,
+      ...wsItems,
+    ];
+
     res.json(items);
   } catch (error) {
     console.error("Fetch order items error:", error);
     res.status(500).json({ error: "Database error" });
   }
 });
+
 
 // Get order receipt (HTML for print/download)
 app.get("/api/user/orders/:id/receipt", authenticateToken, async (req, res) => {
@@ -5030,6 +5676,43 @@ app.post(
   },
 );
 
+// Cancel order
+app.delete("/api/user/orders/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await db.get(
+      "SELECT Status, ID_Cliente FROM encomenda WHERE ID_Encomenda = ?",
+      [id]
+    );
+
+    if (!order) return res.status(404).json({ error: "Order not found" });
+    if (order.ID_Cliente !== req.user.id) return res.status(403).json({ error: "Access denied" });
+    if (order.Status !== "Pendente") return res.status(400).json({ error: "S├│ ├® poss├¡vel cancelar encomendas pendentes." });
+
+    // 1. Restore product stock
+    const items = await db.all("SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?", [id]);
+    for (const item of items) {
+      await db.run("UPDATE produto SET Stock = Stock + ? WHERE ID_Produto = ?", [item.Quantidade, item.ID_Produto]);
+    }
+
+    // 2. Restore workshop vagas and cancel reservations
+    const wsItems = await db.all("SELECT ID_Workshop FROM reserva_workshop WHERE ID_Encomenda = ?", [id]);
+    for (const ws of wsItems) {
+      await db.run("UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?", [ws.ID_Workshop]);
+    }
+    await db.run("UPDATE reserva_workshop SET Status = 'Cancelado', ID_Encomenda = NULL WHERE ID_Encomenda = ?", [id]);
+
+    // 3. Delete order items and order
+    await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [id]);
+    await db.run("DELETE FROM encomenda WHERE ID_Encomenda = ?", [id]);
+
+    res.json({ message: "Encomenda cancelada com sucesso." });
+  } catch (error) {
+    console.error("Cancel order error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Delete product (keeping existing)
 app.delete(
   "/api/admin/products/:id",
@@ -5038,6 +5721,16 @@ app.delete(
   async (req, res) => {
     const { id } = req.params;
     try {
+      // Check if product has orders
+      const hasOrders = await db.get("SELECT 1 FROM item_encomenda WHERE ID_Produto = ? LIMIT 1", [id]);
+      if (hasOrders) {
+        return res.status(400).json({ error: "Este produto já tem encomendas associadas e não pode ser eliminado." });
+      }
+
+      // Delete dependencies
+      await db.run("DELETE FROM favoritos WHERE ID_Produto = ?", [id]);
+      await db.run("DELETE FROM item_carrinho WHERE ID_Produto = ?", [id]);
+
       await db.run("DELETE FROM produto WHERE ID_Produto = ?", [id]);
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
@@ -5051,30 +5744,51 @@ app.delete(
 // Get user cart
 app.get("/api/cart", authenticateToken, async (req, res) => {
   try {
+    let items = [];
     const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
       req.user.id,
     ]);
-    if (!cart) return res.json([]);
+    
+    if (cart) {
+      items = await db.all(
+        `SELECT ic.*, p.Nome, p.Preco, p.Stock, p.Imagem
+         FROM item_carrinho ic 
+         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+         WHERE ic.ID_Carrinho = ?`,
+        [cart.ID_Carrinho],
+      );
 
-    const items = await db.all(
-      `SELECT ic.*, p.Nome, p.Preco, p.Stock, p.Imagem
-       FROM item_carrinho ic 
-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-       WHERE ic.ID_Carrinho = ?`,
-      [cart.ID_Carrinho],
-    );
-
-    for (const item of items) {
-      if (item.Quantidade > item.Stock) {
-        await db.run(
-          "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
-          [item.Stock, item.ID_itemCarrinho]
-        );
-        item.Quantidade = item.Stock;
+      for (const item of items) {
+        if (item.Quantidade > item.Stock) {
+          await db.run(
+            "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
+            [item.Stock, item.ID_itemCarrinho]
+          );
+          item.Quantidade = item.Stock;
+        }
       }
     }
 
-    res.json(items);
+    const pendingWorkshops = await db.all(
+      `SELECT rw.ID_Reserva, rw.ID_Workshop, w.Titulo as Nome, w.Preco, w.Imagem, w.Vagas as Stock
+       FROM reserva_workshop rw
+       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+       WHERE rw.ID_Cliente = ? AND rw.Status = 'Pendente' AND rw.ID_Encomenda IS NULL`,
+      [req.user.id]
+    );
+
+    const workshopItems = pendingWorkshops.map(ws => ({
+      ID_itemCarrinho: `ws_${ws.ID_Reserva}`,
+      ID_Carrinho: cart ? cart.ID_Carrinho : null,
+      ID_Workshop: ws.ID_Workshop,
+      Quantidade: 1,
+      Nome: ws.Nome,
+      Preco: ws.Preco,
+      Stock: ws.Stock,
+      Imagem: ws.Imagem || '/images/workshop_default.webp'
+    }));
+
+    res.json([...items, ...workshopItems]);
   } catch (error) {
     console.error("Cart fetch error:", error);
     res.status(500).json({ error: "Server error" });
@@ -5182,139 +5896,157 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
 app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
   const { itemId } = req.params;
   try {
-    const cart = await db.get("SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
-    if (!cart) {
-      return res.status(400).json({ error: "Carrinho não encontrado" });
-    }
-    
-    const item = await db.get("SELECT * FROM item_carrinho WHERE ID_itemCarrinho = ? AND ID_Carrinho = ?", [itemId, cart.ID_Carrinho]);
-    if (!item) {
-      return res.status(404).json({ error: "Item não encontrado no carrinho" });
+    if (String(itemId).startsWith("ws_")) {
+      const reservaId = String(itemId).replace("ws_", "");
+      await db.run(
+        "DELETE FROM reserva_workshop WHERE ID_Reserva = ? AND ID_Cliente = ? AND Status = 'Pendente' AND ID_Encomenda IS NULL",
+        [reservaId, req.user.id],
+      );
+      return res.json({ message: "Workshop removido do carrinho" });
     }
 
-    await db.run("DELETE FROM item_carrinho WHERE ID_itemCarrinho = ?", [itemId]);
-    res.json({ message: "Item removido com sucesso" });
+    await db.run(
+      "DELETE FROM item_carrinho WHERE ID_itemCarrinho = ? AND ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+      [itemId, req.user.id],
+    );
+    res.json({ message: "Item removed from cart" });
   } catch (error) {
-    console.error("Cart item remove error:", error);
+    console.error("Cart remove error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
 
 // 7. Initialize Checkout Order (Draft/Pending)
 app.post("/api/checkout/init", authenticateToken, async (req, res) => {
-  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } =
-    req.body;
+  const { address, phone, nome, apelido, shippingType, orderId, reservaIds } = req.body;
+  // Calculate shipping cost server-side to prevent tampering
+  const actualShippingCost = shippingType === "ctt" ? 4.9 : 0;
 
   try {
-    let items = [];
-    let subtotal = 0;
+    let prodItems = [];
+    let wsItems = [];
+    let subtotalProducts = 0;
+    let subtotalWorkshops = 0;
 
+    // Load Workshops
+    if (reservaIds && reservaIds.length > 0) {
+      const placeholders = reservaIds.map(() => '?').join(',');
+      wsItems = await db.all(
+        `SELECT rw.*, w.Titulo as Nome, w.Preco, w.Vagas as Stock
+         FROM reserva_workshop rw
+         JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+         WHERE rw.ID_Reserva IN (${placeholders}) AND rw.ID_Cliente = ?`,
+        [...reservaIds, req.user.id]
+      );
+    } else if (!orderId) {
+      // From cart
+      wsItems = await db.all(
+        `SELECT rw.ID_Reserva, rw.ID_Workshop, w.Titulo as Nome, w.Preco, w.Vagas as Stock
+         FROM reserva_workshop rw
+         JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+         WHERE rw.ID_Cliente = ? AND rw.Status = 'Pendente' AND rw.ID_Encomenda IS NULL`,
+        [req.user.id]
+      );
+    }
+    
+    // Validate workshop stock
+    if (!reservaIds || reservaIds.length === 0) {
+      // Only validate stock if we are pulling fresh from cart
+      for (const ws of wsItems) {
+        if (ws.Stock <= 0) {
+          return res.status(400).json({ error: `O workshop "${ws.Nome}" já não tem vagas suficientes.` });
+        }
+      }
+    }
+    
+    subtotalWorkshops = wsItems.reduce((s, i) => s + parseFloat(i.Preco), 0);
+
+    // Load Products
     if (orderId) {
-      // If we have an orderId, we are updating an existing order
       const order = await db.get(
         "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
         [orderId, req.user.id],
       );
-      if (!order)
-        return res.status(404).json({ error: "Encomenda não encontrada" });
-
-      // Get items from that order
-      items = await db.all(
-        "SELECT * FROM item_encomenda WHERE ID_Encomenda = ?",
-        [orderId],
-      );
-      subtotal = items.reduce(
-        (sum, item) => sum + item.Preco_Unitario * item.Quantidade,
-        0,
-      );
+      if (order) {
+        prodItems = await db.all(
+          "SELECT * FROM item_encomenda WHERE ID_Encomenda = ?",
+          [orderId],
+        );
+        subtotalProducts = prodItems.reduce((s, i) => s + parseFloat(i.Preco_Unitario) * i.Quantidade, 0);
+      }
     } else {
-      // If no orderId, we must have a cart
-      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
-        req.user.id,
-      ]);
-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
-
-      items = await db.all(
-        `SELECT ic.*, p.Preco 
-         FROM item_carrinho ic 
-         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-         WHERE ic.ID_Carrinho = ?`,
-        [cart.ID_Carrinho],
-      );
-
-      if (items.length === 0)
-        return res.status(400).json({ error: "Carrinho vazio" });
-      subtotal = items.reduce(
-        (sum, item) => sum + item.Preco * item.Quantidade,
-        0,
-      );
+      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
+      if (cart) {
+        prodItems = await db.all(
+          `SELECT ic.*, p.Preco, p.Nome, p.Stock
+           FROM item_carrinho ic
+           JOIN produto p ON ic.ID_Produto = p.ID_Produto
+           WHERE ic.ID_Carrinho = ?`,
+          [cart.ID_Carrinho],
+        );
+        subtotalProducts = prodItems.reduce((s, i) => s + parseFloat(i.Preco) * i.Quantidade, 0);
+      }
     }
 
-    const total = subtotal + Number(shippingCost || 0);
-    let currentOrderId = orderId;
+    if (prodItems.length === 0 && wsItems.length === 0) {
+      return res.status(400).json({ error: "Carrinho vazio" });
+    }
 
-    if (currentOrderId) {
-      // Update existing draft
-      await db.run(
-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-        [
-          total,
-          address,
-          phone,
-          nome,
-          apelido,
-          shippingCost,
-          shippingType,
-          currentOrderId,
-          req.user.id,
-        ],
-      );
+    const totalProducts = parseFloat(subtotalProducts) + (prodItems.length > 0 ? parseFloat(actualShippingCost) : 0);
+    let currentOrderId = orderId || null;
 
-      // If it was a cart checkout that became an orderId, we might not need to refresh items
-      // but usually we refresh them to match the cart if it's a "draft" being finalized.
-      // HOWEVER, if the cart is EMPTY, we MUST NOT refresh items from cart.
-      // Let's only refresh items if they came from the cart.
-      if (!orderId) {
-        await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [
-          currentOrderId,
-        ]);
-        for (const item of items) {
+    if (prodItems.length > 0) {
+      if (currentOrderId) {
+        // Update existing draft
+        await db.run(
+          "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+          [totalProducts, address, phone, nome, apelido, actualShippingCost, shippingType, currentOrderId, req.user.id],
+        );
+        await clearCustomerProductCart(req.user.id);
+      } else {
+        // Create new draft
+        const result = await db.run(
+          "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
+          [req.user.id, totalProducts, address, phone, nome, apelido, actualShippingCost, shippingType],
+        );
+        currentOrderId = result.lastID;
+
+        // Save product items
+        for (const item of prodItems) {
           await db.run(
             "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
             [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
           );
         }
-      }
-    } else {
-      // Create new draft
-      const result = await db.run(
-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
-        [
-          req.user.id,
-          total,
-          address,
-          phone,
-          nome,
-          apelido,
-          shippingCost,
-          shippingType,
-        ],
-      );
-      currentOrderId = result.lastID;
 
-      // Save items
-      for (const item of items) {
+        // Clear products from cart in database since they are now in the pending order
+        await clearCustomerProductCart(req.user.id);
+      }
+    }
+
+    // Process new workshops from cart
+    if (!reservaIds || reservaIds.length === 0) {
+      for (const item of wsItems) {
+        // Just freeze price and decrement stock, DO NOT link ID_Encomenda
         await db.run(
-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-          [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+          "UPDATE reserva_workshop SET ID_Encomenda = NULL, Status = 'Pendente', Preco_Unitario = ? WHERE ID_Reserva = ?",
+          [item.Preco, item.ID_Reserva],
+        );
+        await db.run(
+          "UPDATE workshop SET Vagas = Vagas - 1 WHERE ID_Workshop = ?",
+          [item.ID_Workshop]
         );
       }
     }
 
-    res.json({ orderId: currentOrderId });
+    res.json({ 
+      orderId: currentOrderId, 
+      reservaIds: wsItems.map(w => w.ID_Reserva) 
+    });
   } catch (error) {
-    console.error("Checkout init error:", error);
-    res.status(500).json({ error: "Falha ao inicializar encomenda" });
+    console.error("Checkout init error:", error.message, error.stack);
+    console.error("Checkout init request body:", req.body);
+    res.status(500).json({ error: "Falha ao inicializar encomenda", detail: error.message });
   }
 });
 
@@ -5332,168 +6064,65 @@ app.post(
       shippingCost,
       shippingType,
       orderId,
+      reservaIds,
       paymentType,
+      returnUrl,
     } = req.body;
+
+    const actualShippingCost = shippingType === "ctt" ? 4.9 : 0;
 
     try {
       let items = [];
-      let subtotal = 0;
-      let finalOrderId = orderId;
+      let wsItems = [];
       const requestedPaymentType = paymentType === "mbway" ? "mb_way" : "card";
 
-      if (finalOrderId) {
-        console.log(`[Stripe Debug] Using existing order ${finalOrderId}`);
-        // Validate existing order
+      // Load Workshops (using reservaIds directly)
+      if (reservaIds && reservaIds.length > 0) {
+        const placeholders = reservaIds.map(() => '?').join(',');
+        wsItems = await db.all(
+          `SELECT rw.*, w.Titulo as Nome, w.Preco, w.Vagas as Stock, w.Imagem
+           FROM reserva_workshop rw
+           JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+           WHERE rw.ID_Reserva IN (${placeholders}) AND rw.ID_Cliente = ? AND rw.Status IN ('Pendente', 'Pendente_Pagamento')`,
+          [...reservaIds, req.user.id]
+        );
+      }
+
+      // Load Products (using orderId)
+      if (orderId) {
         const order = await db.get(
           "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
-          [finalOrderId, req.user.id],
+          [orderId, req.user.id],
         );
-        if (!order) {
-          console.error(
-            `[Stripe Debug] Order ${finalOrderId} not found for user ${req.user.id}`,
-          );
-          return res.status(404).json({ error: "Encomenda não encontrada" });
-        }
-
-        // Check if order is already paid
-        if (order.Status === "Pago") {
-          console.warn(`[Stripe Debug] Order ${finalOrderId} is already paid`);
-          return res.status(400).json({ error: "Esta encomenda já foi paga." });
-        }
-
-        items = await db.all(
-          `SELECT ie.*, p.Nome, p.Imagem, p.Stock 
-         FROM item_encomenda ie 
-         JOIN produto p ON ie.ID_Produto = p.ID_Produto 
-         WHERE ie.ID_Encomenda = ?`,
-          [finalOrderId],
-        );
-        // Map properties to match expected format below
-        items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
-
-        // Check stock availability
-        for (const item of items) {
-          if (item.Quantidade > item.Stock) {
-            return res.status(400).json({
-              error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} disponíveis).`,
-            });
+        if (order) {
+          if (order.Status === "Pago") {
+            return res.status(400).json({ error: "Esta encomenda já foi paga." });
           }
-        }
-
-        subtotal = items.reduce(
-          (sum, item) => sum + item.Preco * item.Quantidade,
-          0,
-        );
-        const total = subtotal + Number(shippingCost || 0);
-
-        // Update order details
-        await db.run(
-          "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ? WHERE ID_Encomenda = ?",
-          [
-            total,
-            address,
-            phone,
-            nome,
-            apelido,
-            shippingCost,
-            shippingType,
-            finalOrderId,
-          ],
-        );
-      } else {
-        console.log(`[Stripe Debug] Creating new order from cart`);
-        // Create from cart
-        const cart = await db.get(
-          "SELECT * FROM carrinho WHERE ID_Cliente = ?",
-          [req.user.id],
-        );
-        if (!cart) {
-          console.error(
-            `[Stripe Debug] Cart not found for user ${req.user.id}`,
+          items = await db.all(
+            `SELECT ie.*, p.Nome, p.Imagem, p.Stock
+             FROM item_encomenda ie
+             JOIN produto p ON ie.ID_Produto = p.ID_Produto
+             WHERE ie.ID_Encomenda = ?`,
+            [orderId],
           );
-          return res.status(400).json({ error: "Carrinho vazio" });
-        }
-
-        items = await db.all(
-          `SELECT ic.*, p.Nome, p.Preco, p.Imagem, p.Stock 
-         FROM item_carrinho ic 
-         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
-         WHERE ic.ID_Carrinho = ?`,
-          [cart.ID_Carrinho],
-        );
-
-        if (items.length === 0) {
-          console.error(`[Stripe Debug] Cart empty for user ${req.user.id}`);
-          return res.status(400).json({ error: "Carrinho vazio" });
-        }
-
-        // Check stock availability
-        for (const item of items) {
-          if (item.Quantidade > item.Stock) {
-            return res.status(400).json({
-              error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} disponíveis).`,
-            });
-          }
-        }
-
-        subtotal = items.reduce(
-          (sum, item) => sum + item.Preco * item.Quantidade,
-          0,
-        );
-        const total = subtotal + Number(shippingCost || 0);
-
-        const result = await db.run(
-          "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
-          [
-            req.user.id,
-            total,
-            address,
-            phone,
-            nome,
-            apelido,
-            shippingCost,
-            shippingType,
-          ],
-        );
-        finalOrderId = result.lastID;
-        console.log(`[Stripe Debug] Created order ${finalOrderId}`);
-
-        for (const item of items) {
-          await db.run(
-            "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
-            [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
-          );
+          items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
         }
       }
 
-      /* 
-       REMOVED: Clear cart only on SUCCESSFUL payment in fulfillPaidOrder
-       to allow retrying the checkout if canceled.
-    */
-      /*
-    await db.run(
-      "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
-      [req.user.id]
-    );
-    */
-
-      // 5. MOCK MODE LOGIC
-      if (!stripe) {
-        console.log("⚠️ STRIPE_SECRET_KEY missing. Entering MOCK MODE.");
-
-        // Clear Cart (if applicable)
-        await db.run(
-          "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
-          [req.user.id],
-        );
-
-        await fulfillPaidOrder(finalOrderId);
-        return res.json({
-          url: `/success.html?orderId=${finalOrderId}&mock=true`,
-          isMock: true,
-        });
+      if (items.length === 0 && wsItems.length === 0) {
+        return res.status(400).json({ error: "Carrinho/Encomenda vazio." });
       }
 
+      // Ensure stock for products
+      for (const item of items) {
+        if (item.Quantidade > item.Stock) {
+          return res.status(400).json({
+            error: `Stock insuficiente para o produto "${item.Nome}".`,
+          });
+        }
+      }
+
+      // Ensure payment details sync
       await syncCustomerCheckoutDetails(req.user.id, {
         nome,
         apelido,
@@ -5501,7 +6130,18 @@ app.post(
         phone,
       });
 
-      // 6. REAL STRIPE SESSION
+      // MOCK MODE LOGIC
+      if (!stripe) {
+        console.log("⚠️ STRIPE_SECRET_KEY missing. Entering MOCK MODE.");
+        await fulfillPaidOrder(orderId || null, reservaIds || []);
+        const successUrl = `/success.html?orderId=${orderId || ''}&reservaIds=${(reservaIds || []).join(',')}&mock=true${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : ''}`;
+        return res.json({
+          url: successUrl,
+          isMock: true,
+        });
+      }
+
+      // REAL STRIPE SESSION
       const lineItems = items.map((item) => {
         const productImages = getStripeCheckoutProductImages(
           req.headers.origin,
@@ -5516,13 +6156,25 @@ app.post(
               name: item.Nome,
               ...(productImages.length > 0 ? { images: productImages } : {}),
             },
-            unit_amount: Math.round(item.Preco * 100), // Stripe uses cents
+            unit_amount: Math.round(parseFloat(item.Preco) * 100),
           },
           quantity: item.Quantidade,
         };
       });
 
-      if (Number(shippingCost || 0) > 0) {
+      // Add workshop items to Stripe line items
+      for (const ws of wsItems) {
+        lineItems.push({
+          price_data: {
+            currency: "eur",
+            product_data: { name: ws.Nome },
+            unit_amount: Math.round(parseFloat(ws.Preco) * 100),
+          },
+          quantity: 1,
+        });
+      }
+
+      if (items.length > 0 && actualShippingCost > 0) {
         lineItems.push({
           price_data: {
             currency: "eur",
@@ -5532,7 +6184,7 @@ app.post(
                 "https://placehold.co/600x600/fef3c7/92400e.png?font=montserrat&text=CTT",
               ],
             },
-            unit_amount: Math.round(Number(shippingCost || 0) * 100),
+            unit_amount: Math.round(actualShippingCost * 100),
           },
           quantity: 1,
         });
@@ -5542,6 +6194,13 @@ app.post(
         "SELECT Email FROM cliente WHERE ID_Cliente = ?",
         [req.user.id],
       );
+
+      const metadata = {
+        paymentPreference: requestedPaymentType,
+      };
+      if (orderId) metadata.orderId = orderId.toString();
+      if (reservaIds && reservaIds.length > 0) metadata.reservaIds = reservaIds.join(',');
+      if (returnUrl) metadata.returnUrl = returnUrl;
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types:
@@ -5553,14 +6212,20 @@ app.post(
         locale: "pt",
         submit_type: "pay",
         billing_address_collection: "auto",
-        success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${finalOrderId}`,
-        cancel_url: `${req.headers.origin}/cancel.html?orderId=${finalOrderId}`,
-        metadata: {
-          orderId: finalOrderId.toString(),
-          paymentPreference: requestedPaymentType,
-        },
+        success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${orderId || ''}&reservaIds=${(reservaIds || []).join(',')}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : ''}`,
+        cancel_url: `${req.headers.origin}/cancel.html?orderId=${orderId || ''}&reservaIds=${(reservaIds || []).join(',')}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl)}` : ''}`,
+        metadata: metadata,
         customer_email: customer?.Email || undefined,
       });
+
+      // Mark workshop reservations as Pendente_Pagamento (removes from cart)
+      if (reservaIds && reservaIds.length > 0) {
+        const ph = reservaIds.map(() => '?').join(',');
+        await db.run(
+          `UPDATE reserva_workshop SET Status = 'Pendente_Pagamento' WHERE ID_Reserva IN (${ph}) AND ID_Cliente = ?`,
+          [...reservaIds, req.user.id]
+        );
+      }
 
       res.json({ url: session.url });
     } catch (error) {
@@ -5586,18 +6251,21 @@ app.get("/api/checkout/session-status", async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const orderId = Number(session.metadata?.orderId);
+    const orderId = session.metadata?.orderId ? Number(session.metadata.orderId) : null;
+    const reservaIdsStr = session.metadata?.reservaIds;
+    const reservaIds = reservaIdsStr ? reservaIdsStr.split(',').map(Number) : [];
 
-    if (!orderId) {
-      return res.status(400).json({ error: "Sessao sem orderId valido" });
+    if (!orderId && reservaIds.length === 0) {
+      return res.status(400).json({ error: "Sessao sem orderId ou reservaIds valido" });
     }
 
     if (session.payment_status === "paid") {
-      await fulfillPaidOrder(orderId);
+      await fulfillPaidOrder(orderId, reservaIds);
     }
 
     res.json({
       orderId,
+      reservaIds,
       paymentStatus: session.payment_status,
       status: session.status,
     });
@@ -5635,12 +6303,14 @@ app.post(
         event.type === "checkout.session.async_payment_succeeded"
       ) {
         const session = event.data.object;
-        const orderId = session.metadata?.orderId;
+        const orderId = session.metadata?.orderId ? Number(session.metadata.orderId) : null;
+        const reservaIdsStr = session.metadata?.reservaIds;
+        const reservaIds = reservaIdsStr ? reservaIdsStr.split(',').map(Number) : [];
 
-        if (orderId && session.payment_status === "paid") {
-          const result = await fulfillPaidOrder(orderId);
+        if ((orderId || reservaIds.length > 0) && session.payment_status === "paid") {
+          const result = await fulfillPaidOrder(orderId, reservaIds);
           console.log(
-            `Order #${orderId} fulfilled via webhook (${result.alreadyPaid ? "already paid" : "new payment"}).`,
+            `Fulfillment via webhook. Order handled: ${result.handledOrder}, Workshops handled: ${result.handledWorkshops}`,
           );
         }
       }
@@ -5685,7 +6355,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       // Use price from item_encomenda
       items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
       subtotal = items.reduce(
-        (sum, item) => sum + item.Preco * item.Quantidade,
+        (sum, item) => sum + parseFloat(item.Preco) * item.Quantidade,
         0,
       );
 
@@ -5705,24 +6375,33 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
         ],
       );
     } else {
+      let wsItems = [];
       const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
         req.user.id,
       ]);
-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
+      if (cart) {
+        items = await db.all(
+          `SELECT ic.*, p.Nome, p.Preco, p.Stock
+           FROM item_carrinho ic
+           JOIN produto p ON ic.ID_Produto = p.ID_Produto
+           WHERE ic.ID_Carrinho = ?`,
+          [cart.ID_Carrinho],
+        );
+      }
 
-      items = await db.all(
-        `SELECT ic.*, p.Nome, p.Preco, p.Stock
-         FROM item_carrinho ic
-         JOIN produto p ON ic.ID_Produto = p.ID_Produto
-         WHERE ic.ID_Carrinho = ?`,
-        [cart.ID_Carrinho],
+      wsItems = await db.all(
+        `SELECT rw.ID_Reserva, rw.ID_Workshop, w.Titulo as Nome, w.Preco, w.Vagas as Stock
+         FROM reserva_workshop rw
+         JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
+         WHERE rw.ID_Cliente = ? AND rw.Status = 'Pendente' AND rw.ID_Encomenda IS NULL`,
+        [req.user.id]
       );
 
-      if (items.length === 0)
+      if (items.length === 0 && wsItems.length === 0)
         return res.status(400).json({ error: "Carrinho vazio" });
 
-      subtotal = items.reduce(
-        (sum, item) => sum + item.Preco * item.Quantidade,
+      subtotal = [...items, ...wsItems].reduce(
+        (sum, item) => sum + parseFloat(item.Preco) * (item.Quantidade || 1),
         0,
       );
       const total = subtotal + Number(shippingCost || 0);
@@ -5746,6 +6425,13 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
         await db.run(
           "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
           [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+        );
+      }
+
+      for (const item of wsItems) {
+        await db.run(
+          "UPDATE reserva_workshop SET ID_Encomenda = ?, Preco_Unitario = ? WHERE ID_Reserva = ?",
+          [finalOrderId, item.Preco, item.ID_Reserva]
         );
       }
     }
@@ -5778,11 +6464,13 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
       [finalOrderId],
     );
 
-    // Clear cart for the user
     await db.run(
-      "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
-      [req.user.id],
+      "UPDATE reserva_workshop SET Status = 'Pago' WHERE ID_Encomenda = ?",
+      [finalOrderId],
     );
+
+    // Clear cart for the user
+    await clearCustomerProductCart(req.user.id);
 
     res.json({ success: true, orderId: finalOrderId });
   } catch (error) {
@@ -6010,6 +6698,31 @@ app.delete(
   },
 );
 
+// Delete an answer (admin or author)
+app.delete(
+  "/api/comunidade/respostas/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const resposta = await db.get(
+        "SELECT * FROM resposta_comunidade WHERE ID_Resposta = ?",
+        [req.params.id],
+      );
+      if (!resposta)
+        return res.status(404).json({ error: "Resposta não encontrada." });
+      if (resposta.ID_Cliente !== req.user.id && req.user.role !== "admin")
+        return res.status(403).json({ error: "Sem permissão." });
+
+      await db.run("DELETE FROM resposta_comunidade WHERE ID_Resposta = ?", [
+        req.params.id,
+      ]);
+      res.json({ message: "Resposta removida." });
+    } catch (error) {
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+);
+
 // Post an answer to a question (authenticated)
 app.post(
   "/api/comunidade/perguntas/:id/respostas",
@@ -6147,20 +6860,23 @@ app.get("/api/products/by-slug/:slug", async (req, res) => {
       `
       SELECT p.*, 
       p.Slug,
-      COALESCE(AVG(a.Nota), 0) as Rating, 
-      COUNT(a.ID_Avaliacao) as ReviewCount,
+      COALESCE(ar.Rating, 0) as Rating, 
+      COALESCE(ar.ReviewCount, 0) as ReviewCount,
       c.Nome as ApicultorNome,
       c.Picture as ApicultorFoto,
       c.Bio as ApicultorBio,
       cat.Nome as CategoriaNome,
       o.Nome as OrigemNome
       FROM produto p
-      LEFT JOIN avaliacao a ON p.ID_Produto = a.ID_Produto
+      LEFT JOIN (
+        SELECT ID_Produto, AVG(Nota) as Rating, COUNT(ID_Avaliacao) as ReviewCount
+        FROM avaliacao
+        GROUP BY ID_Produto
+      ) ar ON p.ID_Produto = ar.ID_Produto
       LEFT JOIN cliente c ON p.ID_Apicultor = c.ID_Cliente
       LEFT JOIN categoria cat ON p.ID_Categoria = cat.ID_Categoria
       LEFT JOIN origem o ON p.ID_Origem = o.ID_Origem
       WHERE p.Slug = ? AND (p.Status = 'Aprovado' OR p.Status IS NULL)
-      GROUP BY p.ID_Produto
     `,
       [req.params.slug],
     );
@@ -6397,7 +7113,7 @@ app.put(
 );
 
 // Helper: Check if maintenance mode is active (full or for specific section)
-export async function isMaintenanceActive(section = "full") {
+async function isMaintenanceActive(section = "full") {
   try {
     const rows = await db.all("SELECT setting_key, setting_value FROM site_settings WHERE setting_key LIKE 'maintenance_%'");
     const settings = {};
@@ -6413,7 +7129,7 @@ export async function isMaintenanceActive(section = "full") {
 }
 
 // Middleware: Block request if maintenance active and not admin
-export async function checkMaintenanceMode(req, res, next) {
+async function checkMaintenanceMode(req, res, next) {
   try {
     const active = await isMaintenanceActive();
     if (active) {
@@ -7109,13 +7825,35 @@ startServer();
 async function cleanupPendingOrders() {
   try {
     console.log("🧹 Running cleanup for expired pending orders...");
-    const result = await db.run(`
-      DELETE FROM encomenda 
-      WHERE Status = 'Pendente' 
+    const expiredOrders = await db.all(`
+      SELECT ID_Encomenda FROM encomenda
+      WHERE Status = 'Pendente'
       AND Data_Encomenda < DATE_SUB(NOW(), INTERVAL 1 DAY)
     `);
-    if (result.changes > 0) {
-      console.log(`✅ Cleaned up ${result.changes} expired orders.`);
+
+    for (const order of expiredOrders) {
+      // Get workshops linked to this expired order to restore their vagas
+      const wsItems = await db.all(
+        "SELECT ID_Workshop FROM reserva_workshop WHERE ID_Encomenda = ?",
+        [order.ID_Encomenda]
+      );
+      for (const ws of wsItems) {
+        await db.run(
+          "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
+          [ws.ID_Workshop]
+        );
+      }
+
+      await db.run(
+        "UPDATE reserva_workshop SET Status = 'Cancelado', ID_Encomenda = NULL WHERE ID_Encomenda = ?",
+        [order.ID_Encomenda],
+      );
+      await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [order.ID_Encomenda]);
+      await db.run("DELETE FROM encomenda WHERE ID_Encomenda = ?", [order.ID_Encomenda]);
+    }
+
+    if (expiredOrders.length > 0) {
+      console.log(`✅ Cleaned up ${expiredOrders.length} expired orders.`);
     }
   } catch (error) {
     if (
@@ -7131,6 +7869,7 @@ async function cleanupPendingOrders() {
 setInterval(cleanupPendingOrders, 60 * 60 * 1000);
 // Also run once on startup (with a small delay to ensure DB is ready)
 setTimeout(cleanupPendingOrders, 10000);
+
 
 initializeDatabase().catch((error) => {
   console.error("Unexpected database bootstrap error:", error);

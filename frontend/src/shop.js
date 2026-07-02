@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import { logInteraction, trackPageView } from "./analytics.js";
 import { Skeleton } from "./skeleton.js";
 import { getLoggedUser } from "./auth.js";
+import { getLowStockState } from "./utils/lowStock.js";
 
 // Easy-to-edit config
 const SHOP_CONFIG = {
@@ -234,20 +235,28 @@ function initSearchControls() {
 async function fetchProducts() {
   const grid = document.getElementById("products-grid");
 
+  // Mostrar skeleton placeholders imediatamente (default skeleton)
+  if (grid) {
+    grid.innerHTML = Skeleton.productGrid(SHOP_CONFIG.skeletonProductCount);
+  }
+
   // Carregar estilo de placeholder configurado pelo admin
   await Skeleton.init();
 
-  // Mostrar skeleton placeholders enquanto carrega
+  // Re-aplicar com o estilo final configurado pelo admin (skeleton ou spinner)
   if (grid) {
     grid.innerHTML = Skeleton.productGrid(SHOP_CONFIG.skeletonProductCount);
   }
 
   try {
+    const token = localStorage.getItem("token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     // 1. Fetch Categories, Origins and Products
     const [catRes, oriRes, res] = await Promise.all([
       fetch(`${API_URL}/categories`),
       fetch(`${API_URL}/origins`),
-      fetch(`${API_URL}/products`),
+      fetch(`${API_URL}/products`, { headers }),
     ]);
 
     if (!catRes.ok) throw new Error(`Falha ao carregar categorias: ${catRes.status}`);
@@ -290,6 +299,7 @@ async function fetchProducts() {
         reviewCount: p.ReviewCount || 0,
         slug: p.Slug || null,
         stock: p.Stock !== undefined ? p.Stock : 0,
+        lowStockThreshold: p.Low_Stock_Threshold ?? p.lowStockThreshold ?? null,
       };
     });
 
@@ -393,7 +403,8 @@ function renderPagination() {
     return `
       <button
         type="button"
-        class="pagination-pill ${page === currentPage ? "active" : ""}"
+        class="btn ${page === currentPage ? "btn-success" : "btn-outline-success"} px-3 fw-bold shadow-sm"
+        style="border-radius: 8px; ${page === currentPage ? 'background-color: var(--primary-green, #2e7d32); border-color: var(--primary-green, #2e7d32); color: white;' : ''}"
         onclick="window.goToProductsPage(${page})"
       >
         ${page}
@@ -402,23 +413,31 @@ function renderPagination() {
   }).join("");
 
   pagination.innerHTML = `
-    <button
-      type="button"
-      class="pagination-pill pagination-nav"
-      onclick="window.goToProductsPage(${currentPage - 1})"
-      ${currentPage === 1 ? "disabled" : ""}
-    >
-      Anterior
-    </button>
-    <div class="pagination-pages">${pageButtons}</div>
-    <button
-      type="button"
-      class="pagination-pill pagination-nav"
-      onclick="window.goToProductsPage(${currentPage + 1})"
-      ${currentPage === totalPages ? "disabled" : ""}
-    >
-      Seguinte
-    </button>
+    <div class="d-flex justify-content-center align-items-center gap-3 w-100 mt-4 pb-4">
+      <button
+        type="button"
+        class="btn btn-outline-secondary fw-bold px-4 shadow-sm"
+        style="border-radius: 8px; border-width: 2px;"
+        onclick="window.goToProductsPage(${currentPage - 1})"
+        ${currentPage === 1 ? "disabled" : ""}
+      >
+        <i class="fas fa-chevron-left me-2"></i>Anterior
+      </button>
+      
+      <div class="d-flex align-items-center gap-2">
+        ${pageButtons}
+      </div>
+      
+      <button
+        type="button"
+        class="btn btn-outline-secondary fw-bold px-4 shadow-sm"
+        style="border-radius: 8px; border-width: 2px;"
+        onclick="window.goToProductsPage(${currentPage + 1})"
+        ${currentPage === totalPages ? "disabled" : ""}
+      >
+        Seguinte<i class="fas fa-chevron-right ms-2"></i>
+      </button>
+    </div>
   `;
 }
 
@@ -455,7 +474,10 @@ function renderProducts() {
   if (currentView === "grid") {
     grid.innerHTML = paginatedProducts
       .map(
-        (product) => `
+        (product) => {
+          const lowStock = getLowStockState(product.stock, product.lowStockThreshold, "product");
+
+          return `
       <div class="col-md-6 col-lg-4 mb-4">
         <div class="product-card-premium h-100 position-relative d-flex flex-column">
           <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${product.slug || product.id}'">
@@ -463,10 +485,11 @@ function renderProducts() {
               ${product.tags
                 .map(
                   (tag) => `
-                <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+                <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>
               `,
                 )
                 .join("")}
+              ${lowStock ? `<div class="product-badge tag-low-stock">${lowStock.label}</div>` : ""}
             </div>
             <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
           </div>
@@ -512,24 +535,28 @@ function renderProducts() {
           </div>
         </div>
       </div>
-    `,
-      )
+    `;
+        })
       .join("");
   } else {
     grid.innerHTML = paginatedProducts
       .map(
-        (product) => `
-      <div class="col-12">
-        <div class="product-card-list-view">
-          <div class="product-img-container" style="cursor: pointer" onclick="window.location.href='/produto/${product.slug || product.id}'">
+        (product) => {
+          const lowStock = getLowStockState(product.stock, product.lowStockThreshold, "product");
+
+          return `
+      <div class="col-12 mb-3">
+        <div class="product-card-premium list-view position-relative d-flex">
+          <div class="product-img-container" style="cursor: pointer; flex: 0 0 200px;" onclick="window.location.href='/produto/${product.slug || product.id}'">
             <div class="product-tags-container">
               ${product.tags
                 .map(
                   (tag) => `
-                <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+                <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>
               `,
                 )
                 .join("")}
+              ${lowStock ? `<div class="product-badge tag-low-stock">${lowStock.label}</div>` : ""}
             </div>
             <img src="${product.image}" alt="${product.name}" onerror="this.src='${SHOP_CONFIG.fallbackImage}'">
           </div>
@@ -575,8 +602,8 @@ function renderProducts() {
           </div>
         </div>
       </div>
-    `,
-      )
+    `;
+        })
       .join("");
   }
 

@@ -6,6 +6,7 @@ import { toast } from "./toast.js";
 import Swal from "sweetalert2";
 import { trackPageView } from "./analytics.js";
 import { Skeleton } from "./skeleton.js";
+import { getLowStockState } from "./utils/lowStock.js";
 
 const API_URL = "/api";
 const fallbackImage = "/images/workshop_default.webp";
@@ -17,12 +18,17 @@ let userReservations = [];
 async function fetchWorkshops() {
   const gridEl = document.getElementById("workshops-grid");
 
+  // Mostrar skeleton placeholders imediatamente (default skeleton)
+  if (gridEl) {
+    gridEl.innerHTML = Skeleton.workshopGrid(6, 'col-md-6 col-lg-4');
+  }
+
   // Carregar estilo de placeholder configurado pelo admin
   await Skeleton.init();
 
-  // Mostrar skeleton placeholders enquanto carrega
+  // Re-aplicar com o estilo final configurado pelo admin (skeleton ou spinner)
   if (gridEl) {
-    gridEl.innerHTML = Skeleton.genericGrid(6, 'col-md-6 col-lg-4 mb-4');
+    gridEl.innerHTML = Skeleton.workshopGrid(6, 'col-md-6 col-lg-4');
   }
 
   userReservations = [];
@@ -54,6 +60,17 @@ async function fetchWorkshops() {
     }
 
     renderWorkshops();
+
+    // Check if there is an ID in the URL to open details automatically
+    const urlParams = new URLSearchParams(window.location.search);
+    const workshopId = urlParams.get('id');
+    if (workshopId) {
+      setTimeout(() => {
+        if (typeof window.openWorkshopDetail === 'function') {
+          window.openWorkshopDetail(parseInt(workshopId));
+        }
+      }, 100);
+    }
   } catch (err) {
     console.error("Error fetching workshops:", err);
     if (gridEl) {
@@ -74,13 +91,21 @@ function renderWorkshops() {
       const hasVagas = w.Vagas > 0;
       const isPast = new Date(w.Data_Realizacao) < new Date();
       const price = parseFloat(w.Preco).toFixed(2);
-      const isReserved = userReservations.some(r => r.ID_Workshop === w.ID_Workshop);
+      const reservation = userReservations.find(r => r.ID_Workshop === w.ID_Workshop);
+      const isPago = reservation && reservation.Status === 'Pago';
+      const isPendenteOrder = reservation && (reservation.Status === 'Pendente_Pagamento' || (reservation.Status === 'Pendente' && reservation.ID_Encomenda !== null));
+      const isInCart = cart.items.some(item => item.ID_Workshop === w.ID_Workshop);
+      const lowStock = getLowStockState(w.Vagas, w.Low_Stock_Threshold ?? w.lowStockThreshold ?? null, "workshop");
 
       let buttonHtml = '';
       if (isPast) {
         buttonHtml = `<button class="btn btn-workshop-reserve disabled" disabled>Terminado</button>`;
-      } else if (isReserved) {
-        buttonHtml = `<button class="btn btn-success disabled w-auto" disabled><i class="fas fa-check-circle me-1"></i>Inscrito</button>`;
+      } else if (isPago) {
+        buttonHtml = `<button class="btn btn-workshop-reserve disabled" style="background: #2e7d32; color: #fff; border:none;" disabled><i class="fas fa-check-circle me-1"></i> Inscrito</button>`;
+      } else if (isPendenteOrder) {
+        buttonHtml = `<button class="btn btn-workshop-reserve" style="background: var(--primary-gold); color: #000; border:none;" onclick="event.stopPropagation(); window.location.href='profile.html?tab=workshops'"><i class="fas fa-clock me-1"></i> Pendente</button>`;
+      } else if (isInCart) {
+        buttonHtml = `<button class="btn btn-workshop-reserve disabled" style="background: var(--primary-gold); color: #000; border:none;" disabled><i class="fas fa-shopping-cart me-1"></i> No Carrinho</button>`;
       } else if (!hasVagas) {
         buttonHtml = `<button class="btn btn-workshop-reserve disabled" disabled>Esgotado</button>`;
       } else {
@@ -93,16 +118,17 @@ function renderWorkshops() {
       }
 
       return `
-      <div class="col-md-6 col-lg-4 animate-fade-up" style="animation-delay: ${i * 0.1}s">
+      <div class="col-md-6 col-lg-4">
         <div class="workshop-card-premium h-100 d-flex flex-column">
           <div class="workshop-img-wrapper" onclick="window.openWorkshopDetail(${w.ID_Workshop})" style="cursor:pointer">
             <img src="${w.Imagem || fallbackImage}" alt="${w.Titulo}" onerror="this.src='${fallbackImage}'">
             <div class="workshop-date-badge">
               <i class="far fa-calendar-alt me-1"></i>${date}
             </div>
+            ${lowStock ? `<div class="workshop-low-stock-badge">${lowStock.label}</div>` : ''}
             ${isPast ? '<div class="workshop-past-badge">Terminado</div>' : ''}
             ${!hasVagas && !isPast ? '<div class="workshop-sold-badge">Esgotado</div>' : ''}
-            ${isReserved && !isPast ? '<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> Inscrito</div>' : ''}
+            ${isPago ? '<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> Inscrito</div>' : (isPendenteOrder || isInCart) ? '<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: var(--primary-gold, #f4b400); color: #000; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-clock"></i> Pendente</div>' : ''}
           </div>
           <div class="workshop-card-body p-4 d-flex flex-column flex-grow-1">
             <div class="d-flex align-items-center gap-2 mb-3">
@@ -128,17 +154,32 @@ function renderWorkshops() {
       </div>`;
     })
     .join("");
+
+  // Adicionar animação suave de revelação (igual à loja)
+  Skeleton.reveal(grid);
 }
 
 // Format date helper
+function formatDateSafely(dateStr) {
+  try {
+    if (!dateStr) return "Data inválida";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "Data inválida";
+    return d.toLocaleDateString("pt-PT", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (err) {
+    console.error("Date formatting error:", err);
+    return "Data inválida";
+  }
+}
+
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString("pt-PT", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateSafely(dateStr);
 }
 
 // Open workshop detail modal
@@ -150,7 +191,11 @@ window.openWorkshopDetail = function (id) {
   const hasVagas = w.Vagas > 0;
   const isPast = new Date(w.Data_Realizacao) < new Date();
   const price = parseFloat(w.Preco).toFixed(2);
-  const isReserved = userReservations.some((r) => r.ID_Workshop === id);
+  const lowStock = getLowStockState(w.Vagas, w.Low_Stock_Threshold ?? w.lowStockThreshold ?? null, "workshop");
+  const reservation = userReservations.find((r) => r.ID_Workshop === id);
+  const isPago = reservation && reservation.Status === 'Pago';
+  const isPendenteOrder = reservation && (reservation.Status === 'Pendente_Pagamento' || (reservation.Status === 'Pendente' && reservation.ID_Encomenda !== null));
+  const isInCart = cart.items.some((item) => item.ID_Workshop === id);
 
   const content = document.getElementById("workshop-detail-content");
   content.innerHTML = `
@@ -174,6 +219,9 @@ window.openWorkshopDetail = function (id) {
         <h2 class="fw-bold mb-3">${w.Titulo}</h2>
 
         <div class="d-flex flex-wrap gap-3 mb-4">
+          ${lowStock ? `<span class="badge bg-warning text-dark border border-warning px-3 py-2 rounded-pill">
+            <i class="fas fa-exclamation-triangle me-1"></i>${lowStock.label}
+          </span>` : ''}
           <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
             <i class="far fa-calendar-alt me-1 text-warning"></i>${date}
           </span>
@@ -193,9 +241,13 @@ window.openWorkshopDetail = function (id) {
         <div class="d-flex gap-3">
           ${isPast 
             ? `<button class="btn btn-workshop-reserve flex-grow-1 py-3 disabled" disabled><i class="fas fa-clock me-2"></i>Workshop Terminado</button>`
-            : isReserved 
+            : isPago
               ? `<button class="btn btn-success flex-grow-1 py-3 disabled" disabled><i class="fas fa-check-circle me-2"></i>Inscrito</button>`
-              : `<button class="btn btn-workshop-reserve flex-grow-1 py-3 ${!hasVagas ? 'disabled' : ''}" onclick="window.reserveWorkshop(${w.ID_Workshop})" ${!hasVagas ? 'disabled' : ''}><i class="fas fa-ticket-alt me-2"></i>Reservar Vaga</button>`
+              : isPendenteOrder
+                ? `<button class="btn flex-grow-1 py-3 shadow-sm" style="background: var(--primary-gold, #f4b400); color: #000; border: none; font-weight: bold;" onclick="event.stopPropagation(); window.location.href='profile.html?tab=workshops'"><i class="fas fa-clock me-2"></i>Pendente (Pagar no Perfil)</button>`
+              : isInCart
+                ? `<button class="btn flex-grow-1 py-3 shadow-sm" style="background: var(--primary-gold, #f4b400); color: #000; border: none; font-weight: bold;" onclick="event.stopPropagation(); bootstrap.Modal.getInstance(document.getElementById('workshopDetailModal')).hide(); cart.toggle(true);"><i class="fas fa-shopping-cart me-2"></i>No Carrinho</button>`
+                : `<button class="btn btn-workshop-reserve flex-grow-1 py-3 ${!hasVagas ? 'disabled' : ''}" onclick="window.reserveWorkshop(${w.ID_Workshop})" ${!hasVagas ? 'disabled' : ''}><i class="fas fa-ticket-alt me-2"></i>Reservar Vaga</button>`
           }
           <button class="btn btn-auth-enhanced login py-3" data-bs-dismiss="modal">Fechar</button>
         </div>
@@ -272,14 +324,20 @@ window.reserveWorkshop = async function (id) {
       const modal = bootstrap.Modal.getInstance(document.getElementById("workshopDetailModal"));
       if (modal) modal.hide();
 
-      Swal.fire({
-        title: "Reserva Confirmada!",
-        html: isPaid
-          ? `<p>${data.message || "A tua vaga foi reservada com sucesso."}</p><p class="text-muted small">Lembra-te de efetuar o pagamento de <strong>${price}€</strong> no dia do workshop.</p>`
-          : data.message || "A tua vaga foi reservada com sucesso.",
-        icon: "success",
-        confirmButtonColor: "#1a4d2e",
-      });
+      if (data.addedToCart) {
+        if (window.cart) {
+          await window.cart.syncWithBackend();
+          window.cart.render();
+          window.cart.toggle(true);
+        }
+      } else {
+        Swal.fire({
+          title: "Reserva Confirmada!",
+          text: data.message || "A tua vaga foi reservada com sucesso.",
+          icon: "success",
+          confirmButtonColor: "#1a4d2e",
+        });
+      }
 
       // Refresh workshops
       await fetchWorkshops();
@@ -302,6 +360,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (cartBtn) {
     cartBtn.addEventListener("click", () => cart.toggle(true));
   }
+
+  window.addEventListener("cart-updated", () => {
+    renderWorkshops();
+  });
 });
 
 console.log("Workshops page loaded! 🐝");

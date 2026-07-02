@@ -90,6 +90,40 @@ const KNOWLEDGE_BASE = {
   }
 };
 
+export function getMelitaReply(query, activeLang = getLang()) {
+  const lang = activeLang === "en" ? "en" : "pt";
+  const db = KNOWLEDGE_BASE[lang] || KNOWLEDGE_BASE.pt;
+
+  if (!query || typeof query !== "string") {
+    const fallback = lang === "pt"
+      ? "Desculpa, mas só consigo responder a questões relacionadas com o site do Hexomel (produtos, workshops, conta, contactos, rede social e curiosidades). 🍯"
+      : "Sorry, but I can only answer questions related to the Hexomel website (products, workshops, account, contacts, social network, and curiosities). 🍯";
+
+    return { response: fallback, isAllowed: false };
+  }
+
+  const cleanQuery = query
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  for (const key in db) {
+    if (db[key].patterns.test(cleanQuery)) {
+      return {
+        response: db[key].response,
+        showAuthActions: !!db[key].showAuthActions,
+        isAllowed: true
+      };
+    }
+  }
+
+  const fallback = lang === "pt"
+    ? "Desculpa, mas só consigo responder a questões relacionadas com o site do Hexomel (como os nossos méis, workshops, rede social, conta ou contactos). 🍯\n\nTenta perguntar algo como:\n- 'Como comprar mel?'\n- 'Quais os workshops?'\n- 'O que é o HexoHive?'\n- 'Qual o vosso contacto?'"
+    : "Sorry, but I can only answer questions related to the Hexomel website (such as our honey, workshops, social network, account, or contacts). 🍯\n\nTry asking something like:\n- 'How to buy honey?'\n- 'What workshops are available?'\n- 'What is HexoHive?'\n- 'What is your contact info?'";
+
+  return { response: fallback, isAllowed: false };
+}
+
 export function initMelitaChatbot() {
   // Check if chatbot is already injected
   if (document.getElementById("melita-chat-root")) return;
@@ -320,7 +354,7 @@ export function initMelitaChatbot() {
   });
 
   // Process User Messages
-  function handleUserMessage(text) {
+  async function handleUserMessage(text) {
     // 1. Add user bubble
     appendMessage("user", text);
 
@@ -332,15 +366,31 @@ export function initMelitaChatbot() {
     // 3. Show typing indicator
     const typingIndicator = appendTypingIndicator();
 
-    // 4. Generate response with delay
-    setTimeout(() => {
-      // Remove typing indicator
-      typingIndicator.remove();
+    try {
+      // Natural delay before showing response
+      await new Promise(resolve => setTimeout(resolve, 700));
 
-      // Find answer
-      const answerObj = getAnswer(text);
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, lang: typeof getLang === "function" ? getLang() : "pt" })
+      });
+
+      const data = await response.json();
+
+      // Check if fallback is requested (e.g. no GEMINI_API_KEY set)
+      if (response.ok && !data.fallback) {
+        typingIndicator.remove();
+        appendMessage("bot", data.response, data.showAuthActions);
+      } else {
+        throw new Error("Fallback required");
+      }
+    } catch (err) {
+      typingIndicator.remove();
+      // Find answer locally (fallback logic)
+      const answerObj = getMelitaReply(text);
       appendMessage("bot", answerObj.response, answerObj.showAuthActions);
-    }, 700);
+    }
   }
 
   // Append a message bubble to the history
@@ -445,32 +495,4 @@ export function initMelitaChatbot() {
     return formatted;
   }
 
-  // Match query against knowledge base
-  function getAnswer(query) {
-    const activeLang = getLang();
-    const db = KNOWLEDGE_BASE[activeLang] || KNOWLEDGE_BASE.pt;
-
-    // Clean query
-    const cleanQuery = query
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // strip Portuguese accents for easier match
-
-    // Look for match
-    for (const key in db) {
-      if (db[key].patterns.test(cleanQuery)) {
-        return {
-          response: db[key].response,
-          showAuthActions: !!db[key].showAuthActions
-        };
-      }
-    }
-
-    // Default fallback response
-    const fallback = activeLang === "pt"
-      ? "Desculpa, mas só consigo responder a questões relacionadas com o site do Hexomel (como os nossos méis, workshops, rede social, conta ou contactos). 🍯\n\nTenta perguntar algo como:\n- 'Como comprar mel?'\n- 'Quais os workshops?'\n- 'O que é o HexoHive?'\n- 'Qual o vosso contacto?'"
-      : "Sorry, but I can only answer questions related to the Hexomel website (such as our honey, workshops, social network, account, or contacts). 🍯\n\nTry asking something like:\n- 'How to buy honey?'\n- 'What workshops are available?'\n- 'What is HexoHive?'\n- 'What is your contact info?'";
-
-    return { response: fallback };
-  }
 }

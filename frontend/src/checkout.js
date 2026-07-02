@@ -11,6 +11,7 @@ class CheckoutManager {
     this.token = localStorage.getItem("token");
     this.userData = null;
     this.currentOrderId = new URLSearchParams(window.location.search).get("orderId");
+    this.currentReservaId = new URLSearchParams(window.location.search).get("reservaId");
     this.init();
   }
 
@@ -38,16 +39,132 @@ class CheckoutManager {
       return;
     }
 
-    // Allow access if we have items in cart OR we are paying for an existing order
-    if (cart.items.length === 0 && !this.currentOrderId) {
-      window.location.href = "shop.html";
+    // Allow access if we have items in cart OR we are paying for an existing order OR workshop
+    if (cart.items.length === 0 && !this.currentOrderId && !this.currentReservaId) {
+      // Go back to where the user came from instead of always shop.html
+      const referrer = document.referrer;
+      if (referrer && !referrer.includes("checkout.html")) {
+        window.location.href = referrer;
+      } else {
+        history.back();
+      }
       return;
     }
 
     // If we have an orderId, we need to load its items instead of the cart items for the summary
     if (this.currentOrderId) {
-      await this.fetchOrderData();
-      this.currentStep = 2; // Skip to payment step for existing orders
+      try {
+        const [resItems, resDetails] = await Promise.all([
+          fetch(`${API_URL}/user/orders/${this.currentOrderId}/items`, {
+            headers: { Authorization: `Bearer ${this.token}` },
+          }),
+          fetch(`${API_URL}/user/orders/${this.currentOrderId}`, {
+            headers: { Authorization: `Bearer ${this.token}` },
+          })
+        ]);
+
+        if (!resItems.ok || !resDetails.ok) {
+          throw new Error("Failed to fetch order data");
+        }
+
+        const items = await resItems.json();
+        this.orderItems = items.map(it => ({
+          ...it,
+          Preco: it.Preco_Unitario,
+          Nome: it.Nome,
+          ID_Produto: it.ID_Produto,
+          ID_Workshop: it.ID_Workshop
+        }));
+
+        const order = await resDetails.json();
+        this.orderData = order;
+
+        const status = order.Status || order.status;
+        if (status === "Pago" || status === "Cancelado") {
+          await Swal.fire({
+            icon: "info",
+            title: "Encomenda Finalizada",
+            text: "Esta encomenda já foi paga ou cancelada.",
+            confirmButtonColor: "#1a4d2e"
+          });
+          window.location.href = "profile.html";
+          return;
+        }
+
+        this.autoFillOrderData();
+        this.currentStep = 2; // Skip to payment step for existing orders
+
+      } catch (err) {
+        console.error("Error fetching order data:", err);
+        await Swal.fire({
+          icon: "error",
+          title: "Erro ao Carregar Encomenda",
+          text: "Não foi possível carregar os dados da encomenda. A regressar ao carrinho.",
+          confirmButtonColor: "#1a4d2e"
+        });
+
+        this.currentOrderId = null;
+        window.history.replaceState({}, document.title, window.location.pathname);
+        this.currentStep = 1;
+
+        if (cart.items.length === 0) {
+          window.location.href = "shop.html";
+          return;
+        }
+      }
+    }
+
+    // If we have a single reservaId, we load its info for checkout
+    if (this.currentReservaId) {
+      try {
+        const res = await fetch(`${API_URL}/user/workshops/${this.currentReservaId}`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch reservation data");
+
+        const ws = await res.json();
+        
+        if (ws.Status === "Pago") {
+          await Swal.fire({
+            icon: "info",
+            title: "Reserva Finalizada",
+            text: "Esta reserva já foi paga.",
+            confirmButtonColor: "#1a4d2e"
+          });
+          window.location.href = "profile.html";
+          return;
+        }
+
+        this.orderItems = [{
+          ID_Reserva: ws.ID_Reserva,
+          ID_Workshop: ws.ID_Workshop,
+          Nome: ws.Nome,
+          Preco: ws.Preco || ws.Preco_Unitario,
+          Imagem: ws.Imagem,
+          Quantidade: 1
+        }];
+        this.currentStep = 2; // Skip to payment step since we just want to pay
+        this.autoFillData(); // We still auto-fill user data even if skipping step 1
+
+      } catch (err) {
+        console.error("Error fetching reservation data:", err);
+        await Swal.fire({
+          icon: "error",
+          title: "Erro ao Carregar Reserva",
+          text: "Não foi possível carregar os dados da reserva.",
+          confirmButtonColor: "#1a4d2e"
+        });
+
+        this.currentReservaId = null;
+        window.history.replaceState({}, document.title, window.location.pathname);
+        this.currentStep = 1;
+
+        if (cart.items.length === 0) {
+          window.location.href = "profile.html";
+          return;
+        }
+      }
     }
 
     this.renderSummary();
@@ -60,39 +177,6 @@ class CheckoutManager {
       itemCount: cart.items.length,
       totalValue: cart.items.reduce((acc, item) => acc + item.Preco * item.Quantidade, 0).toFixed(2)
     });
-  }
-
-  async fetchOrderData() {
-    try {
-      const [resItems, resDetails] = await Promise.all([
-        fetch(`${API_URL}/user/orders/${this.currentOrderId}/items`, {
-          headers: { Authorization: `Bearer ${this.token}` },
-        }),
-        fetch(`${API_URL}/user/orders/${this.currentOrderId}`, {
-          headers: { Authorization: `Bearer ${this.token}` },
-        })
-      ]);
-
-      if (resItems.ok) {
-        const items = await resItems.json();
-        // Override cart items for summary display
-        // We map them to match the cart item structure
-        this.orderItems = items.map(it => ({
-          ...it,
-          Preco: it.Preco_Unitario,
-          Nome: it.Nome,
-          ID_Produto: it.ID_Produto
-        }));
-      }
-
-      if (resDetails.ok) {
-        const order = await resDetails.json();
-        this.orderData = order;
-        this.autoFillOrderData();
-      }
-    } catch (error) {
-      console.error("Error fetching order data:", error);
-    }
   }
 
   autoFillOrderData() {
@@ -386,10 +470,15 @@ class CheckoutManager {
             }),
           });
 
-          if (!res.ok) throw new Error("Falha ao inicializar checkout");
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error("Checkout init server error:", errData);
+            throw new Error(errData.detail || errData.error || "Falha ao inicializar checkout");
+          }
 
           const data = await res.json();
           this.currentOrderId = data.orderId;
+          this.currentReservaIds = data.reservaIds;
 
           // Clear local cart since it's now an order in the backend
           if (cart && typeof cart.clear === "function") {
@@ -408,7 +497,7 @@ class CheckoutManager {
           Swal.fire({
             icon: "error",
             title: "Erro",
-            text: "Não foi possível preparar a tua encomenda. Tenta novamente.",
+            text: error.message || "Não foi possível preparar a tua encomenda. Tenta novamente.",
             confirmButtonColor: "#f4b400",
           });
           btn.disabled = false;
@@ -507,16 +596,31 @@ class CheckoutManager {
     const list = document.getElementById("summary-items-list");
     let subtotal = 0;
 
-    const itemsToRender = this.currentOrderId ? (this.orderItems || []) : cart.items;
+    const itemsToRender = (this.currentOrderId || this.currentReservaId) ? (this.orderItems || []) : cart.items;
 
     list.innerHTML = itemsToRender
       .map((item) => {
         subtotal += item.Preco * item.Quantidade;
+
+        // Resolve image source and fallback
+        const isWorkshop = !!item.ID_Workshop;
+        const fallbackImg = isWorkshop ? '/images/workshop_default.webp' : '/images/default-product.png';
+        let imageSrc = '';
+        if (!item.Imagem) {
+          imageSrc = isWorkshop ? fallbackImg : `/img/produtos/${item.ID_Produto}.webp`;
+        } else if (item.Imagem.startsWith('/') || item.Imagem.startsWith('http')) {
+          imageSrc = item.Imagem;
+        } else if (item.Imagem.startsWith('uploads/')) {
+          imageSrc = `/${item.Imagem}`;
+        } else {
+          imageSrc = `/images/${item.Imagem}`;
+        }
+
         return `
                 <div class="summary-item">
-                    <img src="${item.Imagem || "/images/default-product.png"}" 
+                    <img src="${imageSrc}" 
                          class="summary-item-img" 
-                         onerror="this.src='/images/default-product.png'">
+                         onerror="this.src='${fallbackImg}'">
                     <div class="summary-item-info">
                         <div class="summary-item-name">${item.Nome}</div>
                         <div style="font-size: 0.75rem; color: var(--text-light)">Quantidade: ${item.Quantidade}</div>
@@ -527,8 +631,9 @@ class CheckoutManager {
       })
       .join("");
 
+    const hasProducts = itemsToRender.some(item => !item.ID_Workshop);
     const shippingType = this.getShippingType();
-    const shippingCost = shippingType === "ctt" ? 4.9 : 0;
+    const shippingCost = (hasProducts && shippingType === "ctt") ? 4.9 : 0;
     const total = subtotal + shippingCost;
 
     document.getElementById("subtotal-val").textContent =
@@ -551,11 +656,16 @@ class CheckoutManager {
 
     const shippingType = document.querySelector('input[name="envio"]:checked').value;
     const shippingCost = shippingType === "ctt" ? 4.9 : 0;
-    // Always card for Stripe
-    const paymentType = "card";
+    // Read payment preference from the hidden/visible radio input
+    const paymentRadio = document.querySelector('input[name="pagamento"]:checked');
+    const paymentType = paymentRadio ? paymentRadio.value : "card";
 
     try {
       console.log("[Checkout Debug] Creating session...");
+      
+      // Get the return URL from sessionStorage (saved when user clicked checkout)
+      const returnUrl = sessionStorage.getItem("checkoutReturnUrl");
+      
       const res = await fetch(`${API_URL}/checkout/create-session`, {
         method: "POST",
         headers: {
@@ -570,7 +680,9 @@ class CheckoutManager {
           shippingCost,
           shippingType,
           orderId: this.currentOrderId,
+          reservaIds: this.currentReservaIds || (this.currentReservaId ? [this.currentReservaId] : []),
           paymentType,
+          returnUrl: returnUrl || null,
         }),
       });
 

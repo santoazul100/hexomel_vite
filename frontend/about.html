@@ -21,6 +21,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="src/styles/index.css" />
     <link rel="stylesheet" href="src/styles/modern.css" />
+    <link rel="stylesheet" href="src/styles/about.css" />
     <!-- Google Auth -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Favicon -->
@@ -30,165 +31,43 @@
       <meta name="view-transition" content="same-origin" />
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
-      <div class="container">
-        <a class="navbar-brand" href="index.html">
-          <img
-            src="/images/logo_hexomel.webp"
-            alt="Hexomel Logo"
-            class="navbar-logo"
-          />
-        </a>
-        <button
-          class="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav mx-auto gap-4">
-            <li class="nav-item">
-              <a class="nav-link" href="index.html" data-i18n="nav.home">Início</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
-              <ul class="dropdown-menu dropdown-menu-hexomel">
-                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
-                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" href="about.html" data-i18n="nav.about">Sobre</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
-            </li>
-          </ul>
-
-          <div class="d-flex align-items-center navbar-right-fixed">
-            <div class="cart-navbar-separate me-3">
-              <button
-                id="cart-btn"
-                class="btn btn-link text-decoration-none text-dark position-relative p-0"
-              >
-                <i class="fas fa-shopping-cart fs-5"></i>
-                <span
-                  id="cart-badge"
-                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
-                  >0</span
-                >
-              </button>
-            </div>
-
-            <div class="d-flex align-items-center gap-3" id="authSection">
-              <!-- Injected by main.js -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
-
-    <main>
+    <div id="navbar-container"></div>
+    <main>
       <!-- Premium Hero Section -->
-      <section class="about-hero text-center position-relative">
-        <!-- Floating Bees (Reused from index) -->
-        <div
-          class="bee-container"
-          style="
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-          "
-        >
+      <section class="about-hero-premium text-center position-relative">
+        <div class="bee-container" style="position: absolute; width: 100%; height: 100%; pointer-events: none; top: 0; left: 0; overflow: hidden;">
           <img src="/images/bee/abelha.webp" class="bee-decoration" alt="Bees" />
-          <img
-            src="/images/bee/abelha_inverso.webp"
-            class="bee-decoration"
-            alt="Bees"
-          />
+          <img src="/images/bee/abelha_inverso.webp" class="bee-decoration" alt="Bees" />
         </div>
 
         <div class="container position-relative z-1 animate-fade-up">
-          <span class="product-badge-premium mb-3 d-inline-block"
-             data-i18n="about.badge">NOSSA ESSÊNCIA</span
-          >
-          <h1 class="about-hero-title" data-i18n-html="about.title">Mais que Mel,<br />Uma Tradição Viva</h1>
-          <p class="about-hero-subtitle" data-i18n="about.subtitle">
-            Desde 1984, dedicamo-nos à arte da apicultura na Serra da Estrela,
-            transformando a magia da natureza num néctar puro e inigualável.
+          <span class="about-badge-gold mb-3" data-i18n="about.badge">SOBRE NÓS</span>
+          <h1 class="about-hero-tagline" data-i18n="about.hero.tagline">Hexomel é mais do que uma loja de mel. É uma ponte entre a tradição da apicultura portuguesa e a experiência digital moderna.</h1>
+          <p class="about-hero-desc" data-i18n="about.hero.subtitle">
+            Unimos apicultores portugueses e consumidores finais numa plataforma que valoriza origem, qualidade e autenticidade.
           </p>
         </div>
       </section>
 
       <!-- The Story Section -->
-      <section class="about-story-section">
+      <section class="about-section bg-white-pure">
         <div class="container">
           <div class="row align-items-center g-5">
-            <div class="col-lg-6 animate-fade-up">
-              <div class="about-image-wrapper">
-                <img
-                  src="/images/hero.png"
-                  alt="O Nosso Mel"
-                  class="img-fluid about-hero-img"
-                />
-                <div class="glass-quote-card">
+            <div class="col-lg-6 scroll-reveal">
+              <span class="about-badge-gold" data-i18n="about.history.badge">A NOSSA HISTÓRIA</span>
+              <h2 class="about-title-premium" data-i18n="about.history.title">Da Tradição Familiar à Inovação Digital</h2>
+              <p class="about-text-corrido text-muted mb-4" data-i18n="about.history.text">
+                A Hexomel começou como uma aplicação simples criada para apoiar a empresa familiar do fundador, ligada à produção e venda de mel em Portugal. Com o tempo, tornou-se claro que essa primeira versão não correspondia à ambição do projeto. Foi então reconstruída de raiz, dando origem a uma plataforma completa de e-commerce que liga apicultores portugueses diretamente ao consumidor final, sem intermediários.
+              </p>
+            </div>
+            <div class="col-lg-6 scroll-reveal scroll-reveal-delay-1">
+              <div class="about-image-card">
+                <img src="/images/hero.png" alt="O Nosso Mel" />
+                <div class="about-image-overlay-card">
                   <p class="mb-0 fw-bold fst-italic text-dark">
                     "Onde a pureza da montanha encontra o cuidado artesanal."
                   </p>
-                  <small
-                    class="text-uppercase tracking-wider text-muted mt-2 d-block"
-                    >— Família Hexomel</small
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6 animate-fade-up" style="animation-delay: 0.2s">
-              <span
-                class="text-uppercase small fw-bold text-muted tracking-wider mb-2 d-block"
-                 data-i18n="about.origin">A Nossa Origem</span
-              >
-              <h2
-                class="display-5 fw-bold mb-4"
-                style="color: var(--primary-green)"
-              >
-                De Geração em Geração
-              </h2>
-              <p class="lead mb-4" style="color: var(--text-dark)">
-                A Hexomel não é apenas uma marca; é um legado familiar que
-                nasceu do respeito profundo pelo ciclo da vida e pelas abelhas.
-              </p>
-              <p class="about-legacy-text text-muted mb-4">
-                Localizados no coração de Portugal, trabalhamos em simbiose com
-                a biodiversidade local. Não apressamos a natureza, acompanhamos
-                o seu ritmo. É este tempo, dedicado e paciente, que confere ao
-                nosso mel as suas propriedades terapêuticas e o seu perfil
-                aromático distinto.
-              </p>
-
-              <div class="row g-4 mt-2">
-                <div class="col-sm-6">
-                  <h4 class="fw-bold fs-3 text-dark mb-1">40+</h4>
-                  <p class="text-muted small text-uppercase tracking-wider">
-                    Anos de Experiência
-                  </p>
-                </div>
-                <div class="col-sm-6">
-                  <h4 class="fw-bold fs-3 text-dark mb-1">100%</h4>
-                  <p class="text-muted small text-uppercase tracking-wider">
-                    Biológico
-                  </p>
+                  <small class="text-uppercase tracking-wider text-muted mt-2 d-block">— Família Hexomel</small>
                 </div>
               </div>
             </div>
@@ -196,113 +75,239 @@
         </div>
       </section>
 
-      <!-- Core Values Section -->
-      <section class="py-5" style="background-color: var(--bg-clean)">
-        <div class="container py-5">
-          <div class="text-center mb-5 animate-fade-up">
-            <h2 class="display-5 fw-bold" style="color: var(--primary-green)">
-              O Que Nos Move
-            </h2>
-            <div
-              class="mx-auto"
-              style="
-                width: 60px;
-                height: 3px;
-                background: var(--secondary-gold);
-                margin-top: 20px;
-              "
-            ></div>
+      <!-- Mission Section -->
+      <section class="about-section bg-honey-soft">
+        <div class="container">
+          <div class="row align-items-center g-5 flex-row-reverse">
+            <div class="col-lg-6 scroll-reveal">
+              <span class="about-badge-gold" data-i18n="about.mission.badge">A NOSSA MISSÃO</span>
+              <h2 class="about-title-premium" data-i18n="about.mission.title">Valorizar a Apicultura Portuguesa</h2>
+              <p class="about-text-corrido text-muted" data-i18n="about.mission.text">
+                A nossa missão é valorizar a apicultura portuguesa e dar visibilidade aos pequenos produtores que, apesar da qualidade do seu trabalho, continuam com pouca presença digital. A Hexomel existe para aproximar produtores e consumidores, promovendo uma experiência onde o mel é tratado com o respeito que merece: como produto artesanal, com origem, identidade e história.
+              </p>
+            </div>
+            <div class="col-lg-6 scroll-reveal scroll-reveal-delay-1">
+               <div class="name-origin-box">
+                   <!-- Premium Ambient Glow Effect -->
+                   <div class="name-origin-glow-effect"></div>
+                    <div class="name-origin-header-group">
+                        <div class="name-origin-hexagon">
+                            <svg viewBox="0 0 100 100" style="width: 1.4rem; height: 1.4rem; fill: rgba(201, 176, 55, 0.1); stroke: currentColor; stroke-width: 8px; stroke-linejoin: round;">
+                                <polygon points="50,6 88,28 88,72 50,94 12,72 12,28" />
+                            </svg>
+                        </div>
+                        <div class="name-origin-divider"></div>
+                        <span class="about-badge-gold" data-i18n="about.name.badge">O NOME</span>
+                    </div>
+                   <h4 class="name-origin-desc-highlight" data-i18n="about.name.title">A Essência por Trás de Hexomel</h4>
+                   <p class="name-origin-text text-muted mb-3" data-i18n="about.name.desc1">O nome Hexomel nasce da união entre "Hexo", inspirado no hexágono dos favos de mel, e "mel", o coração da nossa plataforma.</p>
+                   <p class="name-origin-text-secondary text-muted mb-0 small" data-i18n="about.name.desc2">Curto, memorável e diretamente ligado ao universo da apicultura, o nome reflete a eficiência da natureza e a essência da marca.</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- What Makes Us Different -->
+      <section class="about-section bg-white-pure">
+        <div class="container">
+          <div class="text-center mb-5 scroll-reveal">
+            <span class="about-badge-gold" data-i18n="about.diff.badge">O QUE NOS TORNA DIFERENTES</span>
+            <h2 class="about-title-premium" data-i18n="about.diff.title">Um Ecossistema Digital Completo</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;" data-i18n="about.diff.intro">A Hexomel combina comércio, educação e comunidade para criar um ecossistema digital completo dedicado ao mel português artesanal.</p>
           </div>
 
           <div class="row g-4">
-            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.1s">
-              <div class="value-card-premium">
-                <div class="value-icon-wrapper">
-                  <i class="fa-solid fa-leaf"></i>
-                </div>
-                <h4 class="fw-bold mb-3" data-i18n="about.sustain">Sustentabilidade</h4>
-                <p class="text-muted mb-0">
-                  Protegemos a biodiversidade garantindo práticas apícolas que
-                  não esgotam, mas regeneram o ecossistema local.
-                </p>
+            <div class="col-md-4 scroll-reveal scroll-reveal-delay-1">
+              <div class="about-pillar-card">
+                <div class="about-pillar-icon"><i class="fa-solid fa-store"></i></div>
+                <h4 class="fw-bold mb-3" data-i18n="about.diff.pillar1.title">Comercial</h4>
+                <p class="text-muted mb-0" data-i18n="about.diff.pillar1.desc">Loja online com pagamentos seguros e experiência simples de compra.</p>
               </div>
             </div>
-
-            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.2s">
-              <div class="value-card-premium">
-                <div class="value-icon-wrapper">
-                  <i class="fa-solid fa-droplet"></i>
-                </div>
-                <h4 class="fw-bold mb-3" data-i18n="about.purity">Pureza Absoluta</h4>
-                <p class="text-muted mb-0">
-                  Extração a frio e sem filtração agressiva. O mel chega ao seu
-                  frasco exatamente como a natureza o criou.
-                </p>
+            <div class="col-md-4 scroll-reveal scroll-reveal-delay-2">
+              <div class="about-pillar-card">
+                <div class="about-pillar-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                <h4 class="fw-bold mb-3" data-i18n="about.diff.pillar2.title">Educativa</h4>
+                <p class="text-muted mb-0" data-i18n="about.diff.pillar2.desc">Curiosidades, conteúdos sobre apicultura e visualização 3D dos tipos de mel.</p>
               </div>
             </div>
-
-            <div class="col-md-4 animate-fade-up" style="animation-delay: 0.3s">
-              <div class="value-card-premium">
-                <div class="value-icon-wrapper">
-                  <i class="fa-solid fa-hand-holding-heart"></i>
-                </div>
-                <h4 class="fw-bold mb-3" data-i18n="about.fair">Comércio Justo</h4>
-                <p class="text-muted mb-0">
-                  Valorizamos a comunidade local, apoiando pequenos produtores e
-                  mantendo viva a economia rural da região.
-                </p>
+            <div class="col-md-4 scroll-reveal scroll-reveal-delay-3">
+              <div class="about-pillar-card">
+                <div class="about-pillar-icon"><i class="fa-solid fa-users"></i></div>
+                <h4 class="fw-bold mb-3" data-i18n="about.diff.pillar3.title">Comunitária</h4>
+                <p class="text-muted mb-0" data-i18n="about.diff.pillar3.desc">Fórum de perguntas entre clientes e apicultores verificados.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- CTA Section -->
-      <section
-        class="py-5 position-relative overflow-hidden"
-        style="background: var(--primary-green)"
-      >
-        <div
-          class="container py-5 text-center animate-fade-up position-relative z-1"
-        >
-          <h2 class="display-5 fw-bold text-white mb-4">
-            Descubra o Sabor da Tradição
-          </h2>
-          <p class="lead text-white-50 mb-5 mx-auto" style="max-width: 600px">
-            Deixe-se envolver pela riqueza e complexidade da nossa coleção de
-            méis premium. Uma experiência sensorial única.
-          </p>
-          <a
-            href="shop.html"
-            class="btn btn-auth-filled"
-            style="
-              background: var(--secondary-gold) !important;
-              color: var(--primary-green-dark) !important;
-              border: none;
-              padding: 15px 40px !important;
-              font-size: 1.1rem !important;
-              display: inline-flex !important;
-              width: auto;
-            "
-             data-i18n="about.cta.btn">Visitar a Loja <i class="fa-solid fa-arrow-right ms-2"></i
-          ></a>
+      <!-- PAP Technical Section -->
+      <section class="about-section bg-honey-soft">
+        <div class="container">
+          <div class="row align-items-center g-5">
+             <div class="col-lg-6 scroll-reveal">
+                 <span class="about-badge-gold" data-i18n="about.project.badge">PROVA DE APTIDÃO PROFISSIONAL (PAP)</span>
+                 <h2 class="about-title-premium" data-i18n="about.project.title">O Projeto Técnico Hexomel</h2>
+                 <p class="lead text-muted mb-4" data-i18n="about.project.subtitle">Desenvolvido no âmbito do curso Técnico de Gestão e Programação de Sistemas Informáticos (TGPSI).</p>
+                 
+                 <div class="mb-4">
+                    <h5 class="fw-bold text-dark mb-2" data-i18n="about.project.motivation.title">Motivação & Objetivo</h5>
+                    <p class="text-muted" data-i18n="about.project.motivation.desc">O Hexomel nasceu para criar uma ponte digital entre pequenos apicultores portugueses e os consumidores. Aliando métodos tradicionais a tecnologias de ponta, permitimos que os produtores vendam diretamente e promovam a biodiversidade de forma sustentável.</p>
+                 </div>
+                 
+                 <div class="mb-0">
+                    <h5 class="fw-bold text-dark mb-2" data-i18n="about.project.architecture.title">Arquitetura e Construção</h5>
+                    <p class="text-muted" data-i18n="about.project.architecture.desc">Construído sobre uma arquitetura de três camadas (Three-Tier), o sistema implementa uma SPA híbrida nativa no frontend (com View Transitions API e pre-load.js) conectada a uma API REST robusta em Express e a uma base de dados relacional segura.</p>
+                 </div>
+             </div>
+             
+             <div class="col-lg-6 scroll-reveal scroll-reveal-delay-1">
+                 <!-- Technical Spec Dashboard in Organic Colors -->
+                 <div class="pap-spec-dashboard shadow-lg bg-white border-0 p-5 rounded-4">
+                    <div class="pap-spec-header border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center" style="border-color: rgba(26, 77, 46, 0.08) !important;">
+                        <span class="pap-spec-title fw-bold" style="color: var(--primary-green) !important; font-family: monospace;">SYS CONFIG // PAP.HEXOMEL</span>
+                        <span class="badge bg-success" style="font-family: monospace;">ACTIVE</span>
+                    </div>
+                    
+                    <div class="pap-spec-row py-3 border-bottom d-flex justify-content-between" style="border-color: rgba(26, 77, 46, 0.05) !important;">
+                        <span class="pap-spec-label text-muted"><i class="fa-solid fa-server me-2"></i> CORE STACK</span>
+                        <span class="pap-spec-value fw-bold text-dark">Node.js + Express API</span>
+                    </div>
+                    
+                    <div class="pap-spec-row py-3 border-bottom d-flex justify-content-between" style="border-color: rgba(26, 77, 46, 0.05) !important;">
+                        <span class="pap-spec-label text-muted"><i class="fa-solid fa-database me-2"></i> DB ENGINE</span>
+                        <span class="pap-spec-value fw-bold text-dark" data-i18n="about.project.db.title">MySQL 8.0 (InnoDB, ACID)</span>
+                    </div>
+                    
+                    <div class="pap-spec-row py-3 border-bottom d-flex justify-content-between" style="border-color: rgba(26, 77, 46, 0.05) !important;">
+                        <span class="pap-spec-label text-muted"><i class="fa-solid fa-layer-group me-2"></i> FRONTEND FRAME</span>
+                        <span class="pap-spec-value fw-bold text-dark">Vite + Vanilla JS</span>
+                    </div>
+                    
+                    <div class="pap-spec-row py-3 border-bottom d-flex justify-content-between" style="border-color: rgba(26, 77, 46, 0.05) !important;">
+                        <span class="pap-spec-label text-muted"><i class="fa-solid fa-lock me-2"></i> SECURITY SYSTEM</span>
+                        <span class="pap-spec-value fw-bold text-dark">JWT Auth + Bcrypt</span>
+                    </div>
+
+                    <div class="pap-spec-row py-3 border-bottom d-flex justify-content-between" style="border-color: rgba(26, 77, 46, 0.05) !important;">
+                        <span class="pap-spec-label text-muted"><i class="fa-solid fa-credit-card me-2"></i> PAYMENT API</span>
+                        <span class="pap-spec-value fw-bold text-dark">Stripe Gateway</span>
+                    </div>
+
+                    <div class="pap-spec-row py-3 border-bottom d-flex justify-content-between" style="border-color: rgba(26, 77, 46, 0.05) !important;">
+                        <span class="pap-spec-label text-muted"><i class="fa-solid fa-cube me-2"></i> INTERACTION 3D</span>
+                        <span class="pap-spec-value fw-bold text-dark">Three.js Engine</span>
+                    </div>
+                 </div>
+             </div>
+          </div>
         </div>
-        <!-- Decorative subtle background element -->
-        <div
-          style="
-            position: absolute;
-            top: -50%;
-            left: -10%;
-            width: 50vw;
-            height: 50vw;
-            background: radial-gradient(
-              circle,
-              rgba(255, 255, 255, 0.05) 0%,
-              transparent 70%
-            );
-            border-radius: 50%;
-          "
-        ></div>
+      </section>
+
+      <!-- Values -->
+      <section class="about-section bg-white-pure">
+        <div class="container">
+           <div class="text-center mb-5 scroll-reveal">
+            <span class="about-badge-gold" data-i18n="about.values.badge">VALORES</span>
+            <h2 class="about-title-premium" data-i18n="about.values.title">Aquilo em que Acreditamos</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 800px;" data-i18n="about.values.intro">Na Hexomel, Acreditamos em autenticidade, qualidade e proximidade. Valorizamos o trabalho dos produtores locais, promovemos práticas responsáveis e usamos a tecnologia para aproximar pessoas do verdadeiro sabor do mel português.</p>
+          </div>
+          <div class="row g-4 mt-3">
+              <!-- Autenticidade -->
+              <div class="col-md-4 scroll-reveal scroll-reveal-delay-1">
+                  <div class="about-value-capsule">
+                      <div class="about-value-icon"><i class="fa-solid fa-certificate"></i></div>
+                      <div>
+                          <h5 class="about-value-title" data-i18n="about.values.val1.title">Autenticidade</h5>
+                          <p class="about-value-desc" data-i18n="about.values.val1.desc">Mel puro e cru, sem misturas, que reflete fielmente o terroir e a flor de cada região.</p>
+                      </div>
+                  </div>
+              </div>
+              <!-- Qualidade -->
+              <div class="col-md-4 scroll-reveal scroll-reveal-delay-2">
+                  <div class="about-value-capsule">
+                      <div class="about-value-icon"><i class="fa-solid fa-star"></i></div>
+                      <div>
+                          <h5 class="about-value-title" data-i18n="about.values.val2.title">Qualidade</h5>
+                          <p class="about-value-desc" data-i18n="about.values.val2.desc">Padrões de controlo rigorosos para assegurar que cada frasco mantém o sabor e as propriedades medicinais originais.</p>
+                      </div>
+                  </div>
+              </div>
+              <!-- Proximidade -->
+              <div class="col-md-4 scroll-reveal scroll-reveal-delay-3">
+                  <div class="about-value-capsule">
+                      <div class="about-value-icon"><i class="fa-solid fa-handshake"></i></div>
+                      <div>
+                          <h5 class="about-value-title" data-i18n="about.values.val3.title">Proximidade</h5>
+                          <p class="about-value-desc" data-i18n="about.values.val3.desc">Ligamos quem produz a quem consome, eliminando barreiras e fomentando relações humanas de confiança.</p>
+                      </div>
+                  </div>
+              </div>
+              <!-- Inovação -->
+              <div class="col-md-4 scroll-reveal scroll-reveal-delay-1">
+                  <div class="about-value-capsule">
+                      <div class="about-value-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                      <div>
+                          <h5 class="about-value-title" data-i18n="about.values.val4.title">Inovação</h5>
+                          <p class="about-value-desc" data-i18n="about.values.val4.desc">Tecnologia ao serviço da tradição: da visualização 3D do mel aos pagamentos digitais seguros.</p>
+                      </div>
+                  </div>
+              </div>
+              <!-- Sustentabilidade -->
+              <div class="col-md-4 scroll-reveal scroll-reveal-delay-2">
+                  <div class="about-value-capsule">
+                      <div class="about-value-icon"><i class="fa-solid fa-leaf"></i></div>
+                      <div>
+                          <h5 class="about-value-title" data-i18n="about.values.val5.title">Sustentabilidade</h5>
+                          <p class="about-value-desc" data-i18n="about.values.val5.desc">Apoio a práticas apícolas éticas que protegem as abelhas e promovem a conservação da biodiversidade.</p>
+                      </div>
+                  </div>
+              </div>
+              <!-- Valorização -->
+              <div class="col-md-4 scroll-reveal scroll-reveal-delay-3">
+                  <div class="about-value-capsule">
+                      <div class="about-value-icon"><i class="fa-solid fa-medal"></i></div>
+                      <div>
+                          <h5 class="about-value-title" data-i18n="about.values.val6.title">Valorização do Produtor</h5>
+                          <p class="about-value-desc" data-i18n="about.values.val6.desc">Garantimos uma remuneração justa para os apicultores locais, dignificando e preservando a sua atividade.</p>
+                      </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Impact and Purpose -->
+      <section class="about-section bg-white-pure">
+         <div class="container">
+             <div class="about-impact-container scroll-reveal">
+                  <div class="about-impact-watermark">
+                      <svg viewBox="0 0 100 100" style="width: 18rem; height: 18rem; fill: none; stroke: currentColor; stroke-width: 6px; stroke-linejoin: round;">
+                          <polygon points="50,6 88,28 88,72 50,94 12,72 12,28" />
+                      </svg>
+                  </div>
+                 <span class="about-badge-gold" data-i18n="about.impact.badge">IMPACTO E PROPÓSITO</span>
+                 <h2 class="about-impact-title" data-i18n="about.impact.title">Contribuir para Algo Maior</h2>
+                 <p class="about-impact-text" data-i18n="about.impact.text">Ao aproximar apicultores e consumidores, ajudamos a fortalecer pequenos produtores, promovemos o consumo informado e contribuímos para a valorização de uma atividade fundamental para o equilíbrio ambiental e cultural em Portugal.</p>
+             </div>
+         </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="about-section bg-honey-soft text-center">
+        <div class="container scroll-reveal">
+          <h2 class="about-title-premium mb-4" data-i18n="about.project.title">O Projeto Técnico Hexomel</h2>
+          <p class="lead text-muted mb-5 mx-auto" style="max-width: 600px;" data-i18n="about.cta.text">
+            Descobre a Hexomel, explora os nossos méis e conhece as histórias por trás de cada produtor.
+          </p>
+          <div class="about-cta-buttons justify-content-center gap-3">
+              <a href="shop.html" class="btn btn-about-gold text-decoration-none" data-i18n="about.cta.shop">Explorar Loja</a>
+              <a href="apicultores.html" class="btn btn-about-outline-green text-decoration-none" data-i18n="about.cta.producers">Conhecer Produtores</a>
+              <a href="comunidade.html" class="btn btn-about-outline-green text-decoration-none" data-i18n="about.cta.community">Ver Comunidade</a>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -396,6 +401,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="src/beeAnimation.js"></script>
+    <script type="module" src="src/about-scroll.js"></script>
     <script type="module" src="src/main.js"></script>
   </body>
 </html>

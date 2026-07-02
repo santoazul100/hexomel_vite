@@ -12,7 +12,9 @@ const homePage = {
     if (!grid) return;
 
     try {
-      const response = await fetch(`${API_URL}/products`);
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await fetch(`${API_URL}/products`, { headers });
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
 
@@ -40,7 +42,7 @@ const homePage = {
           const tagsHtml = tags
             .map(
               (tag) => `
-            <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}">${tag}</div>
+            <div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, "-")}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>
           `,
             )
             .join("");

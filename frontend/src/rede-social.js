@@ -4,6 +4,8 @@ import { getLang } from "./i18n.js";
 const API_URL = "/api";
 
 window.activeChatPartnerId = null;
+window.activeChatConversationId = null;
+window.activeChatProductId = null;
 window.chatPollInterval = null;
 window.lastMessagesCount = 0;
 
@@ -30,8 +32,8 @@ class SocialNetworkUI {
 
     // Bind window functions
     window.fetchConversations = () => this.fetchConversations();
-    window.openChat = (partnerId, partnerName, partnerPicture) => this.openChat(partnerId, partnerName, partnerPicture);
-    window.fetchChatHistory = (partnerId, quiet) => this.fetchChatHistory(partnerId, quiet);
+    window.openChat = (partnerId, partnerName, partnerPicture, conversation = null) => this.openChat(partnerId, partnerName, partnerPicture, conversation);
+    window.fetchChatHistory = (conversationId, quiet) => this.fetchChatHistory(conversationId, quiet);
     window.sendChatMessage = () => this.sendChatMessage();
     window.blockChatUser = (id) => this.blockChatUser(id);
     window.unblockChatUser = (id) => this.unblockChatUser(id);
@@ -151,6 +153,8 @@ class SocialNetworkUI {
           window.chatPollInterval = null;
         }
         window.activeChatPartnerId = null;
+        window.activeChatConversationId = null;
+        window.activeChatProductId = null;
       });
 
       btnShowComunidade.addEventListener("click", () => {
@@ -171,6 +175,8 @@ class SocialNetworkUI {
           window.chatPollInterval = null;
         }
         window.activeChatPartnerId = null;
+        window.activeChatConversationId = null;
+        window.activeChatProductId = null;
       });
 
       btnShowChat.addEventListener("click", (e) => {
@@ -1035,6 +1041,7 @@ class SocialNetworkUI {
 
       const urlParams = new URLSearchParams(window.location.search);
       const chatWithId = urlParams.get("chatWith");
+      const productSlug = urlParams.get("product");
       let hasChatWithInConversations = false;
 
       if (conversations.length === 0 && !chatWithId) {
@@ -1048,7 +1055,8 @@ class SocialNetworkUI {
       }
 
       conversations.forEach((c) => {
-        if (chatWithId && String(c.partner.id) === String(chatWithId)) {
+        const matchesRequestedProduct = productSlug ? c.product?.slug === productSlug : !c.product;
+        if (chatWithId && String(c.partner.id) === String(chatWithId) && matchesRequestedProduct) {
           hasChatWithInConversations = true;
         }
         
@@ -1056,7 +1064,8 @@ class SocialNetworkUI {
         const avatarUrl = hasPartnerPic ? c.partner.picture : `https://ui-avatars.com/api/?name=${encodeURIComponent(c.partner.name)}&background=1a4d2e&color=fff&size=80`;
         const unreadBadge = c.unreadCount > 0 ? `<span class="badge bg-success rounded-pill">${c.unreadCount}</span>` : "";
         const lastMsgText = c.lastMessage ? c.lastMessage.text : "Nenhuma mensagem.";
-        const isActive = window.activeChatPartnerId === c.partner.id ? "active" : "";
+        const productLine = c.product ? `<p class="text-success smaller text-truncate mb-0"><i class="fas fa-box-open me-1"></i>${c.product.name}</p>` : "";
+        const isActive = window.activeChatConversationId === c.id ? "active" : "";
 
         const item = document.createElement("div");
         item.className = `conversation-item p-3 border-bottom d-flex align-items-center gap-3 cursor-pointer ${isActive}`;
@@ -1067,13 +1076,14 @@ class SocialNetworkUI {
               <span class="fw-bold text-dark small text-truncate" style="max-width: 140px;">${c.partner.name}</span>
               ${unreadBadge}
             </div>
+            ${productLine}
             <p class="text-muted smaller text-truncate mb-0">${lastMsgText}</p>
           </div>
         `;
         item.addEventListener("click", () => {
           document.querySelectorAll(".conversation-item").forEach(el => el.classList.remove("active"));
           item.classList.add("active");
-          window.openChat(c.partner.id, c.partner.name, c.partner.picture);
+          window.openChat(c.partner.id, c.partner.name, c.partner.picture, c);
         });
         listEl.appendChild(item);
       });
@@ -1108,29 +1118,28 @@ class SocialNetworkUI {
             tempItem.addEventListener("click", () => {
               document.querySelectorAll(".conversation-item").forEach(el => el.classList.remove("active"));
               tempItem.classList.add("active");
-              window.openChat(userData.id, userData.name, userData.picture);
+              window.openChat(userData.id, userData.name, userData.picture, null);
             });
             
             listEl.insertBefore(tempItem, listEl.firstChild);
-            window.openChat(userData.id, userData.name, userData.picture);
+            window.openChat(userData.id, userData.name, userData.picture, null);
           }
         } catch (err) {
           console.error("Error fetching temporary chat user:", err);
         }
       } else if (chatWithId && hasChatWithInConversations && !window.activeChatPartnerId) {
-        const items = listEl.querySelectorAll(".conversation-item");
-        for (const item of items) {
-          const titleSpan = item.querySelector("span");
-          if (titleSpan) {
-            const matchRes = await fetch(`/api/users/${chatWithId}`).catch(() => null);
-            if (matchRes && matchRes.ok) {
-              const userData = await matchRes.json();
-              if (titleSpan.textContent === userData.name) {
-                item.click();
-                break;
-              }
-            }
-          }
+        const matchingConversation = conversations.find((c) => {
+          const matchesPartner = String(c.partner.id) === String(chatWithId);
+          const matchesProduct = productSlug ? c.product?.slug === productSlug : !c.product;
+          return matchesPartner && matchesProduct;
+        });
+        if (matchingConversation) {
+          window.openChat(
+            matchingConversation.partner.id,
+            matchingConversation.partner.name,
+            matchingConversation.partner.picture,
+            matchingConversation
+          );
         }
       }
     } catch (error) {
@@ -1138,8 +1147,10 @@ class SocialNetworkUI {
     }
   }
 
-  async openChat(partnerId, partnerName, partnerPicture) {
+  async openChat(partnerId, partnerName, partnerPicture, conversation = null) {
     window.activeChatPartnerId = partnerId;
+    window.activeChatConversationId = conversation?.id || null;
+    window.activeChatProductId = conversation?.product?.id || null;
     window.lastMessagesCount = 0;
 
     const url = new URL(window.location);
@@ -1157,7 +1168,9 @@ class SocialNetworkUI {
     }
 
     if (productSlug) {
-      fetch(`/api/products/by-slug/${encodeURIComponent(productSlug)}`)
+      const t = localStorage.getItem("token");
+      const h = t ? { Authorization: `Bearer ${t}` } : {};
+      fetch(`/api/products/by-slug/${encodeURIComponent(productSlug)}`, { headers: h })
         .then(res => res.ok ? res.json() : null)
         .then(product => {
           if (product && String(product.ID_Apicultor) === String(partnerId)) {
@@ -1183,6 +1196,68 @@ class SocialNetworkUI {
         .catch(err => console.error("Error loading chat product:", err));
     }
 
+    let activeProduct = conversation?.product || null;
+    if (productSlug && !activeProduct) {
+      const t = localStorage.getItem("token");
+      const h = t ? { Authorization: `Bearer ${t}` } : {};
+      try {
+        const productRes = await fetch(`/api/products/by-slug/${encodeURIComponent(productSlug)}`, { headers: h });
+        const product = productRes.ok ? await productRes.json() : null;
+        if (product && String(product.ID_Apicultor) === String(partnerId)) {
+          activeProduct = {
+            id: product.ID_Produto,
+            name: product.Nome,
+            image: product.Imagem,
+            price: product.Preco,
+            slug: product.Slug
+          };
+        }
+      } catch (err) {
+        console.error("Error resolving chat product:", err);
+      }
+    }
+
+    if (!window.activeChatConversationId) {
+      const openRes = await fetch("/api/messages/conversations/open", {
+        method: "POST",
+        headers: buildAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          partnerId,
+          productId: activeProduct?.id || null
+        })
+      });
+
+      if (!openRes.ok) {
+        const data = await openRes.json().catch(() => ({}));
+        Swal.fire("Erro", data.error || "Não foi possível abrir a conversa.", "error");
+        return;
+      }
+
+      const data = await openRes.json();
+      conversation = data.conversation;
+      window.activeChatConversationId = conversation.id;
+      window.activeChatProductId = conversation.product?.id || activeProduct?.id || null;
+      activeProduct = conversation.product || activeProduct;
+    }
+
+    if (activeProduct && bannerContainer && bannerContainer.classList.contains("d-none")) {
+      bannerContainer.innerHTML = `
+        <div class="chat-product-banner d-flex align-items-center justify-content-between p-3 bg-light border-bottom" style="z-index: 10; width: 100%;">
+          <div class="d-flex align-items-center gap-3">
+            <img src="${activeProduct.image || '/images/default-product.png'}" class="rounded-3 border" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.onerror=null; this.src='/images/default-product.png';">
+            <div>
+              <div class="fw-bold text-dark small mb-1">${activeProduct.name}</div>
+              <div class="fw-bold text-success" style="font-size: 0.85rem;">€${parseFloat(activeProduct.price).toFixed(2)}</div>
+            </div>
+          </div>
+          <a href="/produto/${activeProduct.slug}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" style="font-size: 0.8rem; border-color: var(--primary-green); color: var(--primary-green); text-decoration: none;">
+            <i class="fas fa-eye me-1"></i>Ver Produto
+          </a>
+        </div>
+      `;
+      bannerContainer.classList.remove("d-none");
+    }
+
     const headerEl = document.getElementById("chat-header");
     const messagesArea = document.getElementById("chat-messages-area");
     const inputArea = document.getElementById("chat-input-area");
@@ -1193,7 +1268,7 @@ class SocialNetworkUI {
     const avatarUrl = hasPartnerPic ? partnerPicture : `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=1a4d2e&color=fff&size=80`;
 
     headerEl.innerHTML = `
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 chat-header-profile-link" style="cursor: pointer;" onclick="window.location.href='profile.html?id=${partnerId}'" title="Ver perfil">
         <img src="${avatarUrl}" class="rounded-circle" style="width: 38px; height: 38px; object-fit: cover;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${partnerName.replace(/'/g, "\\'")}') + '&background=1a4d2e&color=fff&size=80';" />
         <div>
           <div class="fw-bold text-dark small">${partnerName}</div>
@@ -1214,17 +1289,17 @@ class SocialNetworkUI {
       </div>
     `;
 
-    await window.fetchChatHistory(partnerId, false);
+    await window.fetchChatHistory(window.activeChatConversationId, false);
 
-    await fetch(`/api/messages/read/${partnerId}`, {
+    await fetch(`/api/messages/read/${window.activeChatConversationId}`, {
       method: "POST",
       headers: buildAuthHeaders()
     }).catch(() => {});
 
     if (window.chatPollInterval) clearInterval(window.chatPollInterval);
     window.chatPollInterval = setInterval(() => {
-      if (window.activeChatPartnerId === partnerId) {
-        window.fetchChatHistory(partnerId, true);
+      if (window.activeChatPartnerId === partnerId && window.activeChatConversationId) {
+        window.fetchChatHistory(window.activeChatConversationId, true);
       }
     }, 3000);
 
@@ -1234,19 +1309,20 @@ class SocialNetworkUI {
     }
   }
 
-  async fetchChatHistory(partnerId, quiet = false) {
+  async fetchChatHistory(conversationId, quiet = false) {
     const messagesArea = document.getElementById("chat-messages-area");
-    if (!this.token || !messagesArea || window.activeChatPartnerId !== partnerId) return;
+    if (!this.token || !messagesArea || window.activeChatConversationId !== conversationId) return;
+    const partnerId = window.activeChatPartnerId;
 
     try {
-      const res = await fetch(`/api/messages/history/${partnerId}`, {
+      const res = await fetch(`/api/messages/history/${conversationId}`, {
         headers: buildAuthHeaders()
       });
 
       if (!res.ok) throw new Error("Erro ao obter mensagens.");
 
       const data = await res.json();
-      if (window.activeChatPartnerId !== partnerId) return;
+      if (window.activeChatConversationId !== conversationId) return;
 
       const messages = data.messages || [];
       
@@ -1337,8 +1413,9 @@ class SocialNetworkUI {
     const inputEl = document.getElementById("chat-message-input");
     const text = inputEl ? inputEl.value.trim() : "";
     const partnerId = window.activeChatPartnerId;
+    const conversationId = window.activeChatConversationId;
 
-    if (!text || !partnerId) return;
+    if (!text || !partnerId || !conversationId) return;
 
     inputEl.value = "";
 
@@ -1350,12 +1427,14 @@ class SocialNetworkUI {
         }),
         body: JSON.stringify({
           receiverId: partnerId,
+          conversationId,
+          productId: window.activeChatProductId,
           text
         })
       });
 
       if (res.ok) {
-        await window.fetchChatHistory(partnerId, false);
+        await window.fetchChatHistory(conversationId, false);
         window.fetchConversations();
       } else {
         const data = await res.json();
@@ -1404,7 +1483,7 @@ class SocialNetworkUI {
             timer: 1500,
             showConfirmButton: false
           });
-          window.fetchChatHistory(id, false);
+          if (window.activeChatConversationId) window.fetchChatHistory(window.activeChatConversationId, false);
           window.fetchConversations();
         } else {
           const data = await res.json();
@@ -1429,7 +1508,7 @@ class SocialNetworkUI {
           timer: 1500,
           showConfirmButton: false
         });
-        window.fetchChatHistory(id, false);
+        if (window.activeChatConversationId) window.fetchChatHistory(window.activeChatConversationId, false);
         window.fetchConversations();
       } else {
         const data = await res.json();

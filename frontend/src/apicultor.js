@@ -177,7 +177,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = await res.json();
         
         if (res.ok) {
-            toast.success(data.message || localTranslations.reserveSuccess[lang]);
+            if (data.addedToCart) {
+                if (window.cart) {
+                    await window.cart.syncWithBackend();
+                    window.cart.render();
+                    window.cart.toggle(true);
+                }
+            } else {
+                toast.success(data.message || localTranslations.reserveSuccess[lang]);
+            }
             // Reload workshops to update vacancy count
             fetchWorkshops(apicultorId);
         } else {
@@ -303,6 +311,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("Error loading apicultor profile:", error);
   }
+
+  window.addEventListener("cart-updated", () => {
+    fetchWorkshops(apicultorId);
+  });
 });
 
 async function fetchProfile(id) {
@@ -383,7 +395,7 @@ async function fetchProducts(id) {
 
   products.forEach((p) => {
     const tags = p.Tags ? p.Tags.split(',').map(t => t.trim()).filter(t => t) : [];
-    const tagsHtml = tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}">${tag}</div>`).join('');
+    const tagsHtml = tags.map(tag => `<div class="product-badge tag-${tag.toLowerCase().replace(/\s+/g, '-')}" data-i18n="tag.${tag.toUpperCase()}">${window.__t ? window.__t('tag.' + tag.toUpperCase()) : tag}</div>`).join('');
     const col = document.createElement("div");
     col.className = "col-lg-4 col-md-6 mb-4";
     col.innerHTML = `
@@ -462,8 +474,20 @@ async function fetchWorkshops(id) {
 
   const locale = lang === 'pt' ? 'pt-PT' : 'en-GB';
 
+  function formatDateSafely(dateStr, locale, options) {
+    try {
+      if (!dateStr) return "Data inválida";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "Data inválida";
+      return d.toLocaleDateString(locale, options);
+    } catch (err) {
+      console.error("Date formatting error:", err);
+      return "Data inválida";
+    }
+  }
+
   workshops.forEach((w) => {
-    const date = new Date(w.Data_Realizacao).toLocaleDateString(locale, {
+    const date = formatDateSafely(w.Data_Realizacao, locale, {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -473,13 +497,39 @@ async function fetchWorkshops(id) {
     const col = document.createElement("div");
     col.className = "col-lg-4 col-md-6";
     const hasVagas = w.Vagas > 0;
-    const isReserved = userReservations.some(r => r.ID_Workshop === w.ID_Workshop);
 
+    const reservation = userReservations.find(r => r.ID_Workshop === w.ID_Workshop);
+    const isPago = reservation && reservation.Status === 'Pago';
+    const isPendente = reservation && reservation.Status === 'Pendente';
+    const isInCart = window.cart && window.cart.items.some(item => item.ID_Workshop === w.ID_Workshop);
+
+    let badgeHtml = '';
     let buttonHtml = '';
-    if (isReserved) {
+
+    if (reservation) {
+      if (isPago) {
+        badgeHtml = `<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> Inscrito</div>`;
+        buttonHtml = `
+          <button class="btn btn-success w-100 mt-4 rounded-pill fw-bold disabled" disabled>
+            <i class="fas fa-check-circle me-1"></i> Inscrito
+          </button>
+        `;
+      } else if (isPendente) {
+        badgeHtml = `<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #f4b400; color: #000; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-exclamation-circle"></i> Pendente</div>`;
+        buttonHtml = `
+          <button class="btn w-100 mt-4 rounded-pill fw-bold" 
+                  style="background: #f4b400; color: #000; border: none;"
+                  onclick="event.stopPropagation(); window.location.href='profile.html?tab=workshops'">
+            <i class="fas fa-wallet me-1"></i> Pendente (Pagar)
+          </button>
+        `;
+      }
+    } else if (isInCart) {
       buttonHtml = `
-        <button class="btn btn-success w-100 mt-4 rounded-pill fw-bold disabled" disabled>
-          <i class="fas fa-check-circle me-1"></i> ${localTranslations.inscrito[lang]}
+        <button class="btn btn-warning w-100 mt-4 rounded-pill fw-bold" 
+                style="background-color: #f4b400; border-color: #f4b400; color: #000;"
+                onclick="event.stopPropagation(); window.cart.toggle(true);">
+          <i class="fas fa-shopping-cart me-1"></i> No Carrinho
         </button>
       `;
     } else {
@@ -496,7 +546,7 @@ async function fetchWorkshops(id) {
             <div class="workshop-card h-100">
                 <div class="position-relative">
                   <img src="${w.Imagem || "assets/default-workshop.png"}" class="workshop-img w-100" alt="${w.Titulo}">
-                  ${isReserved ? `<div class="workshop-reserved-badge" style="position: absolute; top: 15px; left: 15px; background: #2e7d32; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-check-circle"></i> ${localTranslations.inscrito[lang]}</div>` : ''}
+                  ${badgeHtml}
                 </div>
                 <div class="p-4">
                     <span class="badge badge-date mb-2"><i class="far fa-calendar-alt me-1"></i> ${date}</span>

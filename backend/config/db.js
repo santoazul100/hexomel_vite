@@ -65,6 +65,36 @@ export const db = {
       await ensurePool().query(statement);
     }
   },
+
+  transaction: async (callback) => {
+    const pool = ensurePool();
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const trxDb = {
+        get: async (sql, params = []) => {
+          const [rows] = await conn.execute(sql, params);
+          return rows[0] || null;
+        },
+        all: async (sql, params = []) => {
+          const [rows] = await conn.execute(sql, params);
+          return rows;
+        },
+        run: async (sql, params = []) => {
+          const [result] = await conn.execute(sql, params);
+          return { lastID: result.insertId, changes: result.affectedRows };
+        }
+      };
+      const result = await callback(trxDb);
+      await conn.commit();
+      return result;
+    } catch (error) {
+      await conn.rollback();
+      throw error;
+    } finally {
+      conn.release();
+    }
+  },
 };
 
 export const getPool = () => pool;

@@ -119,6 +119,7 @@ class CartManager {
       });
       if (res.ok) {
         this.items = await res.json();
+        window.dispatchEvent(new CustomEvent('cart-updated', { detail: this.items }));
       }
     } catch (error) {
       console.error("Cart sync failed:", error);
@@ -220,6 +221,10 @@ class CartManager {
     }
 
     // Redirect to the new checkout page
+    // Save the referrer (page the user came from) before redirecting to checkout
+    const referrer = window.location.href;
+    sessionStorage.setItem("checkoutReturnUrl", referrer);
+
     window.location.href = "checkout.html";
   }
 
@@ -293,9 +298,24 @@ class CartManager {
         total += item.Preco * item.Quantidade;
         const isMinQty = item.Quantidade <= 1;
         const isMaxStock = item.Quantidade >= item.Stock;
+
+        // Resolve image source and fallback
+        const isWorkshop = !!item.ID_Workshop;
+        const fallbackImg = isWorkshop ? '/images/workshop_default.webp' : '/images/default-product.png';
+        let imageSrc = '';
+        if (!item.Imagem) {
+          imageSrc = isWorkshop ? fallbackImg : `/img/produtos/${item.ID_Produto}.webp`;
+        } else if (item.Imagem.startsWith('/') || item.Imagem.startsWith('http')) {
+          imageSrc = item.Imagem;
+        } else if (item.Imagem.startsWith('uploads/')) {
+          imageSrc = `/${item.Imagem}`;
+        } else {
+          imageSrc = `/images/${item.Imagem}`;
+        }
+
         return `
             <div class="cart-item" style="display: flex; gap: 15px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02); align-items: stretch;">
-                <img src="${item.Imagem || '/img/produtos/' + item.ID_Produto + '.webp'}" onerror="this.src='/images/default-product.png'" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 5px;" alt="${item.Nome}">
+                <img src="${imageSrc}" onerror="this.src='${fallbackImg}'" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 5px;" alt="${item.Nome}">
                 
                 <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
@@ -304,13 +324,16 @@ class CartManager {
                     </div>
                     
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-                        <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 50px; overflow: hidden; background: #fff;">
-                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: ${isMinQty ? 'not-allowed' : 'pointer'}; color: ${isMinQty ? '#cbd5e1' : '#64748b'}; font-weight: bold; font-size: 1.1rem;" ${isMinQty ? 'disabled' : ''} onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
-                            <span style="padding: 4px 12px; font-weight: 700; font-size: 0.95rem; font-family: 'Outfit', sans-serif; color: #1e293b;">${item.Quantidade}</span>
-                            <button style="border: none; background: transparent; padding: 4px 12px; cursor: ${isMaxStock ? 'not-allowed' : 'pointer'}; color: ${isMaxStock ? '#cbd5e1' : '#64748b'}; font-weight: bold; font-size: 1.1rem;" ${isMaxStock ? 'disabled' : ''} onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
-                        </div>
+                        ${item.ID_Workshop 
+                          ? `<span style="font-weight: 700; font-size: 0.9rem; font-family: 'Outfit', sans-serif; color: #64748b; padding: 4px 0;"><i class="fas fa-ticket-alt me-1 text-warning"></i>1 Vaga Reservada</span>`
+                          : `<div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 50px; overflow: hidden; background: #fff;">
+                                <button style="border: none; background: transparent; padding: 4px 12px; cursor: ${isMinQty ? 'not-allowed' : 'pointer'}; color: ${isMinQty ? '#cbd5e1' : '#64748b'}; font-weight: bold; font-size: 1.1rem;" ${isMinQty ? 'disabled' : ''} onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade - 1})">-</button>
+                                <span style="padding: 4px 12px; font-weight: 700; font-size: 0.95rem; font-family: 'Outfit', sans-serif; color: #1e293b;">${item.Quantidade}</span>
+                                <button style="border: none; background: transparent; padding: 4px 12px; cursor: ${isMaxStock ? 'not-allowed' : 'pointer'}; color: ${isMaxStock ? '#cbd5e1' : '#64748b'}; font-weight: bold; font-size: 1.1rem;" ${isMaxStock ? 'disabled' : ''} onclick="cart.updateQuantity(${item.ID_itemCarrinho}, ${item.Quantidade + 1})">+</button>
+                             </div>`
+                        }
                         
-                        <button onclick="cart.removeItem(${item.ID_itemCarrinho})" style="background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;" title="Remover item">
+                        <button onclick="cart.removeItem('${item.ID_itemCarrinho}')" style="background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;" title="Remover item">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>

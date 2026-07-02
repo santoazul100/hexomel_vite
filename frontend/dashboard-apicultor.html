@@ -23,7 +23,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_green.css">
     <style>
       :root {
         --admin-sidebar-width: 260px;
@@ -55,7 +54,7 @@
         background: var(--primary-green);
         color: #ffffff;
         border-color: var(--primary-green);
-        transform: scale(1.06) rotate(90deg);
+        transform: scale(1.06);
         box-shadow: 0 4px 12px rgba(26, 77, 46, 0.2);
       }
       #navbar-sidebar-toggle:active {
@@ -680,76 +679,7 @@
   </head>
   <body>
     <!-- Navbar (consistent with site) -->
-    <nav class="navbar navbar-expand-lg navbar-enhanced fixed-top">
-      <div class="container-fluid px-4">
-        <!-- Sidebar Toggle (always visible inside navbar) -->
-        <button id="navbar-sidebar-toggle" title="Alternar Menu" aria-label="Toggle Sidebar">
-          <i class="fas fa-bars"></i>
-        </button>
-
-        <a class="navbar-brand" href="index.html">
-          <img
-            src="/images/logo_hexomel.webp"
-            alt="Hexomel Logo"
-            class="navbar-logo"
-          />
-        </a>
-        <button
-          class="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav mx-auto gap-4">
-            <li class="nav-item">
-              <a class="nav-link active" href="index.html" data-i18n="nav.home">Início</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="shop.html" data-i18n="nav.products">Produtos</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="workshops.html" data-i18n="nav.workshops">Workshops</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.discover">Descobrir</a>
-              <ul class="dropdown-menu dropdown-menu-hexomel">
-                <li><a class="dropdown-item" href="curiosidades.html" data-i18n="nav.curiosities">Curiosidades</a></li>
-                <li><a class="dropdown-item" href="aprender.html" data-i18n="nav.learn">Aprender</a></li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="about.html" data-i18n="nav.about">Sobre</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="contact.html" data-i18n="nav.contacts">Contactos</a>
-            </li>
-          </ul>
-
-          <div class="d-flex align-items-center navbar-right-fixed">
-            <div class="cart-navbar-separate me-3">
-              <button
-                id="cart-btn"
-                class="btn btn-link text-decoration-none text-dark position-relative p-0"
-              >
-                <i class="fas fa-shopping-cart fs-5"></i>
-                <span
-                  id="cart-badge"
-                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border-0"
-                  >0</span
-                >
-              </button>
-            </div>
-
-            <div class="d-flex align-items-center gap-3" id="authSection">
-              <!-- Injected by auth.js -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <div id="navbar-container"></div>
 
     <div class="admin-layout" id="admin-layout">
 
@@ -763,19 +693,19 @@
         </div>
         <nav class="flex-grow-1">
           <p class="sidebar-section-title" data-i18n="dash.sidebar.main">Principal</p>
-          <a href="#" class="admin-nav-link active" data-section="dashboard">
+          <a class="admin-nav-link active" data-section="dashboard">
             <i class="fas fa-chart-pie"></i>
             <span data-i18n="dash.sidebar.overview">Visão Geral</span>
           </a>
-          <a href="#" class="admin-nav-link" data-section="products">
+          <a class="admin-nav-link" data-section="products">
             <i class="fas fa-box"></i>
             <span data-i18n="dash.sidebar.products">Meus Produtos</span>
           </a>
-          <a href="#" class="admin-nav-link" data-section="workshops">
+          <a class="admin-nav-link" data-section="workshops">
             <i class="fas fa-calendar-alt"></i>
             <span data-i18n="dash.sidebar.workshops">Meus Workshops</span>
           </a>
-          <a href="#" class="admin-nav-link" data-section="sales">
+          <a class="admin-nav-link" data-section="sales">
             <i class="fas fa-shopping-bag"></i>
             <span data-i18n="dash.sidebar.sales">Vendas</span>
           </a>
@@ -866,6 +796,33 @@
                 <h5 class="fw-bold mb-4" data-i18n="dash.chart.product_status">Estado dos Produtos</h5>
                 <div style="height: 300px;">
                   <canvas id="apicultorStatusChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+              <div class="admin-card border-0 shadow-sm">
+                <h5 class="fw-bold mb-4" data-i18n="dash.chart.workshop_status">Estado dos Workshops</h5>
+                <div style="height: 300px;">
+                  <canvas id="apicultorWorkshopStatusChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="admin-card border-0 shadow-sm">
+                <h5 class="fw-bold mb-4" data-i18n="dash.chart.workshop_avail">Disponibilidade dos Workshops</h5>
+                <div style="height: 300px;">
+                  <canvas id="apicultorWorkshopAvailabilityChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="admin-card border-0 shadow-sm">
+                <h5 class="fw-bold mb-4" data-i18n="dash.chart.earnings_source">Origem dos Lucros</h5>
+                <div style="height: 300px;">
+                  <canvas id="apicultorEarningsSourceChart"></canvas>
                 </div>
               </div>
             </div>
@@ -1046,6 +1003,10 @@
                       <label class="form-label small fw-700 text-uppercase ls-1 text-muted mb-2" data-i18n="dash.modal.product.stock">Stock</label>
                       <input type="number" id="prod-stock" class="form-control premium-input shadow-none" placeholder="0" required />
                     </div>
+                    <div class="col-md-4">
+                      <label class="form-label small fw-700 text-uppercase ls-1 text-muted mb-2">Limite de Stock</label>
+                      <input type="number" id="prod-low-stock-threshold" class="form-control premium-input shadow-none" placeholder="Ex: 10" min="0" />
+                    </div>
                     <div class="col-md-6">
                       <label class="form-label small fw-700 text-uppercase ls-1 text-muted mb-2" data-i18n="dash.modal.product.category">Categoria</label>
                       <select id="prod-categoria" class="form-select premium-input shadow-none" required>
@@ -1135,11 +1096,16 @@
                        <label class="form-label small fw-700 text-uppercase ls-1 text-muted mb-2">Vagas Disponíveis</label>
                        <input type="number" id="ws-vagas" class="form-control premium-input shadow-none" placeholder="0" required />
                     </div>
+                    <div class="col-md-6">
+                       <label class="form-label small fw-700 text-uppercase ls-1 text-muted mb-2">Limite de Vagas</label>
+                       <input type="number" id="ws-low-stock-threshold" class="form-control premium-input shadow-none" placeholder="Ex: 5" min="0" />
+                       <small class="text-muted">Mostra a etiqueta quando as vagas forem iguais ou inferiores a este valor.</small>
+                    </div>
                     <div class="col-12">
                        <label class="form-label small fw-700 text-uppercase ls-1 text-muted mb-2">Data e Hora</label>
                        <div class="input-group">
                          <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px; border-color: #e2e8f0;"><i class="fas fa-calendar-alt text-muted"></i></span>
-                         <input type="text" id="ws-data" class="form-control premium-input shadow-none" placeholder="Selecionar data e hora..." required style="border-left: 0;" />
+                         <input type="text" id="ws-data" class="form-control premium-input shadow-none" placeholder="Selecionar data e hora..." style="border-left: 0;" />
                        </div>
                     </div>
                     <div class="col-12">
@@ -1170,6 +1136,59 @@
                 <button type="submit" class="btn btn-add-product px-5 py-2">Agendar Workshop</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden">
+          <div class="modal-header border-0 pb-0 px-4 pt-4 d-flex justify-content-between align-items-center">
+            <h5 class="modal-title fw-800 display-6 fs-3" id="orderModalTitle" style="color: var(--primary-green)">
+              Detalhes da Venda
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: #f8fafc; padding: 10px; border-radius: 50%; opacity: 1;"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="row mb-4 align-items-center">
+              <div class="col-md-9">
+                <p class="text-muted mb-1 small fw-bold text-uppercase">Estado da Venda</p>
+                <div id="order-status-container" class="btn-group w-100 mt-2" role="group" aria-label="Status da Encomenda">
+                  <!-- buttons injected via js -->
+                </div>
+              </div>
+              <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                <p class="text-muted mb-1 small fw-bold text-uppercase">Tipo de Venda</p>
+                <h5 id="order-type-badge" class="mb-0"></h5>
+              </div>
+            </div>
+
+            <h6 class="fw-bold mb-3">Artigos da Venda</h6>
+            <div class="table-responsive" style="border-radius: 12px; border: 1px solid #f1f5f9;">
+              <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3 border-0">Artigo</th>
+                    <th class="border-0">Quantidade</th>
+                    <th class="border-0">Preço Un.</th>
+                    <th class="border-0 text-end pe-3">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="order-items-table">
+                  <!-- items injected via js -->
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+              <div class="text-end">
+                <p class="text-muted mb-1 small fw-bold text-uppercase">Total da Venda</p>
+                <h4 id="order-total-price" class="fw-bold" style="color: var(--primary-green)">0.00€</h4>
+              </div>
+            </div>
           </div>
         </div>
       </div>

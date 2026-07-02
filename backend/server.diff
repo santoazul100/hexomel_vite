@@ -1,0 +1,1138 @@
+﻿diff --git a/backend/server.js b/backend/server.js
+index 5f70924..f2b24a1 100644
+--- a/backend/server.js
++++ b/backend/server.js
+@@ -372,44 +372,69 @@ async function syncCustomerCheckoutDetails(
+   );
+ }
+ 
+-async function fulfillPaidOrder(orderId) {
+-  const order = await db.get(
+-    "SELECT ID_Encomenda, ID_Cliente, Status FROM encomenda WHERE ID_Encomenda = ?",
+-    [orderId],
+-  );
+-
+-  if (!order) {
+-    return { ok: false, reason: "ORDER_NOT_FOUND" };
+-  }
++async function fulfillPaidOrder(orderId, reservaIds = []) {
++  let clientId = null;
++  let hasHandledOrder = false;
++  let hasHandledWorkshops = false;
+ 
+-  if (order.Status === "Pago") {
+-    return { ok: true, alreadyPaid: true };
+-  }
++  // 1. Fulfill Order (Products)
++  if (orderId) {
++    const order = await db.get(
++      "SELECT ID_Encomenda, ID_Cliente, Status FROM encomenda WHERE ID_Encomenda = ?",
++      [orderId],
++    );
+ 
+-  const items = await db.all(
+-    "SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?",
+-    [orderId],
+-  );
++    if (order) {
++      clientId = order.ID_Cliente;
++      if (order.Status !== "Pago") {
++        // Deduct product stock
++        const items = await db.all(
++          "SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?",
++          [orderId],
++        );
++        for (const item of items) {
++          await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [
++            item.Quantidade,
++            item.ID_Produto,
++          ]);
++        }
+ 
+-  for (const item of items) {
+-    await db.run("UPDATE produto SET Stock = Stock - ? WHERE ID_Produto = ?", [
+-      item.Quantidade,
+-      item.ID_Produto,
+-    ]);
++        await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
++          orderId,
++        ]);
++        
++        await sendReceiptEmail(orderId);
++        hasHandledOrder = true;
++      }
++    }
+   }
+ 
+-  await db.run("UPDATE encomenda SET Status = 'Pago' WHERE ID_Encomenda = ?", [
+-    orderId,
+-  ]);
++  // 2. Fulfill Workshops
++  if (reservaIds && reservaIds.length > 0) {
++    const placeholders = reservaIds.map(() => '?').join(',');
++    const pendingWorkshops = await db.all(
++      `SELECT ID_Reserva, ID_Cliente, Status FROM reserva_workshop WHERE ID_Reserva IN (${placeholders})`,
++      reservaIds
++    );
+ 
+-  await db.run(
+-    "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+-    [order.ID_Cliente],
+-  );
++    for (const ws of pendingWorkshops) {
++      if (!clientId) clientId = ws.ID_Cliente;
++      if (ws.Status !== "Pago") {
++        await db.run("UPDATE reserva_workshop SET Status = 'Pago' WHERE ID_Reserva = ?", [ws.ID_Reserva]);
++        hasHandledWorkshops = true;
++      }
++    }
++  }
+ 
+-  await sendReceiptEmail(orderId);
++  // 3. Clear Cart
++  if (clientId && (hasHandledOrder || hasHandledWorkshops)) {
++    await db.run(
++      "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
++      [clientId],
++    );
++  }
+ 
+-  return { ok: true, alreadyPaid: false };
++  return { ok: true, handledOrder: hasHandledOrder, handledWorkshops: hasHandledWorkshops };
+ }
+ 
+ function buildAbsoluteAppUrl(origin, assetPath) {
+@@ -703,6 +728,9 @@ const runDatabaseMigrations = async () => {
+               ID_Reserva int(10) NOT NULL AUTO_INCREMENT,
+               ID_Workshop int(10) NOT NULL,
+               ID_Cliente int(10) NOT NULL,
++              Status varchar(20) DEFAULT 'Pendente',
++              ID_Encomenda int(10) DEFAULT NULL,
++              Preco_Unitario decimal(10,2) DEFAULT NULL,
+               Data_Reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               PRIMARY KEY (ID_Reserva),
+               KEY ID_Workshop (ID_Workshop),
+@@ -714,6 +742,18 @@ const runDatabaseMigrations = async () => {
+       )
+       .catch(() => console.log("reserva_workshop table creation handled"));
+ 
++    await db
++      .run(
++        "ALTER TABLE reserva_workshop ADD COLUMN Status VARCHAR(20) DEFAULT 'Pendente'",
++      )
++      .catch(() => {});
++    await db
++      .run("ALTER TABLE reserva_workshop ADD COLUMN ID_Encomenda INT(10) DEFAULT NULL")
++      .catch(() => {});
++    await db
++      .run("ALTER TABLE reserva_workshop ADD COLUMN Preco_Unitario DECIMAL(10,2) DEFAULT NULL")
++      .catch(() => {});
++
+     // Community Q&A tables
+     await db
+       .run(
+@@ -2978,12 +3018,8 @@ app.post("/api/workshops/:id/reserve", authenticateToken, async (req, res) => {
+       "INSERT INTO reserva_workshop (ID_Workshop, ID_Cliente) VALUES (?, ?)",
+       [id, req.user.id],
+     );
+-    await db.run(
+-      "UPDATE workshop SET Vagas = Vagas - 1 WHERE ID_Workshop = ?",
+-      [id],
+-    );
+ 
+-    res.json({ ok: true, message: "Reserva efetuada com sucesso!" });
++    res.json({ ok: true, addedToCart: true, message: "Adicionado ao carrinho com sucesso!" });
+   } catch (error) {
+     console.error("Workshop reserve error:", error);
+     res.status(500).json({ error: "Erro na base de dados." });
+@@ -3500,17 +3536,70 @@ app.delete("/api/user/workshops/:id", authenticateToken, async (req, res) => {
+     await db.run("DELETE FROM reserva_workshop WHERE ID_Reserva = ?", [
+       req.params.id,
+     ]);
+-    await db.run(
+-      "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
+-      [reservation.ID_Workshop],
+-    );
++    if (reservation.ID_Encomenda !== null) {
++      await db.run(
++        "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
++        [reservation.ID_Workshop],
++      );
++    }
+     res.json({ message: "Reserva cancelada com sucesso." });
+   } catch (err) {
+     console.error("Cancel reservation error:", err);
+     res.status(500).json({ error: "Database error" });
+   }
++// Get a specific workshop reservation
++app.get("/api/user/workshops/:id", authenticateToken, async (req, res) => {
++  try {
++    const reservation = await db.get(
++      `SELECT rw.*, w.Titulo as Nome, w.Preco, w.Imagem
++       FROM reserva_workshop rw
++       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++       WHERE rw.ID_Reserva = ? AND rw.ID_Cliente = ?`,
++      [req.params.id, req.user.id]
++    );
++
++    if (!reservation) {
++      return res.status(404).json({ error: "Reserva n├úo encontrada" });
++    }
++
++    res.json(reservation);
++  } catch (err) {
++    res.status(500).json({ error: "Database error" });
++  }
++});
++
++// Create a dedicated pending order for paying a specific workshop reservation
++app.post("/api/user/workshops/:id/pay-order", authenticateToken, async (req, res) => {
++  try {
++    const reservation = await db.get(
++      `SELECT rw.*, w.Preco, w.Titulo, w.Vagas
++       FROM reserva_workshop rw
++       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++       WHERE rw.ID_Reserva = ? AND rw.ID_Cliente = ?`,
++      [req.params.id, req.user.id],
++    );
++    if (!reservation)
++      return res.status(404).json({ error: "Reserva n├úo encontrada." });
++
++    if (reservation.Status === "Pago")
++      return res.status(400).json({ error: "Esta reserva j├í foi paga." });
++
++    // Ensure Preco_Unitario is set on the reservation if it wasn't already
++    if (!reservation.Preco_Unitario) {
++      await db.run(
++        "UPDATE reserva_workshop SET Preco_Unitario = ? WHERE ID_Reserva = ?",
++        [reservation.Preco, reservation.ID_Reserva]
++      );
++    }
++
++    return res.json({ reservaId: reservation.ID_Reserva });
++  } catch (err) {
++    console.error("Workshop pay-order error:", err);
++    res.status(500).json({ error: "Database error" });
++  }
+ });
+ 
++
+ // Public list of beekeepers
+ app.get("/api/apicultores", async (req, res) => {
+   try {
+@@ -4230,7 +4319,7 @@ app.get("/api/user/profile", authenticateToken, async (req, res) => {
+     }
+ 
+     const orders = await db.all(
+-      "SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC",
++      "SELECT DISTINCT e.ID_Encomenda as id, e.Data_Encomenda as date, e.Total as total, e.Status as status FROM encomenda e JOIN item_encomenda ie ON e.ID_Encomenda = ie.ID_Encomenda WHERE e.ID_Cliente = ? ORDER BY e.Data_Encomenda DESC",
+       [req.user.id],
+     );
+ 
+@@ -4404,7 +4493,7 @@ app.get("/api/members/:id/profile", async (req, res) => {
+ 
+     let orders = [];
+     if (member.ordersPublic) {
+-      orders = await db.all("SELECT ID_Encomenda as id, Data_Encomenda as date, Total as total, Status as status FROM encomenda WHERE ID_Cliente = ? ORDER BY Data_Encomenda DESC", [memberId]);
++      orders = await db.all("SELECT DISTINCT e.ID_Encomenda as id, e.Data_Encomenda as date, e.Total as total, e.Status as status FROM encomenda e JOIN item_encomenda ie ON e.ID_Encomenda = ie.ID_Encomenda WHERE e.ID_Cliente = ? ORDER BY e.Data_Encomenda DESC", [memberId]);
+     }
+ 
+     res.json({
+@@ -4939,14 +5028,44 @@ app.get("/api/user/orders/:id", authenticateToken, async (req, res) => {
+ // Get order items
+ app.get("/api/user/orders/:id/items", authenticateToken, async (req, res) => {
+   try {
+-    const items = await db.all(
+-      `SELECT ie.*, p.Nome, p.Imagem, a.Nome as ApicultorNome
+-       FROM item_encomenda ie 
+-       JOIN produto p ON ie.ID_Produto = p.ID_Produto 
++    const orderId = req.params.id;
++
++    // Validate the order belongs to this user
++    const order = await db.get(
++      "SELECT ID_Encomenda FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
++      [orderId, req.user.id],
++    );
++    if (!order) return res.status(404).json({ error: "Order not found" });
++
++    // Get product items
++    const prodItems = await db.all(
++      `SELECT ie.*, p.Nome, p.Imagem, p.ID_Apicultor as ApicultorId, a.Nome as ApicultorNome
++       FROM item_encomenda ie
++       JOIN produto p ON ie.ID_Produto = p.ID_Produto
+        LEFT JOIN cliente a ON p.ID_Apicultor = a.ID_Cliente
+        WHERE ie.ID_Encomenda = ?`,
+-      [req.params.id],
++      [orderId],
++    );
++
++    // Get workshop reservations linked to this order
++    const wsItems = await db.all(
++      `SELECT rw.ID_Reserva, rw.ID_Workshop, rw.Status,
++              COALESCE(rw.Preco_Unitario, w.Preco) as Preco_Unitario,
++              w.Titulo as Nome, w.Imagem, w.ID_Apicultor as ApicultorId,
++              a.Nome as ApicultorNome,
++              1 as Quantidade, NULL as ID_Produto
++       FROM reserva_workshop rw
++       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++       LEFT JOIN cliente a ON w.ID_Apicultor = a.ID_Cliente
++       WHERE rw.ID_Encomenda = ? AND rw.ID_Cliente = ?`,
++      [orderId, req.user.id],
+     );
++
++    const items = [
++      ...prodItems,
++      ...wsItems,
++    ];
++
+     res.json(items);
+   } catch (error) {
+     console.error("Fetch order items error:", error);
+@@ -4954,6 +5073,7 @@ app.get("/api/user/orders/:id/items", authenticateToken, async (req, res) => {
+   }
+ });
+ 
++
+ // Get order receipt (HTML for print/download)
+ app.get("/api/user/orders/:id/receipt", authenticateToken, async (req, res) => {
+   try {
+@@ -5030,6 +5150,43 @@ app.post(
+   },
+ );
+ 
++// Cancel order
++app.delete("/api/user/orders/:id", authenticateToken, async (req, res) => {
++  try {
++    const { id } = req.params;
++    const order = await db.get(
++      "SELECT Status, ID_Cliente FROM encomenda WHERE ID_Encomenda = ?",
++      [id]
++    );
++
++    if (!order) return res.status(404).json({ error: "Order not found" });
++    if (order.ID_Cliente !== req.user.id) return res.status(403).json({ error: "Access denied" });
++    if (order.Status !== "Pendente") return res.status(400).json({ error: "S├│ ├® poss├¡vel cancelar encomendas pendentes." });
++
++    // 1. Restore product stock
++    const items = await db.all("SELECT ID_Produto, Quantidade FROM item_encomenda WHERE ID_Encomenda = ?", [id]);
++    for (const item of items) {
++      await db.run("UPDATE produto SET Stock = Stock + ? WHERE ID_Produto = ?", [item.Quantidade, item.ID_Produto]);
++    }
++
++    // 2. Restore workshop vagas and cancel reservations
++    const wsItems = await db.all("SELECT ID_Workshop FROM reserva_workshop WHERE ID_Encomenda = ?", [id]);
++    for (const ws of wsItems) {
++      await db.run("UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?", [ws.ID_Workshop]);
++    }
++    await db.run("UPDATE reserva_workshop SET Status = 'Cancelado', ID_Encomenda = NULL WHERE ID_Encomenda = ?", [id]);
++
++    // 3. Delete order items and order
++    await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [id]);
++    await db.run("DELETE FROM encomenda WHERE ID_Encomenda = ?", [id]);
++
++    res.json({ message: "Encomenda cancelada com sucesso." });
++  } catch (error) {
++    console.error("Cancel order error:", error);
++    res.status(500).json({ error: "Server error" });
++  }
++});
++
+ // Delete product (keeping existing)
+ app.delete(
+   "/api/admin/products/:id",
+@@ -5051,30 +5208,51 @@ app.delete(
+ // Get user cart
+ app.get("/api/cart", authenticateToken, async (req, res) => {
+   try {
++    let items = [];
+     const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
+       req.user.id,
+     ]);
+-    if (!cart) return res.json([]);
+-
+-    const items = await db.all(
+-      `SELECT ic.*, p.Nome, p.Preco, p.Stock, p.Imagem
+-       FROM item_carrinho ic 
+-       JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+-       WHERE ic.ID_Carrinho = ?`,
+-      [cart.ID_Carrinho],
+-    );
++    
++    if (cart) {
++      items = await db.all(
++        `SELECT ic.*, p.Nome, p.Preco, p.Stock, p.Imagem
++         FROM item_carrinho ic 
++         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
++         WHERE ic.ID_Carrinho = ?`,
++        [cart.ID_Carrinho],
++      );
+ 
+-    for (const item of items) {
+-      if (item.Quantidade > item.Stock) {
+-        await db.run(
+-          "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
+-          [item.Stock, item.ID_itemCarrinho]
+-        );
+-        item.Quantidade = item.Stock;
++      for (const item of items) {
++        if (item.Quantidade > item.Stock) {
++          await db.run(
++            "UPDATE item_carrinho SET Quantidade = ? WHERE ID_itemCarrinho = ?",
++            [item.Stock, item.ID_itemCarrinho]
++          );
++          item.Quantidade = item.Stock;
++        }
+       }
+     }
+ 
+-    res.json(items);
++    const pendingWorkshops = await db.all(
++      `SELECT rw.ID_Reserva, rw.ID_Workshop, w.Titulo as Nome, w.Preco, w.Imagem, w.Vagas as Stock
++       FROM reserva_workshop rw
++       JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++       WHERE rw.ID_Cliente = ? AND rw.Status = 'Pendente' AND rw.ID_Encomenda IS NULL`,
++      [req.user.id]
++    );
++
++    const workshopItems = pendingWorkshops.map(ws => ({
++      ID_itemCarrinho: `ws_${ws.ID_Reserva}`,
++      ID_Carrinho: cart ? cart.ID_Carrinho : null,
++      ID_Workshop: ws.ID_Workshop,
++      Quantidade: 1,
++      Nome: ws.Nome,
++      Preco: ws.Preco,
++      Stock: ws.Stock,
++      Imagem: ws.Imagem || '/images/workshop_default.webp'
++    }));
++
++    res.json([...items, ...workshopItems]);
+   } catch (error) {
+     console.error("Cart fetch error:", error);
+     res.status(500).json({ error: "Server error" });
+@@ -5182,6 +5360,21 @@ app.post("/api/cart/update", authenticateToken, async (req, res) => {
+ app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
+   const { itemId } = req.params;
+   try {
++    if (typeof itemId === 'string' && itemId.startsWith('ws_')) {
++      const reservaId = itemId.replace('ws_', '');
++      const reservation = await db.get(
++        "SELECT * FROM reserva_workshop WHERE ID_Reserva = ? AND ID_Cliente = ? AND ID_Encomenda IS NULL", 
++        [reservaId, req.user.id]
++      );
++      
++      if (!reservation) {
++        return res.status(404).json({ error: "Reserva n├úo encontrada" });
++      }
++      
++      await db.run("DELETE FROM reserva_workshop WHERE ID_Reserva = ?", [reservaId]);
++      return res.json({ message: "Reserva removida com sucesso" });
++    }
++
+     const cart = await db.get("SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
+     if (!cart) {
+       return res.status(400).json({ error: "Carrinho n├úo encontrado" });
+@@ -5202,119 +5395,131 @@ app.delete("/api/cart/remove/:itemId", authenticateToken, async (req, res) => {
+ 
+ // 7. Initialize Checkout Order (Draft/Pending)
+ app.post("/api/checkout/init", authenticateToken, async (req, res) => {
+-  const { address, phone, nome, apelido, shippingCost, shippingType, orderId } =
+-    req.body;
++  const { address, phone, nome, apelido, shippingType, orderId, reservaIds } = req.body;
++  // Calculate shipping cost server-side to prevent tampering
++  const actualShippingCost = shippingType === "ctt" ? 4.9 : 0;
+ 
+   try {
+-    let items = [];
+-    let subtotal = 0;
++    let prodItems = [];
++    let wsItems = [];
++    let subtotalProducts = 0;
++    let subtotalWorkshops = 0;
++
++    // Load Workshops
++    if (reservaIds && reservaIds.length > 0) {
++      const placeholders = reservaIds.map(() => '?').join(',');
++      wsItems = await db.all(
++        `SELECT rw.*, w.Titulo as Nome, w.Preco, w.Vagas as Stock
++         FROM reserva_workshop rw
++         JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++         WHERE rw.ID_Reserva IN (${placeholders}) AND rw.ID_Cliente = ?`,
++        [...reservaIds, req.user.id]
++      );
++    } else if (!orderId) {
++      // From cart
++      wsItems = await db.all(
++        `SELECT rw.ID_Reserva, rw.ID_Workshop, w.Titulo as Nome, w.Preco, w.Vagas as Stock
++         FROM reserva_workshop rw
++         JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++         WHERE rw.ID_Cliente = ? AND rw.Status = 'Pendente' AND rw.ID_Encomenda IS NULL`,
++        [req.user.id]
++      );
++    }
++    
++    // Validate workshop stock
++    if (!reservaIds || reservaIds.length === 0) {
++      // Only validate stock if we are pulling fresh from cart
++      for (const ws of wsItems) {
++        if (ws.Stock <= 0) {
++          return res.status(400).json({ error: `O workshop "${ws.Nome}" j├í n├úo tem vagas suficientes.` });
++        }
++      }
++    }
++    
++    subtotalWorkshops = wsItems.reduce((s, i) => s + parseFloat(i.Preco), 0);
+ 
++    // Load Products
+     if (orderId) {
+-      // If we have an orderId, we are updating an existing order
+       const order = await db.get(
+         "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+         [orderId, req.user.id],
+       );
+-      if (!order)
+-        return res.status(404).json({ error: "Encomenda n├úo encontrada" });
+-
+-      // Get items from that order
+-      items = await db.all(
+-        "SELECT * FROM item_encomenda WHERE ID_Encomenda = ?",
+-        [orderId],
+-      );
+-      subtotal = items.reduce(
+-        (sum, item) => sum + item.Preco_Unitario * item.Quantidade,
+-        0,
+-      );
++      if (order) {
++        prodItems = await db.all(
++          "SELECT * FROM item_encomenda WHERE ID_Encomenda = ?",
++          [orderId],
++        );
++        subtotalProducts = prodItems.reduce((s, i) => s + parseFloat(i.Preco_Unitario) * i.Quantidade, 0);
++      }
+     } else {
+-      // If no orderId, we must have a cart
+-      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
+-        req.user.id,
+-      ]);
+-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
+-
+-      items = await db.all(
+-        `SELECT ic.*, p.Preco 
+-         FROM item_carrinho ic 
+-         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+-         WHERE ic.ID_Carrinho = ?`,
+-        [cart.ID_Carrinho],
+-      );
++      const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [req.user.id]);
++      if (cart) {
++        prodItems = await db.all(
++          `SELECT ic.*, p.Preco, p.Nome, p.Stock
++           FROM item_carrinho ic
++           JOIN produto p ON ic.ID_Produto = p.ID_Produto
++           WHERE ic.ID_Carrinho = ?`,
++          [cart.ID_Carrinho],
++        );
++        subtotalProducts = prodItems.reduce((s, i) => s + parseFloat(i.Preco) * i.Quantidade, 0);
++      }
++    }
+ 
+-      if (items.length === 0)
+-        return res.status(400).json({ error: "Carrinho vazio" });
+-      subtotal = items.reduce(
+-        (sum, item) => sum + item.Preco * item.Quantidade,
+-        0,
+-      );
++    if (prodItems.length === 0 && wsItems.length === 0) {
++      return res.status(400).json({ error: "Carrinho vazio" });
+     }
+ 
+-    const total = subtotal + Number(shippingCost || 0);
+-    let currentOrderId = orderId;
++    const totalProducts = parseFloat(subtotalProducts) + (prodItems.length > 0 ? parseFloat(actualShippingCost) : 0);
++    let currentOrderId = orderId || null;
+ 
+-    if (currentOrderId) {
+-      // Update existing draft
+-      await db.run(
+-        "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+-        [
+-          total,
+-          address,
+-          phone,
+-          nome,
+-          apelido,
+-          shippingCost,
+-          shippingType,
+-          currentOrderId,
+-          req.user.id,
+-        ],
+-      );
++    if (prodItems.length > 0) {
++      if (currentOrderId) {
++        // Update existing draft
++        await db.run(
++          "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ?, Data_Encomenda = CURRENT_TIMESTAMP WHERE ID_Encomenda = ? AND ID_Cliente = ?",
++          [totalProducts, address, phone, nome, apelido, actualShippingCost, shippingType, currentOrderId, req.user.id],
++        );
++      } else {
++        // Create new draft
++        const result = await db.run(
++          "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
++          [req.user.id, totalProducts, address, phone, nome, apelido, actualShippingCost, shippingType],
++        );
++        currentOrderId = result.lastID;
+ 
+-      // If it was a cart checkout that became an orderId, we might not need to refresh items
+-      // but usually we refresh them to match the cart if it's a "draft" being finalized.
+-      // HOWEVER, if the cart is EMPTY, we MUST NOT refresh items from cart.
+-      // Let's only refresh items if they came from the cart.
+-      if (!orderId) {
+-        await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [
+-          currentOrderId,
+-        ]);
+-        for (const item of items) {
++        // Save product items
++        for (const item of prodItems) {
+           await db.run(
+             "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+             [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+           );
+         }
+       }
+-    } else {
+-      // Create new draft
+-      const result = await db.run(
+-        "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
+-        [
+-          req.user.id,
+-          total,
+-          address,
+-          phone,
+-          nome,
+-          apelido,
+-          shippingCost,
+-          shippingType,
+-        ],
+-      );
+-      currentOrderId = result.lastID;
++    }
+ 
+-      // Save items
+-      for (const item of items) {
++    // Process new workshops from cart
++    if (!reservaIds || reservaIds.length === 0) {
++      for (const item of wsItems) {
++        // Just freeze price and decrement stock, DO NOT link ID_Encomenda
+         await db.run(
+-          "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+-          [currentOrderId, item.ID_Produto, item.Quantidade, item.Preco],
++          "UPDATE reserva_workshop SET ID_Encomenda = NULL, Status = 'Pendente', Preco_Unitario = ? WHERE ID_Reserva = ?",
++          [item.Preco, item.ID_Reserva],
++        );
++        await db.run(
++          "UPDATE workshop SET Vagas = Vagas - 1 WHERE ID_Workshop = ?",
++          [item.ID_Workshop]
+         );
+       }
+     }
+ 
+-    res.json({ orderId: currentOrderId });
++    res.json({ 
++      orderId: currentOrderId, 
++      reservaIds: wsItems.map(w => w.ID_Reserva) 
++    });
+   } catch (error) {
+-    console.error("Checkout init error:", error);
+-    res.status(500).json({ error: "Falha ao inicializar encomenda" });
++    console.error("Checkout init error:", error.message, error.stack);
++    console.error("Checkout init request body:", req.body);
++    res.status(500).json({ error: "Falha ao inicializar encomenda", detail: error.message });
+   }
+ });
+ 
+@@ -5332,176 +5537,82 @@ app.post(
+       shippingCost,
+       shippingType,
+       orderId,
++      reservaIds,
+       paymentType,
+     } = req.body;
+ 
++    const actualShippingCost = shippingType === "ctt" ? 4.9 : 0;
++
+     try {
+       let items = [];
+-      let subtotal = 0;
+-      let finalOrderId = orderId;
++      let wsItems = [];
+       const requestedPaymentType = paymentType === "mbway" ? "mb_way" : "card";
+ 
+-      if (finalOrderId) {
+-        console.log(`[Stripe Debug] Using existing order ${finalOrderId}`);
+-        // Validate existing order
+-        const order = await db.get(
+-          "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
+-          [finalOrderId, req.user.id],
++      // Load Workshops (using reservaIds directly)
++      if (reservaIds && reservaIds.length > 0) {
++        const placeholders = reservaIds.map(() => '?').join(',');
++        wsItems = await db.all(
++          `SELECT rw.*, w.Titulo as Nome, w.Preco, w.Vagas as Stock, w.Imagem
++           FROM reserva_workshop rw
++           JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++           WHERE rw.ID_Reserva IN (${placeholders}) AND rw.ID_Cliente = ? AND rw.Status = 'Pendente'`,
++          [...reservaIds, req.user.id]
+         );
+-        if (!order) {
+-          console.error(
+-            `[Stripe Debug] Order ${finalOrderId} not found for user ${req.user.id}`,
+-          );
+-          return res.status(404).json({ error: "Encomenda n├úo encontrada" });
+-        }
+-
+-        // Check if order is already paid
+-        if (order.Status === "Pago") {
+-          console.warn(`[Stripe Debug] Order ${finalOrderId} is already paid`);
+-          return res.status(400).json({ error: "Esta encomenda j├í foi paga." });
+-        }
++      }
+ 
+-        items = await db.all(
+-          `SELECT ie.*, p.Nome, p.Imagem, p.Stock 
+-         FROM item_encomenda ie 
+-         JOIN produto p ON ie.ID_Produto = p.ID_Produto 
+-         WHERE ie.ID_Encomenda = ?`,
+-          [finalOrderId],
++      // Load Products (using orderId)
++      if (orderId) {
++        const order = await db.get(
++          "SELECT * FROM encomenda WHERE ID_Encomenda = ? AND ID_Cliente = ?",
++          [orderId, req.user.id],
+         );
+-        // Map properties to match expected format below
+-        items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
+-
+-        // Check stock availability
+-        for (const item of items) {
+-          if (item.Quantidade > item.Stock) {
+-            return res.status(400).json({
+-              error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} dispon├¡veis).`,
+-            });
++        if (order) {
++          if (order.Status === "Pago") {
++            return res.status(400).json({ error: "Esta encomenda j├í foi paga." });
+           }
+-        }
+-
+-        subtotal = items.reduce(
+-          (sum, item) => sum + item.Preco * item.Quantidade,
+-          0,
+-        );
+-        const total = subtotal + Number(shippingCost || 0);
+-
+-        // Update order details
+-        await db.run(
+-          "UPDATE encomenda SET Total = ?, Morada = ?, Telefone = ?, Nome = ?, Apelido = ?, Custo_Envio = ?, Tipo_Envio = ? WHERE ID_Encomenda = ?",
+-          [
+-            total,
+-            address,
+-            phone,
+-            nome,
+-            apelido,
+-            shippingCost,
+-            shippingType,
+-            finalOrderId,
+-          ],
+-        );
+-      } else {
+-        console.log(`[Stripe Debug] Creating new order from cart`);
+-        // Create from cart
+-        const cart = await db.get(
+-          "SELECT * FROM carrinho WHERE ID_Cliente = ?",
+-          [req.user.id],
+-        );
+-        if (!cart) {
+-          console.error(
+-            `[Stripe Debug] Cart not found for user ${req.user.id}`,
++          items = await db.all(
++            `SELECT ie.*, p.Nome, p.Imagem, p.Stock
++             FROM item_encomenda ie
++             JOIN produto p ON ie.ID_Produto = p.ID_Produto
++             WHERE ie.ID_Encomenda = ?`,
++            [orderId],
+           );
+-          return res.status(400).json({ error: "Carrinho vazio" });
+-        }
+-
+-        items = await db.all(
+-          `SELECT ic.*, p.Nome, p.Preco, p.Imagem, p.Stock 
+-         FROM item_carrinho ic 
+-         JOIN produto p ON ic.ID_Produto = p.ID_Produto 
+-         WHERE ic.ID_Carrinho = ?`,
+-          [cart.ID_Carrinho],
+-        );
+-
+-        if (items.length === 0) {
+-          console.error(`[Stripe Debug] Cart empty for user ${req.user.id}`);
+-          return res.status(400).json({ error: "Carrinho vazio" });
++          items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
+         }
++      }
+ 
+-        // Check stock availability
+-        for (const item of items) {
+-          if (item.Quantidade > item.Stock) {
+-            return res.status(400).json({
+-              error: `Stock insuficiente para o produto "${item.Nome}" (apenas ${item.Stock} dispon├¡veis).`,
+-            });
+-          }
+-        }
+-
+-        subtotal = items.reduce(
+-          (sum, item) => sum + item.Preco * item.Quantidade,
+-          0,
+-        );
+-        const total = subtotal + Number(shippingCost || 0);
+-
+-        const result = await db.run(
+-          "INSERT INTO encomenda (ID_Cliente, Data_Encomenda, Total, Status, Morada, Telefone, Nome, Apelido, Custo_Envio, Tipo_Envio) VALUES (?, CURRENT_TIMESTAMP, ?, 'Pendente', ?, ?, ?, ?, ?, ?)",
+-          [
+-            req.user.id,
+-            total,
+-            address,
+-            phone,
+-            nome,
+-            apelido,
+-            shippingCost,
+-            shippingType,
+-          ],
+-        );
+-        finalOrderId = result.lastID;
+-        console.log(`[Stripe Debug] Created order ${finalOrderId}`);
++      if (items.length === 0 && wsItems.length === 0) {
++        return res.status(400).json({ error: "Carrinho/Encomenda vazio." });
++      }
+ 
+-        for (const item of items) {
+-          await db.run(
+-            "INSERT INTO item_encomenda (ID_Encomenda, ID_Produto, Quantidade, Preco_Unitario) VALUES (?, ?, ?, ?)",
+-            [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+-          );
++      // Ensure stock for products
++      for (const item of items) {
++        if (item.Quantidade > item.Stock) {
++          return res.status(400).json({
++            error: `Stock insuficiente para o produto "${item.Nome}".`,
++          });
+         }
+       }
+ 
+-      /* 
+-       REMOVED: Clear cart only on SUCCESSFUL payment in fulfillPaidOrder
+-       to allow retrying the checkout if canceled.
+-    */
+-      /*
+-    await db.run(
+-      "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+-      [req.user.id]
+-    );
+-    */
++      // Ensure payment details sync
++      await syncCustomerCheckoutDetails(req.user.id, {
++        nome,
++        apelido,
++        address,
++        phone,
++      });
+ 
+-      // 5. MOCK MODE LOGIC
++      // MOCK MODE LOGIC
+       if (!stripe) {
+         console.log("ÔÜá´©Å STRIPE_SECRET_KEY missing. Entering MOCK MODE.");
+-
+-        // Clear Cart (if applicable)
+-        await db.run(
+-          "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+-          [req.user.id],
+-        );
+-
+-        await fulfillPaidOrder(finalOrderId);
++        await fulfillPaidOrder(orderId || null, reservaIds || []);
+         return res.json({
+-          url: `/success.html?orderId=${finalOrderId}&mock=true`,
++          url: `/success.html?orderId=${orderId || ''}&reservaIds=${(reservaIds || []).join(',')}&mock=true`,
+           isMock: true,
+         });
+       }
+ 
+-      await syncCustomerCheckoutDetails(req.user.id, {
+-        nome,
+-        apelido,
+-        address,
+-        phone,
+-      });
+-
+-      // 6. REAL STRIPE SESSION
++      // REAL STRIPE SESSION
+       const lineItems = items.map((item) => {
+         const productImages = getStripeCheckoutProductImages(
+           req.headers.origin,
+@@ -5516,13 +5627,25 @@ app.post(
+               name: item.Nome,
+               ...(productImages.length > 0 ? { images: productImages } : {}),
+             },
+-            unit_amount: Math.round(item.Preco * 100), // Stripe uses cents
++            unit_amount: Math.round(parseFloat(item.Preco) * 100),
+           },
+           quantity: item.Quantidade,
+         };
+       });
+ 
+-      if (Number(shippingCost || 0) > 0) {
++      // Add workshop items to Stripe line items
++      for (const ws of wsItems) {
++        lineItems.push({
++          price_data: {
++            currency: "eur",
++            product_data: { name: ws.Nome },
++            unit_amount: Math.round(parseFloat(ws.Preco) * 100),
++          },
++          quantity: 1,
++        });
++      }
++
++      if (items.length > 0 && actualShippingCost > 0) {
+         lineItems.push({
+           price_data: {
+             currency: "eur",
+@@ -5532,7 +5655,7 @@ app.post(
+                 "https://placehold.co/600x600/fef3c7/92400e.png?font=montserrat&text=CTT",
+               ],
+             },
+-            unit_amount: Math.round(Number(shippingCost || 0) * 100),
++            unit_amount: Math.round(actualShippingCost * 100),
+           },
+           quantity: 1,
+         });
+@@ -5543,6 +5666,12 @@ app.post(
+         [req.user.id],
+       );
+ 
++      const metadata = {
++        paymentPreference: requestedPaymentType,
++      };
++      if (orderId) metadata.orderId = orderId.toString();
++      if (reservaIds && reservaIds.length > 0) metadata.reservaIds = reservaIds.join(',');
++
+       const session = await stripe.checkout.sessions.create({
+         payment_method_types:
+           requestedPaymentType === "mb_way"
+@@ -5553,12 +5682,9 @@ app.post(
+         locale: "pt",
+         submit_type: "pay",
+         billing_address_collection: "auto",
+-        success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${finalOrderId}`,
+-        cancel_url: `${req.headers.origin}/cancel.html?orderId=${finalOrderId}`,
+-        metadata: {
+-          orderId: finalOrderId.toString(),
+-          paymentPreference: requestedPaymentType,
+-        },
++        success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}&orderId=${orderId || ''}&reservaIds=${(reservaIds || []).join(',')}`,
++        cancel_url: `${req.headers.origin}/cancel.html?orderId=${orderId || ''}&reservaIds=${(reservaIds || []).join(',')}`,
++        metadata: metadata,
+         customer_email: customer?.Email || undefined,
+       });
+ 
+@@ -5586,18 +5712,21 @@ app.get("/api/checkout/session-status", async (req, res) => {
+ 
+   try {
+     const session = await stripe.checkout.sessions.retrieve(sessionId);
+-    const orderId = Number(session.metadata?.orderId);
++    const orderId = session.metadata?.orderId ? Number(session.metadata.orderId) : null;
++    const reservaIdsStr = session.metadata?.reservaIds;
++    const reservaIds = reservaIdsStr ? reservaIdsStr.split(',').map(Number) : [];
+ 
+-    if (!orderId) {
+-      return res.status(400).json({ error: "Sessao sem orderId valido" });
++    if (!orderId && reservaIds.length === 0) {
++      return res.status(400).json({ error: "Sessao sem orderId ou reservaIds valido" });
+     }
+ 
+     if (session.payment_status === "paid") {
+-      await fulfillPaidOrder(orderId);
++      await fulfillPaidOrder(orderId, reservaIds);
+     }
+ 
+     res.json({
+       orderId,
++      reservaIds,
+       paymentStatus: session.payment_status,
+       status: session.status,
+     });
+@@ -5635,12 +5764,14 @@ app.post(
+         event.type === "checkout.session.async_payment_succeeded"
+       ) {
+         const session = event.data.object;
+-        const orderId = session.metadata?.orderId;
++        const orderId = session.metadata?.orderId ? Number(session.metadata.orderId) : null;
++        const reservaIdsStr = session.metadata?.reservaIds;
++        const reservaIds = reservaIdsStr ? reservaIdsStr.split(',').map(Number) : [];
+ 
+-        if (orderId && session.payment_status === "paid") {
+-          const result = await fulfillPaidOrder(orderId);
++        if ((orderId || reservaIds.length > 0) && session.payment_status === "paid") {
++          const result = await fulfillPaidOrder(orderId, reservaIds);
+           console.log(
+-            `Order #${orderId} fulfilled via webhook (${result.alreadyPaid ? "already paid" : "new payment"}).`,
++            `Fulfillment via webhook. Order handled: ${result.handledOrder}, Workshops handled: ${result.handledWorkshops}`,
+           );
+         }
+       }
+@@ -5685,7 +5816,7 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
+       // Use price from item_encomenda
+       items = items.map((it) => ({ ...it, Preco: it.Preco_Unitario }));
+       subtotal = items.reduce(
+-        (sum, item) => sum + item.Preco * item.Quantidade,
++        (sum, item) => sum + parseFloat(item.Preco) * item.Quantidade,
+         0,
+       );
+ 
+@@ -5705,24 +5836,33 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
+         ],
+       );
+     } else {
++      let wsItems = [];
+       const cart = await db.get("SELECT * FROM carrinho WHERE ID_Cliente = ?", [
+         req.user.id,
+       ]);
+-      if (!cart) return res.status(400).json({ error: "Carrinho vazio" });
++      if (cart) {
++        items = await db.all(
++          `SELECT ic.*, p.Nome, p.Preco, p.Stock
++           FROM item_carrinho ic
++           JOIN produto p ON ic.ID_Produto = p.ID_Produto
++           WHERE ic.ID_Carrinho = ?`,
++          [cart.ID_Carrinho],
++        );
++      }
+ 
+-      items = await db.all(
+-        `SELECT ic.*, p.Nome, p.Preco, p.Stock
+-         FROM item_carrinho ic
+-         JOIN produto p ON ic.ID_Produto = p.ID_Produto
+-         WHERE ic.ID_Carrinho = ?`,
+-        [cart.ID_Carrinho],
++      wsItems = await db.all(
++        `SELECT rw.ID_Reserva, rw.ID_Workshop, w.Titulo as Nome, w.Preco, w.Vagas as Stock
++         FROM reserva_workshop rw
++         JOIN workshop w ON rw.ID_Workshop = w.ID_Workshop
++         WHERE rw.ID_Cliente = ? AND rw.Status = 'Pendente' AND rw.ID_Encomenda IS NULL`,
++        [req.user.id]
+       );
+ 
+-      if (items.length === 0)
++      if (items.length === 0 && wsItems.length === 0)
+         return res.status(400).json({ error: "Carrinho vazio" });
+ 
+-      subtotal = items.reduce(
+-        (sum, item) => sum + item.Preco * item.Quantidade,
++      subtotal = [...items, ...wsItems].reduce(
++        (sum, item) => sum + parseFloat(item.Preco) * (item.Quantidade || 1),
+         0,
+       );
+       const total = subtotal + Number(shippingCost || 0);
+@@ -5748,6 +5888,13 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
+           [finalOrderId, item.ID_Produto, item.Quantidade, item.Preco],
+         );
+       }
++
++      for (const item of wsItems) {
++        await db.run(
++          "UPDATE reserva_workshop SET ID_Encomenda = ?, Preco_Unitario = ? WHERE ID_Reserva = ?",
++          [finalOrderId, item.Preco, item.ID_Reserva]
++        );
++      }
+     }
+ 
+     await syncCustomerCheckoutDetails(req.user.id, {
+@@ -5778,6 +5925,11 @@ app.post("/api/cart/checkout", authenticateToken, async (req, res) => {
+       [finalOrderId],
+     );
+ 
++    await db.run(
++      "UPDATE reserva_workshop SET Status = 'Pago' WHERE ID_Encomenda = ?",
++      [finalOrderId],
++    );
++
+     // Clear cart for the user
+     await db.run(
+       "DELETE FROM item_carrinho WHERE ID_Carrinho = (SELECT ID_Carrinho FROM carrinho WHERE ID_Cliente = ?)",
+@@ -6397,7 +6549,7 @@ app.put(
+ );
+ 
+ // Helper: Check if maintenance mode is active (full or for specific section)
+-export async function isMaintenanceActive(section = "full") {
++async function isMaintenanceActive(section = "full") {
+   try {
+     const rows = await db.all("SELECT setting_key, setting_value FROM site_settings WHERE setting_key LIKE 'maintenance_%'");
+     const settings = {};
+@@ -6413,7 +6565,7 @@ export async function isMaintenanceActive(section = "full") {
+ }
+ 
+ // Middleware: Block request if maintenance active and not admin
+-export async function checkMaintenanceMode(req, res, next) {
++async function checkMaintenanceMode(req, res, next) {
+   try {
+     const active = await isMaintenanceActive();
+     if (active) {
+@@ -7109,13 +7261,35 @@ startServer();
+ async function cleanupPendingOrders() {
+   try {
+     console.log("­ƒº╣ Running cleanup for expired pending orders...");
+-    const result = await db.run(`
+-      DELETE FROM encomenda 
+-      WHERE Status = 'Pendente' 
++    const expiredOrders = await db.all(`
++      SELECT ID_Encomenda FROM encomenda
++      WHERE Status = 'Pendente'
+       AND Data_Encomenda < DATE_SUB(NOW(), INTERVAL 1 DAY)
+     `);
+-    if (result.changes > 0) {
+-      console.log(`Ô£à Cleaned up ${result.changes} expired orders.`);
++
++    for (const order of expiredOrders) {
++      // Get workshops linked to this expired order to restore their vagas
++      const wsItems = await db.all(
++        "SELECT ID_Workshop FROM reserva_workshop WHERE ID_Encomenda = ?",
++        [order.ID_Encomenda]
++      );
++      for (const ws of wsItems) {
++        await db.run(
++          "UPDATE workshop SET Vagas = Vagas + 1 WHERE ID_Workshop = ?",
++          [ws.ID_Workshop]
++        );
++      }
++
++      await db.run(
++        "UPDATE reserva_workshop SET Status = 'Cancelado', ID_Encomenda = NULL WHERE ID_Encomenda = ?",
++        [order.ID_Encomenda],
++      );
++      await db.run("DELETE FROM item_encomenda WHERE ID_Encomenda = ?", [order.ID_Encomenda]);
++      await db.run("DELETE FROM encomenda WHERE ID_Encomenda = ?", [order.ID_Encomenda]);
++    }
++
++    if (expiredOrders.length > 0) {
++      console.log(`Ô£à Cleaned up ${expiredOrders.length} expired orders.`);
+     }
+   } catch (error) {
+     if (
+@@ -7132,6 +7306,9 @@ setInterval(cleanupPendingOrders, 60 * 60 * 1000);
+ // Also run once on startup (with a small delay to ensure DB is ready)
+ setTimeout(cleanupPendingOrders, 10000);
+ 
++
+ initializeDatabase().catch((error) => {
+   console.error("Unexpected database bootstrap error:", error);
+ });
++
++});
+\ No newline at end of file

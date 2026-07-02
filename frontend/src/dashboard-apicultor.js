@@ -1,6 +1,7 @@
 // Apicultor Dashboard Logic
 const API_URL = "/api";
 import { initI18n, createLangToggle } from "./i18n.js";
+import { getNavbarHtml } from "./components/navbar.js";
 
 
 class ApicultorUI {
@@ -20,6 +21,44 @@ class ApicultorUI {
   }
 
   async init() {
+    // Refresh profile info from server if token exists to get the latest role
+    if (this.token) {
+      try {
+        const profileRes = await fetch(`${API_URL}/user/profile`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+
+          if (profileData.newToken) {
+            localStorage.setItem("token", profileData.newToken);
+            this.token = profileData.newToken;
+            window.location.reload();
+            return;
+          }
+
+          // Update localStorage user object
+          const updatedUser = {
+            ...this.userData,
+            id: profileData.id,
+            name: profileData.name,
+            email: profileData.email,
+            role: profileData.role,
+            userType: profileData.role,
+            UserType: profileData.role,
+            picture: profileData.picture,
+            address: profileData.address,
+            phone: profileData.phone,
+            bio: profileData.bio
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          this.userData = updatedUser;
+        }
+      } catch (err) {
+        console.warn("Failed to refresh user profile on initialization:", err);
+      }
+    }
+
     // Security Check
     const role = this.userData?.role || this.userData?.userType || this.userData?.UserType;
     if (!this.token || !this.userData || (role?.toLowerCase() !== "apicultor" && role?.toLowerCase() !== "admin")) {
@@ -28,6 +67,10 @@ class ApicultorUI {
       window.location.href = "index.html";
       return;
     }
+
+    // Render Navbar
+    const navbarContainer = document.getElementById("navbar-container");
+    if (navbarContainer) navbarContainer.innerHTML = getNavbarHtml();
 
     // Set Welcome Name
     const welcomeEl = document.getElementById("apicultor-welcome-name");
@@ -161,6 +204,7 @@ class ApicultorUI {
     const navLinks = document.querySelectorAll(".admin-nav-link[data-section]");
     navLinks.forEach((link) => {
       link.addEventListener("click", (e) => {
+        e.preventDefault();
         const section = e.currentTarget.dataset.section;
         this.switchSection(section);
       });
@@ -205,6 +249,7 @@ class ApicultorUI {
         time_24hr: true,
         altInput: true,
         altFormat: "d/m/Y H:i",
+        static: true,
       });
     }
   }
@@ -307,7 +352,7 @@ class ApicultorUI {
       if (response.ok) {
         const stats = await response.json();
 
-        const totalEarnings = stats.summary.totalEarnings || 0;
+        const totalEarnings = parseFloat(stats.summary.totalEarnings || 0);
         const commission = totalEarnings * 0.10;
         const netEarnings = totalEarnings * 0.90;
 
@@ -334,6 +379,9 @@ class ApicultorUI {
 
     if (this._categoryChart) this._categoryChart.destroy();
     if (this._statusChart) this._statusChart.destroy();
+    if (this._workshopStatusChart) this._workshopStatusChart.destroy();
+    if (this._workshopAvailChart) this._workshopAvailChart.destroy();
+    if (this._earningsSourceChart) this._earningsSourceChart.destroy();
 
     const ctxCategory = document.getElementById("apicultorCategoryChart");
     if (ctxCategory && stats.categories) {
@@ -429,6 +477,129 @@ class ApicultorUI {
         },
       });
     }
+
+    const ctxWsStatus = document.getElementById("apicultorWorkshopStatusChart");
+    if (ctxWsStatus && stats.workshopStatuses) {
+      const labelsWs = stats.workshopStatuses.map((s) => s.Status);
+      const colorsWs = { Aprovado: "#10b981", Pendente: "#f59e0b", Rejeitado: "#ef4444" };
+
+      this._workshopStatusChart = new Chart(ctxWsStatus, {
+        type: "doughnut",
+        data: {
+          labels: labelsWs,
+          datasets: [
+            {
+              data: stats.workshopStatuses.map((s) => s.count),
+              backgroundColor: labelsWs.map((l) => colorsWs[l] || "#64748b"),
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "78%",
+          plugins: { 
+            legend: { 
+              position: "bottom",
+              labels: {
+                  padding: 20,
+                  font: { family: 'Outfit', size: 12, weight: '600' },
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(26, 77, 46, 0.9)',
+                padding: 12,
+                cornerRadius: 10,
+                bodyFont: { family: 'Outfit' }
+            }
+          },
+          animation: {
+              animateRotate: true,
+              animateScale: true,
+              duration: 1500
+          }
+        },
+      });
+    }
+
+    const ctxWsAvail = document.getElementById("apicultorWorkshopAvailabilityChart");
+    if (ctxWsAvail && stats.workshopAvailability) {
+      const labelsAvail = stats.workshopAvailability.map((s) => s.availability);
+      const colorsAvail = { "Com Vagas": "#14b8a6", Esgotado: "#64748b" };
+
+      this._workshopAvailChart = new Chart(ctxWsAvail, {
+        type: "doughnut",
+        data: {
+          labels: labelsAvail,
+          datasets: [
+            {
+              data: stats.workshopAvailability.map((s) => s.count),
+              backgroundColor: labelsAvail.map((l) => colorsAvail[l] || "#94a3b8"),
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "78%",
+          plugins: { 
+            legend: { 
+              position: "bottom",
+              labels: { padding: 20, font: { family: 'Outfit', size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
+            },
+            tooltip: { backgroundColor: 'rgba(26, 77, 46, 0.9)', padding: 12, cornerRadius: 10, bodyFont: { family: 'Outfit' } }
+          },
+          animation: { animateRotate: true, animateScale: true, duration: 1500 }
+        },
+      });
+    }
+
+    const ctxEarnings = document.getElementById("apicultorEarningsSourceChart");
+    if (ctxEarnings && stats.summary) {
+      const labelsEarnings = ["Produtos", "Workshops"];
+      const productEarnings = stats.summary.productEarnings || 0;
+      const workshopEarnings = stats.summary.workshopEarnings || 0;
+      
+      this._earningsSourceChart = new Chart(ctxEarnings, {
+        type: "pie",
+        data: {
+          labels: labelsEarnings,
+          datasets: [
+            {
+              data: [productEarnings, workshopEarnings],
+              backgroundColor: ["#16a34a", "#eab308"],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              position: "bottom",
+              labels: { padding: 20, font: { family: 'Outfit', size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
+            },
+            tooltip: { 
+              backgroundColor: 'rgba(26, 77, 46, 0.9)', padding: 12, cornerRadius: 10, bodyFont: { family: 'Outfit' },
+              callbacks: {
+                label: function(context) {
+                  let label = context.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed !== null) label += context.parsed.toFixed(2) + '€';
+                  return label;
+                }
+              }
+            }
+          },
+          animation: { animateRotate: true, animateScale: true, duration: 1500 }
+        },
+      });
+    }
   }
 
   /* ──────────────────────────────────────────
@@ -473,13 +644,18 @@ class ApicultorUI {
   ────────────────────────────────────────── */
   async loadProducts(silent = false) {
     try {
-      const response = await fetch(`${API_URL}/apicultores/${this.userData.id}/products`);
+      const response = await fetch(`${API_URL}/apicultor/products`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
       if (response.ok) {
         this.products = await response.json();
         if (!silent) this.renderProducts();
+      } else {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Falha ao carregar os seus produtos.");
       }
     } catch (error) {
-      if (!silent) Swal.fire("Erro", "Falha ao carregar os seus produtos.", "error");
+      if (!silent) Swal.fire("Erro", error.message, "error");
     }
   }
 
@@ -511,7 +687,7 @@ class ApicultorUI {
             <tr>
               <td>
                 <div class="d-flex align-items-center gap-3">
-                  <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-small" alt="${p.Nome}">
+                  <img src="${p.Imagem || "/images/default-product.png"}" class="product-img-small" alt="${p.Nome}">
                   <div>
                     <div class="fw-bold">${p.Nome}</div>
                     ${p.Slug ? `<div class="text-muted" style="font-size:0.7rem; font-family:monospace;"><i class="fas fa-link me-1"></i>${p.Slug}</div>` : ''}
@@ -577,7 +753,7 @@ class ApicultorUI {
                       <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
                     </button>
                   </div>
-                  <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" class="img-fluid" style="max-height:160px; object-fit:contain;">
+                  <img src="${p.Imagem || "/images/default-product.png"}" alt="${p.Nome}" class="img-fluid" style="max-height:160px; object-fit:contain;">
                 </div>
                 <div class="dash-product-body">
                   <div class="dash-product-title">${p.Nome}</div>
@@ -664,6 +840,7 @@ class ApicultorUI {
     document.getElementById("prod-preco").value = p.Preco || "";
     this.updateProductNetEarningsPreview(p.Preco);
     document.getElementById("prod-stock").value = p.Stock || 0;
+    document.getElementById("prod-low-stock-threshold").value = p.Low_Stock_Threshold || "";
     document.getElementById("prod-descricao").value = p.Descricao || "";
     
     // Set Slug field
@@ -683,6 +860,7 @@ class ApicultorUI {
 
     const preview = document.getElementById("prod-image-preview");
     const placeholder = document.getElementById("prod-image-placeholder");
+    document.getElementById("prod-imagem").value = p.Imagem || "";
     if (p.Imagem) {
       preview.src = p.Imagem;
       preview.style.display = "block";
@@ -729,12 +907,19 @@ class ApicultorUI {
   ────────────────────────────────────────── */
   async loadWorkshops(silent = false) {
     try {
-      const response = await fetch(`${API_URL}/apicultores/${this.userData.id}/workshops`);
+      const response = await fetch(`${API_URL}/apicultor/workshops`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
       if (response.ok) {
         this.workshops = await response.json();
         if (!silent) this.renderWorkshops();
+      } else {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Falha ao carregar os seus workshops.");
       }
-    } catch (error) {}
+    } catch (error) {
+      if (!silent) Swal.fire("Erro", error.message, "error");
+    }
   }
 
   renderWorkshops() {
@@ -791,6 +976,7 @@ class ApicultorUI {
     document.getElementById("ws-preco").value = w.Preco || "";
     this.updateWorkshopNetEarningsPreview(w.Preco);
     document.getElementById("ws-vagas").value = w.Vagas || "";
+    document.getElementById("ws-low-stock-threshold").value = w.Low_Stock_Threshold || "";
     document.getElementById("ws-descricao").value = w.Descricao || "";
     document.getElementById("ws-imagem").value = w.Imagem || "";
 
@@ -902,6 +1088,7 @@ class ApicultorUI {
     const nome = document.getElementById("prod-nome").value;
     const preco = document.getElementById("prod-preco").value;
     const stock = document.getElementById("prod-stock").value;
+    const lowStockThreshold = document.getElementById("prod-low-stock-threshold").value;
     const idCategoria = document.getElementById("prod-categoria").value;
     const idOrigem = document.getElementById("prod-origem").value;
     const descricao = document.getElementById("prod-descricao").value;
@@ -940,7 +1127,7 @@ class ApicultorUI {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify({ nome, preco, stock, idCategoria, idOrigem, descricao, tags, imagem }),
+        body: JSON.stringify({ nome, preco, stock, idCategoria, idOrigem, descricao, tags, imagem, lowStockThreshold }),
       });
 
       if (!response.ok) throw new Error("Erro ao guardar produto.");
@@ -983,6 +1170,7 @@ class ApicultorUI {
     const titulo = document.getElementById("ws-titulo").value;
     const preco = document.getElementById("ws-preco").value;
     const vagas = document.getElementById("ws-vagas").value;
+    const lowStockThreshold = document.getElementById("ws-low-stock-threshold").value;
     const data = document.getElementById("ws-data").value;
     const descricao = document.getElementById("ws-descricao").value;
     
@@ -1019,7 +1207,7 @@ class ApicultorUI {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify({ titulo, preco, vagas, data_realizacao: data, descricao, imagem }),
+        body: JSON.stringify({ titulo, preco, vagas, data_realizacao: data, descricao, imagem, lowStockThreshold }),
       });
 
       if (!response.ok) throw new Error("Erro ao guardar workshop.");
@@ -1111,16 +1299,22 @@ class ApicultorUI {
     container.innerHTML = this.sales
       .map((s) => `
         <tr>
-          <td class="fw-bold">#${s.ID_Encomenda}</td>
+          <td>
+            <div class="fw-bold">#${s.id}</div>
+            ${s.tipo === 'workshop' 
+              ? `<span class="badge" style="background:#fef3c7; color:#d97706; font-size:0.7rem;">Workshop</span>`
+              : `<span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.7rem;">Produto</span>`
+            }
+          </td>
           <td>
             <div class="fw-bold">${s.ClienteNome}</div>
-            <div class="small text-muted">${s.Morada}</div>
+            <div class="small text-muted">${s.tipo === 'workshop' ? s.WorkshopTitulo : s.Morada}</div>
           </td>
-          <td class="small text-muted">${new Date(s.Data_Encomenda).toLocaleDateString()}</td>
-          <td class="fw-bold text-dark">${parseFloat(s.Total).toFixed(2)}€</td>
-          <td><span class="badge-premium ${s.Status.toLowerCase()}">${s.Status}</span></td>
+          <td class="small text-muted">${new Date(s.data).toLocaleDateString()}</td>
+          <td class="fw-bold text-dark">${parseFloat(s.total).toFixed(2)}€</td>
+          <td><span class="badge-premium ${s.status.toLowerCase()}">${s.status}</span></td>
           <td class="text-end">
-            <button class="btn-action-premium" onclick="Swal.fire('Info', 'Detalhes da encomenda em breve.', 'info')">
+            <button class="btn-action-premium" onclick="window.apicultorUI.openOrderDetails('${s.tipo}', ${s.id}, '${s.status}', ${parseFloat(s.total)})">
               <i class="fas fa-eye"></i>
             </button>
           </td>
@@ -1269,7 +1463,145 @@ class ApicultorUI {
       previewEl.innerText = `Receberá ${net.toFixed(2)}€ líquidos (após 10% comissão).`;
     }
   }
+
+  /* ──────────────────────────────────────────
+     ORDER DETAILS & STATUS
+  ────────────────────────────────────────── */
+  async openOrderDetails(type, id, currentStatus, total) {
+    this._currentOrderType = type;
+    this._currentOrderId = id;
+    this._currentOrderStatus = currentStatus;
+
+    const modal = new bootstrap.Modal(document.getElementById("orderModal"));
+    const tbody = document.getElementById("order-items-table");
+    const container = document.getElementById("order-status-container");
+    const typeBadge = document.getElementById("order-type-badge");
+    
+    document.getElementById("order-total-price").innerText = parseFloat(total).toFixed(2) + "€";
+    
+    if (type === "workshop") {
+      typeBadge.innerHTML = `<span class="badge" style="background:#fef3c7; color:#d97706; padding:8px 12px;">Workshop</span>`;
+      container.innerHTML = `
+        <div class="alert alert-success d-flex align-items-center mb-0 w-100" style="border-radius: 12px; padding: 12px 16px;">
+          <i class="fas fa-check-circle fs-4 me-3"></i>
+          <div>
+            <h6 class="mb-0 fw-bold">Workshop Reservado e Pago</h6>
+            <small class="mb-0">Não é necessária nenhuma ação de estado para os workshops.</small>
+          </div>
+        </div>
+      `;
+    } else {
+      typeBadge.innerHTML = `<span class="badge" style="background:#e0f2fe; color:#0284c7; padding:8px 12px;">Produto</span>`;
+      let flow = ["Em processamento", "Enviado", "Entregue"];
+      let currentIndex = flow.findIndex(s => s.toLowerCase() === currentStatus.toLowerCase());
+      
+      container.innerHTML = flow.map((status, index) => {
+        let btnStyle = "font-weight: 600; font-size: 0.85rem; padding: 10px 16px; transition: all 0.3s ease;";
+        let btnClass = "";
+        let disabled = true;
+        let icon = "";
+        
+        if (index < currentIndex) {
+          btnClass = "text-white";
+          btnStyle += " background-color: #1a4d2e; border-color: #143e24; opacity: 0.9;";
+          icon = '<i class="fas fa-check me-2"></i>';
+        } else if (index === currentIndex) {
+          btnClass = "text-white";
+          btnStyle += " background-color: var(--primary-green, #2e7d32); border-color: var(--primary-green-dark, #1a4d2e); box-shadow: inset 0 3px 5px rgba(0,0,0,.125);";
+          icon = '<i class="fas fa-dot-circle me-2"></i>';
+        } else if (index === currentIndex + 1 || (currentIndex === -1 && index === 0)) {
+          btnClass = "btn-outline-success";
+          btnStyle += " border-width: 2px; border-style: dashed; background-color: transparent; cursor: pointer;";
+          disabled = false;
+          icon = '<i class="fas fa-arrow-right me-2"></i>';
+        } else {
+          btnClass = "btn-outline-secondary";
+          btnStyle += " background-color: #f8fafc; color: #94a3b8;";
+          icon = '<i class="fas fa-lock me-2"></i>';
+        }
+
+        return `<button type="button" class="btn ${btnClass} flex-grow-1 status-btn" style="${btnStyle}" ${disabled ? 'disabled' : ''} onclick="window.apicultorUI.updateOrderStatus('${status}')">${icon}${status}</button>`;
+      }).join('');
+    }
+
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4"><i class="fas fa-spinner fa-spin text-success"></i> A carregar...</td></tr>`;
+    modal.show();
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/apicultor/orders/${type}/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch");
+      const items = await res.json();
+      
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Nenhum artigo encontrado.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => {
+        const subtotal = item.Quantidade * item.Preco_Unitario;
+        const imgUrl = item.Imagem ? (item.Imagem.startsWith('http') || item.Imagem.startsWith('/') ? item.Imagem : `/${item.Imagem}`) : '/images/default-product.png';
+        return `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <img src="${imgUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:8px;">
+                <div class="fw-bold">${item.Nome}</div>
+              </div>
+            </td>
+            <td>${item.Quantidade}x</td>
+            <td>${parseFloat(item.Preco_Unitario).toFixed(2)}€</td>
+            <td class="text-end fw-bold">${subtotal.toFixed(2)}€</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error(err);
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-danger">Erro ao carregar detalhes.</td></tr>`;
+    }
+  }
+
+  async updateOrderStatus(newStatus) {
+    if (!this._currentOrderId || !this._currentOrderType) return;
+
+    const buttons = document.querySelectorAll(".status-btn");
+
+    try {
+      buttons.forEach(b => {
+        if (b.innerText.includes(newStatus)) {
+          b.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+        b.disabled = true;
+      });
+      
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/apicultor/orders/${this._currentOrderType}/${this._currentOrderId}/status`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!res.ok) throw new Error("Failed to update status");
+
+      Swal.fire({ icon: "success", title: "Sucesso!", text: "Estado atualizado com sucesso!", timer: 1500, showConfirmButton: false });
+      
+      const modalObj = bootstrap.Modal.getInstance(document.getElementById("orderModal"));
+      if (modalObj) modalObj.hide();
+      
+      await this.loadDashboardStats(); // reload to update chart & list
+      await this.loadSales();
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Erro", "Erro ao atualizar estado.", "error");
+    }
+  }
 }
 
-// Global scope
-window.apicultorUI = new ApicultorUI();
+document.addEventListener("DOMContentLoaded", () => {
+  window.apicultorUI = new ApicultorUI();
+});

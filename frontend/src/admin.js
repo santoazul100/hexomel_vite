@@ -25,20 +25,78 @@ class AdminUI {
     this.currentTags = new Set(); // Stores active tags for the modal
     this.layoutAnimationStyle = "fade";
 
-    // Load monetization parameters from localStorage with defaults
+    // Real platform rate history: drives the badge, dashboard, sales cards, table and charts.
+    // Applying the simulator adds a new entry effective from "now" — orders created before
+    // that moment keep being calculated with the rate that was in effect at the time.
+    let savedHistory = null;
+    try {
+      savedHistory = JSON.parse(localStorage.getItem("adminRateHistory"));
+    } catch {
+      savedHistory = null;
+    }
+    this.rateHistory = Array.isArray(savedHistory) && savedHistory.length > 0
+      ? savedHistory
+      : [{ commissionRate: 10, gatewayRate: 2, effectiveFrom: "1970-01-01T00:00:00.000Z" }];
+
+    // Simulator-only parameters (what-if values, independent from the real rate history above)
     const savedComm = localStorage.getItem("adminCommissionRate");
-    this.commissionRate = savedComm !== null ? parseFloat(savedComm) : 10;
-    if (isNaN(this.commissionRate)) this.commissionRate = 10;
+    this.commissionRate = savedComm !== null ? parseFloat(savedComm) : this.realCommissionRate;
+    if (isNaN(this.commissionRate)) this.commissionRate = this.realCommissionRate;
 
     const savedGate = localStorage.getItem("adminGatewayRate");
-    this.gatewayRate = savedGate !== null ? parseFloat(savedGate) : 2;
-    if (isNaN(this.gatewayRate)) this.gatewayRate = 2;
-
-    const savedFixed = localStorage.getItem("adminFixedCosts");
-    this.fixedCosts = savedFixed !== null ? parseFloat(savedFixed) : 2000;
-    if (isNaN(this.fixedCosts)) this.fixedCosts = 2000;
+    this.gatewayRate = savedGate !== null ? parseFloat(savedGate) : this.realGatewayRate;
+    if (isNaN(this.gatewayRate)) this.gatewayRate = this.realGatewayRate;
 
     this.init();
+  }
+
+  // Current effective real rate (most recent entry in the history)
+  get realCommissionRate() {
+    return this.rateHistory[this.rateHistory.length - 1].commissionRate;
+  }
+  get realGatewayRate() {
+    return this.rateHistory[this.rateHistory.length - 1].gatewayRate;
+  }
+
+  // Returns the rate that was in effect at a given order date
+  getRealRateForDate(dateInput) {
+    const date = new Date(dateInput);
+    let applicable = this.rateHistory[0];
+    for (const entry of this.rateHistory) {
+      if (new Date(entry.effectiveFrom) <= date) {
+        applicable = entry;
+      } else {
+        break;
+      }
+    }
+    return applicable;
+  }
+
+  applySimulatorAsReal() {
+    const newCommission = this.commissionRate;
+    const newGateway = this.gatewayRate;
+
+    if (isNaN(newCommission) || isNaN(newGateway) || newCommission < 0 || newGateway < 0) return;
+
+    this.rateHistory.push({
+      commissionRate: newCommission,
+      gatewayRate: newGateway,
+      effectiveFrom: new Date().toISOString(),
+    });
+    this.rateHistory.sort((a, b) => new Date(a.effectiveFrom) - new Date(b.effectiveFrom));
+    localStorage.setItem("adminRateHistory", JSON.stringify(this.rateHistory));
+
+    this.updateRealRateLabels();
+    this.loadVendasData();
+    this.loadAnalytics();
+
+    Swal.fire({
+      icon: "success",
+      title: "Taxa aplicada!",
+      text: `A partir de agora a plataforma passa a usar Comissão ${newCommission}% / Gateway ${newGateway}%. As vendas já registadas mantêm a taxa que tinham na altura.`,
+      timer: 3000,
+      showConfirmButton: false,
+    });
   }
 
   async init() {
@@ -238,7 +296,6 @@ class AdminUI {
     // Simulator inputs
     const simRate = document.getElementById("sim-rate");
     const simGateway = document.getElementById("sim-gateway");
-    const simFixed = document.getElementById("sim-fixed-costs");
     const simGmv = document.getElementById("sim-gmv");
 
     if (simRate) {
@@ -247,9 +304,8 @@ class AdminUI {
         if (!isNaN(val) && val >= 0 && val <= 100) {
           this.commissionRate = val;
           localStorage.setItem("adminCommissionRate", val);
-          this.updateUIPercentages();
-          this.loadVendasData();
-          this.loadAnalytics();
+          this.updateSimulatorLabels();
+          this.runSimulator("value");
         }
       });
     }
@@ -260,37 +316,29 @@ class AdminUI {
         if (!isNaN(val) && val >= 0 && val <= 100) {
           this.gatewayRate = val;
           localStorage.setItem("adminGatewayRate", val);
-          this.updateUIPercentages();
-          this.loadVendasData();
-          this.loadAnalytics();
-        }
-      });
-    }
-
-    if (simFixed) {
-      simFixed.addEventListener("input", () => {
-        const val = parseFloat(simFixed.value);
-        if (!isNaN(val) && val >= 0) {
-          this.fixedCosts = val;
-          localStorage.setItem("adminFixedCosts", val);
-          this.loadAnalytics();
-          this.runSimulator();
+          this.updateSimulatorLabels();
+          this.runSimulator("value");
         }
       });
     }
 
     if (simGmv) {
-      simGmv.addEventListener("input", () => this.runSimulator());
+      simGmv.addEventListener("input", () => this.runSimulator("value"));
     }
 
-    const simSingleGross = document.getElementById("sim-single-gross");
     const simSingleApicultor = document.getElementById("sim-single-apicultor");
-
-    if (simSingleGross) {
-      simSingleGross.addEventListener("input", () => this.runSingleSimulator("gross"));
-    }
     if (simSingleApicultor) {
-      simSingleApicultor.addEventListener("input", () => this.runSingleSimulator("apicultor"));
+      simSingleApicultor.addEventListener("input", () => this.runSimulator("apicultor"));
+    }
+
+    const applyRealRateBtn = document.getElementById("btn-apply-real-rate");
+    if (applyRealRateBtn) {
+      applyRealRateBtn.addEventListener("click", () => this.applySimulatorAsReal());
+    }
+
+    const resetSimulatorBtn = document.getElementById("btn-reset-simulator");
+    if (resetSimulatorBtn) {
+      resetSimulatorBtn.addEventListener("click", () => this.resetSimulator());
     }
 
     // Product Form
@@ -320,40 +368,41 @@ class AdminUI {
   prefillMonetizationInputs() {
     const simRateInput = document.getElementById("sim-rate");
     const simGatewayInput = document.getElementById("sim-gateway");
-    const simFixedInput = document.getElementById("sim-fixed-costs");
 
     if (simRateInput) simRateInput.value = this.commissionRate;
     if (simGatewayInput) simGatewayInput.value = this.gatewayRate;
-    if (simFixedInput) simFixedInput.value = this.fixedCosts;
 
-    this.updateUIPercentages();
+    this.updateRealRateLabels();
+    this.updateSimulatorLabels();
   }
 
-  updateUIPercentages() {
-    const netRate = this.commissionRate - this.gatewayRate;
-    const sellerRate = 100 - this.commissionRate;
+  // Labels driven by the REAL platform rates (badge, dashboard, sales cards, table headers).
+  // Not affected by the simulator.
+  updateRealRateLabels() {
+    const netRate = this.realCommissionRate - this.realGatewayRate;
+    const sellerRate = 100 - this.realCommissionRate;
 
     // 1. Badge "TAXA COMISSÃO: X%"
     const badgeEl = document.getElementById("badge-taxa-comissao");
     if (badgeEl) {
-      badgeEl.innerHTML = `<i class="fas fa-percent text-success me-1"></i> TAXA COMISSÃO: ${this.commissionRate}%`;
+      badgeEl.innerHTML = `<i class="fas fa-percent text-success me-1"></i> TAXA COMISSÃO: ${this.realCommissionRate}%`;
     }
 
     // 2. Dashboard Card platforms commission label
     const dashCommLabelEl = document.getElementById("dash-platform-commission-label");
     if (dashCommLabelEl) {
-      dashCommLabelEl.innerHTML = `Comissões (${this.commissionRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Receita total proveniente das comissões cobradas sobre as vendas da plataforma."></i>`;
+      dashCommLabelEl.innerHTML = `Comissões (${this.realCommissionRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Receita total proveniente das comissões cobradas sobre as vendas da plataforma."></i>`;
     }
 
     // 3. Sales Cards Labels
     const commLabelEl = document.getElementById("vendas-platform-commission-label");
     if (commLabelEl) {
-      commLabelEl.innerHTML = `Comissão Bruta (${this.commissionRate}%) <i class="fas fa-circle-info text-muted ms-1" title="Percentagem cobrada sobre as vendas dos apicultores. Esta comissão é a receita bruta da plataforma."></i>`;
+      commLabelEl.innerHTML = `Comissão Bruta (${this.realCommissionRate}%) <i class="fas fa-circle-info text-muted ms-1" title="Percentagem cobrada sobre as vendas dos apicultores. Esta comissão é a receita bruta da plataforma."></i>`;
     }
 
     const gateLabelEl = document.getElementById("vendas-gateway-fees-label");
     if (gateLabelEl) {
-      gateLabelEl.innerHTML = `Custos Gateway (${this.gatewayRate}%) <i class="fas fa-circle-info text-muted ms-1" title="Despesas financeiras de processamento cobradas pela entidade bancária ou gateway de pagamentos."></i>`;
+      gateLabelEl.innerHTML = `Custos Gateway (${this.realGatewayRate}%) <i class="fas fa-circle-info text-muted ms-1" title="Despesas financeiras de processamento cobradas pela entidade bancária ou gateway de pagamentos."></i>`;
     }
 
     const netLabelEl = document.getElementById("vendas-platform-net-label");
@@ -364,12 +413,12 @@ class AdminUI {
     // 4. Sales Table Headers
     const thComm = document.getElementById("th-vendas-comm");
     if (thComm) {
-      thComm.innerHTML = `Comissão (${this.commissionRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Taxa cobrada pela plataforma (Bruto * Taxa Comissão)."></i>`;
+      thComm.innerHTML = `Comissão (${this.realCommissionRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Taxa cobrada pela plataforma (Bruto * Taxa Comissão)."></i>`;
     }
 
     const thGate = document.getElementById("th-vendas-gate");
     if (thGate) {
-      thGate.innerHTML = `Gateway (${this.gatewayRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Custos cobrados pelo processador de pagamentos (Bruto * 2%)."></i>`;
+      thGate.innerHTML = `Gateway (${this.realGatewayRate}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Custos cobrados pelo processador de pagamentos (Bruto * 2%)."></i>`;
     }
 
     const thPlat = document.getElementById("th-vendas-plat");
@@ -381,66 +430,85 @@ class AdminUI {
     if (thVend) {
       thVend.innerHTML = `Vendedor (${sellerRate.toFixed(1)}%) <i class="fas fa-circle-info text-muted ms-1" style="font-size:0.75rem;" title="Valor líquido a transferir para o apicultor (Bruto - Comissão)."></i>`;
     }
-    
-    // 5. Simulator labels (inside the simulator card)
+
+    this.initTooltips();
+  }
+
+  // Labels driven by the SIMULATOR rates (only inside the "Parâmetros & Simulação" card).
+  updateSimulatorLabels() {
+    const netRate = this.commissionRate - this.gatewayRate;
+    const sellerRate = 100 - this.commissionRate;
+
     const lblSimComm = document.getElementById("lbl-sim-commission");
     if (lblSimComm) lblSimComm.innerText = `Comissão (${this.commissionRate}%):`;
+
+    const lblSimApicultor = document.getElementById("lbl-sim-apicultor");
+    if (lblSimApicultor) lblSimApicultor.innerText = `Ganho do Apicultor (${sellerRate.toFixed(1)}%):`;
 
     const lblSimGate = document.getElementById("lbl-sim-gateway");
     if (lblSimGate) lblSimGate.innerText = `Custos Gateway (${this.gatewayRate}%):`;
 
     const lblSimNet = document.getElementById("lbl-sim-net");
-    if (lblSimNet) lblSimNet.innerText = `Margem Líquida (${netRate.toFixed(1)}%):`;
+    if (lblSimNet) lblSimNet.innerText = `Margem Líquida da Plataforma (${netRate.toFixed(1)}%):`;
 
-    // 6. Individual Transaction Simulator labels
-    const lblSingleComm = document.getElementById("lbl-single-commission");
-    if (lblSingleComm) lblSingleComm.innerText = `Comissão Bruta (${this.commissionRate}%):`;
-
-    const lblSingleGate = document.getElementById("lbl-single-gateway");
-    if (lblSingleGate) lblSingleGate.innerText = `Custo Gateway (${this.gatewayRate}%):`;
-
-    const lblSingleNet = document.getElementById("lbl-single-net");
-    if (lblSingleNet) lblSingleNet.innerText = `Lucro Plataforma (${netRate.toFixed(1)}%):`;
-
-    // Trigger single simulator recalculation
-    this.runSingleSimulator("gross");
-
-    // Re-initialize tooltips since label HTML was updated
     this.initTooltips();
   }
 
-  runSingleSimulator(changedSource = "gross") {
-    const grossInput = document.getElementById("sim-single-gross");
+  runSimulator(changedSource = "value") {
+    const valueInput = document.getElementById("sim-gmv");
     const apicultorInput = document.getElementById("sim-single-apicultor");
 
-    if (!grossInput || !apicultorInput) return;
+    if (!valueInput || !apicultorInput) return;
 
-    let gross = 0;
-    if (changedSource === "gross") {
-      gross = parseFloat(grossInput.value) || 0;
-      const apicultorGain = gross * (1 - this.commissionRate / 100);
-      apicultorInput.value = apicultorGain.toFixed(2);
-    } else {
+    let value = 0;
+    if (changedSource === "apicultor") {
       const apicultorGain = parseFloat(apicultorInput.value) || 0;
       if (this.commissionRate < 100) {
-        gross = apicultorGain / (1 - this.commissionRate / 100);
+        value = apicultorGain / (1 - this.commissionRate / 100);
       } else {
-        gross = 0;
+        value = 0;
       }
-      grossInput.value = gross.toFixed(2);
+      valueInput.value = value.toFixed(2);
+    } else {
+      value = parseFloat(valueInput.value) || 0;
+      const apicultorGain = value * (1 - this.commissionRate / 100);
+      apicultorInput.value = apicultorGain.toFixed(2);
     }
 
-    const commission = gross * (this.commissionRate / 100);
-    const gateway = gross * (this.gatewayRate / 100);
+    const commission = value * (this.commissionRate / 100);
+    const gateway = value * (this.gatewayRate / 100);
     const netMargin = commission - gateway;
+    const apicultorGain = value - commission;
 
-    const commVal = document.getElementById("sim-single-comm-val");
-    const gateVal = document.getElementById("sim-single-gate-val");
-    const netVal = document.getElementById("sim-single-net-val");
+    const grossValEl = document.getElementById("sim-gross-val");
+    const commValEl = document.getElementById("sim-commission-val");
+    const apicultorValEl = document.getElementById("sim-apicultor-val");
+    const gateValEl = document.getElementById("sim-gateway-val");
+    const netValEl = document.getElementById("sim-net-val");
 
-    if (commVal) commVal.innerText = `€${commission.toFixed(2)}`;
-    if (gateVal) gateVal.innerText = `€${gateway.toFixed(2)}`;
-    if (netVal) netVal.innerText = `€${netMargin.toFixed(2)}`;
+    if (grossValEl) grossValEl.innerText = `€${value.toFixed(2)}`;
+    if (commValEl) commValEl.innerText = `-€${commission.toFixed(2)}`;
+    if (apicultorValEl) apicultorValEl.innerText = `€${apicultorGain.toFixed(2)}`;
+    if (gateValEl) gateValEl.innerText = `-€${gateway.toFixed(2)}`;
+    if (netValEl) netValEl.innerText = `€${netMargin.toFixed(2)}`;
+  }
+
+  resetSimulator() {
+    const simRateInput = document.getElementById("sim-rate");
+    const simGatewayInput = document.getElementById("sim-gateway");
+    const simGmvInput = document.getElementById("sim-gmv");
+
+    this.commissionRate = this.realCommissionRate;
+    this.gatewayRate = this.realGatewayRate;
+    localStorage.removeItem("adminCommissionRate");
+    localStorage.removeItem("adminGatewayRate");
+
+    if (simRateInput) simRateInput.value = this.commissionRate;
+    if (simGatewayInput) simGatewayInput.value = this.gatewayRate;
+    if (simGmvInput) simGmvInput.value = "100.00";
+
+    this.updateSimulatorLabels();
+    this.runSimulator("value");
   }
 
   setupImagePreview() {
@@ -593,7 +661,6 @@ class AdminUI {
     }
     if (sectionId === "aprender-factos") this.loadFacts();
     if (sectionId === "aprender-glossario") this.loadGlossaryTerms();
-    if (sectionId === "monetizacao") this.loadMonetization();
     if (sectionId === "vendas") this.loadVendasData();
   }
 
@@ -1548,7 +1615,7 @@ class AdminUI {
       <div class="col-md-6 col-lg-4">
         <div class="admin-card border p-3 d-flex align-items-center justify-content-between gap-3 h-100" style="border-radius: 12px; background: ${isFeatured ? 'rgba(26, 77, 46, 0.02)' : 'white'}; border-color: ${isFeatured ? 'rgba(26, 77, 46, 0.15) !important' : 'rgba(0,0,0,0.08) !important'};">
           <div class="d-flex align-items-center gap-2 overflow-hidden">
-            <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" style="width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: #f8f9fa; padding: 4px; border: 1px solid rgba(0,0,0,0.05);">
+            <img src="${p.Imagem || "/images/default-product.png"}" alt="${p.Nome}" style="width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: #f8f9fa; padding: 4px; border: 1px solid rgba(0,0,0,0.05);">
             <div class="overflow-hidden">
               <h6 class="mb-0 text-dark fw-bold text-truncate" style="font-size: 0.9rem;">${p.Nome}</h6>
               <span class="text-muted smaller">${category}</span>
@@ -1637,7 +1704,7 @@ class AdminUI {
       if (totalOrdersEl) totalOrdersEl.innerText = orderCount;
 
       // Update Low Stock (less than 5 units)
-      const lowStockCount = this.products.filter((p) => p.Stock < 5).length;
+      const lowStockCount = this.products.filter((p) => p.Stock <= (p.Low_Stock_Threshold || 10)).length;
       const lowStockEl = document.getElementById("dash-low-stock");
       if (lowStockEl) lowStockEl.innerText = lowStockCount;
 
@@ -2222,11 +2289,11 @@ class AdminUI {
         const totalRevenue = parseFloat(data.stats.totalRevenue) || 0;
         revenueEl.innerText = `${totalRevenue.toFixed(2)}€`;
 
-        const commission = totalRevenue * (this.commissionRate / 100);
+        const commission = totalRevenue * (this.realCommissionRate / 100);
         const commEl = document.getElementById("dash-platform-commission");
         if (commEl) commEl.innerText = `${commission.toFixed(2)}€`;
 
-        const gatewayCost = totalRevenue * (this.gatewayRate / 100);
+        const gatewayCost = totalRevenue * (this.realGatewayRate / 100);
         const balance = commission - gatewayCost;
         const balEl = document.getElementById("dash-platform-balance");
         const balIcon = document.getElementById("dash-platform-balance-icon");
@@ -2539,7 +2606,7 @@ class AdminUI {
               <tr>
                   <td>
                       <div class="d-flex align-items-center gap-3">
-                          <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}" style="width:48px; height:48px; object-fit:cover; border-radius:10px;">
+                          <img src="${p.Imagem || "/images/default-product.png"}" class="product-img-rounded" alt="${p.Nome}" style="width:48px; height:48px; object-fit:cover; border-radius:10px;">
                           <div>
                               <div class="fw-bold text-dark">${p.Nome}</div>
                               <div class="text-muted smaller">ID: #${p.ID_Produto}</div>
@@ -2548,7 +2615,7 @@ class AdminUI {
                   </td>
                   <td class="fw-bold text-dark">${parseFloat(p.Preco).toFixed(2)}€</td>
                   <td>
-                      <span class="badge-premium ${p.Stock < 10 ? "badge-stock-low" : "badge-stock-ok"}" style="white-space: nowrap;">${p.Stock} UN</span>
+                      <span class="badge-premium ${p.Stock <= (p.Low_Stock_Threshold || 10) ? "badge-stock-low" : "badge-stock-ok"}" style="white-space: nowrap;">${p.Stock} UN</span>
                   </td>
                   <td>
                       <span class="badge bg-light text-dark border">${category}</span>
@@ -2626,7 +2693,7 @@ class AdminUI {
                       </button>
                     `}
                   </div>
-                  <img src="${p.Imagem || "/images/wildflower.png"}" alt="${p.Nome}" class="img-fluid" style="max-height:160px; object-fit:contain;">
+                  <img src="${p.Imagem || "/images/default-product.png"}" alt="${p.Nome}" class="img-fluid" style="max-height:160px; object-fit:contain;">
                 </div>
                 <div class="dash-product-body">
                   <div class="dash-product-title">${p.Nome}</div>
@@ -3625,6 +3692,7 @@ class AdminUI {
     document.getElementById("prod-nome").value = p.Nome;
     document.getElementById("prod-preco").value = p.Preco;
     document.getElementById("prod-stock").value = p.Stock;
+    document.getElementById("prod-low-stock-threshold").value = p.Low_Stock_Threshold || "";
     document.getElementById("prod-categoria").value = p.ID_Categoria;
     document.getElementById("prod-origem").value =
       p.ID_Origin || p.idOrigem || p.ID_Origem || "";
@@ -3666,6 +3734,7 @@ class AdminUI {
     const nome = document.getElementById("prod-nome").value;
     const preco = parseFloat(document.getElementById("prod-preco").value);
     const stock = parseInt(document.getElementById("prod-stock").value);
+    const lowStockThreshold = document.getElementById("prod-low-stock-threshold").value;
     const idCategoria = parseInt(
       document.getElementById("prod-categoria").value,
     );
@@ -3718,6 +3787,7 @@ class AdminUI {
           nome,
           preco,
           stock,
+          lowStockThreshold: lowStockThreshold === "" ? null : parseInt(lowStockThreshold, 10),
           idCategoria,
           idOrigem,
           descricao,
@@ -4282,6 +4352,20 @@ class AdminUI {
   }
 
   viewDocument(path) {
+    if (!path || path === "N/A") {
+      Swal.fire("Erro", "Documento não encontrado.", "error");
+      return;
+    }
+    
+    // Convert absolute or incorrect paths to correct relative URL path
+    if (path.includes('\\uploads\\')) {
+      path = '/uploads/' + path.split('\\uploads\\').pop();
+    } else if (path.includes('/uploads/')) {
+      path = '/uploads/' + path.split('/uploads/').pop();
+    } else if (!path.startsWith('/') && !path.startsWith('http') && !path.startsWith('data:')) {
+      path = '/uploads/' + path;
+    }
+
     const modalElement = document.getElementById("documentModal");
     let modal = bootstrap.Modal.getInstance(modalElement);
     if (!modal) modal = new bootstrap.Modal(modalElement);
@@ -4869,7 +4953,7 @@ class AdminUI {
         <tr>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <img src="${p.Imagem || "/images/wildflower.png"}" class="product-img-rounded" alt="${p.Nome}" style="width:32px;height:32px;object-fit:cover;border-radius:8px;">
+              <img src="${p.Imagem || "/images/default-product.png"}" class="product-img-rounded" alt="${p.Nome}" style="width:32px;height:32px;object-fit:cover;border-radius:8px;">
               <span class="fw-bold small">${p.Nome}</span>
             </div>
           </td>
@@ -5275,7 +5359,9 @@ class AdminUI {
       if (!response.ok) throw new Error("Falha no envio do ficheiro.");
       const data = await response.json();
       const targetInput = document.getElementById(targetInputId);
-      if (targetInput) targetInput.value = data.url;
+      const imagePath = data.url || data.path;
+      if (!imagePath) throw new Error("O servidor não devolveu o caminho da imagem.");
+      if (targetInput) targetInput.value = imagePath;
 
       Swal.fire({
         icon: "success",
@@ -5340,6 +5426,22 @@ class AdminUI {
     if (idField) idField.value = "";
     const labelField = document.getElementById("factModalLabel");
     if (labelField) labelField.innerText = "Adicionar Novo Facto";
+  }
+
+  wrapFactContentSelection(tagName) {
+    const allowedTags = new Set(["strong", "u"]);
+    if (!allowedTags.has(tagName)) return;
+
+    const textarea = document.getElementById("factContentBack");
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.slice(start, end) || "texto";
+    const wrappedText = `<${tagName}>${selectedText}</${tagName}>`;
+
+    textarea.setRangeText(wrappedText, start, end, "select");
+    textarea.focus();
   }
 
   editFact(id) {
@@ -5452,6 +5554,7 @@ class AdminUI {
       });
       if (!response.ok) throw new Error("Falha ao carregar o glossário.");
       this.glossaryTerms = await response.json();
+      this.buildGlossaryCategoryOptions();
       this.renderGlossaryTerms();
     } catch (error) {
       console.error(error);
@@ -5468,13 +5571,6 @@ class AdminUI {
       return;
     }
 
-    const catLabels = {
-      substance: "Substâncias",
-      hive: "A Colmeia",
-      process: "Processos",
-      equipment: "Equipamentos"
-    };
-
     const renderIconBadge = (icon) => {
       if (!icon) return '';
       if (icon.startsWith('/uploads/') || icon.startsWith('uploads/') || icon.startsWith('http') || icon.startsWith('data:')) {
@@ -5486,7 +5582,7 @@ class AdminUI {
 
     container.innerHTML = this.glossaryTerms
       .map((g) => {
-        const categoryLabel = catLabels[g.Categoria] || g.Categoria;
+        const categoryLabel = this.getCategoryLabel(this.normalizeCategoryKey(g.Categoria));
         return `
         <tr>
             <td class="fw-bold text-muted">#${g.ID_Glossario}</td>
@@ -5508,22 +5604,104 @@ class AdminUI {
       .join("");
   }
 
-  toggleGlossaryCategoryField() {
-    const select = document.getElementById("glossaryCategory");
-    const container = document.getElementById("glossaryCustomCategoryContainer");
-    const customInput = document.getElementById("glossaryCustomCategory");
-    if (select && container) {
-      if (select.value === "custom") {
-        container.style.display = "block";
-        if (customInput) customInput.required = true;
-      } else {
-        container.style.display = "none";
-        if (customInput) {
-          customInput.required = false;
-          customInput.value = "";
-        }
-      }
+  buildGlossaryCategoryOptions() {
+    const defaults = ["substance", "hive", "process", "equipment"];
+    const customValues = (this.glossaryTerms || [])
+      .map((term) => this.normalizeCategoryKey(term?.Categoria))
+      .filter((value) => typeof value === "string" && value.trim())
+      .map((value) => value.trim());
+
+    const combined = [...defaults, ...customValues];
+    this.glossaryCategoryOptions = [...new Set(combined.filter(Boolean))];
+    this.renderGlossaryCategorySuggestions();
+  }
+
+  getCategoryLabels() {
+    return {
+      substance: "Substâncias",
+      hive: "A Colmeia",
+      process: "Processos",
+      equipment: "Equipamentos"
+    };
+  }
+
+  normalizeCategoryKey(value) {
+    if (!value) return "";
+    const labels = this.getCategoryLabels();
+    const inverseLabels = Object.entries(labels).reduce((acc, [k, v]) => { acc[v] = k; return acc; }, {});
+    
+    // Se é um label em português, converte para chave
+    if (inverseLabels[value]) return inverseLabels[value];
+    // Se é uma chave conhecida, retorna como está
+    if (labels[value]) return value;
+    // Caso contrário, normaliza (minúsculas, sem espaços extras)
+    return value.toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  getCategoryLabel(key) {
+    const labels = this.getCategoryLabels();
+    return labels[key] || key;
+  }
+
+  renderGlossaryCategorySuggestions() {
+    const datalist = document.getElementById("glossary-category-suggestions");
+    const chipsContainer = document.getElementById("glossary-category-chips");
+    if (!datalist && !chipsContainer) return;
+
+    const labels = this.getCategoryLabels();
+
+    if (datalist) {
+      datalist.innerHTML = this.glossaryCategoryOptions
+        .map((tag) => `<option value="${this.getCategoryLabel(tag)}"></option>`)
+        .join("");
     }
+
+    if (chipsContainer) {
+      chipsContainer.innerHTML = "";
+      this.glossaryCategoryOptions.forEach((tag) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "btn btn-sm rounded-pill border border-success-subtle fw-semibold px-3 py-1";
+        chip.style.background = "rgba(26, 77, 46, 0.06)";
+        chip.style.color = "#1a4d2e";
+        chip.textContent = this.getCategoryLabel(tag);
+        chip.dataset.category = tag;
+        chip.addEventListener("click", () => this.selectGlossaryCategory(tag));
+        chipsContainer.appendChild(chip);
+      });
+    }
+  }
+
+  selectGlossaryCategory(tag) {
+    const input = document.getElementById("glossaryCategory");
+    if (input) {
+      // Mostra o label em português, mas guarda internamente a chave
+      input.value = this.getCategoryLabel(tag);
+      input.dataset.categoryKey = tag;
+      input.focus();
+    }
+  }
+
+  addGlossaryCategoryFromInput() {
+    const input = document.getElementById("glossaryCategory");
+    const value = input?.value?.trim();
+    if (!value) {
+      Swal.fire("Atenção", "Escreve uma tag ou categoria antes de a adicionar.", "warning");
+      return;
+    }
+
+    const normalizedKey = this.normalizeCategoryKey(value);
+    if (!this.glossaryCategoryOptions.includes(normalizedKey)) {
+      this.glossaryCategoryOptions = [normalizedKey, ...this.glossaryCategoryOptions];
+    }
+
+    this.renderGlossaryCategorySuggestions();
+    this.selectGlossaryCategory(normalizedKey);
+  }
+
+  toggleGlossaryCategoryField() {
+    const input = document.getElementById("glossaryCategory");
+    if (input) input.focus();
   }
 
   resetGlossaryForm() {
@@ -5533,13 +5711,8 @@ class AdminUI {
     if (idField) idField.value = "";
     const labelField = document.getElementById("glossaryModalLabel");
     if (labelField) labelField.innerText = "Adicionar Novo Termo";
-    const customContainer = document.getElementById("glossaryCustomCategoryContainer");
-    if (customContainer) customContainer.style.display = "none";
-    const customInput = document.getElementById("glossaryCustomCategory");
-    if (customInput) {
-      customInput.value = "";
-      customInput.required = false;
-    }
+    const categoryField = document.getElementById("glossaryCategory");
+    if (categoryField) categoryField.value = "";
   }
 
   editGlossaryTerm(id) {
@@ -5554,25 +5727,10 @@ class AdminUI {
     if (iconField) iconField.value = g.Icon;
     
     const categoryField = document.getElementById("glossaryCategory");
-    const customContainer = document.getElementById("glossaryCustomCategoryContainer");
-    const customInput = document.getElementById("glossaryCustomCategory");
     if (categoryField) {
-      const defaultCategories = ["substance", "hive", "process", "equipment"];
-      if (defaultCategories.includes(g.Categoria)) {
-        categoryField.value = g.Categoria;
-        if (customContainer) customContainer.style.display = "none";
-        if (customInput) {
-          customInput.value = "";
-          customInput.required = false;
-        }
-      } else {
-        categoryField.value = "custom";
-        if (customContainer) customContainer.style.display = "block";
-        if (customInput) {
-          customInput.value = g.Categoria;
-          customInput.required = true;
-        }
-      }
+      const normalizedKey = this.normalizeCategoryKey(g.Categoria);
+      categoryField.value = this.getCategoryLabel(normalizedKey);
+      categoryField.dataset.categoryKey = normalizedKey;
     }
 
     const definitionField = document.getElementById("glossaryDefinition");
@@ -5586,15 +5744,14 @@ class AdminUI {
 
   async saveGlossaryTerm() {
     const id = document.getElementById("glossaryId").value;
-    let categoria = document.getElementById("glossaryCategory").value;
-    if (categoria === "custom") {
-      categoria = document.getElementById("glossaryCustomCategory").value.trim().toLowerCase();
-    }
-    
+    const input = document.getElementById("glossaryCategory");
+    const categoriaLabel = input?.value?.trim() || "";
+    const categoria = this.normalizeCategoryKey(categoriaLabel);
+
     const body = {
       termo: document.getElementById("glossaryTerm").value,
       icon: document.getElementById("glossaryIcon").value,
-      categoria: categoria,
+      categoria,
       definicao: document.getElementById("glossaryDefinition").value,
     };
 
@@ -5620,6 +5777,11 @@ class AdminUI {
       });
 
       if (!response.ok) throw new Error("Falha ao guardar termo do glossário.");
+
+      if (!this.glossaryCategoryOptions.includes(body.categoria)) {
+        this.glossaryCategoryOptions = [body.categoria, ...this.glossaryCategoryOptions];
+      }
+      this.renderGlossaryCategorySuggestions();
 
       const modalEl = document.getElementById("glossaryModal");
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -5973,114 +6135,6 @@ class AdminUI {
     }
   }
 
-  loadMonetization() {
-    this.calculateMonetization();
-  }
-
-  updateCustomRateValue(val) {
-    const badge = document.getElementById("sim-custom-rate-badge");
-    if (badge) badge.innerText = `${val}%`;
-    const titleRate = document.getElementById("val-custom-title-rate");
-    if (titleRate) titleRate.innerText = `${val}%`;
-    this.calculateMonetization();
-  }
-
-  calculateMonetization() {
-    const gmvEl = document.getElementById("sim-gmv-monet");
-    const fixedEl = document.getElementById("sim-fixed-monet");
-    const gatewayEl = document.getElementById("sim-gateway-monet");
-    const customRateEl = document.getElementById("sim-custom-rate");
-
-    if (!gmvEl || !fixedEl || !gatewayEl || !customRateEl) return;
-
-    const gmv = parseFloat(gmvEl.value) || 0;
-    const fixedCosts = parseFloat(fixedEl.value) || 0;
-    const gatewayPct = parseFloat(gatewayEl.value) || 0;
-    const customRate = parseFloat(customRateEl.value) || 0;
-
-    const gatewayCost = gmv * (gatewayPct / 100);
-
-    const netResults = {};
-
-    const calculateRow = (ratePct, rowIdPrefix) => {
-      const revenue = gmv * (ratePct / 100);
-      const grossProfit = revenue - gatewayCost;
-      const netProfit = grossProfit - fixedCosts;
-      netResults[rowIdPrefix] = netProfit;
-
-      const revEl = document.getElementById(`val-${rowIdPrefix}-revenue`);
-      const gateEl = document.getElementById(`val-${rowIdPrefix}-gateway`);
-      const grossEl = document.getElementById(`val-${rowIdPrefix}-gross`);
-      const fixEl = document.getElementById(`val-${rowIdPrefix}-fixed`);
-      const netEl = document.getElementById(`val-${rowIdPrefix}-net`);
-      const statusEl = document.getElementById(`val-${rowIdPrefix}-status`);
-
-      if (revEl) revEl.innerText = `${revenue.toFixed(2)}€`;
-      if (gateEl) gateEl.innerText = `${gatewayCost.toFixed(2)}€`;
-      if (grossEl) grossEl.innerText = `${grossProfit.toFixed(2)}€`;
-      if (fixEl) fixEl.innerText = `${fixedCosts.toFixed(2)}€`;
-      
-      if (netEl) {
-        netEl.innerText = `${netProfit.toFixed(2)}€`;
-        if (netProfit < 0) {
-          netEl.className = "fw-bold text-danger";
-        } else {
-          netEl.className = "fw-bold text-success";
-        }
-      }
-
-      if (statusEl) {
-        if (netProfit < 0) {
-          statusEl.innerHTML = `<span class="badge bg-danger">Prejuízo</span>`;
-        } else {
-          statusEl.innerHTML = `<span class="badge bg-success">Lucro</span>`;
-        }
-      }
-    };
-
-    calculateRow(5, "5");
-    calculateRow(10, "10");
-    calculateRow(20, "20");
-    calculateRow(customRate, "custom");
-
-    this.renderMonetizationScenarioChart(netResults["5"], netResults["10"], netResults["20"], netResults["custom"], customRate);
-  }
-
-  renderMonetizationScenarioChart(net5, net10, net20, netCustom, customRate) {
-    if (typeof Chart === "undefined") return;
-    const scenarioCtx = document.getElementById("monetizationScenarioChart")?.getContext("2d");
-    if (!scenarioCtx) return;
-
-    if (this.monetizationScenarioChart) this.monetizationScenarioChart.destroy();
-    this.monetizationScenarioChart = new Chart(scenarioCtx, {
-      type: "bar",
-      data: {
-        labels: ["Cenário 5%", "Cenário 10% (Recomendado)", "Cenário 20%", `Personalizado (${customRate}%)`],
-        datasets: [{
-          label: "Lucro Líquido Simulado (€)",
-          data: [net5, net10, net20, netCustom],
-          backgroundColor: [
-            net5 < 0 ? "#dc2626" : "#16a34a",
-            net10 < 0 ? "#dc2626" : "#f59e0b",
-            net20 < 0 ? "#dc2626" : "#2563eb",
-            netCustom < 0 ? "#dc2626" : "#10b981"
-          ],
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: { grid: { color: "rgba(0,0,0,0.05)" } }
-        }
-      }
-    });
-  }
-
   renderVendasCharts(totalGross, commission, gatewayFees, netPlatform) {
     if (typeof Chart === "undefined") return;
 
@@ -6150,12 +6204,16 @@ class AdminUI {
       const activeOrders = orders.filter(o => o.Status.toLowerCase() !== "cancelado");
 
       let totalGross = 0;
+      let commission = 0;
+      let gatewayFees = 0;
       activeOrders.forEach(o => {
-        totalGross += parseFloat(o.Total) || 0;
+        const gross = parseFloat(o.Total) || 0;
+        const rate = this.getRealRateForDate(o.Data_Encomenda);
+        totalGross += gross;
+        commission += gross * (rate.commissionRate / 100);
+        gatewayFees += gross * (rate.gatewayRate / 100);
       });
 
-      const commission = totalGross * (this.commissionRate / 100);
-      const gatewayFees = totalGross * (this.gatewayRate / 100);
       const netPlatform = commission - gatewayFees;
 
       // Update Cards
@@ -6180,8 +6238,9 @@ class AdminUI {
         } else {
           tableBody.innerHTML = activeOrders.map(o => {
             const valGross = parseFloat(o.Total) || 0;
-            const valComm = valGross * (this.commissionRate / 100);
-            const valGate = valGross * (this.gatewayRate / 100);
+            const rate = this.getRealRateForDate(o.Data_Encomenda);
+            const valComm = valGross * (rate.commissionRate / 100);
+            const valGate = valGross * (rate.gatewayRate / 100);
             const valNet = valComm - valGate;
             const valSeller = valGross - valComm;
             const date = new Date(o.Data_Encomenda).toLocaleDateString();
@@ -6202,63 +6261,11 @@ class AdminUI {
       }
 
       // Initial run of the simulator with database values (or default)
-      const simGmvInput = document.getElementById("sim-gmv");
-      if (simGmvInput && (parseFloat(simGmvInput.value) === 10000 || simGmvInput.value === "")) {
-        simGmvInput.value = Math.max(Math.round(totalGross), 1000);
-      }
-      this.runSimulator();
+      this.runSimulator("value");
 
     } catch (error) {
       console.error("Error loading sales/financial data:", error);
       Swal.fire("Erro", "Não foi possível carregar os dados financeiros.", "error");
-    }
-  }
-
-  runSimulator() {
-    const simGmvInput = document.getElementById("sim-gmv");
-    const simFixedInput = document.getElementById("sim-fixed-costs");
-    
-    if (!simGmvInput || !simFixedInput) return;
-
-    const gmv = parseFloat(simGmvInput.value) || 0;
-    const fixedCosts = parseFloat(simFixedInput.value) || 0;
-
-    const commission = gmv * (this.commissionRate / 100);
-    const gateway = gmv * (this.gatewayRate / 100);
-    const netMargin = commission - gateway;
-    const netProfit = netMargin - fixedCosts;
-
-    // Update Simulator display values
-    const commValEl = document.getElementById("sim-commission-val");
-    const gateValEl = document.getElementById("sim-gateway-val");
-    const netValEl = document.getElementById("sim-net-val");
-    const profitTitleEl = document.getElementById("sim-profit-title");
-    const profitTextEl = document.getElementById("sim-profit-text");
-    const resultBoxEl = document.getElementById("sim-result-box");
-
-    if (commValEl) commValEl.innerText = `€${commission.toFixed(2)}`;
-    if (gateValEl) gateValEl.innerText = `€${gateway.toFixed(2)}`;
-    if (netValEl) netValEl.innerText = `€${netMargin.toFixed(2)}`;
-
-    if (profitTitleEl) {
-      const sign = netProfit >= 0 ? "+" : "";
-      profitTitleEl.innerText = `${sign}€${netProfit.toFixed(2)}`;
-    }
-
-    if (profitTextEl && resultBoxEl) {
-      if (netProfit >= 0) {
-        profitTextEl.innerText = "(Acima do Ponto de Equilíbrio)";
-        profitTextEl.style.color = "#16a34a";
-        resultBoxEl.style.background = "#f0fdf4";
-        resultBoxEl.style.borderColor = "#bbf7d0";
-        if (profitTitleEl) profitTitleEl.style.color = "#16a34a";
-      } else {
-        profitTextEl.innerText = "(Abaixo do Ponto de Equilíbrio)";
-        profitTextEl.style.color = "#dc2626";
-        resultBoxEl.style.background = "#fef2f2";
-        resultBoxEl.style.borderColor = "#fecaca";
-        if (profitTitleEl) profitTitleEl.style.color = "#dc2626";
-      }
     }
   }
 }

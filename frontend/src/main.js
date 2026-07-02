@@ -15,6 +15,7 @@ import Swal from "sweetalert2";
 import { trackPageView, setupAutoTracking } from "./analytics.js";
 import { API_URL, ensureBackendReady, parseJsonSafely } from "./api.js";
 import { app } from "./common.js";
+import { getNavbarHtml } from "./components/navbar.js";
 
 // Global fetch interceptor for automatic logout on 401 Unauthorized
 const originalFetch = window.fetch;
@@ -249,6 +250,15 @@ window.addEventListener("scroll", () => {
 
 // Initialize
 document.addEventListener("DOMContentLoaded", async () => {
+  const navbarContainer = document.getElementById("navbar-container");
+  if (navbarContainer) {
+    navbarContainer.innerHTML = getNavbarHtml();
+    if (window.location.pathname.includes("admin.html") || window.location.pathname.includes("dashboard-apicultor.html")) {
+      const toggle = document.getElementById("navbar-sidebar-toggle");
+      if (toggle) toggle.classList.remove("d-none");
+    }
+  }
+
   app.checkMaintenanceMode();
   trackPageView(); // Global analytics
   setupAutoTracking(); // Automatic click tracking

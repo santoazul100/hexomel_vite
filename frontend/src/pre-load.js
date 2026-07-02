@@ -51,7 +51,7 @@
   // Anti-flicker: Inject Navigation Auth State immediately upon DOM parsing
   const observer = new MutationObserver((mutations, obs) => {
     const authSection = document.getElementById('authSection');
-    if (authSection) {
+    if (authSection && !authSection.hasChildNodes()) {
       if (user) {
         const avatar = user.picture && user.picture.trim() !== "" ? user.picture : user.avatar || "/images/default-user.png";
         const firstName = user.name?.split(" ")[0] || user.firstName || "User";

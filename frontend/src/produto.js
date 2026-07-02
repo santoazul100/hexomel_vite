@@ -4,6 +4,7 @@ import { cart } from "./cart.js";
 import Swal from "sweetalert2";
 import { trackPageView } from "./analytics.js";
 import { getLoggedUser } from "./auth.js";
+import { getLowStockState } from "./utils/lowStock.js";
 
 const API_URL = "/api";
 const fallbackImage = "/images/default-product.png";
@@ -89,6 +90,11 @@ async function loadProduct() {
 function renderProduct(p) {
   document.getElementById("breadcrumb-name").textContent = p.Nome;
 
+  const lowStock = getLowStockState(p.Stock, p.Low_Stock_Threshold ?? p.lowStockThreshold ?? null, "product");
+  const lowStockBadge = lowStock
+    ? `<span class="badge-tag tag-low-stock" style="background:#fbc02d; color:#4e342e; border:1px solid #f9a825">${lowStock.label}</span>`
+    : "";
+
   const content = document.getElementById("produto-content");
   content.innerHTML = `
     <!-- Product Image -->
@@ -100,9 +106,10 @@ function renderProduct(p) {
 
     <!-- Product Info -->
     <div class="col-lg-6">
-      ${p.Tags ? `<div class="produto-tags-top d-flex flex-wrap gap-2 mb-3">
-        ${p.Tags.split(",").map(t => `<span class="badge-tag">${t.trim()}</span>`).join("")}
-      </div>` : ""}
+      <div class="produto-tags-top d-flex flex-wrap gap-2 mb-3">
+        ${p.Tags ? p.Tags.split(",").map(t => `<span class="badge-tag">${t.trim()}</span>`).join("") : ""}
+        ${lowStockBadge}
+      </div>
       
       <h1 class="fw-bold mb-2" style="font-size: 2rem; color: #1e293b;">${p.Nome}</h1>
       
